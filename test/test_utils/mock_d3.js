@@ -13,7 +13,7 @@ function Element(type) {
         return result;
     }
     this.select = function (selector) {
-        return mChildren.find(child => child.matches(selector))
+        return mChildren.find(child => child.matches(selector)) || { node: () => null }
     }
     this.attr = function (att, val = null) {
         if (val !== null) {

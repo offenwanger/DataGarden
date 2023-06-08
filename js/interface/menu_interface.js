@@ -116,9 +116,9 @@ function MenuInterface(svg) {
     }
 
     function defineFilters(svg) {
-        const defs = (svg.select('defs')
+        const defs = (svg.select('defs').node()
             ? svg.select('defs')
-            : svg.append("defs")).node()
+            : svg.append("defs"))
         const shadow = defs.append("filter")
             .attr("id", "dropshadow")
             .attr("y", "-40%")
