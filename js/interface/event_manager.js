@@ -78,7 +78,7 @@ function EventManager() {
             mBrushDown = true;
         }
     });
-    mInterface.on('pointermove', (e) => {
+    $(document).on('pointermove', (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY };
         if (mCurrentToolState == Buttons.ZOOM_BUTTON) {
             if (mZoomStartPos) {
@@ -101,7 +101,7 @@ function EventManager() {
             redrawInterface();
         }
     });
-    mInterface.on('pointerup', (e) => {
+    $(document).on('pointerup', (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY };
         if (mCurrentToolState == Buttons.ZOOM_BUTTON) {
             mZoomStartPos = null;
