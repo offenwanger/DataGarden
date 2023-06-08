@@ -11,6 +11,7 @@ let chai = require('chai')
 let assert = chai.assert;
 
 let mockD3 = require("./mock_d3.js");
+let mockJquery = require('./mock_jquery.js')
 
 let initialized = false;
 let timeoutCallbacks = []
@@ -40,22 +41,35 @@ function createGlobalVariables() {
         }
     }
 
-    return { documentEventListeners };
+    let windowEventListeners = {};
+    global.window = {
+        // default values for window
+        innerHeight: 800,
+        innerWidth: 1000,
+        addEventListener: function (event, callback) {
+            documentEventListeners[event] ? 0 : documentEventListeners[event] = [];
+            documentEventListeners[event].push(callback);
+        }
+    }
+
+    return { documentEventListeners, windowEventListeners };
 }
 
 function createEnviromentVariables() {
     let d3 = new mockD3();
-    let window = {
-        // default values for window
-        innerHeight: 800,
-        innerWidth: 1000
-    };
+    let $ = new mockJquery();
+    $.setDocument(global.document)
 
-    return { d3, window };
+    return {
+        d3,
+        $,
+        EventManager: rewireJs('interface/event_manager.js').__get__("EventManager"),
+        MenuInterface: rewireJs('interface/menu_interface.js').__get__("MenuInterface"),
+    };
 }
 
 function getIntegrationEnviroment() {
-    let globals = createGlobalVariables();
+    let globalAccessors = createGlobalVariables();
 
     if (!initialized) { init(); initialized = true; }
 
@@ -63,8 +77,8 @@ function getIntegrationEnviroment() {
     main.__set__(createEnviromentVariables());
 
     return {
-        globals,
-        main,
+        globalAccessors,
+        main
     };
 }
 

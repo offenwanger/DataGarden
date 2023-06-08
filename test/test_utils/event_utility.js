@@ -1,4 +1,4 @@
 exports.DOMContentLoaded = function (integrationEnv) {
-    let funcs = integrationEnv.globals.documentEventListeners["DOMContentLoaded"] || [];
+    let funcs = integrationEnv.globalAccessors.documentEventListeners["DOMContentLoaded"] || [];
     funcs.forEach(func => func());
 }

@@ -1,16 +1,32 @@
 document.addEventListener('DOMContentLoaded', function (e) {
-    let mSvg = d3.select('#svg_container').append('svg')
+    let mCanvas = d3.select('#canvas_container').append('canvas')
         .attr('width', window.innerWidth)
-        .attr('height', window.innerHeight);
+        .attr('height', window.innerHeight)
+    let mViewTransform = d3.zoomIdentity;
 
-    window.addEventListener('resize', () => {
-        mSvg.attr('width', window.innerWidth)
+    let mEventManager = new EventManager();
+
+    mEventManager.onResize(() => {
+        mCanvas.attr('width', window.innerWidth)
             .attr('height', window.innerHeight);
-    });
+        draw();
+    })
 
+    mEventManager.onZoom((transform) => {
+        mViewTransform = transform;
+        draw();
+    })
 
-    /** useful test and development function: */
-    // $(document).on('pointerover pointerenter pointerdown pointermove pointerup pointercancel pointerout pointerleave gotpointercapture lostpointercapture abort afterprint animationend animationiteration animationstart beforeprint beforeunload blur canplay canplaythrough change click contextmenu copy cut dblclick drag dragend dragenter dragleave dragover dragstart drop durationchange ended error focus focusin focusout fullscreenchange fullscreenerror hashchange input invalid keydown keypress keyup load loadeddata loadedmetadata loadstart message mousedown mouseenter mouseleave mousemove mouseover mouseout mouseup mousewheel offline online open pagehide pageshow paste pause play playing popstate progress ratechange resize reset scroll search seeked seeking select show stalled storage submit suspend timeupdate toggle touchcancel touchend touchmove touchstart transitionend unload volumechange waiting wheel', function (e) {
-    //     console.log(e.type, screenToSvgCoords({ x: e.clientX, y: e.clientY }))
-    // });
+    function draw() {
+        let ctx = mCanvas.node().getContext('2d');
+        ctx.save();
+        ctx.clearRect(0, 0, mCanvas.attr("width"), mCanvas.attr("height"));
+        ctx.translate(mViewTransform.x, mViewTransform.y)
+        ctx.scale(mViewTransform.k, mViewTransform.k)
+        ctx.fillStyle = "#FF0000";
+        ctx.fillRect(0, 0, 150, 75);
+        ctx.restore();
+    }
+
+    draw();
 });
