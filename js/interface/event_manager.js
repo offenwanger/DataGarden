@@ -6,17 +6,15 @@ function EventManager() {
     let mInteractionCanvas = d3.select('#canvas_container').append('canvas')
         .attr('width', window.innerWidth)
         .attr('height', window.innerHeight)
+        .attr('id', 'interaction-canvas')
     let mInterface = d3.select('#interface_container').append('svg')
         .attr('width', window.innerWidth)
         .attr('height', window.innerHeight);
 
-    let mViewTransform = { x: 0, y: 0, scale: 1 };
-
     let mMenuInterface = new MenuInterface(mInterface);
-    let mKeysDown = [];
-
     let mCurrentToolState = Buttons.SELECTION_BUTTON;
 
+    let mKeysDown = [];
     let mKeyBindingArray = [
         [Buttons.BRUSH_BUTTON, "d"],
         [Buttons.SELECTION_BUTTON, "s"],
@@ -26,6 +24,7 @@ function EventManager() {
 
     let mZoomCallback = () => { };
     let mResizeCallback = () => { };
+    let mStrokeCallback = () => { };
 
     let mPanZoom = d3.zoom()
         .scaleExtent([0.1, 10])
@@ -33,6 +32,13 @@ function EventManager() {
             mZoomCallback(transform);
         });
     let mZoomStartPos = false;
+
+    let mBrushOptions = {
+        size: 10,
+        color: "#000000FF",
+        currentStroke: [{ x: 0, y: 0 }]
+    }
+    let mBrushDown = false;
 
     window.addEventListener('resize', () => {
         mInteractionCanvas.attr('width', window.innerWidth)
@@ -54,15 +60,76 @@ function EventManager() {
 
     $(document).on('keyup', function (e) {
         mKeysDown = mKeysDown.filter(i => i !== e.originalEvent.key);
-
         updateState();
     });
 
+    mInterface.on("pointerdown", (e) => {
+        if (mCurrentToolState == Buttons.ZOOM_BUTTON) {
+            holdState();
+            mZoomStartPos = {
+                pointerX: e.clientX,
+                pointerY: e.clientY,
+                transformX: getZoom().x,
+                transformY: getZoom().y,
+                scale: getZoom().k
+            };
+        } else if (mCurrentToolState == Buttons.BRUSH_BUTTON) {
+            holdState();
+            mBrushDown = true;
+        }
+    });
+    mInterface.on('pointermove', (e) => {
+        let screenCoords = { x: e.clientX, y: e.clientY };
+        if (mCurrentToolState == Buttons.ZOOM_BUTTON) {
+            if (mZoomStartPos) {
+                let scale = mZoomStartPos.scale * (1 + (screenCoords.y - mZoomStartPos.pointerY) / mInterface.attr('height'));
+                let zoomChange = scale - mZoomStartPos.scale;
+                let zoomCenter = screenToModelCoords({ x: mZoomStartPos.pointerX, y: mZoomStartPos.pointerY })
+                let transformX = -(zoomCenter.x * zoomChange) + mZoomStartPos.transformX;
+                let transformY = -(zoomCenter.y * zoomChange) + mZoomStartPos.transformY;
+                let transform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
+                mInterface.call(mPanZoom.transform, transform);
+                mZoomCallback(transform);
+            }
+        } if (mCurrentToolState == Buttons.BRUSH_BUTTON) {
+            let localCoords = screenToModelCoords(screenCoords);
+            if (mBrushDown) {
+                mBrushOptions.currentStroke.push(localCoords);
+            } else {
+                mBrushOptions.currentStroke = [localCoords];
+            }
+            redrawInterface();
+        }
+    });
+    mInterface.on('pointerup', (e) => {
+        let screenCoords = { x: e.clientX, y: e.clientY };
+        if (mCurrentToolState == Buttons.ZOOM_BUTTON) {
+            mZoomStartPos = null;
+            releaseState();
+        } if (mCurrentToolState == Buttons.BRUSH_BUTTON) {
+            mBrushDown = false;
+
+            mStrokeCallback(mBrushOptions.currentStroke, mBrushOptions.size, mBrushOptions.color)
+            mBrushOptions.currentStroke = [screenToModelCoords(screenCoords)];
+
+            releaseState();
+        }
+    });
+
+    let mLockedState = false;
+    function holdState() { mLockedState = true; }
+    function releaseState() {
+        mLockedState = false;
+        updateState();
+    }
+
     function updateState() {
+        if (mLockedState) return;
         let keyState = getStateFromInput(mKeysDown);
         if (keyState != mCurrentToolState) {
             stateTransition(mCurrentToolState, keyState);
             mCurrentToolState = keyState;
+            updateInterface(mCurrentToolState);
         }
     }
 
@@ -78,8 +145,6 @@ function EventManager() {
             mMenuInterface.activateButton(newState)
             getChildButtons(newState).forEach(b => mMenuInterface.showButton(b));
         }
-
-        setState(newState);
     }
 
     function isChildButton(child, parent) {
@@ -102,53 +167,53 @@ function EventManager() {
         } else return null;
     }
 
-    function setState(newState) {
-        clearState();
+    function updateInterface(newState) {
+        clearInterfaceState();
         if (newState == Buttons.PANNING_BUTTON) {
             mInterface.call(mPanZoom);
-        } else if (newState == Buttons.ZOOM_BUTTON) {
-            mInterface.on("pointerdown", (e) => {
-                let transform = currentZoom();
-                mZoomStartPos = {
-                    pointerX: e.clientX,
-                    pointerY: e.clientY,
-                    transformX: transform.x,
-                    transformY: transform.y,
-                    scale: transform.k
-                };
-            });
-            mInterface.on('pointermove', (e) => {
-                if (mZoomStartPos) {
-                    let scale = mZoomStartPos.scale * (1 + (e.clientY - mZoomStartPos.pointerY) / mInterface.attr('height'));
-                    let zoomChange = scale - mZoomStartPos.scale;
-                    let zoomCenter = screenToModelCoords({ x: mZoomStartPos.pointerX, y: mZoomStartPos.pointerY })
-                    let transformX = -(zoomCenter.x * zoomChange) + mZoomStartPos.transformX;
-                    let transformY = -(zoomCenter.y * zoomChange) + mZoomStartPos.transformY;
-                    let transform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
-                    mInterface.call(mPanZoom.transform, transform);
-                    mZoomCallback(transform);
-                }
-            });
-            mInterface.on('pointerup', (e) => {
-                mZoomStartPos = null;
-            });
+        } else if (newState == Buttons.BRUSH_BUTTON) {
+            // nothing needed
         } else if (newState == Buttons.SELECTION_BUTTON) {
             console.error("newState == Buttons.SELECTION_BUTTON: Unimplemented!")
+        } else if (newState == Buttons.ZOOM_BUTTON) {
+            // nothing needed
         } else {
             console.error("State not valid! " + newState);
         }
+
+        redrawInterface();
     }
 
-    function clearState() {
+    function clearInterfaceState() {
         mInterface.on('.zoom', null);
-        mInterface.on('pointerdown', null);
-        mInterface.on('pointermove', null);
-        mInterface.on('pointerup', null);
+    }
+
+    function redrawInterface() {
+        let ctx = mInteractionCanvas.node().getContext("2d");
+        ctx.clearRect(0, 0, mInteractionCanvas.attr("width"), mInteractionCanvas.attr("height"));
+        ctx.save();
+
+        let zoom = getZoom();
+        ctx.translate(zoom.x, zoom.y)
+        ctx.scale(zoom.k, zoom.k)
+
+        if (mCurrentToolState == Buttons.BRUSH_BUTTON) {
+            ctx.strokeStyle = mBrushOptions.color;
+            ctx.lineWidth = mBrushOptions.size;
+
+            ctx.beginPath();
+            ctx.moveTo(mBrushOptions.currentStroke[0].x - 1, mBrushOptions.currentStroke[0].y - 1);
+            mBrushOptions.currentStroke.forEach(p => ctx.lineTo(p.x, p.y));
+
+            ctx.stroke();
+        }
+
+        ctx.restore();
     }
 
     function screenToModelCoords(screenCoords) {
         let boundingBox = mInterface.node().getBoundingClientRect();
-        let zoomPan = currentZoom();
+        let zoomPan = getZoom();
         if (checkConvertionState(screenCoords, boundingBox, zoomPan)) {
             return {
                 x: (screenCoords.x - boundingBox.x - zoomPan.x) / zoomPan.k,
@@ -161,7 +226,7 @@ function EventManager() {
 
     function modelToScreenCoords(modelCoords) {
         let boundingBox = mInterface.node().getBoundingClientRect();
-        let zoomPan = currentZoom();
+        let zoomPan = getZoom();
         if (checkConvertionState(screenCoords, boundingBox, zoomPan)) {
             return {
                 x: (modelCoords.x * zoomPan.k) + boundingBox.x + zoomPan.x,
@@ -211,7 +276,7 @@ function EventManager() {
         }
     }
 
-    function currentZoom() {
+    function getZoom() {
         return d3.zoomTransform(mInterface.node());
     }
 
@@ -223,6 +288,8 @@ function EventManager() {
     return {
         onZoom: (func) => mZoomCallback = func,
         onResize: (func) => mResizeCallback = func,
+        onStroke: (func) => mStrokeCallback = func,
+        getZoom,
     }
 }
 

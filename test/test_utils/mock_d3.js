@@ -69,5 +69,6 @@ module.exports = function () {
 
     this.select = select;
     this.zoom = () => mockZoom;
+    this.zoomTransform = () => mockZoom;
     this.zoomIdentity = new Transform();
 }
