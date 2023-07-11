@@ -1,4 +1,4 @@
-function MenuInterface(svg) {
+function MenuController(svg) {
     const BUTTON_SIZE = 40;
 
     let mBrushButton;
@@ -15,6 +15,40 @@ function MenuInterface(svg) {
 
         defineFilters(svg);
         layout(svg);
+    }
+
+    function stateTransition(oldState, newState) {
+        if (isChildButton(newState, oldState) || isChildButton(oldState, newState)) {
+            deactivateButton(oldState)
+            activateButton(newState);
+        } else {
+            deactivateButton(oldState)
+            oldState = getParentButton(oldState) ? getParentButton(oldState) : oldState;
+            getChildButtons(oldState).forEach(b => hideButton(b));
+
+            activateButton(newState)
+            getChildButtons(newState).forEach(b => showButton(b));
+        }
+    }
+
+    function isChildButton(child, parent) {
+        if (parent == Buttons.PANNING_BUTTON && child == Buttons.ZOOM_BUTTON) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function getChildButtons(parent) {
+        if (parent == Buttons.PANNING_BUTTON) {
+            return [Buttons.ZOOM_BUTTON];
+        } else return [];
+    }
+
+    function getParentButton(child) {
+        if (child == Buttons.ZOOM_BUTTON) {
+            return Buttons.PANNING_BUTTON;
+        } else return null;
     }
 
     function activateButton(buttonId) {
@@ -166,9 +200,6 @@ function MenuInterface(svg) {
 
     return {
         onResize: (svg) => layout(svg),
-        activateButton,
-        deactivateButton,
-        showButton,
-        hideButton,
+        stateTransition,
     }
 }

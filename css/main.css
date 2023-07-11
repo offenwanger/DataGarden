@@ -1,8 +1,16 @@
+html {
+    height: 100%;
+    margin: 0px;
+    padding: 0px;
+}
+
 body {
     position: relative;
     overflow: hidden;
     touch-action: none;
     margin: 0px;
+    padding: 0px;
+    height: 100%;
     user-select: none;
     -webkit-user-select: none;
     -khtml-user-select: none;
@@ -10,19 +18,32 @@ body {
     -ms-user-select: none;
 }
 
-#canvas_container {
+#quad {
+    display: grid;
+    grid-template-columns: auto auto;
+    height: 100%;
+    width: 100%;
+}
+
+#quad>div {
+    border: 1px;
+    border-color: black;
+    border-style: solid;
+}
+
+.canvas-container {
     position: absolute;
     top: 0;
     left: 0;
 }
 
-#canvas_container canvas {
+.canvas-container canvas {
     position: absolute;
     top: 0;
     left: 0;
 }
 
-#interface_container {
+#interface-container {
     position: absolute;
     top: 0;
     left: 0;

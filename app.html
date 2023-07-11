@@ -7,15 +7,39 @@
     <script src="lib/jquery.min.js" charset="utf-8"></script>
     <script src="lib/d3.min.js" charset="utf-8"></script>
 
+    <!-- Static Function Classes -->
     <script src="js/constants.js" charset="utf-8"></script>
-    <script src="js/interface/event_manager.js" charset="utf-8"></script>
-    <script src="js/interface/menu_interface.js" charset="utf-8"></script>
+    <script src="js/data_structs.js" charset="utf-8"></script>
+    <script src="js/fairy.js" charset="utf-8"></script>
+    <script src="js/util.js"></script>
+
+    <!-- Object Classes -->
+    <script src="js/model_controller.js" charset="utf-8"></script>
+    <script src="js/views/stroke_view_controller.js" charset="utf-8"></script>
+    <script src="js/views/vem_view_controller.js" charset="utf-8"></script>
+    <script src="js/views/struct_view_controller.js" charset="utf-8"></script>
+    <script src="js/views/table_view_controller.js" charset="utf-8"></script>
+    <script src="js/event_manager.js" charset="utf-8"></script>
+    <script src="js/menu_controller.js" charset="utf-8"></script>
     <script src="js/main.js" charset="utf-8"></script>
 </head>
 
 <body>
-    <div id="canvas_container"></div>
-    <div id="interface_container"></div>
+    <div id="quad">
+        <div id="stroke-view">
+            <div class="canvas-container"></div>
+        </div>
+        <div id="vem-view">
+            <div class="canvas-container"></div>
+        </div>
+        <div id="struct-view">
+            <div class="canvas-container"></div>
+        </div>
+        <div id="table-view">
+            <div class="canvas-container"></div>
+        </div>
+    </div>
+    <div id="interface-container"></div>
 </body>
 
 </html>

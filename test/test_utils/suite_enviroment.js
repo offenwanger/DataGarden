@@ -63,8 +63,11 @@ function createEnviromentVariables() {
     return {
         d3,
         $,
-        EventManager: rewireJs('interface/event_manager.js').__get__("EventManager"),
-        MenuInterface: rewireJs('interface/menu_interface.js').__get__("MenuInterface"),
+        EventManager: rewireJs('event_manager.js').__get__("EventManager"),
+        MenuController: rewireJs('menu_controller.js').__get__("MenuController"),
+        ModelController: rewireJs('model_controller.js').__get__("ModelController"),
+        Data: rewireJs('data_structs.js').__get__("Data"),
+        StrokeViewController: rewireJs('views/stroke_view_controller.js').__get__("StrokeViewController"),
     };
 }
 
