@@ -2,16 +2,8 @@
 function ModelController() {
     let mDataModel = new Data.DataModel();
 
-    function newElement(strokes) {
-        let elem = new Data.Element();
-        if (Array.isArray(strokes)) {
-            // TODO: Handle bad strokes.
-            elem.strokes = strokes.map(s => s.clone()); d
-        } else {
-            // TODO: Handle null case.
-            elem.strokes = [strokes];
-        }
-        mDataModel.elements.push(elem)
+    function addElement(elem) {
+        mDataModel.elements.push(elem);
     }
 
     function addStroke(elementId, stroke) {
@@ -36,7 +28,7 @@ function ModelController() {
     return {
         addStroke,
         removeStorke,
-        newElement,
+        addElement,
         getModel
     }
 

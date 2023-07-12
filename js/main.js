@@ -2,9 +2,12 @@ document.addEventListener('DOMContentLoaded', function (e) {
     let mModelController = new ModelController();
 
     let mStrokeViewController = new StrokeViewController();
-    mStrokeViewController.onResize(window.innerWidth * 0.5, window.innerHeight * 0.5);
+    let mVemViewController = new VemViewController();
 
-    let mEventManager = new EventManager(mStrokeViewController);
+    mStrokeViewController.onResize(window.innerWidth * 0.5, window.innerHeight * 0.5);
+    mVemViewController.onResize(window.innerWidth * 0.5, window.innerHeight * 0.5);
+
+    let mEventManager = new EventManager(mStrokeViewController, mVemViewController);
 
     mStrokeViewController.setStrokeCallback((stroke) => {
         Fairy.doMagic(stroke, mModelController);
@@ -12,6 +15,8 @@ document.addEventListener('DOMContentLoaded', function (e) {
     })
 
     function modelUpdate() {
-        mStrokeViewController.onModelUpdate(mModelController.getModel());
+        let model = mModelController.getModel();
+        mStrokeViewController.onModelUpdate(model);
+        mVemViewController.onModelUpdate(model);
     }
 });

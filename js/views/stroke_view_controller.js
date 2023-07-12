@@ -132,15 +132,22 @@ function StrokeViewController() {
         ctx.translate(zoom.x, zoom.y)
         ctx.scale(zoom.k, zoom.k)
 
-        mModel.getStrokes().forEach(stroke => {
-            ctx.strokeStyle = stroke.color;
-            ctx.lineWidth = stroke.size;
+        mModel.getElements().forEach(elem => {
+            elem.strokes.forEach(stroke => {
+                ctx.save();
 
-            ctx.beginPath();
-            ctx.moveTo(stroke.path[0].x - 1, stroke.path[0].y - 1);
-            stroke.path.forEach(p => ctx.lineTo(p.x, p.y));
+                ctx.translate(elem.x, elem.y);
+                ctx.strokeStyle = stroke.color;
+                ctx.lineWidth = stroke.size;
 
-            ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(stroke.path[0].x - 1, stroke.path[0].y - 1);
+                stroke.path.forEach(p => ctx.lineTo(p.x, p.y));
+
+                ctx.stroke();
+
+                ctx.restore();
+            })
         })
 
         ctx.restore();

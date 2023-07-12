@@ -20,14 +20,29 @@ let Data = function () {
         };
     }
 
-    function Element() {
+    function Element(x, y, height, width) {
         this.id = getUniqueId();
+        this.x = x;
+        this.y = y;
+        this.height = height;
+        this.width = width;
         this.creationTime = Date.now();
         this.strokes = [];
 
+        this.vemX = 10;
+        this.vemY = 10;
+        this.parent = null;
+
         this.clone = function () {
             let clone = new Element();
+            clone.x = this.x;
+            clone.y = this.y;
+            clone.height = this.height;
+            clone.width = this.width;
             clone.id = this.id;
+            clone.vemX = this.vemX;
+            clone.vemY = this.vemY;
+            clone.parent = this.parent;
             clone.creationTime = this.creationTime;
             clone.strokes = this.strokes.map(s => s.clone());
             return clone;
@@ -43,8 +58,8 @@ let Data = function () {
             return clone;
         }
 
-        this.getStrokes = function () {
-            return this.elements.map(e => e.strokes).flat();
+        this.getElements = function () {
+            return this.elements;
         }
     }
 

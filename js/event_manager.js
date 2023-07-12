@@ -3,10 +3,10 @@
  */
 
 function EventManager(strokeController, vemController, structController, tableController) {
-    let mStrokeController = strokeController;
-    let mVemController = vemController;
-    let mStructController = structController;
-    let mTableController = tableController;
+    let mStrokeViewController = strokeController;
+    let mVemViewController = vemController;
+    let mStructViewController = structController;
+    let mTableViewController = tableController;
 
     let mHorizontalBarPercent = 0.5;
     let mVerticalBarPercent = 0.5;
@@ -32,7 +32,7 @@ function EventManager(strokeController, vemController, structController, tableCo
     let mBrushDown = false;
 
     window.addEventListener('resize', () => {
-        mStrokeController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight * mHorizontalBarPercent);
+        mStrokeViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight * mHorizontalBarPercent);
     });
 
     $(document).on('keydown', function (e) {
@@ -53,19 +53,19 @@ function EventManager(strokeController, vemController, structController, tableCo
         let pointerCoord = { x: e.clientX, y: e.clientY, };
         mActiveController = getActiveController(pointerCoord);
         if (mCurrentToolState == Buttons.PANNING_BUTTON &&
-            mActiveController != mTableController) {
+            mActiveController != mTableViewController) {
             holdState();
             mPanStartPosition = pointerCoord;
             mActiveController.onPanStart(pointerCoord);
         } else if (mCurrentToolState == Buttons.ZOOM_BUTTON &&
-            mActiveController != mTableController) {
+            mActiveController != mTableViewController) {
             holdState();
             mZoomStartPos = pointerCoord;
             mActiveController.onZoomStart(pointerCoord);
         } else if (mCurrentToolState == Buttons.BRUSH_BUTTON &&
-            mActiveController == mStrokeController) {
+            mActiveController == mStrokeViewController) {
             holdState();
-            mStrokeController.onBrushStart();
+            mStrokeViewController.onBrushStart();
             mBrushDown = true;
         }
     });
@@ -83,9 +83,9 @@ function EventManager(strokeController, vemController, structController, tableCo
             }
         } else if (mCurrentToolState == Buttons.BRUSH_BUTTON) {
             if (mBrushDown) {
-                mStrokeController.onBrush(screenCoords);
+                mStrokeViewController.onBrush(screenCoords);
             } else {
-                mStrokeController.onBrushMove(screenCoords);
+                mStrokeViewController.onBrushMove(screenCoords);
             }
         }
     });
@@ -102,7 +102,7 @@ function EventManager(strokeController, vemController, structController, tableCo
         } else if (mCurrentToolState == Buttons.BRUSH_BUTTON) {
             if (mBrushDown) {
                 mBrushDown = false;
-                mStrokeController.onBrushEnd(screenCoords);
+                mStrokeViewController.onBrushEnd(screenCoords);
                 releaseState();
             }
         }
@@ -124,9 +124,9 @@ function EventManager(strokeController, vemController, structController, tableCo
 
             clearInterfaceState();
             if (mCurrentToolState == Buttons.PANNING_BUTTON) {
-                mStrokeController.setPanActive(true);
+                mStrokeViewController.setPanActive(true);
             } else if (mCurrentToolState == Buttons.BRUSH_BUTTON) {
-                mStrokeController.setBrushActive(true);
+                mStrokeViewController.setBrushActive(true);
             } else if (mCurrentToolState == Buttons.SELECTION_BUTTON) {
                 console.error("newState == Buttons.SELECTION_BUTTON: Unimplemented!")
             } else if (mCurrentToolState == Buttons.ZOOM_BUTTON) {
@@ -138,9 +138,9 @@ function EventManager(strokeController, vemController, structController, tableCo
     }
 
     function clearInterfaceState() {
-        mStrokeController.setBrushActive(false);
+        mStrokeViewController.setBrushActive(false);
 
-        mStrokeController.setPanActive(false);
+        mStrokeViewController.setPanActive(false);
     }
 
     function getStateFromInput(keysDown) {
@@ -168,13 +168,13 @@ function EventManager(strokeController, vemController, structController, tableCo
         let topBottomDivide = mHorizontalBarPercent * window.innerHeight;
 
         if (screenCoords.x < leftRightDivide && screenCoords.y < topBottomDivide) {
-            return mStrokeController;
+            return mStrokeViewController;
         } else if (screenCoords.x < leftRightDivide) {
-            return mStructController;
+            return mStructViewController;
         } else if (screenCoords.y < topBottomDivide) {
-            return mVemController;
+            return mVemViewController;
         } else {
-            return mTableController;
+            return mTableViewController;
         }
     }
 
