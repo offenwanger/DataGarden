@@ -14,7 +14,7 @@ function MenuController(svg) {
         mSelectionButton = new MenuButton(svg, "img/selection_button.svg")
 
         defineFilters(svg);
-        layout(svg);
+        layout(svg.attr('width'), svg.attr('height'));
     }
 
     function stateTransition(oldState, newState) {
@@ -95,13 +95,13 @@ function MenuController(svg) {
         }
     }
 
-    function layout(svg) {
+    function layout(width, height) {
         let buttonSpacing = BUTTON_SIZE * 1.5;
 
-        mBrushButton.setPosition(buttonSpacing * 2.5, svg.attr("height") - BUTTON_SIZE);
-        mSelectionButton.setPosition(buttonSpacing * 1.5, svg.attr("height") - BUTTON_SIZE);
-        mPanButton.setPosition(buttonSpacing * 0.5, svg.attr("height") - BUTTON_SIZE);
-        mZoomButton.setPosition(buttonSpacing * 0.5, svg.attr("height") - BUTTON_SIZE);
+        mBrushButton.setPosition(buttonSpacing * 2.5, height - BUTTON_SIZE);
+        mSelectionButton.setPosition(buttonSpacing * 1.5, height - BUTTON_SIZE);
+        mPanButton.setPosition(buttonSpacing * 0.5, height - BUTTON_SIZE);
+        mZoomButton.setPosition(buttonSpacing * 0.5, height - BUTTON_SIZE);
     }
 
     function MenuButton(svg, img) {
@@ -199,7 +199,7 @@ function MenuController(svg) {
     createInterface(svg);
 
     return {
-        onResize: (svg) => layout(svg),
+        onResize: layout,
         stateTransition,
     }
 }

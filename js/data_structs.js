@@ -29,8 +29,8 @@ let Data = function () {
         this.creationTime = Date.now();
         this.strokes = [];
 
-        this.vemX = 10;
-        this.vemY = 10;
+        this.vemX = null;
+        this.vemY = null;
         this.parent = null;
 
         this.clone = function () {
@@ -49,23 +49,77 @@ let Data = function () {
         };
     }
 
-    function DataModel() {
+    function Group() {
+        this.id = getUniqueId();
+        this.creationTime = Date.now();
         this.elements = [];
+
+        this.structX = null;
+        this.structY = null;
+        this.parent = null;
+
+        this.orientationBinding = null;
+        this.formBinding = null;
+        this.cardinatlityBinding = null;
+        this.positionBinding = null;
+
+        this.clone = function () {
+            let clone = new Element();
+            clone.id = this.id;
+            clone.structX = this.structX;
+            clone.structX = this.structX;
+            clone.parent = this.parent;
+            clone.orientationBinding = this.orientationBinding;
+            clone.formBinding = this.formBinding;
+            clone.cardinatlityBinding = this.cardinatlityBinding;
+            clone.positionBinding = this.positionBinding;
+            clone.creationTime = this.creationTime;
+            clone.elements = this.elements.map(s => s.clone());
+            return clone;
+        };
+    }
+
+    function Dimention() {
+        this.id = getUniqueId();
+        this.creationTime = Date.now();
+        this.structX = null;
+        this.structY = null;
+    }
+
+    function Binding() {
+        this.id = getUniqueId();
+        this.creationTime = Date.now();
+
+        this.structX = null;
+        this.structY = null;
+
+        this.dimention = null;
+    }
+
+    function DataModel() {
+        this.groups = [];
 
         this.clone = function () {
             let clone = new DataModel();
-            clone.elements = this.elements.map(e => e.clone());
+            clone.groups = this.groups.map(e => e.clone());
             return clone;
         }
 
         this.getElements = function () {
-            return this.elements;
+            return this.groups.map(g => g.elements).flat();
+        }
+
+        this.getGroups = function () {
+            return this.groups;
         }
     }
 
     return {
         Stroke,
         Element,
+        Group,
+        Binding,
+        Dimention,
         DataModel,
     }
 }();

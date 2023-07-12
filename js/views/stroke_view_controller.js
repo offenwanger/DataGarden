@@ -186,7 +186,7 @@ function StrokeViewController() {
     function screenToModelCoords(screenCoords) {
         let boundingBox = mInterfaceCanvas.node().getBoundingClientRect();
         let zoomPan = getZoom();
-        if (ValidationUtil.checkConvertionState(screenCoords, boundingBox, zoomPan)) {
+        if (ValUtil.checkConvertionState(screenCoords, boundingBox, zoomPan)) {
             return {
                 x: (screenCoords.x - boundingBox.x - zoomPan.x) / zoomPan.k,
                 y: (screenCoords.y - boundingBox.y - zoomPan.y) / zoomPan.k
@@ -199,7 +199,7 @@ function StrokeViewController() {
     function modelToScreenCoords(modelCoords) {
         let boundingBox = mInterfaceCanvas.node().getBoundingClientRect();
         let zoomPan = getZoom();
-        if (ValidationUtil.checkConvertionState(screenCoords, boundingBox, zoomPan)) {
+        if (ValUtil.checkConvertionState(screenCoords, boundingBox, zoomPan)) {
             return {
                 x: (modelCoords.x * zoomPan.k) + boundingBox.x + zoomPan.x,
                 y: (modelCoords.y * zoomPan.k) + boundingBox.y + zoomPan.y

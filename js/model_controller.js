@@ -2,23 +2,33 @@
 function ModelController() {
     let mDataModel = new Data.DataModel();
 
-    function addElement(elem) {
-        mDataModel.elements.push(elem);
+    function addGroup(group) {
+        mDataModel.groups.push(group);
+    }
+
+    function addElement(groupId, elem) {
+        let group = mDataModel.groups.find(g => g.id == groupId)
+        if (!group) { console.error("Group not found for id: ", groupId); return; };
+        group.elements.push(elem);
+    }
+
+    function removeElement(elementId) {
+        let group = mDataModel.getGroups().find(g => g.elements.some(e => e.id == elementId));
+        if (!group) { console.error("Group not found for element: ", elementId); return; };
+        group.push(elem);
+
     }
 
     function addStroke(elementId, stroke) {
-        let elem = mDataModel.elements.find(e => e.id == elementId);
-        // TODO: Handle element not found
+        let elem = mDataModel.getElements().find(e => e.id == elementId);
+        if (!elem) { console.error("Element not found for id: ", elementId); return; };
         elem.strokes.push(stroke);
     }
 
     function removeStorke(strokeId) {
-        let elem = mDataModel.elements.find(e => e.strokes.some(s => s.id == strokeId));
-        // TODO: Handle element not found
+        let elem = mDataModel.getElements().find(e => e.strokes.some(s => s.id == strokeId));
+        if (!elem) { console.error("Element not found for stroke: ", strokeId); return; };
         elem.strokes = elem.strokes.filter(s => s.id != strokeId);
-        if (elem.strokes.length == 0) {
-            mDataModel.elements = mDataModel.elements.filter(e => e.id != elem.id);
-        }
     }
 
     function getModel() {
@@ -26,10 +36,12 @@ function ModelController() {
     }
 
     return {
+        addGroup,
+        addElement,
+        removeElement,
         addStroke,
         removeStorke,
-        addElement,
-        getModel
+        getModel,
     }
 
 }

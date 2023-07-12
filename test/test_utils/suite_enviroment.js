@@ -69,6 +69,7 @@ function createEnviromentVariables() {
         Data: rewireJs('data_structs.js').__get__("Data"),
         StrokeViewController: rewireJs('views/stroke_view_controller.js').__get__("StrokeViewController"),
         VemViewController: rewireJs('views/vem_view_controller.js').__get__("VemViewController"),
+        StructViewController: rewireJs('views/struct_view_controller.js').__get__("StructViewController"),
     };
 }
 

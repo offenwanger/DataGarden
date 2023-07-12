@@ -1,4 +1,4 @@
-let ValidationUtil = function () {
+let ValUtil = function () {
     function checkConvertionState(coords, boundingBox, zoomPan) {
         if (isNaN(parseInt(coords.x)) || isNaN(parseInt(coords.y))) {
             console.error('Bad conversion coords', coords);
@@ -41,8 +41,8 @@ let ValidationUtil = function () {
 
 let MathUtil = function () {
     function add(v1, v2) {
-        if (!ValidationUtil.isCoord(v1)) { console.error("Bad vector", v1); return { x: 0, y: 0 }; }
-        if (!ValidationUtil.isCoord(v2)) { console.error("Bad vector", v2); return { x: 0, y: 0 }; }
+        if (!ValUtil.isCoord(v1)) { console.error("Bad vector", v1); return { x: 0, y: 0 }; }
+        if (!ValUtil.isCoord(v2)) { console.error("Bad vector", v2); return { x: 0, y: 0 }; }
         return {
             x: v1.x + v2.x,
             y: v1.y + v2.y
@@ -50,8 +50,8 @@ let MathUtil = function () {
     }
 
     function subtract(v1, v2) {
-        if (!ValidationUtil.isCoord(v1)) { console.error("Bad vector", v1); return { x: 0, y: 0 }; }
-        if (!ValidationUtil.isCoord(v2)) { console.error("Bad vector", v2); return { x: 0, y: 0 }; }
+        if (!ValUtil.isCoord(v1)) { console.error("Bad vector", v1); return { x: 0, y: 0 }; }
+        if (!ValUtil.isCoord(v2)) { console.error("Bad vector", v2); return { x: 0, y: 0 }; }
         return {
             x: v1.x - v2.x,
             y: v1.y - v2.y
@@ -59,8 +59,8 @@ let MathUtil = function () {
     }
 
     function scale(v, num) {
-        if (!ValidationUtil.isCoord(v)) { console.error("Bad vector", v); return { x: 0, y: 0 }; }
-        if (!ValidationUtil.isNum(num)) { console.error("Bad scalar", num); return { x: 0, y: 0 }; }
+        if (!ValUtil.isCoord(v)) { console.error("Bad vector", v); return { x: 0, y: 0 }; }
+        if (!ValUtil.isNum(num)) { console.error("Bad scalar", num); return { x: 0, y: 0 }; }
         return {
             x: v.x * num,
             y: v.y * num
@@ -77,8 +77,8 @@ let MathUtil = function () {
 
 let PathUtil = function () {
     function translate(path, v) {
-        if (!ValidationUtil.isPath(path)) { console.error("Bad path", path); return path; }
-        if (!ValidationUtil.isCoord(v)) { console.error("Bad vector", v); return path; }
+        if (!ValUtil.isPath(path)) { console.error("Bad path", path); return path; }
+        if (!ValUtil.isCoord(v)) { console.error("Bad vector", v); return path; }
         return path.map(p => {
             return {
                 x: p.x + v.x,
@@ -92,11 +92,11 @@ let PathUtil = function () {
             console.error("Bad path set", paths);
             return { x: 0, y: 0, height: 1, width: 1 }
         }
-        if (ValidationUtil.isPath(paths)) {
+        if (ValUtil.isPath(paths)) {
             paths = [paths];
         }
         paths = paths.filter(path => {
-            if (ValidationUtil.isPath(path)) return true;
+            if (ValUtil.isPath(path)) return true;
             else { console.error("Bad Path", path); return false; }
         })
         if (paths.lengh == 0) { console.error("No valid paths input"); return { x: 0, y: 0, height: 1, width: 1 } };
