@@ -2,18 +2,88 @@
 function VemViewController() {
     let mCanvas = d3.select('#vem-view').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
-
     let mInterfaceCanvas = d3.select("#vem-view").select('.canvas-container').append('canvas')
         .classed('interface-canvas', true);
+    let mInteractionCanvas = d3.select("#vem-view").select('.canvas-container').append('canvas')
+        .style("opacity", 0)
+        .classed('interaction-canvas', true);
+
+    let mHighlightCallback = () => { };
+    let mSelectionCallback = () => { };
+
+    let mInteractionLookup = {};
+    let mReverseInteractionLookup = {};
+    let mColorIndex = 1;
+    let mTargetIncrease = 5;
 
     let mPanZoom = d3.zoom();
 
-    let mModel = new Data.DataModel();
+    let mModel = new DataModel();
+    let mInteracting;
     let mStartPos;
 
     function onModelUpdate(model) {
         mModel = model;
         draw();
+    }
+
+    function onPointerDown(screenCoords, toolState) {
+        if (ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect()))
+            return false;
+
+        if (toolState == Buttons.PANNING_BUTTON) {
+            let zoom = getZoom();
+            mStartPos = {
+                x: zoom.x,
+                y: zoom.y,
+                scale: zoom.k,
+                screenCoords,
+            }
+
+            mInteracting = true;
+            return true;
+        } else if (toolState == Buttons.ZOOM_BUTTON) {
+            mInteracting = true;
+
+            let zoom = getZoom();
+            let zoomCenter = screenToModelCoords(screenCoords)
+
+            mStartPos = {
+                pointerX: zoomCenter.x,
+                pointerY: zoomCenter.y,
+                transformX: zoom.x,
+                transformY: zoom.y,
+                scale: zoom.k,
+                screenCoords,
+            }
+
+            mInteracting = true;
+            return true;
+        }
+    }
+
+    function onPointerMove(screenCoords, toolState) {
+        if (toolState == Buttons.PANNING_BUTTON && mInteracting) {
+            let mouseDist = MathUtil.subtract(screenCoords, mStartPos.screenCoords);
+            let translate = MathUtil.add(mStartPos, mouseDist);
+            let transform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mStartPos.scale);
+            mInterfaceCanvas.call(mPanZoom.transform, transform);
+            draw();
+        } else if (toolState == Buttons.ZOOM_BUTTON && mInteracting) {
+            let mouseDist = screenCoords.y - mStartPos.screenCoords.y;
+            let scale = mStartPos.scale * (1 + (mouseDist / mInterfaceCanvas.attr('height')));
+            let zoomChange = scale - mStartPos.scale;
+            let transformX = -(mStartPos.pointerX * zoomChange) + mStartPos.transformX;
+            let transformY = -(mStartPos.pointerY * zoomChange) + mStartPos.transformY;
+            let transform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
+            mInterfaceCanvas.call(mPanZoom.transform, transform);
+            draw();
+        }
+    }
+
+    function onPointerUp(screenCoords, toolState) {
+        mInteracting = false;
+        mStartPos = null;
     }
 
     function onResize(height, width) {
@@ -23,69 +93,19 @@ function VemViewController() {
         mInterfaceCanvas
             .attr('width', height)
             .attr('height', width);
+        mInteractionCanvas
+            .attr('width', height)
+            .attr('height', width);
         draw();
         drawInterface();
     }
 
-    function onZoomStart(startPos) {
-        let zoom = getZoom();
-        let zoomCenter = screenToModelCoords(startPos)
-
-        mStartPos = {
-            pointerX: zoomCenter.x,
-            pointerY: zoomCenter.y,
-            transformX: zoom.x,
-            transformY: zoom.y,
-            scale: zoom.k
-        }
-    }
-
-    function onZoom(mouseDist) {
-        if (!mStartPos) console.error("Bad State, trying to zoom before starting zoom. Start posistion is: ", mStartPos);
-
-        let scale = mStartPos.scale * (1 + (mouseDist / mInterfaceCanvas.attr('height')));
-        let zoomChange = scale - mStartPos.scale;
-        let transformX = -(mStartPos.pointerX * zoomChange) + mStartPos.transformX;
-        let transformY = -(mStartPos.pointerY * zoomChange) + mStartPos.transformY;
-        let transform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
-        mInterfaceCanvas.call(mPanZoom.transform, transform);
-
-        draw();
-    }
-
-    function onZoomEnd() {
-        mStartPos = null;
-    }
-
-    function onPanStart() {
-        let zoom = getZoom();
-        mStartPos = {
-            x: zoom.x,
-            y: zoom.y,
-            scale: zoom.k
-        }
-    }
-
-    function onPan(mouseDist) {
-        if (!mStartPos) console.error("Bad State, trying to pan before starting pan. Start posistion is: ", mStartPos);
-
-        let translate = MathUtil.add(mStartPos, mouseDist);
-        let transform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mStartPos.scale);
-        mInterfaceCanvas.call(mPanZoom.transform, transform);
-
-        draw();
-    }
-
-    function onPanEnd() {
-        mStartPos = null;
-    }
-
-    function setPanActive(active) {
-        if (active) {
-            mInterfaceCanvas.call(mPanZoom);
-        } else {
-            mInterfaceCanvas.on('.zoom', null);
-        }
+    function highlight(objs) {
+        // if the objs are strokes, 
+        //      If the stroke view is open, highlight the strokes
+        //      else convert to elements
+        // if the objs are groups, convert to elements
+        // highlight the elements
     }
 
     function draw() {
@@ -182,14 +202,12 @@ function VemViewController() {
 
     return {
         onModelUpdate,
-        onZoomStart,
-        onZoom,
-        onZoomEnd,
-        onPanStart,
-        onPan,
-        onPanEnd,
-        setPanActive,
+        onPointerDown,
+        onPointerMove,
+        onPointerUp,
         onResize,
-        setStrokeCallback: (func) => mStrokeCallback = func,
+        highlight,
+        setHighlightCallback: (func) => mHighlightCallback = func,
+        setSelectionCallback: (func) => mSelectionCallback = func,
     }
 }

@@ -1,13 +1,10 @@
 let suite = require("./test_utils/suite_enviroment")
 
-describe('Test Main - Integration Test', function () {
-    afterEach(function (done) {
-        suite.cleanup(done);
-    });
+describe('Suite Environment Test', function () {
 
     describe('intialization test', function () {
-        it('should intialize', function () {
-            suite.getIntegrationEnviroment();
+        it('should intialize', function (done) {
+            suite.getIntegrationEnviroment().cleanup(done);
         });
     })
 });

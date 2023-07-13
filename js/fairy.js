@@ -4,12 +4,7 @@ let Fairies = function () {
         // Right now these fairies only handle new elements, but they'll need to handle changes to. 
 
         // Right now just make the dumb decision to create a new element every time.
-        let boundingBox = PathUtil.getBoundingBox(stroke.path);
-
-        boundingBox.x -= stroke.size / 2
-        boundingBox.y -= stroke.size / 2
-        boundingBox.height += stroke.size
-        boundingBox.width += stroke.size
+        let boundingBox = DataUtil.getBoundingBox(stroke);
 
         let elem = new Data.Element(boundingBox.x, boundingBox.y, boundingBox.height, boundingBox.width);
         stroke.path = PathUtil.translate(stroke.path, { x: -boundingBox.x, y: -boundingBox.y })

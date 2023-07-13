@@ -11,7 +11,6 @@ let chai = require('chai')
 let assert = chai.assert;
 
 let mockD3 = require("./mock_d3.js");
-let mockJquery = require('./mock_jquery.js')
 
 let initialized = false;
 let timeoutCallbacks = []
@@ -30,67 +29,76 @@ function init() {
     setTimeout = function (callback, delay) {
         timeoutCallbacks.push(callback);
     }
-}
 
-function createGlobalVariables() {
-    let documentEventListeners = {};
     global.document = {
+        isDocument: true,
         addEventListener: function (event, callback) {
-            documentEventListeners[event] ? 0 : documentEventListeners[event] = [];
-            documentEventListeners[event].push(callback);
+            if (event == 'DOMContentLoaded') {
+                this.load = callback;
+            } else {
+                console.error("Shouldn't have any other events coming through here", event);
+            }
         }
     }
 
-    let windowEventListeners = {};
     global.window = {
-        // default values for window
-        innerHeight: 800,
+        isWindow: true,
         innerWidth: 1000,
-        addEventListener: function (event, callback) {
-            documentEventListeners[event] ? 0 : documentEventListeners[event] = [];
-            documentEventListeners[event].push(callback);
-        }
+        innerHeight: 800,
     }
-
-    return { documentEventListeners, windowEventListeners };
 }
 
-function createEnviromentVariables() {
-    let d3 = new mockD3();
-    let $ = new mockJquery();
-    $.setDocument(global.document)
 
-    return {
-        d3,
-        $,
+function getIntegrationEnviroment() {
+    // This gets run once and sets the constants.
+    if (!initialized) { init(); initialized = true; }
+
+    let main = rewireJs('main.js');
+
+    // grab this immidiately because the next test will overwrite it. 
+    // Yes, I know, this is bad programming, but I want my nice test 
+    // coverage library so sue me. 
+    let documentLoad = document.load;
+
+    let instances = {};
+    function snagConstructor(source, constructor) {
+        return function () {
+            instances[constructor] = source.__get__(constructor).call(this, ...arguments);
+            return instances[constructor];
+        }
+    };
+
+    let integrationEnv = {
+        d3: new mockD3(),
         EventManager: rewireJs('event_manager.js').__get__("EventManager"),
         MenuController: rewireJs('menu_controller.js').__get__("MenuController"),
-        ModelController: rewireJs('model_controller.js').__get__("ModelController"),
+        ModelController: snagConstructor(rewireJs('model_controller.js'), "ModelController"),
         Data: rewireJs('data_structs.js').__get__("Data"),
+        DataModel: rewireJs('data_model.js').__get__("DataModel"),
+        ValUtil: rewireJs('util.js').__get__("ValUtil"),
+        DataUtil: rewireJs('util.js').__get__("DataUtil"),
+        PathUtil: rewireJs('util.js').__get__("PathUtil"),
+        MathUtil: rewireJs('util.js').__get__("MathUtil"),
+        Fairies: rewireJs('fairy.js').__get__("Fairies"),
         StrokeViewController: rewireJs('views/stroke_view_controller.js').__get__("StrokeViewController"),
         VemViewController: rewireJs('views/vem_view_controller.js').__get__("VemViewController"),
         StructViewController: rewireJs('views/struct_view_controller.js').__get__("StructViewController"),
     };
-}
 
-function getIntegrationEnviroment() {
-    let globalAccessors = createGlobalVariables();
+    main.__set__(integrationEnv);
+    integrationEnv.main = main;
+    integrationEnv.documentLoad = documentLoad;
+    integrationEnv.instances = instances;
 
-    if (!initialized) { init(); initialized = true; }
+    integrationEnv.cleanup = function (done) {
+        Object.keys(integrationEnv).forEach((key) => {
+            delete global[key];
+        })
+        triggerTimeouts();
+        done();
+    }
 
-    let main = rewireJs('main.js');
-    main.__set__(createEnviromentVariables());
-
-    return {
-        globalAccessors,
-        main
-    };
-}
-
-function cleanup(done) {
-    triggerTimeouts();
-    delete global.document;
-    done();
+    return integrationEnv;
 }
 
 function triggerTimeouts() {
@@ -102,6 +110,5 @@ function triggerTimeouts() {
 
 module.exports = {
     getIntegrationEnviroment,
-    cleanup,
     triggerTimeouts
 }

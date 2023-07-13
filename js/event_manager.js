@@ -12,8 +12,9 @@ function EventManager(strokeController, vemController, structController, tableCo
     let mVerticalBarPercent = 0.5;
 
     let mInterface = d3.select('#interface-container').append('svg')
+        .attr('id', 'interface-svg')
         .attr('width', window.innerWidth)
-        .attr('height', window.innerHeight);
+        .attr('height', window.innerHeight)
 
     let mMenuController = new MenuController(mInterface);
     let mCurrentToolState = Buttons.SELECTION_BUTTON;
@@ -26,12 +27,7 @@ function EventManager(strokeController, vemController, structController, tableCo
         [Buttons.ZOOM_BUTTON, "a", "s"],
     ]
 
-    let mActiveController = null;
-    let mZoomStartPos = false;
-    let mPanStartPosition = false;
-    let mBrushDown = false;
-
-    window.addEventListener('resize', () => {
+    d3.select(window).on('resize', () => {
         mStrokeViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight * mHorizontalBarPercent);
         mVemViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight * mHorizontalBarPercent);
         mStructViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight * mHorizontalBarPercent);
@@ -39,77 +35,42 @@ function EventManager(strokeController, vemController, structController, tableCo
         mMenuController.onResize(window.innerWidth, window.innerHeight);
     });
 
-    $(document).on('keydown', function (e) {
-        if (e.originalEvent.repeat) return;
+    d3.select(document).on('keydown', function (e) {
+        if (e.repeat) return;
         // we can sometimes still get a double down, so check for that to. 
-        if (mKeysDown.includes(e.originalEvent.key)) return;
-        mKeysDown.push(e.originalEvent.key)
+        if (mKeysDown.includes(e.key)) return;
+        mKeysDown.push(e.key)
 
         updateState();
     });
 
-    $(document).on('keyup', function (e) {
-        mKeysDown = mKeysDown.filter(i => i !== e.originalEvent.key);
+    d3.select(document).on('keyup', function (e) {
+        mKeysDown = mKeysDown.filter(i => i !== e.key);
         updateState();
     });
 
     mInterface.on("pointerdown", (e) => {
-        let pointerCoord = { x: e.clientX, y: e.clientY, };
-        mActiveController = getActiveController(pointerCoord);
-        if (mCurrentToolState == Buttons.PANNING_BUTTON &&
-            mActiveController != mTableViewController) {
-            holdState();
-            mPanStartPosition = pointerCoord;
-            mActiveController.onPanStart(pointerCoord);
-        } else if (mCurrentToolState == Buttons.ZOOM_BUTTON &&
-            mActiveController != mTableViewController) {
-            holdState();
-            mZoomStartPos = pointerCoord;
-            mActiveController.onZoomStart(pointerCoord);
-        } else if (mCurrentToolState == Buttons.BRUSH_BUTTON &&
-            mActiveController == mStrokeViewController) {
-            holdState();
-            mStrokeViewController.onBrushStart();
-            mBrushDown = true;
-        }
+        let screenCoords = { x: e.clientX, y: e.clientY, };
+
+        let hold = mStrokeViewController.onPointerDown(screenCoords, mCurrentToolState);
+        hold = hold || mVemViewController.onPointerDown(screenCoords, mCurrentToolState);
+        hold = hold || mStructViewController.onPointerDown(screenCoords, mCurrentToolState);
+
+        if (hold) { holdState(); }
     });
-    $(document).on('pointermove', (e) => {
+    d3.select(document).on('pointermove', (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY };
-        if (mCurrentToolState == Buttons.PANNING_BUTTON) {
-            if (mPanStartPosition) {
-                let mouseDist = MathUtil.subtract(screenCoords, mPanStartPosition);
-                mActiveController.onPan(mouseDist);
-            }
-        } else if (mCurrentToolState == Buttons.ZOOM_BUTTON) {
-            if (mZoomStartPos) {
-                let mouseDist = screenCoords.y - mZoomStartPos.y;
-                mActiveController.onZoom(mouseDist);
-            }
-        } else if (mCurrentToolState == Buttons.BRUSH_BUTTON) {
-            if (mBrushDown) {
-                mStrokeViewController.onBrush(screenCoords);
-            } else {
-                mStrokeViewController.onBrushMove(screenCoords);
-            }
-        }
+        mStrokeViewController.onPointerMove(screenCoords, mCurrentToolState);
+        mVemViewController.onPointerMove(screenCoords, mCurrentToolState);
+        mStructViewController.onPointerMove(screenCoords, mCurrentToolState);
     });
-    $(document).on('pointerup', (e) => {
+
+    d3.select(document).on('pointerup', (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY };
-        if (mCurrentToolState == Buttons.PANNING_BUTTON) {
-            mActiveController.onPanEnd();
-            mPanStartPosition = null;
-            releaseState();
-        } else if (mCurrentToolState == Buttons.ZOOM_BUTTON) {
-            mActiveController.onZoomEnd();
-            mZoomStartPos = null;
-            releaseState();
-        } else if (mCurrentToolState == Buttons.BRUSH_BUTTON) {
-            if (mBrushDown) {
-                mBrushDown = false;
-                mStrokeViewController.onBrushEnd(screenCoords);
-                releaseState();
-            }
-        }
+        mStrokeViewController.onPointerUp(screenCoords, mCurrentToolState);
+        mVemViewController.onPointerUp(screenCoords, mCurrentToolState);
+        mStructViewController.onPointerUp(screenCoords, mCurrentToolState);
+        releaseState();
     });
 
     let mLockedState = false;
@@ -125,26 +86,7 @@ function EventManager(strokeController, vemController, structController, tableCo
         if (keyState != mCurrentToolState) {
             mMenuController.stateTransition(mCurrentToolState, keyState);
             mCurrentToolState = keyState;
-
-            clearInterfaceState();
-            if (mCurrentToolState == Buttons.PANNING_BUTTON) {
-                mStrokeViewController.setPanActive(true);
-            } else if (mCurrentToolState == Buttons.BRUSH_BUTTON) {
-                mStrokeViewController.setBrushActive(true);
-            } else if (mCurrentToolState == Buttons.SELECTION_BUTTON) {
-                console.error("newState == Buttons.SELECTION_BUTTON: Unimplemented!")
-            } else if (mCurrentToolState == Buttons.ZOOM_BUTTON) {
-                // nothing needed
-            } else {
-                console.error("State not valid! " + mCurrentToolState);
-            }
         }
-    }
-
-    function clearInterfaceState() {
-        mStrokeViewController.setBrushActive(false);
-
-        mStrokeViewController.setPanActive(false);
     }
 
     function getStateFromInput(keysDown) {
@@ -167,23 +109,8 @@ function EventManager(strokeController, vemController, structController, tableCo
         }
     }
 
-    function getActiveController(screenCoords) {
-        let leftRightDivide = mVerticalBarPercent * window.innerWidth;
-        let topBottomDivide = mHorizontalBarPercent * window.innerHeight;
-
-        if (screenCoords.x < leftRightDivide && screenCoords.y < topBottomDivide) {
-            return mStrokeViewController;
-        } else if (screenCoords.x < leftRightDivide) {
-            return mStructViewController;
-        } else if (screenCoords.y < topBottomDivide) {
-            return mVemViewController;
-        } else {
-            return mTableViewController;
-        }
-    }
-
     /** useful test and development function: */
-    // $(document).on('pointerover pointerenter pointerdown pointermove pointerup pointercancel pointerout pointerleave gotpointercapture lostpointercapture abort afterprint animationend animationiteration animationstart beforeprint beforeunload blur canplay canplaythrough change click contextmenu copy cut dblclick drag dragend dragenter dragleave dragover dragstart drop durationchange ended error focus focusin focusout fullscreenchange fullscreenerror hashchange input invalid keydown keypress keyup load loadeddata loadedmetadata loadstart message mousedown mouseenter mouseleave mousemove mouseover mouseout mouseup mousewheel offline online open pagehide pageshow paste pause play playing popstate progress ratechange resize reset scroll search seeked seeking select show stalled storage submit suspend timeupdate toggle touchcancel touchend touchmove touchstart transitionend unload volumechange waiting wheel', function (e) {
+    // d3.select(document).on('pointerover pointerenter pointerdown pointermove pointerup pointercancel pointerout pointerleave gotpointercapture lostpointercapture abort afterprint animationend animationiteration animationstart beforeprint beforeunload blur canplay canplaythrough change click contextmenu copy cut dblclick drag dragend dragenter dragleave dragover dragstart drop durationchange ended error focus focusin focusout fullscreenchange fullscreenerror hashchange input invalid keydown keypress keyup load loadeddata loadedmetadata loadstart message mousedown mouseenter mouseleave mousemove mouseover mouseout mouseup mousewheel offline online open pagehide pageshow paste pause play playing popstate progress ratechange resize reset scroll search seeked seeking select show stalled storage submit suspend timeupdate toggle touchcancel touchend touchmove touchstart transitionend unload volumechange waiting wheel', function (e) {
     //     console.log(e.type, e, { x: e.clientX, y: e.clientY }, screenToModelCoords({ x: e.clientX, y: e.clientY }))
     // });
 

@@ -2,18 +2,115 @@
 function StructViewController() {
     let mCanvas = d3.select('#struct-view').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
-
     let mInterfaceCanvas = d3.select("#struct-view").select('.canvas-container').append('canvas')
         .classed('interface-canvas', true);
+    let mInteractionCanvas = d3.select("#struct-view").select('.canvas-container').append('canvas')
+        .style("opacity", 0)
+        .classed('interaction-canvas', true);
+
+    let mHighlightCallback = () => { };
+    let mSelectionCallback = () => { };
+    let mHighlightGroups = null;
+
+    let mInteractionLookup = {};
+    let mReverseInteractionLookup = {};
+    let mColorIndex = 1;
+    let mTargetIncrease = 5;
 
     let mPanZoom = d3.zoom();
 
-    let mModel = new Data.DataModel();
+    let mModel = new DataModel();
+    let mInteracting;
     let mStartPos;
 
     function onModelUpdate(model) {
         mModel = model;
         draw();
+    }
+
+    function onPointerDown(screenCoords, toolState) {
+        if (ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect()))
+            return false;
+
+        if (toolState == Buttons.PANNING_BUTTON) {
+            let zoom = getZoom();
+            mStartPos = {
+                x: zoom.x,
+                y: zoom.y,
+                scale: zoom.k,
+                screenCoords,
+            }
+
+            mInteracting = true;
+            return true;
+        } else if (toolState == Buttons.ZOOM_BUTTON) {
+            mInteracting = true;
+
+            let zoom = getZoom();
+            let zoomCenter = screenToModelCoords(screenCoords)
+
+            mStartPos = {
+                pointerX: zoomCenter.x,
+                pointerY: zoomCenter.y,
+                transformX: zoom.x,
+                transformY: zoom.y,
+                scale: zoom.k,
+                screenCoords,
+            }
+
+            mInteracting = true;
+            return true;
+        }
+    }
+
+
+    function onPointerMove(screenCoords, toolState) {
+        if (toolState == Buttons.PANNING_BUTTON && mInteracting) {
+            let mouseDist = MathUtil.subtract(screenCoords, mStartPos.screenCoords);
+            let translate = MathUtil.add(mStartPos, mouseDist);
+            let transform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mStartPos.scale);
+            mInterfaceCanvas.call(mPanZoom.transform, transform);
+            draw();
+            drawInterface();
+        } else if (toolState == Buttons.ZOOM_BUTTON && mInteracting) {
+            let mouseDist = screenCoords.y - mStartPos.screenCoords.y;
+            let scale = mStartPos.scale * (1 + (mouseDist / mInterfaceCanvas.attr('height')));
+            let zoomChange = scale - mStartPos.scale;
+            let transformX = -(mStartPos.pointerX * zoomChange) + mStartPos.transformX;
+            let transformY = -(mStartPos.pointerY * zoomChange) + mStartPos.transformY;
+            let transform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
+            mInterfaceCanvas.call(mPanZoom.transform, transform);
+            draw();
+            drawInterface();
+        } else if (toolState == Buttons.SELECTION_BUTTON) {
+            if (mInteracting) {
+                // WE are either dragging a group, or a dimention, or something
+            } else {
+                if (!ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
+                    let targetId = getInteractionTarget(screenCoords);
+                    let group = mModel.getGroup(targetId);
+                    if (group) {
+                        mHighlightGroups = [group];
+                        mHighlightCallback(mHighlightGroups);
+                    } else {
+                        mHighlightGroups = null;
+                        mHighlightCallback(null);
+                    }
+                }
+                drawInterface();
+            }
+
+        }
+
+        if (mHighlightGroups && toolState != Buttons.SELECTION_BUTTON) {
+            mHighlightGroups = null;
+            drawInterface();
+        }
+    }
+
+    function onPointerUp(screenCoords, toolState) {
+        mInteracting = false;
+        mStartPos = null;
     }
 
     function onResize(height, width) {
@@ -23,70 +120,25 @@ function StructViewController() {
         mInterfaceCanvas
             .attr('width', height)
             .attr('height', width);
+        mInteractionCanvas
+            .attr('width', height)
+            .attr('height', width);
         draw();
         drawInterface();
     }
 
-    function onZoomStart(startPos) {
-        let zoom = getZoom();
-        let zoomCenter = screenToModelCoords(startPos)
-
-        mStartPos = {
-            pointerX: zoomCenter.x,
-            pointerY: zoomCenter.y,
-            transformX: zoom.x,
-            transformY: zoom.y,
-            scale: zoom.k
-        }
-    }
-
-    function onZoom(mouseDist) {
-        if (!mStartPos) console.error("Bad State, trying to zoom before starting zoom. Start posistion is: ", mStartPos);
-
-        let scale = mStartPos.scale * (1 + (mouseDist / mInterfaceCanvas.attr('height')));
-        let zoomChange = scale - mStartPos.scale;
-        let transformX = -(mStartPos.pointerX * zoomChange) + mStartPos.transformX;
-        let transformY = -(mStartPos.pointerY * zoomChange) + mStartPos.transformY;
-        let transform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
-        mInterfaceCanvas.call(mPanZoom.transform, transform);
-
-        draw();
-    }
-
-    function onZoomEnd() {
-        mStartPos = null;
-    }
-
-    function onPanStart() {
-        let zoom = getZoom();
-        mStartPos = {
-            x: zoom.x,
-            y: zoom.y,
-            scale: zoom.k
-        }
-    }
-
-    function onPan(mouseDist) {
-        if (!mStartPos) console.error("Bad State, trying to pan before starting pan. Start posistion is: ", mStartPos);
-
-        let translate = MathUtil.add(mStartPos, mouseDist);
-        let transform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mStartPos.scale);
-        mInterfaceCanvas.call(mPanZoom.transform, transform);
-
-        draw();
-    }
-
-    function onPanEnd() {
-        mStartPos = null;
-    }
-
-    function setPanActive(active) {
-        if (active) {
-            mInterfaceCanvas.call(mPanZoom);
+    function highlight(objs) {
+        if (!objs || (Array.isArray(objs) && objs.length == 0)) {
+            mHighlightGroups = null;
         } else {
-            mInterfaceCanvas.on('.zoom', null);
+            mHighlightGroups = objs.filter(o => o instanceof Data.Group);
+            mHighlightGroups.push(...objs.filter(o => o instanceof Data.Element).map(e => mModel.getGroupForElement(e.id)));
+            mHighlightGroups.push(...objs.filter(o => o instanceof Data.Stroke).map(s => mModel.getGroupForElement(s.id)));
+            mHighlightGroups = mHighlightGroups.filter((group, index, self) => self.findIndex(g => g.id == group.id) == index);
         }
+        drawInterface();
     }
+
 
     function draw() {
         let ctx = mCanvas.node().getContext('2d');
@@ -102,21 +154,23 @@ function StructViewController() {
         })
 
         ctx.restore();
+
+        drawInteraction();
     }
 
     function drawIcon(ctx, group) {
-        ctx.save();
-
         let boundingBox = PathUtil.getBoundingBox(group.elements.map(e => e.strokes.map(s => PathUtil.translate(s.path, e)).flat()));
+        if (!boundingBox) return;
 
+        ctx.save();
         ctx.translate(group.structX, group.structY);
 
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.rect(0, 0, 128, 128);
         ctx.stroke();
 
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 2;
         ctx.shadowColor = "black";
         ctx.shadowOffsetX = 1;
         ctx.shadowOffsetY = 1;
@@ -153,9 +207,47 @@ function StructViewController() {
         ctx.restore();
     }
 
+    function drawInteraction() {
+        let ctx = mInteractionCanvas.node().getContext('2d');
+        ctx.clearRect(0, 0, mCanvas.attr("width"), mCanvas.attr("height"));
+        let zoom = getZoom();
+
+        ctx.save();
+        ctx.translate(zoom.x, zoom.y)
+        ctx.scale(zoom.k, zoom.k)
+
+        mModel.getGroups().forEach(g => {
+            let code = getCode(g.id);
+            ctx.save();
+            ctx.translate(g.structX, g.structY);
+            ctx.fillStyle = code;
+            ctx.fillRect(0, 0, 128, 128);
+            ctx.restore();
+        })
+
+        ctx.restore();
+    }
+
     function drawInterface() {
         let ctx = mInterfaceCanvas.node().getContext("2d");
         ctx.clearRect(0, 0, mInterfaceCanvas.attr("width"), mInterfaceCanvas.attr("height"));
+        let zoom = getZoom();
+
+        if (mHighlightGroups) {
+            ctx.save();
+            ctx.translate(zoom.x, zoom.y)
+            ctx.scale(zoom.k, zoom.k)
+            mHighlightGroups.forEach(g => {
+                ctx.save();
+                ctx.translate(g.structX, g.structY);
+                ctx.strokeStyle = "red";
+                ctx.beginPath();
+                ctx.rect(0, 0, 128, 128);
+                ctx.stroke();
+                ctx.restore();
+            })
+            ctx.restore();
+        }
     }
 
     function getZoom() {
@@ -188,16 +280,36 @@ function StructViewController() {
         }
     }
 
+    function getInteractionTarget(screenCoords) {
+        let boundingBox = mInteractionCanvas.node().getBoundingClientRect();
+        let ctx = mInteractionCanvas.node().getContext('2d');
+        let p = ctx.getImageData(screenCoords.x - boundingBox.x, screenCoords.y - boundingBox.y, 1, 1).data;
+        let hex = DataUtil.rgbToHex(p[0], p[1], p[2]);
+        if (mInteractionLookup[hex]) {
+            return mInteractionLookup[hex];
+        } else {
+            return null;
+        }
+    }
+
+    function getCode(itemId) {
+        if (mReverseInteractionLookup[itemId]) return mReverseInteractionLookup[itemId];
+        else {
+            let code = DataUtil.numToColor(mColorIndex++);
+            mInteractionLookup[code] = itemId;
+            mReverseInteractionLookup[itemId] = code;
+            return code;
+        }
+    }
+
     return {
         onModelUpdate,
-        onZoomStart,
-        onZoom,
-        onZoomEnd,
-        onPanStart,
-        onPan,
-        onPanEnd,
-        setPanActive,
+        onPointerDown,
+        onPointerMove,
+        onPointerUp,
         onResize,
-        setStrokeCallback: (func) => mStrokeCallback = func,
+        highlight,
+        setHighlightCallback: (func) => mHighlightCallback = func,
+        setSelectionCallback: (func) => mSelectionCallback = func,
     }
 }

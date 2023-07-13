@@ -1,7 +1,8 @@
 let mockCanvas = require("./mock_canvas");
 
-function Element(type) {
+function MockElement(type) {
     let mAttrs = {};
+    let mStyles = {};
     let mType = type;
     let mChildren = [];
     let mClasses = [];
@@ -10,7 +11,7 @@ function Element(type) {
 
     this.append = function (appendee) {
         if (typeof appendee == 'string') {
-            let result = new Element(appendee);
+            let result = new MockElement(appendee);
             mChildren.push(result);
             return result;
         } else {
@@ -27,6 +28,13 @@ function Element(type) {
             return this;
         };
         return mAttrs[att];
+    };
+    this.style = function (style, val = null) {
+        if (val !== null) {
+            mStyles[style] = val
+            return this;
+        };
+        return mStyles[style];
     };
     this.classed = function (name, isClass) {
         if (isClass) {
@@ -56,9 +64,30 @@ function Element(type) {
         }
     }
     this.getContext = function (type) {
-        if (!mContext) mContext = mockCanvas.getContext();
+        if (!mContext) {
+            mContext = mockCanvas.getContext(mAttrs['width'], mAttrs['height'])
+        };
+
         return mContext;
     }
+    this.getBoundingClientRect = function () {
+        let x = 0, y = 0;
+        if (d3.getRoot().select("#stroke-view").select('.canvas-container').select('.interaction-canvas') == this ||
+            d3.getRoot().select("#stroke-view").select('.canvas-container').select('.interface-canvas') == this) {
+            // x and y are 0, that's fine
+        } else if (d3.getRoot().select("#vem-view").select('.canvas-container').select('.interaction-canvas') == this ||
+            d3.getRoot().select("#vem-view").select('.canvas-container').select('.interface-canvas') == this) {
+            y = d3.getRoot().select("#stroke-view").select('.canvas-container').select('.interface-canvas').attr('height')
+        } else if (d3.getRoot().select("#struct-view").select('.canvas-container').select('.interaction-canvas') == this ||
+            d3.getRoot().select("#struct-view").select('.canvas-container').select('.interface-canvas') == this) {
+            x = d3.getRoot().select("#stroke-view").select('.canvas-container').select('.interface-canvas').attr('width')
+        } else {
+            console.error("Unexpected!")
+        }
+
+        return { x, y, width: mAttrs['width'], height: mAttrs['height'] };
+    }
+    this.getCallbacks = () => mCallBacks;
 
 }
 
@@ -70,18 +99,28 @@ function Transform(x = 0, y = 0, k = 1) {
 }
 
 module.exports = function () {
-    let strokeView = new Element("div");
-    strokeView.append(new Element('div').classed("canvas-container", true))
-    let interfaceContainer = new Element("div");
+    let rootNode = new MockElement();
+    rootNode.append('div').attr("id", "stroke-view").append(new MockElement().classed("canvas-container", true));
+    rootNode.append('div').attr("id", "vem-view").append(new MockElement().classed("canvas-container", true));
+    rootNode.append('div').attr("id", "struct-view").append(new MockElement().classed("canvas-container", true));
+    rootNode.append('div').attr("id", "interface-container");
+
+    let documentCallbacks = {};
 
     let mockZoom = {
         scaleExtent: function () { return this },
-        on: function (callback) { this.call = callback }
+        on: function (callback) { this.call = callback },
+        x: 0,
+        y: 0,
+        k: 1,
     }
 
     function select(selector) {
-        if (selector == "#stroke-view") return strokeView;
-        else if (selector == "#interface-container") return interfaceContainer;
+        if (selector.isDocument || selector.isWindow) {
+            return { on: (event, callback) => documentCallbacks[event] = callback };
+        } else {
+            return rootNode.select(selector);
+        }
     }
 
 
@@ -89,4 +128,6 @@ module.exports = function () {
     this.zoom = () => mockZoom;
     this.zoomTransform = () => mockZoom;
     this.zoomIdentity = new Transform();
+    this.getCallbacks = () => documentCallbacks;
+    this.getRoot = () => rootNode;
 }

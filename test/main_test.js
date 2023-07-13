@@ -1,23 +1,51 @@
 let chai = require('chai');
 let assert = chai.assert;
+let expect = chai.expect;
 
 let suite = require("./test_utils/suite_enviroment")
-let utility = require("./test_utils/event_utility.js")
+let utility = require("./test_utils/utility.js")
 
 describe('Test Main - Integration Test', function () {
     let integrationEnv;
     beforeEach(function () {
         integrationEnv = suite.getIntegrationEnviroment();
-        utility.DOMContentLoaded(integrationEnv);
+        integrationEnv.documentLoad();
     });
 
     afterEach(function (done) {
-        suite.cleanup(done);
+        integrationEnv.cleanup(done);
     });
 
     describe('intialization test', function () {
-        it('should by part of the enviroment', function () {
+        it('should be part of the enviroment', function () {
             assert(integrationEnv.main);
+        });
+    })
+
+    describe('line drawing tests', function () {
+        it('should highlight all three views when mousing over the stroke view', function () {
+            // draw a line
+
+            utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 20, y: 80 },])
+            let model = integrationEnv.instances.ModelController.getModel();
+
+            assert.equal(model.getGroups().length, 1);
+            assert.equal(model.getElements().length, 1);
+            assert.equal(model.getElements()[0].strokes.length, 1);
+            expect(model.getElements()[0].strokes[0].path).to.eql([
+                { "x": 5, "y": 5, },
+                { "x": 5, "y": 5, },
+                { "x": 5, "y": 25, },
+                { "x": 5, "y": 45, },
+                { "x": 5, "y": 65, }]);
+        });
+    })
+
+    describe('highlight tests', function () {
+        it('should highlight all three views when mousing over the stroke view', function () {
+            utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 20, y: 80 },])
+            
+            assert.equal('done', true)
         });
     })
 });

@@ -96,30 +96,11 @@ let Data = function () {
         this.dimention = null;
     }
 
-    function DataModel() {
-        this.groups = [];
-
-        this.clone = function () {
-            let clone = new DataModel();
-            clone.groups = this.groups.map(e => e.clone());
-            return clone;
-        }
-
-        this.getElements = function () {
-            return this.groups.map(g => g.elements).flat();
-        }
-
-        this.getGroups = function () {
-            return this.groups;
-        }
-    }
-
     return {
         Stroke,
         Element,
         Group,
         Binding,
         Dimention,
-        DataModel,
     }
 }();

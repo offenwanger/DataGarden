@@ -31,11 +31,23 @@ let ValUtil = function () {
         return typeof num == 'number' && !isNaN(num);
     }
 
+    function outOfBounds(point, box) {
+        if (point.x <= box.x ||
+            point.x >= box.x + box.width ||
+            point.y <= box.y ||
+            point.y >= box.y + box.height) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     return {
         isCoord,
         isNum,
         isPath,
         checkConvertionState,
+        outOfBounds,
     }
 }();
 
@@ -90,7 +102,7 @@ let PathUtil = function () {
     function getBoundingBox(paths) {
         if (!Array.isArray(paths)) {
             console.error("Bad path set", paths);
-            return { x: 0, y: 0, height: 1, width: 1 }
+            return null
         }
         if (ValUtil.isPath(paths)) {
             paths = [paths];
@@ -99,7 +111,7 @@ let PathUtil = function () {
             if (ValUtil.isPath(path)) return true;
             else { console.error("Bad Path", path); return false; }
         })
-        if (paths.lengh == 0) { console.error("No valid paths input"); return { x: 0, y: 0, height: 1, width: 1 } };
+        if (paths.length == 0) { console.error("No valid paths input"); return null };
 
         let xs = paths.map(path => path.map(point => point.x)).flat();
         let ys = paths.map(path => path.map(point => point.y)).flat();
@@ -113,6 +125,68 @@ let PathUtil = function () {
 
     return {
         translate,
+        getBoundingBox,
+    }
+}();
+
+let DataUtil = function () {
+    function numToColor(num) {
+        return "#" + Math.round(num).toString(16).padStart(6, "0");
+    }
+
+    function rgbToHex(r, g, b) {
+        return "#" +
+            r.toString(16).padStart(2, "0") +
+            g.toString(16).padStart(2, "0") +
+            b.toString(16).padStart(2, "0");
+    }
+
+    function getBoundingBox(objs) {
+        // if it's not an array assume it's a single instance and carry forward.
+        if (!Array.isArray(objs)) {
+            objs = [objs];
+        }
+
+        let boundingBoxes;
+        if (objs.every(o => o instanceof Data.Stroke)) {
+            boundingBoxes = objs.map(stroke => {
+                let bb = PathUtil.getBoundingBox(stroke.path);
+
+                bb.x -= stroke.size / 2
+                bb.y -= stroke.size / 2
+                bb.height += stroke.size
+                bb.width += stroke.size
+
+                return bb;
+            });
+        } else if (objs.every(o => o instanceof Data.Element)) {
+            boundingBoxes = objs.map(elem => {
+                let bb = getBoundingBox(elem.strokes);
+                bb.x += elem.x
+                bb.y += elem.y
+                return bb;
+            });
+        } else {
+            console.error("Invalid array. Not a set of Elements or Strokes", objs);
+            return null;
+        }
+
+        if (boundingBoxes.length == 0) {
+            console.error("No valid elements to bound. ", objs);
+            return null;
+        }
+
+        let x = Math.min(...boundingBoxes.map(b => b.x));
+        let y = Math.min(...boundingBoxes.map(b => b.y));
+        let xMax = Math.max(...boundingBoxes.map(b => b.x + b.width));
+        let yMax = Math.max(...boundingBoxes.map(b => b.y + b.height));
+
+        return { x, y, width: xMax - x, height: yMax - y, }
+    }
+
+    return {
+        numToColor,
+        rgbToHex,
         getBoundingBox,
     }
 }();

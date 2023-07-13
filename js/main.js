@@ -16,6 +16,39 @@ document.addEventListener('DOMContentLoaded', function (e) {
         modelUpdate();
     })
 
+    mStrokeViewController.setHighlightCallback((selection) => {
+        mVemViewController.highlight(selection);
+        mStructViewController.highlight(selection);
+    })
+
+    mStrokeViewController.setSelectionCallback((selection) => {
+        // selection could be strokes or elements
+        // might select an entire element tree
+        // update the Vem and Struct selections
+    })
+
+    mVemViewController.setSelectionCallback((selection) => {
+        // selections could be strokes or elements. 
+        // Update the stroke and Struct selections
+    })
+
+    mVemViewController.setHighlightCallback((selection) => {
+        mStrokeViewController.highlight(selection);
+        mStructViewController.highlight(selection);
+    })
+
+
+    mStructViewController.setSelectionCallback((selection) => {
+        // selectsions could be groups or elements. Update the 
+        // Vem and Stroke selections
+    })
+
+    mStructViewController.setHighlightCallback((selection) => {
+        mStrokeViewController.highlight(selection);
+        mVemViewController.highlight(selection);
+    })
+
+
     function modelUpdate() {
         let model = mModelController.getModel();
         mStrokeViewController.onModelUpdate(model);
