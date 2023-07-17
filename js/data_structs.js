@@ -64,10 +64,10 @@ let Data = function () {
         this.positionBinding = null;
 
         this.clone = function () {
-            let clone = new Element();
+            let clone = new Group();
             clone.id = this.id;
             clone.structX = this.structX;
-            clone.structX = this.structX;
+            clone.structY = this.structY;
             clone.parent = this.parent;
             clone.orientationBinding = this.orientationBinding;
             clone.formBinding = this.formBinding;

@@ -161,10 +161,9 @@ function StructViewController() {
     function drawIcon(ctx, group) {
         let boundingBox = PathUtil.getBoundingBox(group.elements.map(e => e.strokes.map(s => PathUtil.translate(s.path, e)).flat()));
         if (!boundingBox) return;
-
-        ctx.save();
         ctx.translate(group.structX, group.structY);
 
+        ctx.save();
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 2;
         ctx.beginPath();

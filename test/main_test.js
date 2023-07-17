@@ -44,8 +44,22 @@ describe('Test Main - Integration Test', function () {
     describe('highlight tests', function () {
         it('should highlight all three views when mousing over the stroke view', function () {
             utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 20, y: 80 },])
-            
-            assert.equal('done', true)
+
+            integrationEnv.d3.getCallbacks()['pointermove']({ clientX: 20, clientY: 30 });
+
+            let model = integrationEnv.instances.ModelController.getModel();
+
+            assert.equal(model.getGroups().length, 1);
+            let group = model.getGroups()[0];
+
+            let ctx = d3.getRoot().select("#struct-view").select('.canvas-container').select('.interface-canvas').getContext();
+            assert.equal(ctx.array[group.structX][group.structY], "red");
+
+            assert.equal(model.getElements().length, 1);
+            let element = model.getElements()[0];
+
+            ctx = d3.getRoot().select("#vem-view").select('.canvas-container').select('.interface-canvas').getContext();
+            assert.equal(ctx.array[element.vemX][element.vemY], "red");
         });
     })
 });

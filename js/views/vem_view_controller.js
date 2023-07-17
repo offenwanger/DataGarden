@@ -10,6 +10,7 @@ function VemViewController() {
 
     let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
+    let mHighlightElements = null;
 
     let mInteractionLookup = {};
     let mReverseInteractionLookup = {};
@@ -69,6 +70,7 @@ function VemViewController() {
             let transform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mStartPos.scale);
             mInterfaceCanvas.call(mPanZoom.transform, transform);
             draw();
+            drawInterface();
         } else if (toolState == Buttons.ZOOM_BUTTON && mInteracting) {
             let mouseDist = screenCoords.y - mStartPos.screenCoords.y;
             let scale = mStartPos.scale * (1 + (mouseDist / mInterfaceCanvas.attr('height')));
@@ -78,6 +80,29 @@ function VemViewController() {
             let transform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
             mInterfaceCanvas.call(mPanZoom.transform, transform);
             draw();
+            drawInterface();
+        } else if (toolState == Buttons.SELECTION_BUTTON) {
+            if (mInteracting) {
+                // WE are either dragging a group, or a dimention, or something
+            } else {
+                if (!ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
+                    let targetId = getInteractionTarget(screenCoords);
+                    let element = mModel.getElement(targetId);
+                    if (element) {
+                        mHighlightElements = [element];
+                        mHighlightCallback(mHighlightElements);
+                    } else {
+                        mHighlightElements = null;
+                        mHighlightCallback(null);
+                    }
+                }
+                drawInterface();
+            }
+        }
+
+        if (mHighlightElements && toolState != Buttons.SELECTION_BUTTON) {
+            mHighlightElements = null;
+            drawInterface();
         }
     }
 
@@ -101,11 +126,15 @@ function VemViewController() {
     }
 
     function highlight(objs) {
-        // if the objs are strokes, 
-        //      If the stroke view is open, highlight the strokes
-        //      else convert to elements
-        // if the objs are groups, convert to elements
-        // highlight the elements
+        if (!objs || (Array.isArray(objs) && objs.length == 0)) {
+            mHighlightElements = null;
+        } else {
+            mHighlightElements = objs.filter(o => o instanceof Data.Element);
+            mHighlightElements.push(...objs.filter(o => o instanceof Data.Group).map(g => g.elements).flat());
+            mHighlightElements.push(...objs.filter(o => o instanceof Data.Stroke).map(s => mModel.getElementForStroke(s.id)));
+            mHighlightElements = mHighlightElements.filter((element, index, self) => self.findIndex(g => g.id == element.id) == index);
+        }
+        drawInterface();
     }
 
     function draw() {
@@ -122,6 +151,8 @@ function VemViewController() {
         })
 
         ctx.restore();
+
+        drawInteraction();
     }
 
     function drawIcon(ctx, elem) {
@@ -165,9 +196,50 @@ function VemViewController() {
         ctx.restore();
     }
 
+    function drawInteraction() {
+        let ctx = mInteractionCanvas.node().getContext('2d');
+        ctx.clearRect(0, 0, mCanvas.attr("width"), mCanvas.attr("height"));
+        let zoom = getZoom();
+
+        ctx.save();
+        ctx.translate(zoom.x, zoom.y)
+        ctx.scale(zoom.k, zoom.k)
+
+        mModel.getElements().forEach(g => {
+            let code = getCode(g.id);
+            ctx.save();
+            ctx.translate(g.vemX, g.vemY);
+            ctx.fillStyle = code;
+            ctx.fillRect(0, 0, 64, 64);
+            ctx.restore();
+        })
+
+        ctx.restore();
+    }
+
     function drawInterface() {
         let ctx = mInterfaceCanvas.node().getContext("2d");
         ctx.clearRect(0, 0, mInterfaceCanvas.attr("width"), mInterfaceCanvas.attr("height"));
+
+        let zoom = getZoom();
+        ctx.translate(zoom.x, zoom.y)
+        ctx.scale(zoom.k, zoom.k)
+
+        if (mHighlightElements) {
+            ctx.save();
+            ctx.translate(zoom.x, zoom.y)
+            ctx.scale(zoom.k, zoom.k)
+            mHighlightElements.forEach(e => {
+                ctx.save();
+                ctx.translate(e.vemX, e.vemY);
+                ctx.strokeStyle = "red";
+                ctx.beginPath();
+                ctx.rect(0, 0, 64, 64);
+                ctx.stroke();
+                ctx.restore();
+            })
+            ctx.restore();
+        }
     }
 
     function getZoom() {
@@ -197,6 +269,28 @@ function VemViewController() {
             };
         } else {
             return { x: 0, y: 0 };
+        }
+    }
+
+    function getInteractionTarget(screenCoords) {
+        let boundingBox = mInteractionCanvas.node().getBoundingClientRect();
+        let ctx = mInteractionCanvas.node().getContext('2d');
+        let p = ctx.getImageData(screenCoords.x - boundingBox.x, screenCoords.y - boundingBox.y, 1, 1).data;
+        let hex = DataUtil.rgbToHex(p[0], p[1], p[2]);
+        if (mInteractionLookup[hex]) {
+            return mInteractionLookup[hex];
+        } else {
+            return null;
+        }
+    }
+
+    function getCode(itemId) {
+        if (mReverseInteractionLookup[itemId]) return mReverseInteractionLookup[itemId];
+        else {
+            let code = DataUtil.numToColor(mColorIndex++);
+            mInteractionLookup[code] = itemId;
+            mReverseInteractionLookup[itemId] = code;
+            return code;
         }
     }
 
