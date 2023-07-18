@@ -18,6 +18,7 @@ function VemViewController() {
     let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
     let mMoveElementCallback = () => { };
+    let mMergeElementCallback = () => { };
     let mHighlightElementIds = null;
     let mSelectedElements = null;
 
@@ -34,6 +35,17 @@ function VemViewController() {
 
     function onModelUpdate(model) {
         mModel = model;
+        let elementIds = mModel.getElements().map(e => e.id);
+        if (mHighlightElementIds) {
+            mHighlightElementIds = mHighlightElementIds.filter(id => elementIds.includes(id));
+            if (mHighlightElementIds.length == 0) mHighlightElementIds = null;
+        }
+
+        if (mSelectedElements) {
+            mSelectedElements = mSelectedElements.filter(id => elementIds.includes(id));
+            if (mSelectedElements.length == 0) mSelectedElements = null;
+        }
+
         draw();
         drawInteraction();
         drawInterface();
@@ -145,13 +157,15 @@ function VemViewController() {
     }
 
     function onPointerUp(screenCoords, toolState) {
-        if (mInteraction && mInteraction.type == DRAG_MOVE) {
-            let moveDiff = MathUtil.subtract(screenToModelCoords(screenCoords), mInteraction.start);
+        let interaction = mInteraction;
+        mInteraction = null;
+        if (interaction && interaction.type == DRAG_MOVE) {
+            let moveDiff = MathUtil.subtract(screenToModelCoords(screenCoords), interaction.start);
             if (MathUtil.length(moveDiff) > 5) {
                 let dropTarget = getInteractionTarget(screenCoords);
                 if (dropTarget) {
                     if (dropTarget.type == TARGET_MERGE) {
-                        console.log("Merge!")
+                        mMergeElementCallback(mSelectedElements, dropTarget.id);
                     } else if (dropTarget.type == TARGET_PARENT) {
                         console.log("Parent!")
                     } else {
@@ -164,8 +178,6 @@ function VemViewController() {
                 console.log("Subselect!")
             }
         }
-        mInteraction = null;
-        mStartPos = null;
     }
 
     function onResize(height, width) {
@@ -211,8 +223,8 @@ function VemViewController() {
     }
 
     function drawIcon(ctx, elem) {
+        let boundingBox = DataUtil.getBoundingBox(elem);
         ctx.save();
-
         ctx.translate(elem.vemX, elem.vemY);
 
         ctx.save();
@@ -230,11 +242,11 @@ function VemViewController() {
         ctx.fillRect(0, 0, 64, 64);
         ctx.restore();
 
-        let miniScale = 56 / Math.max(elem.height, elem.width);
+        let miniScale = 56 / Math.max(boundingBox.height, boundingBox.width);
         ctx.beginPath();
         ctx.rect(0, 0, 64, 64);
         ctx.clip();
-        ctx.translate((64 - (elem.width * miniScale)) / 2, (64 - (elem.height * miniScale)) / 2)
+        ctx.translate((64 - (boundingBox.width * miniScale)) / 2, (64 - (boundingBox.height * miniScale)) / 2)
         ctx.scale(miniScale, miniScale);
 
         elem.strokes.forEach(stroke => {
@@ -245,7 +257,7 @@ function VemViewController() {
             ctx.moveTo(stroke.path[0].x - 1, stroke.path[0].y - 1);
             stroke.path.forEach(p => ctx.lineTo(p.x, p.y));
             ctx.stroke();
-            ctx.restore();
+            ctx.restore(); a
         })
 
         ctx.restore();
@@ -262,15 +274,17 @@ function VemViewController() {
         if (mInteraction) {
             if (mInteraction.type == DRAG_MOVE) {
                 mModel.getElements().forEach(e => {
-                    ctx.save();
-                    ctx.translate(e.vemX, e.vemY);
-                    ctx.fillStyle = getCode(e.id, TARGET_MERGE);
-                    ctx.fillRect(0, 0, 64, 44);
+                    if (!mSelectedElements.includes(e.id)) {
+                        ctx.save();
+                        ctx.translate(e.vemX, e.vemY);
+                        ctx.fillStyle = getCode(e.id, TARGET_MERGE);
+                        ctx.fillRect(0, 0, 64, 44);
 
-                    ctx.fillStyle = getCode(e.id, TARGET_PARENT);
-                    ctx.fillRect(0, 44, 44, 64);
+                        ctx.fillStyle = getCode(e.id, TARGET_PARENT);
+                        ctx.fillRect(0, 44, 44, 64);
 
-                    ctx.restore();
+                        ctx.restore();
+                    }
                 })
             }
         } else {
@@ -366,5 +380,6 @@ function VemViewController() {
         setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,
         setMoveElementCallback: (func) => mMoveElementCallback = func,
+        setMergeElementCallback: (func) => mMergeElementCallback = func,
     }
 }

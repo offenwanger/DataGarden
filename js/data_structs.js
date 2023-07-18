@@ -14,12 +14,10 @@ let Data = function () {
         };
     }
 
-    function Element(x, y, height, width) {
+    function Element(x, y) {
         this.id = IdUtil.getUniqueId(Element);
         this.x = x;
         this.y = y;
-        this.height = height;
-        this.width = width;
         this.creationTime = Date.now();
         this.strokes = [];
 
@@ -31,8 +29,6 @@ let Data = function () {
             let clone = new Element();
             clone.x = this.x;
             clone.y = this.y;
-            clone.height = this.height;
-            clone.width = this.width;
             clone.id = this.id;
             clone.vemX = this.vemX;
             clone.vemY = this.vemY;

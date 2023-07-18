@@ -17,17 +17,31 @@ describe('Test Main - Integration Test', function () {
     });
 
 
-    describe('zoom tests', function () {
+    describe('element drag/drop tests', function () {
         it('should update element vem positions', function () {
             utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 40, y: 80 },])
             let model = integrationEnv.instances.ModelController.getModel();
             assert.equal(model.getElements().length, 1);
 
-            utility.drag(integrationEnv, PathUtil.translate([{ x: 20, y: 20 }, { x: 40, y: 20 }, { x: 60, y: 60 }, { x: 80, y: 20 },], { x: 0, y: window.innerHeight / 2 }))
+            utility.drag(integrationEnv, "#vem-view", [{ x: 20, y: 20 }, { x: 40, y: 20 }, { x: 60, y: 60 }, { x: 80, y: 20 },])
 
             model = integrationEnv.instances.ModelController.getModel();
             assert.equal(model.getElements().length, 1);
             assert.equal(model.getElements()[0].vemX, 70);
+            assert.equal(model.getElements()[0].vemY, 10);
+        });
+
+        it('should merge elements vem positions', function () {
+            utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 40, y: 80 },])
+            utility.drawStroke(integrationEnv, [{ x: 60, y: 20 }, { x: 60, y: 40 }, { x: 60, y: 60 }, { x: 60, y: 80 },])
+            let model = integrationEnv.instances.ModelController.getModel();
+            assert.equal(model.getElements().length, 2);
+
+            utility.drag(integrationEnv, "#vem-view", [{ x: 20, y: 20 }, { x: 40, y: 20 }, { x: 60, y: 60 }, { x: 80, y: 20 },])
+
+            model = integrationEnv.instances.ModelController.getModel();
+            assert.equal(model.getElements().length, 1);
+            assert.equal(model.getElements()[0].vemX, 80);
             assert.equal(model.getElements()[0].vemY, 10);
         });
     });

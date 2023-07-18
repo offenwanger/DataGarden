@@ -35,6 +35,11 @@ document.addEventListener('DOMContentLoaded', function (e) {
         modelUpdate();
     })
 
+    mVemViewController.setMergeElementCallback((selection, mergeElementId) => {
+        Fairies.elementMergeFairy(selection, mergeElementId, mModelController);
+        modelUpdate();
+    })
+
     mVemViewController.setSelectionCallback((selection) => {
         // selections could be strokes or elements. 
         // Update the stroke and Struct selections

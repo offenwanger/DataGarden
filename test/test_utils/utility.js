@@ -35,17 +35,22 @@ function makeModel() {
 
 function drawStroke(integrationEnv, path) {
     integrationEnv.d3.getCallbacks()['keydown']({ key: "d" });
-    drag(integrationEnv, path);
+    drag(integrationEnv, "#stroke-view", path);
     integrationEnv.d3.getCallbacks()['keyup']({ key: "d" });
 }
 
-function drag(integrationEnv, path) {
-    integrationEnv.d3.getCallbacks()['pointermove']({ clientX: path[0].x, clientY: path[0].y });
-    integrationEnv.d3.select('#interface-container').select('#interface-svg').getCallbacks()['pointerdown']({ clientX: path[0].x, clientY: path[0].y });
+function drag(integrationEnv, id, path) {
+    let offset = { x: 0, y: 0 }
+    if (id == "#vem-view") offset.y += window.innerHeight / 2;
+    if (id == "#struct-view") offset.x += window.innerWidth / 2;
+
+    let start = { clientX: path[0].x + offset.x, clientY: path[0].y + offset.y };
+    integrationEnv.d3.getCallbacks()['pointermove'](start);
+    integrationEnv.d3.select('#interface-container').select('#interface-svg').getCallbacks()['pointerdown'](start);
     path.forEach(p => {
-        integrationEnv.d3.getCallbacks()['pointermove']({ clientX: p.x, clientY: p.y });
+        integrationEnv.d3.getCallbacks()['pointermove']({ clientX: p.x + offset.x, clientY: p.y + offset.y });
     })
-    integrationEnv.d3.getCallbacks()['pointerup']({ clientX: path[path.length - 1].x, clientY: path[path.length - 1].y });
+    integrationEnv.d3.getCallbacks()['pointerup']({ clientX: path[path.length - 1].x + offset.x, clientY: path[path.length - 1].y + offset.y });
 }
 
 function mouseOver(integrationEnv, id, x, y) {

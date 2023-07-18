@@ -6,7 +6,7 @@ let Fairies = function () {
         // Right now just make the dumb decision to create a new element every time.
         let boundingBox = DataUtil.getBoundingBox(stroke);
 
-        let elem = new Data.Element(boundingBox.x, boundingBox.y, boundingBox.height, boundingBox.width);
+        let elem = new Data.Element(boundingBox.x, boundingBox.y);
         stroke.path = PathUtil.translate(stroke.path, { x: -boundingBox.x, y: -boundingBox.y })
         elem.strokes.push(stroke);
 
@@ -47,7 +47,22 @@ let Fairies = function () {
         modelController.addGroup(group);
     }
 
+    function elementMergeFairy(elementIds, mergeIntoId, modelController) {
+        let model = modelController.getModel();
+        let elements = model.getElements().filter(e => elementIds.includes(e.id));
+        let mergeInto = model.getElement(mergeIntoId);
+        elements.forEach(element => {
+            modelController.removeElement(element.id);
+            let pathTranslation = MathUtil.subtract(element, mergeInto);
+            element.strokes.forEach(stroke => {
+                stroke.path = PathUtil.translate(stroke.path, pathTranslation);
+                modelController.addStroke(mergeInto.id, stroke)
+            })
+        });
+    }
+
     return {
         strokeFairy,
+        elementMergeFairy,
     }
 }();

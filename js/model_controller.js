@@ -15,7 +15,7 @@ function ModelController() {
     function removeElement(elementId) {
         let group = mDataModel.getGroupForElement(elementId);
         if (!group) { console.error("Group not found for element: ", elementId); return; };
-        group.push(elem);
+        group.elements = group.elements.filter(e => e.id != elementId);
     }
 
     function updateElementPosition(elementId, newX, newY) {
