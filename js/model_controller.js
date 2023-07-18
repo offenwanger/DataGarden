@@ -18,6 +18,18 @@ function ModelController() {
         group.push(elem);
     }
 
+    function updateElementPosition(elementId, newX, newY) {
+        let element = mDataModel.getElement(elementId);
+        element.x = newX;
+        element.y = newY;
+    }
+
+    function updateElementVemPosition(elementId, newX, newY) {
+        let element = mDataModel.getElement(elementId);
+        element.vemX = newX;
+        element.vemY = newY;
+    }
+
     function addStroke(elementId, stroke) {
         let elem = mDataModel.getElement(elementId);
         if (!elem) { console.error("Element not found for id: ", elementId); return; };
@@ -38,6 +50,8 @@ function ModelController() {
         addGroup,
         addElement,
         removeElement,
+        updateElementPosition,
+        updateElementVemPosition,
         addStroke,
         removeStorke,
         getModel,

@@ -35,13 +35,24 @@ function makeModel() {
 
 function drawStroke(integrationEnv, path) {
     integrationEnv.d3.getCallbacks()['keydown']({ key: "d" });
+    drag(integrationEnv, path);
+    integrationEnv.d3.getCallbacks()['keyup']({ key: "d" });
+}
+
+function drag(integrationEnv, path) {
     integrationEnv.d3.getCallbacks()['pointermove']({ clientX: path[0].x, clientY: path[0].y });
     integrationEnv.d3.select('#interface-container').select('#interface-svg').getCallbacks()['pointerdown']({ clientX: path[0].x, clientY: path[0].y });
     path.forEach(p => {
         integrationEnv.d3.getCallbacks()['pointermove']({ clientX: p.x, clientY: p.y });
     })
     integrationEnv.d3.getCallbacks()['pointerup']({ clientX: path[path.length - 1].x, clientY: path[path.length - 1].y });
-    integrationEnv.d3.getCallbacks()['keyup']({ key: "d" });
+}
+
+function mouseOver(integrationEnv, id, x, y) {
+    let offset = { x: 0, y: 0 }
+    if (id == "#vem-view") offset.y += window.innerHeight / 2;
+    if (id == "#struct-view") offset.x += window.innerWidth / 2;
+    integrationEnv.d3.getCallbacks()['pointermove']({ clientX: x + offset.x, clientY: y + offset.y });
 }
 
 function pan(integrationEnv, id, x, y) {
@@ -81,5 +92,7 @@ module.exports = {
     makeModel,
     deepEquals,
     drawStroke,
+    drag,
+    mouseOver,
     pan, zoom,
 }

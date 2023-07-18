@@ -1,5 +1,12 @@
 
 function VemViewController() {
+    const DRAG_MOVE = "moveDrag";
+    const DRAG_SELECT = "selectDrag"
+
+    const TARGET_PARENT = 'parentTarget';
+    const TARGET_MERGE = 'mergeTarget';
+    const TARGET_ELEMENT = 'elementTarget';
+
     let mCanvas = d3.select('#vem-view').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
     let mInterfaceCanvas = d3.select("#vem-view").select('.canvas-container').append('canvas')
@@ -10,7 +17,9 @@ function VemViewController() {
 
     let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
-    let mHighlightElements = null;
+    let mMoveElementCallback = () => { };
+    let mHighlightElementIds = null;
+    let mSelectedElements = null;
 
     let mInteractionLookup = {};
     let mReverseInteractionLookup = {};
@@ -20,12 +29,14 @@ function VemViewController() {
     let mZoomTransform = d3.zoomIdentity;
 
     let mModel = new DataModel();
-    let mInteracting;
+    let mInteraction = null;
     let mStartPos;
 
     function onModelUpdate(model) {
         mModel = model;
         draw();
+        drawInteraction();
+        drawInterface();
     }
 
     function onPointerDown(screenCoords, toolState) {
@@ -33,21 +44,17 @@ function VemViewController() {
             return false;
 
         if (toolState == Buttons.PANNING_BUTTON) {
-            mStartPos = {
+            mInteraction = {
                 x: mZoomTransform.x,
                 y: mZoomTransform.y,
                 scale: mZoomTransform.k,
                 screenCoords,
             }
-
-            mInteracting = true;
             return true;
         } else if (toolState == Buttons.ZOOM_BUTTON) {
-            mInteracting = true;
 
             let zoomCenter = screenToModelCoords(screenCoords)
-
-            mStartPos = {
+            mInteraction = {
                 pointerX: zoomCenter.x,
                 pointerY: zoomCenter.y,
                 transformX: mZoomTransform.x,
@@ -56,40 +63,74 @@ function VemViewController() {
                 screenCoords,
             }
 
-            mInteracting = true;
             return true;
+        } else if (toolState == Buttons.SELECTION_BUTTON) {
+            mInteraction = {
+                start: screenToModelCoords(screenCoords),
+                startTime: Date.now(),
+            }
+
+            let target = getInteractionTarget(screenCoords);
+            if (target) {
+                if (!mSelectedElements || !mSelectedElements.find(e => e.id == target.id)) {
+                    // element not in selection
+                    mSelectedElements = [target.id];
+                    mSelectionCallback(mSelectedElements);
+                }
+                mInteraction.type = DRAG_MOVE;
+                mInteraction.originalModel = mModel.clone();
+                drawInteraction();
+            } else {
+                mSelectedElements = null;
+                mSelectionCallback(null);
+                mInteraction.type = DRAG_SELECT;
+            }
+            drawInterface();
         }
     }
 
     function onPointerMove(screenCoords, toolState) {
-        if (toolState == Buttons.PANNING_BUTTON && mInteracting) {
-            let mouseDist = MathUtil.subtract(screenCoords, mStartPos.screenCoords);
-            let translate = MathUtil.add(mStartPos, mouseDist);
-            mZoomTransform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mStartPos.scale);
+        if (toolState == Buttons.PANNING_BUTTON && mInteraction) {
+            let mouseDist = MathUtil.subtract(screenCoords, mInteraction.screenCoords);
+            let translate = MathUtil.add(mInteraction, mouseDist);
+            mZoomTransform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mInteraction.scale);
 
             draw();
             drawInterface();
-        } else if (toolState == Buttons.ZOOM_BUTTON && mInteracting) {
-            let mouseDist = screenCoords.y - mStartPos.screenCoords.y;
-            let scale = mStartPos.scale * (1 + (mouseDist / mInterfaceCanvas.attr('height')));
-            let zoomChange = scale - mStartPos.scale;
-            let transformX = -(mStartPos.pointerX * zoomChange) + mStartPos.transformX;
-            let transformY = -(mStartPos.pointerY * zoomChange) + mStartPos.transformY;
+        } else if (toolState == Buttons.ZOOM_BUTTON && mInteraction) {
+            let mouseDist = screenCoords.y - mInteraction.screenCoords.y;
+            let scale = mInteraction.scale * (1 + (mouseDist / mInterfaceCanvas.attr('height')));
+            let zoomChange = scale - mInteraction.scale;
+            let transformX = -(mInteraction.pointerX * zoomChange) + mInteraction.transformX;
+            let transformY = -(mInteraction.pointerY * zoomChange) + mInteraction.transformY;
             mZoomTransform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
             draw();
             drawInterface();
         } else if (toolState == Buttons.SELECTION_BUTTON) {
-            if (mInteracting) {
-                // WE are either dragging a group, or a dimention, or something
+            if (mInteraction) {
+                let moveDiff = MathUtil.subtract(screenToModelCoords(screenCoords), mInteraction.start);
+                if (mInteraction.type == DRAG_MOVE) {
+                    mModel = mInteraction.originalModel.clone();
+                    let elements = mModel.getElements().filter(e => mSelectedElements.includes(e.id));
+                    elements.forEach(e => {
+                        e.vemX += moveDiff.x;
+                        e.vemY += moveDiff.y;
+                    });
+                    draw();
+                    drawInterface();
+                } else if (mInteraction.type == DRAG_SELECT) {
+
+                } else {
+                    console.error("Bad state", mInteraction);
+                }
             } else {
                 if (!ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
-                    let targetId = getInteractionTarget(screenCoords);
-                    let element = mModel.getElement(targetId);
-                    if (element) {
-                        mHighlightElements = [element];
-                        mHighlightCallback(mHighlightElements);
+                    let target = getInteractionTarget(screenCoords);
+                    if (target) {
+                        mHighlightElementIds = [target.id];
+                        mHighlightCallback(mHighlightElementIds);
                     } else {
-                        mHighlightElements = null;
+                        mHighlightElementIds = null;
                         mHighlightCallback(null);
                     }
                 }
@@ -97,14 +138,33 @@ function VemViewController() {
             }
         }
 
-        if (mHighlightElements && toolState != Buttons.SELECTION_BUTTON) {
-            mHighlightElements = null;
+        if (mHighlightElementIds && toolState != Buttons.SELECTION_BUTTON) {
+            mHighlightElementIds = null;
             drawInterface();
         }
     }
 
     function onPointerUp(screenCoords, toolState) {
-        mInteracting = false;
+        if (mInteraction && mInteraction.type == DRAG_MOVE) {
+            let moveDiff = MathUtil.subtract(screenToModelCoords(screenCoords), mInteraction.start);
+            if (MathUtil.length(moveDiff) > 5) {
+                let dropTarget = getInteractionTarget(screenCoords);
+                if (dropTarget) {
+                    if (dropTarget.type == TARGET_MERGE) {
+                        console.log("Merge!")
+                    } else if (dropTarget.type == TARGET_PARENT) {
+                        console.log("Parent!")
+                    } else {
+                        console.error("Bad State", dropTarget);
+                    }
+                } else {
+                    mMoveElementCallback(mSelectedElements, moveDiff)
+                }
+            } else {
+                console.log("Subselect!")
+            }
+        }
+        mInteraction = null;
         mStartPos = null;
     }
 
@@ -119,17 +179,18 @@ function VemViewController() {
             .attr('width', height)
             .attr('height', width);
         draw();
+        drawInteraction();
         drawInterface();
     }
 
-    function highlight(objs) {
-        if (!objs || (Array.isArray(objs) && objs.length == 0)) {
-            mHighlightElements = null;
+    function highlight(ids) {
+        if (!ids || (Array.isArray(ids) && ids.length == 0)) {
+            mHighlightElementIds = null;
         } else {
-            mHighlightElements = objs.filter(o => o instanceof Data.Element);
-            mHighlightElements.push(...objs.filter(o => o instanceof Data.Group).map(g => g.elements).flat());
-            mHighlightElements.push(...objs.filter(o => o instanceof Data.Stroke).map(s => mModel.getElementForStroke(s.id)));
-            mHighlightElements = mHighlightElements.filter((element, index, self) => self.findIndex(g => g.id == element.id) == index);
+            mHighlightElementIds = ids.filter(id => IdUtil.isType(id, Data.Element));
+            mHighlightElementIds.push(...ids.filter(id => IdUtil.isType(id, Data.Group)).map(groupId => mModel.getGroup(groupId).elements).flat());
+            mHighlightElementIds.push(...ids.filter(id => IdUtil.isType(id, Data.Stroke)).map(sId => mModel.getElementForStroke(sId)));
+            mHighlightElementIds = mHighlightElementIds.filter((elementId, index, self) => self.findIndex(id => id == elementId) == index);
         }
         drawInterface();
     }
@@ -147,8 +208,6 @@ function VemViewController() {
         })
 
         ctx.restore();
-
-        drawInteraction();
     }
 
     function drawIcon(ctx, elem) {
@@ -200,14 +259,30 @@ function VemViewController() {
         ctx.translate(mZoomTransform.x, mZoomTransform.y)
         ctx.scale(mZoomTransform.k, mZoomTransform.k)
 
-        mModel.getElements().forEach(e => {
-            let code = getCode(e.id);
-            ctx.save();
-            ctx.translate(e.vemX, e.vemY);
-            ctx.fillStyle = code;
-            ctx.fillRect(0, 0, 64, 64);
-            ctx.restore();
-        })
+        if (mInteraction) {
+            if (mInteraction.type == DRAG_MOVE) {
+                mModel.getElements().forEach(e => {
+                    ctx.save();
+                    ctx.translate(e.vemX, e.vemY);
+                    ctx.fillStyle = getCode(e.id, TARGET_MERGE);
+                    ctx.fillRect(0, 0, 64, 44);
+
+                    ctx.fillStyle = getCode(e.id, TARGET_PARENT);
+                    ctx.fillRect(0, 44, 44, 64);
+
+                    ctx.restore();
+                })
+            }
+        } else {
+            mModel.getElements().forEach(e => {
+                let code = getCode(e.id, TARGET_ELEMENT);
+                ctx.save();
+                ctx.translate(e.vemX, e.vemY);
+                ctx.fillStyle = code;
+                ctx.fillRect(0, 0, 64, 64);
+                ctx.restore();
+            })
+        }
 
         ctx.restore();
     }
@@ -216,11 +291,12 @@ function VemViewController() {
         let ctx = mInterfaceCanvas.node().getContext("2d");
         ctx.clearRect(0, 0, mInterfaceCanvas.attr("width"), mInterfaceCanvas.attr("height"));
 
-        if (mHighlightElements) {
+        if (mHighlightElementIds) {
             ctx.save();
             ctx.translate(mZoomTransform.x, mZoomTransform.y)
             ctx.scale(mZoomTransform.k, mZoomTransform.k)
-            mHighlightElements.forEach(e => {
+            mHighlightElementIds.forEach(eId => {
+                let e = mModel.getElement(eId)
                 ctx.save();
                 ctx.translate(e.vemX, e.vemY);
                 ctx.lineWidth = 1;
@@ -270,12 +346,12 @@ function VemViewController() {
         }
     }
 
-    function getCode(itemId) {
-        if (mReverseInteractionLookup[itemId]) return mReverseInteractionLookup[itemId];
+    function getCode(itemId, type) {
+        if (mReverseInteractionLookup[itemId + "_" + type]) return mReverseInteractionLookup[itemId + "_" + type];
         else {
             let code = DataUtil.numToColor(mColorIndex++);
-            mInteractionLookup[code] = itemId;
-            mReverseInteractionLookup[itemId] = code;
+            mInteractionLookup[code] = { id: itemId, type };
+            mReverseInteractionLookup[itemId + "_" + type] = code;
             return code;
         }
     }
@@ -289,5 +365,6 @@ function VemViewController() {
         highlight,
         setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,
+        setMoveElementCallback: (func) => mMoveElementCallback = func,
     }
 }

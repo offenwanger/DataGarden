@@ -79,10 +79,15 @@ let MathUtil = function () {
         };
     }
 
+    function length(v) {
+        return Math.sqrt(v.x * v.x + v.y * v.y);
+    }
+
     return {
         add,
         subtract,
         scale,
+        length,
     }
 }();
 
@@ -188,5 +193,25 @@ let DataUtil = function () {
         numToColor,
         rgbToHex,
         getBoundingBox,
+    }
+}();
+
+let IdUtil = function () {
+    let idCounter = 0;
+    function getUniqueId(classFunction) {
+        return classFunction.name + "_" + Date.now() + "_" + idCounter++;
+    }
+
+    function isType(id, classFunction) {
+        if (typeof id != "string") {
+            console.error("invalid id", id);
+            return false;
+        }
+        return id.split("_")[0] == classFunction.name;
+    }
+
+    return {
+        getUniqueId,
+        isType,
     }
 }();

@@ -1,12 +1,6 @@
 let Data = function () {
-    let idCounter = 0;
-    function getUniqueId() {
-        idCounter++
-        return Date.now() + "_" + idCounter;
-    }
-
     function Stroke(path, size, color) {
-        this.id = getUniqueId();
+        this.id = IdUtil.getUniqueId(Stroke);
         this.creationTime = Date.now();
         this.path = path.map(p => { return { x: p.x, y: p.y } });
         this.size = size;
@@ -21,7 +15,7 @@ let Data = function () {
     }
 
     function Element(x, y, height, width) {
-        this.id = getUniqueId();
+        this.id = IdUtil.getUniqueId(Element);
         this.x = x;
         this.y = y;
         this.height = height;
@@ -50,7 +44,7 @@ let Data = function () {
     }
 
     function Group() {
-        this.id = getUniqueId();
+        this.id = IdUtil.getUniqueId(Group);
         this.creationTime = Date.now();
         this.elements = [];
 
@@ -80,14 +74,14 @@ let Data = function () {
     }
 
     function Dimention() {
-        this.id = getUniqueId();
+        this.id = IdUtil.getUniqueId(Dimention);
         this.creationTime = Date.now();
         this.structX = null;
         this.structY = null;
     }
 
     function Binding() {
-        this.id = getUniqueId();
+        this.id = IdUtil.getUniqueId(Binding);
         this.creationTime = Date.now();
 
         this.structX = null;

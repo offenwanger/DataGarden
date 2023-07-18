@@ -10,7 +10,7 @@ function StructViewController() {
 
     let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
-    let mHighlightGroups = null;
+    let mHighlightGroupIds = null;
 
     let mInteractionLookup = {};
     let mReverseInteractionLookup = {};
@@ -85,12 +85,11 @@ function StructViewController() {
             } else {
                 if (!ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
                     let targetId = getInteractionTarget(screenCoords);
-                    let group = mModel.getGroup(targetId);
-                    if (group) {
-                        mHighlightGroups = [group];
-                        mHighlightCallback(mHighlightGroups);
+                    if (targetId) {
+                        mHighlightGroupIds = [targetId];
+                        mHighlightCallback(mHighlightGroupIds);
                     } else {
-                        mHighlightGroups = null;
+                        mHighlightGroupIds = null;
                         mHighlightCallback(null);
                     }
                 }
@@ -99,8 +98,8 @@ function StructViewController() {
 
         }
 
-        if (mHighlightGroups && toolState != Buttons.SELECTION_BUTTON) {
-            mHighlightGroups = null;
+        if (mHighlightGroupIds && toolState != Buttons.SELECTION_BUTTON) {
+            mHighlightGroupIds = null;
             drawInterface();
         }
     }
@@ -124,14 +123,14 @@ function StructViewController() {
         drawInterface();
     }
 
-    function highlight(objs) {
-        if (!objs || (Array.isArray(objs) && objs.length == 0)) {
-            mHighlightGroups = null;
+    function highlight(ids) {
+        if (!ids || (Array.isArray(ids) && ids.length == 0)) {
+            mHighlightGroupIds = null;
         } else {
-            mHighlightGroups = objs.filter(o => o instanceof Data.Group);
-            mHighlightGroups.push(...objs.filter(o => o instanceof Data.Element).map(e => mModel.getGroupForElement(e.id)));
-            mHighlightGroups.push(...objs.filter(o => o instanceof Data.Stroke).map(s => mModel.getGroupForElement(s.id)));
-            mHighlightGroups = mHighlightGroups.filter((group, index, self) => self.findIndex(g => g.id == group.id) == index);
+            mHighlightGroupIds = ids.filter(id => IdUtil.isType(id, Data.Group));
+            mHighlightGroupIds.push(...ids.filter(id => IdUtil.isType(id, Data.Element)).map(eId => mModel.getGroupForElement(eId).id));
+            mHighlightGroupIds.push(...ids.filter(id => IdUtil.isType(id, Data.Stroke)).map(sId => mModel.getGroupForElement(sId).id));
+            mHighlightGroupIds = mHighlightGroupIds.filter((groupId, index, self) => self.findIndex(gId => gId == groupId) == index);
         }
         drawInterface();
     }
@@ -226,11 +225,12 @@ function StructViewController() {
         let ctx = mInterfaceCanvas.node().getContext("2d");
         ctx.clearRect(0, 0, mInterfaceCanvas.attr("width"), mInterfaceCanvas.attr("height"));
 
-        if (mHighlightGroups) {
+        if (mHighlightGroupIds) {
             ctx.save();
             ctx.translate(mZoomTransform.x, mZoomTransform.y)
             ctx.scale(mZoomTransform.k, mZoomTransform.k)
-            mHighlightGroups.forEach(g => {
+            mHighlightGroupIds.forEach(gId => {
+                let g = mModel.getGroup(gId);
                 ctx.save();
                 ctx.translate(g.structX, g.structY);
                 ctx.strokeStyle = "red";

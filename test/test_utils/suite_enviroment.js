@@ -79,6 +79,7 @@ function getIntegrationEnviroment() {
         DataUtil: rewireJs('util.js').__get__("DataUtil"),
         PathUtil: rewireJs('util.js').__get__("PathUtil"),
         MathUtil: rewireJs('util.js').__get__("MathUtil"),
+        IdUtil: rewireJs('util.js').__get__("IdUtil"),
         Fairies: rewireJs('fairy.js').__get__("Fairies"),
         StrokeViewController: rewireJs('views/stroke_view_controller.js').__get__("StrokeViewController"),
         VemViewController: rewireJs('views/vem_view_controller.js').__get__("VemViewController"),

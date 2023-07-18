@@ -27,6 +27,14 @@ document.addEventListener('DOMContentLoaded', function (e) {
         // update the Vem and Struct selections
     })
 
+    mVemViewController.setMoveElementCallback((selection, translation) => {
+        let elements = mModelController.getModel().getElements().filter(e => selection.includes(e.id))
+        elements.forEach(element => {
+            mModelController.updateElementVemPosition(element.id, element.vemX + translation.x, element.vemY + translation.y);
+        })
+        modelUpdate();
+    })
+
     mVemViewController.setSelectionCallback((selection) => {
         // selections could be strokes or elements. 
         // Update the stroke and Struct selections

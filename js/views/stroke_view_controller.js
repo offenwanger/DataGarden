@@ -120,7 +120,7 @@ function StrokeViewController() {
                     if (element) {
                         let elements = mModel.getElementDecendants(element.id);
                         mHighlightBoundingBoxes = [DataUtil.getBoundingBox(elements)];
-                        mHighlightCallback(elements);
+                        mHighlightCallback(elements.map(e => e.id));
                     } else {
                         mHighlightBoundingBoxes = null;
                         mHighlightCallback(null);
@@ -181,22 +181,22 @@ function StrokeViewController() {
         drawInterface();
     }
 
-    function highlight(objs) {
-        if (!objs || (Array.isArray(objs) && objs.length == 0)) {
+    function highlight(ids) {
+        if (!ids || (Array.isArray(ids) && ids.length == 0)) {
             mHighlightBoundingBoxes = null;
         } else {
             mHighlightBoundingBoxes = [];
-            mHighlightBoundingBoxes.push(...objs
-                .filter(o => o instanceof Data.Element)
-                .map(e => DataUtil.getBoundingBox(e)));
-            mHighlightBoundingBoxes.push(...objs
-                .filter(o => o instanceof Data.Group)
-                .map(group => group.elements)
+            mHighlightBoundingBoxes.push(...ids
+                .filter(id => IdUtil.isType(id, Data.Element))
+                .map(id => DataUtil.getBoundingBox(mModel.getElement(id))));
+            mHighlightBoundingBoxes.push(...ids
+                .filter(id => IdUtil.isType(id, Data.Group))
+                .map(gId => mModel.getGroup(gId).elements)
                 .flat()
                 .map(e => DataUtil.getBoundingBox(e)));
-            mHighlightBoundingBoxes.push(...objs
-                .filter(o => o instanceof Data.Stroke)
-                .map(s => DataUtil.getBoundingBox(s)))
+            mHighlightBoundingBoxes.push(...ids
+                .filter(id => IdUtil.isType(id, Data.Stroke))
+                .map(sId => DataUtil.getBoundingBox(mModel.getStroke(sId))))
         }
         drawInterface();
     }
