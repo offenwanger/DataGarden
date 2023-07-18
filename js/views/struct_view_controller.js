@@ -17,7 +17,7 @@ function StructViewController() {
     let mColorIndex = 1;
     let mTargetIncrease = 5;
 
-    let mPanZoom = d3.zoom();
+    let mZoomTransform = d3.zoomIdentity;
 
     let mModel = new DataModel();
     let mInteracting;
@@ -33,11 +33,10 @@ function StructViewController() {
             return false;
 
         if (toolState == Buttons.PANNING_BUTTON) {
-            let zoom = getZoom();
             mStartPos = {
-                x: zoom.x,
-                y: zoom.y,
-                scale: zoom.k,
+                x: mZoomTransform.x,
+                y: mZoomTransform.y,
+                scale: mZoomTransform.k,
                 screenCoords,
             }
 
@@ -46,15 +45,14 @@ function StructViewController() {
         } else if (toolState == Buttons.ZOOM_BUTTON) {
             mInteracting = true;
 
-            let zoom = getZoom();
             let zoomCenter = screenToModelCoords(screenCoords)
 
             mStartPos = {
                 pointerX: zoomCenter.x,
                 pointerY: zoomCenter.y,
-                transformX: zoom.x,
-                transformY: zoom.y,
-                scale: zoom.k,
+                transformX: mZoomTransform.x,
+                transformY: mZoomTransform.y,
+                scale: mZoomTransform.k,
                 screenCoords,
             }
 
@@ -68,8 +66,7 @@ function StructViewController() {
         if (toolState == Buttons.PANNING_BUTTON && mInteracting) {
             let mouseDist = MathUtil.subtract(screenCoords, mStartPos.screenCoords);
             let translate = MathUtil.add(mStartPos, mouseDist);
-            let transform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mStartPos.scale);
-            mInterfaceCanvas.call(mPanZoom.transform, transform);
+            mZoomTransform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mStartPos.scale);
             draw();
             drawInterface();
         } else if (toolState == Buttons.ZOOM_BUTTON && mInteracting) {
@@ -79,7 +76,7 @@ function StructViewController() {
             let transformX = -(mStartPos.pointerX * zoomChange) + mStartPos.transformX;
             let transformY = -(mStartPos.pointerY * zoomChange) + mStartPos.transformY;
             let transform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
-            mInterfaceCanvas.call(mPanZoom.transform, transform);
+            mZoomTransform = transform;
             draw();
             drawInterface();
         } else if (toolState == Buttons.SELECTION_BUTTON) {
@@ -145,9 +142,8 @@ function StructViewController() {
         ctx.clearRect(0, 0, mCanvas.attr("width"), mCanvas.attr("height"));
         ctx.save();
 
-        let zoom = getZoom();
-        ctx.translate(zoom.x, zoom.y)
-        ctx.scale(zoom.k, zoom.k)
+        ctx.translate(mZoomTransform.x, mZoomTransform.y)
+        ctx.scale(mZoomTransform.k, mZoomTransform.k)
 
         mModel.getGroups().forEach(g => {
             drawIcon(ctx, g);
@@ -209,11 +205,10 @@ function StructViewController() {
     function drawInteraction() {
         let ctx = mInteractionCanvas.node().getContext('2d');
         ctx.clearRect(0, 0, mCanvas.attr("width"), mCanvas.attr("height"));
-        let zoom = getZoom();
 
         ctx.save();
-        ctx.translate(zoom.x, zoom.y)
-        ctx.scale(zoom.k, zoom.k)
+        ctx.translate(mZoomTransform.x, mZoomTransform.y)
+        ctx.scale(mZoomTransform.k, mZoomTransform.k)
 
         mModel.getGroups().forEach(g => {
             let code = getCode(g.id);
@@ -230,12 +225,11 @@ function StructViewController() {
     function drawInterface() {
         let ctx = mInterfaceCanvas.node().getContext("2d");
         ctx.clearRect(0, 0, mInterfaceCanvas.attr("width"), mInterfaceCanvas.attr("height"));
-        let zoom = getZoom();
 
         if (mHighlightGroups) {
             ctx.save();
-            ctx.translate(zoom.x, zoom.y)
-            ctx.scale(zoom.k, zoom.k)
+            ctx.translate(mZoomTransform.x, mZoomTransform.y)
+            ctx.scale(mZoomTransform.k, mZoomTransform.k)
             mHighlightGroups.forEach(g => {
                 ctx.save();
                 ctx.translate(g.structX, g.structY);
@@ -249,17 +243,12 @@ function StructViewController() {
         }
     }
 
-    function getZoom() {
-        return d3.zoomTransform(mInterfaceCanvas.node());
-    }
-
     function screenToModelCoords(screenCoords) {
         let boundingBox = mInterfaceCanvas.node().getBoundingClientRect();
-        let zoomPan = getZoom();
-        if (ValUtil.checkConvertionState(screenCoords, boundingBox, zoomPan)) {
+        if (ValUtil.checkConvertionState(screenCoords, boundingBox, mZoomTransform)) {
             return {
-                x: (screenCoords.x - boundingBox.x - zoomPan.x) / zoomPan.k,
-                y: (screenCoords.y - boundingBox.y - zoomPan.y) / zoomPan.k
+                x: (screenCoords.x - boundingBox.x - mZoomTransform.x) / mZoomTransform.k,
+                y: (screenCoords.y - boundingBox.y - mZoomTransform.y) / mZoomTransform.k
             };
         } else {
             return { x: 0, y: 0 };
@@ -268,11 +257,10 @@ function StructViewController() {
 
     function modelToScreenCoords(modelCoords) {
         let boundingBox = mInterfaceCanvas.node().getBoundingClientRect();
-        let zoomPan = getZoom();
-        if (ValUtil.checkConvertionState(screenCoords, boundingBox, zoomPan)) {
+        if (ValUtil.checkConvertionState(screenCoords, boundingBox, mZoomTransform)) {
             return {
-                x: (modelCoords.x * zoomPan.k) + boundingBox.x + zoomPan.x,
-                y: (modelCoords.y * zoomPan.k) + boundingBox.y + zoomPan.y
+                x: (modelCoords.x * mZoomTransform.k) + boundingBox.x + mZoomTransform.x,
+                y: (modelCoords.y * mZoomTransform.k) + boundingBox.y + mZoomTransform.y
             };
         } else {
             return { x: 0, y: 0 };

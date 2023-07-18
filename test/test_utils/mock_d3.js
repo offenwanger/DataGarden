@@ -8,6 +8,7 @@ function MockElement(type) {
     let mClasses = [];
     let mCallBacks = {};
     let mContext = null;
+    let transform = new mockTransform();
 
     this.append = function (appendee) {
         if (typeof appendee == 'string') {
@@ -88,14 +89,21 @@ function MockElement(type) {
         return { x, y, width: mAttrs['width'], height: mAttrs['height'] };
     }
     this.getCallbacks = () => mCallBacks;
+    this.call = function (something, newZoomTransform) {
+        transform = newZoomTransform;
+    };
+    this.getTransform = function () {
+        return transform;
+    }
 
 }
 
-function Transform(x = 0, y = 0, k = 1) {
+function mockTransform(x = 0, y = 0, k = 1) {
     this.x = x;
     this.y = y;
     this.k = k;
-    this.translate = function (x, y) { return new Transform(this.x + x, this.y + y, this.k) }
+    this.translate = function (x, y) { return new mockTransform(this.x + x, this.y + y, this.k) }
+    this.scale = function (k) { return new mockTransform(this.x, this.y, this.k * k) }
 }
 
 module.exports = function () {
@@ -107,14 +115,6 @@ module.exports = function () {
 
     let documentCallbacks = {};
 
-    let mockZoom = {
-        scaleExtent: function () { return this },
-        on: function (callback) { this.call = callback },
-        x: 0,
-        y: 0,
-        k: 1,
-    }
-
     function select(selector) {
         if (selector.isDocument || selector.isWindow) {
             return { on: (event, callback) => documentCallbacks[event] = callback };
@@ -125,9 +125,7 @@ module.exports = function () {
 
 
     this.select = select;
-    this.zoom = () => mockZoom;
-    this.zoomTransform = () => mockZoom;
-    this.zoomIdentity = new Transform();
+    this.zoomIdentity = new mockTransform();
     this.getCallbacks = () => documentCallbacks;
     this.getRoot = () => rootNode;
 }

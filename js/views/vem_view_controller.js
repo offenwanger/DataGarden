@@ -17,7 +17,7 @@ function VemViewController() {
     let mColorIndex = 1;
     let mTargetIncrease = 5;
 
-    let mPanZoom = d3.zoom();
+    let mZoomTransform = d3.zoomIdentity;
 
     let mModel = new DataModel();
     let mInteracting;
@@ -33,11 +33,10 @@ function VemViewController() {
             return false;
 
         if (toolState == Buttons.PANNING_BUTTON) {
-            let zoom = getZoom();
             mStartPos = {
-                x: zoom.x,
-                y: zoom.y,
-                scale: zoom.k,
+                x: mZoomTransform.x,
+                y: mZoomTransform.y,
+                scale: mZoomTransform.k,
                 screenCoords,
             }
 
@@ -46,15 +45,14 @@ function VemViewController() {
         } else if (toolState == Buttons.ZOOM_BUTTON) {
             mInteracting = true;
 
-            let zoom = getZoom();
             let zoomCenter = screenToModelCoords(screenCoords)
 
             mStartPos = {
                 pointerX: zoomCenter.x,
                 pointerY: zoomCenter.y,
-                transformX: zoom.x,
-                transformY: zoom.y,
-                scale: zoom.k,
+                transformX: mZoomTransform.x,
+                transformY: mZoomTransform.y,
+                scale: mZoomTransform.k,
                 screenCoords,
             }
 
@@ -67,8 +65,8 @@ function VemViewController() {
         if (toolState == Buttons.PANNING_BUTTON && mInteracting) {
             let mouseDist = MathUtil.subtract(screenCoords, mStartPos.screenCoords);
             let translate = MathUtil.add(mStartPos, mouseDist);
-            let transform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mStartPos.scale);
-            mInterfaceCanvas.call(mPanZoom.transform, transform);
+            mZoomTransform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mStartPos.scale);
+
             draw();
             drawInterface();
         } else if (toolState == Buttons.ZOOM_BUTTON && mInteracting) {
@@ -77,8 +75,7 @@ function VemViewController() {
             let zoomChange = scale - mStartPos.scale;
             let transformX = -(mStartPos.pointerX * zoomChange) + mStartPos.transformX;
             let transformY = -(mStartPos.pointerY * zoomChange) + mStartPos.transformY;
-            let transform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
-            mInterfaceCanvas.call(mPanZoom.transform, transform);
+            mZoomTransform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
             draw();
             drawInterface();
         } else if (toolState == Buttons.SELECTION_BUTTON) {
@@ -142,9 +139,8 @@ function VemViewController() {
         ctx.clearRect(0, 0, mCanvas.attr("width"), mCanvas.attr("height"));
         ctx.save();
 
-        let zoom = getZoom();
-        ctx.translate(zoom.x, zoom.y)
-        ctx.scale(zoom.k, zoom.k)
+        ctx.translate(mZoomTransform.x, mZoomTransform.y)
+        ctx.scale(mZoomTransform.k, mZoomTransform.k)
 
         mModel.getElements().forEach(elem => {
             drawIcon(ctx, elem);
@@ -199,16 +195,15 @@ function VemViewController() {
     function drawInteraction() {
         let ctx = mInteractionCanvas.node().getContext('2d');
         ctx.clearRect(0, 0, mCanvas.attr("width"), mCanvas.attr("height"));
-        let zoom = getZoom();
 
         ctx.save();
-        ctx.translate(zoom.x, zoom.y)
-        ctx.scale(zoom.k, zoom.k)
+        ctx.translate(mZoomTransform.x, mZoomTransform.y)
+        ctx.scale(mZoomTransform.k, mZoomTransform.k)
 
-        mModel.getElements().forEach(g => {
-            let code = getCode(g.id);
+        mModel.getElements().forEach(e => {
+            let code = getCode(e.id);
             ctx.save();
-            ctx.translate(g.vemX, g.vemY);
+            ctx.translate(e.vemX, e.vemY);
             ctx.fillStyle = code;
             ctx.fillRect(0, 0, 64, 64);
             ctx.restore();
@@ -221,17 +216,14 @@ function VemViewController() {
         let ctx = mInterfaceCanvas.node().getContext("2d");
         ctx.clearRect(0, 0, mInterfaceCanvas.attr("width"), mInterfaceCanvas.attr("height"));
 
-        let zoom = getZoom();
-        ctx.translate(zoom.x, zoom.y)
-        ctx.scale(zoom.k, zoom.k)
-
         if (mHighlightElements) {
             ctx.save();
-            ctx.translate(zoom.x, zoom.y)
-            ctx.scale(zoom.k, zoom.k)
+            ctx.translate(mZoomTransform.x, mZoomTransform.y)
+            ctx.scale(mZoomTransform.k, mZoomTransform.k)
             mHighlightElements.forEach(e => {
                 ctx.save();
                 ctx.translate(e.vemX, e.vemY);
+                ctx.lineWidth = 1;
                 ctx.strokeStyle = "red";
                 ctx.beginPath();
                 ctx.rect(0, 0, 64, 64);
@@ -242,17 +234,12 @@ function VemViewController() {
         }
     }
 
-    function getZoom() {
-        return d3.zoomTransform(mInterfaceCanvas.node());
-    }
-
     function screenToModelCoords(screenCoords) {
         let boundingBox = mInterfaceCanvas.node().getBoundingClientRect();
-        let zoomPan = getZoom();
-        if (ValUtil.checkConvertionState(screenCoords, boundingBox, zoomPan)) {
+        if (ValUtil.checkConvertionState(screenCoords, boundingBox, mZoomTransform)) {
             return {
-                x: (screenCoords.x - boundingBox.x - zoomPan.x) / zoomPan.k,
-                y: (screenCoords.y - boundingBox.y - zoomPan.y) / zoomPan.k
+                x: (screenCoords.x - boundingBox.x - mZoomTransform.x) / mZoomTransform.k,
+                y: (screenCoords.y - boundingBox.y - mZoomTransform.y) / mZoomTransform.k
             };
         } else {
             return { x: 0, y: 0 };
@@ -261,11 +248,10 @@ function VemViewController() {
 
     function modelToScreenCoords(modelCoords) {
         let boundingBox = mInterfaceCanvas.node().getBoundingClientRect();
-        let zoomPan = getZoom();
         if (ValUtil.checkConvertionState(screenCoords, boundingBox, zoomPan)) {
             return {
-                x: (modelCoords.x * zoomPan.k) + boundingBox.x + zoomPan.x,
-                y: (modelCoords.y * zoomPan.k) + boundingBox.y + zoomPan.y
+                x: (modelCoords.x * mZoomTransform.k) + boundingBox.x + mZoomTransform.x,
+                y: (modelCoords.y * mZoomTransform.k) + boundingBox.y + mZoomTransform.y
             };
         } else {
             return { x: 0, y: 0 };

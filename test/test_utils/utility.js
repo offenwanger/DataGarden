@@ -44,8 +44,42 @@ function drawStroke(integrationEnv, path) {
     integrationEnv.d3.getCallbacks()['keyup']({ key: "d" });
 }
 
+function pan(integrationEnv, id, x, y) {
+    let offset = { x: 0, y: 0 }
+    if (id == "#vem-view") offset.y += window.innerHeight / 2;
+    if (id == "#struct-view") offset.x += window.innerWidth / 2;
+    let start = { clientX: 10 + offset.x, clientY: 10 + offset.y };
+    let end = { clientX: 10 + offset.x - x, clientY: 10 + offset.y - y }
+
+    integrationEnv.d3.getCallbacks()['keydown']({ key: "a" });
+    integrationEnv.d3.getCallbacks()['pointermove'](start);
+    integrationEnv.d3.select('#interface-container').select('#interface-svg').getCallbacks()['pointerdown'](start);
+    integrationEnv.d3.getCallbacks()['pointermove'](end);
+    integrationEnv.d3.getCallbacks()['pointerup'](end);
+    integrationEnv.d3.getCallbacks()['keyup']({ key: "a" });
+}
+
+function zoom(integrationEnv, id, zoomCenter, scale) {
+    let offset = { x: 0, y: 0 }
+    if (id == "#vem-view") offset.y += window.innerHeight / 2;
+    if (id == "#struct-view") offset.y += window.innerHeight / 2;
+
+    let start = { clientX: zoomCenter.x + offset.x, clientY: zoomCenter.y + offset.y };
+    let end = { clientX: zoomCenter.x + offset.x, clientY: zoomCenter.y + offset.y + (scale - 1) * window.innerHeight / 2 }
+
+    integrationEnv.d3.getCallbacks()['keydown']({ key: "a" });
+    integrationEnv.d3.getCallbacks()['keydown']({ key: "s" });
+    integrationEnv.d3.getCallbacks()['pointermove'](start);
+    integrationEnv.d3.select('#interface-container').select('#interface-svg').getCallbacks()['pointerdown'](start);
+    integrationEnv.d3.getCallbacks()['pointermove'](end);
+    integrationEnv.d3.getCallbacks()['pointerup'](end);
+    integrationEnv.d3.getCallbacks()['keydown']({ key: "s" });
+    integrationEnv.d3.getCallbacks()['keyup']({ key: "a" });
+}
+
 module.exports = {
     makeModel,
     deepEquals,
     drawStroke,
+    pan, zoom,
 }

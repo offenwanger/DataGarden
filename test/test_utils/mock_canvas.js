@@ -1,6 +1,5 @@
 
 function CanvasContext(width, height) {
-    this.fillRect = function () { };
     this.beginPath = function () { };
     this.stroke = function () { };
     this.clip = function () { };
@@ -42,6 +41,8 @@ function CanvasContext(width, height) {
         this.translateX += x;
         this.translateY += y;
     };
+    // drawing functions
+    // we don't have separete x/y scales so we use ScaleX for everything
     this.moveTo = function (x, y) {
         this.currX = this.scaleX * x + this.translateX;
         this.currY = this.scaleX * y + this.translateY;
@@ -65,16 +66,50 @@ function CanvasContext(width, height) {
         this.currY = y;
     };
     this.rect = function (x, y, w, h) {
-        let fromX = Math.max(0, x + this.translateX);
-        let toX = Math.min(width, x + this.translateX + w);
-        let fromY = Math.max(0, y + this.translateY);
-        let toY = Math.min(height, y + this.translateY + h);
+        let fromX = Math.max(0, this.scaleX * x + this.translateX);
+        let toX = Math.min(width, this.scaleX * x + this.translateX + this.scaleX * w);
+        let fromY = Math.max(0, this.scaleX * y + this.translateY);
+        let toY = Math.min(height, this.scaleX * y + this.translateY + this.scaleX * h);
 
         for (let i = fromX; i < toX; i++) {
             for (let j = fromY; j < toY; j++) {
                 this.array[i][j] = this.strokeStyle;
             }
         }
+    }
+    this.fillStyle = "#000000FF"
+    this.fillRect = function (x, y, w, h) {
+        let fromX = Math.max(0, this.scaleX * x + this.translateX);
+        let toX = Math.min(width, this.scaleX * x + this.translateX + this.scaleX * w);
+        let fromY = Math.max(0, this.scaleX * y + this.translateY);
+        let toY = Math.min(height, this.scaleX * y + this.translateY + this.scaleX * h);
+
+        for (let i = fromX; i < toX; i++) {
+            for (let j = fromY; j < toY; j++) {
+                this.array[i][j] = this.fillStyle;
+            }
+        }
+    }
+    this.toString = function () {
+        let str = "";
+        let lastRow = ''
+        this.array.forEach((row, x) => {
+            let rowStr = ''
+            let rowCheck = ''
+            let lastcolor = 0;
+            row.forEach((val, y) => {
+                if (val != lastcolor) {
+                    rowStr += " [(" + x + "," + y + "): " + val + "]";
+                    rowCheck += " (," + y + "): " + val;
+                    lastcolor = val;
+                }
+            })
+            if (rowCheck != lastRow) {
+                str += rowStr + "\n";
+                lastRow = rowCheck;
+            }
+        });
+        return str;
     }
 
     this.array = new Array(width).fill(0).map(() => new Array(height).fill("#00000000"));

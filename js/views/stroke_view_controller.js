@@ -12,7 +12,7 @@ function StrokeViewController() {
     let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
 
-    let mPanZoom = d3.zoom();
+    let mZoomTransform = d3.zoomIdentity;
     let mBrushActive = false;
     let mHighlightBoundingBoxes = null;
 
@@ -41,11 +41,10 @@ function StrokeViewController() {
             return false;
 
         if (toolState == Buttons.PANNING_BUTTON) {
-            let zoom = getZoom();
             mStartPos = {
-                x: zoom.x,
-                y: zoom.y,
-                scale: zoom.k,
+                x: mZoomTransform.x,
+                y: mZoomTransform.y,
+                scale: mZoomTransform.k,
                 screenCoords,
             }
 
@@ -54,15 +53,14 @@ function StrokeViewController() {
         } else if (toolState == Buttons.ZOOM_BUTTON) {
             mInteracting = true;
 
-            let zoom = getZoom();
             let zoomCenter = screenToModelCoords(screenCoords)
 
             mStartPos = {
                 pointerX: zoomCenter.x,
                 pointerY: zoomCenter.y,
-                transformX: zoom.x,
-                transformY: zoom.y,
-                scale: zoom.k,
+                transformX: mZoomTransform.x,
+                transformY: mZoomTransform.y,
+                scale: mZoomTransform.k,
                 screenCoords,
             }
 
@@ -86,8 +84,7 @@ function StrokeViewController() {
         if (toolState == Buttons.PANNING_BUTTON && mInteracting) {
             let mouseDist = MathUtil.subtract(screenCoords, mStartPos.screenCoords);
             let translate = MathUtil.add(mStartPos, mouseDist);
-            let transform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mStartPos.scale);
-            mInterfaceCanvas.call(mPanZoom.transform, transform);
+            mZoomTransform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mStartPos.scale);
             draw();
             drawInterface();
         } else if (toolState == Buttons.ZOOM_BUTTON && mInteracting) {
@@ -96,8 +93,7 @@ function StrokeViewController() {
             let zoomChange = scale - mStartPos.scale;
             let transformX = -(mStartPos.pointerX * zoomChange) + mStartPos.transformX;
             let transformY = -(mStartPos.pointerY * zoomChange) + mStartPos.transformY;
-            let transform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
-            mInterfaceCanvas.call(mPanZoom.transform, transform);
+            mZoomTransform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
             draw();
             drawInterface();
         } else if (toolState == Buttons.BRUSH_BUTTON) {
@@ -211,9 +207,8 @@ function StrokeViewController() {
 
         ctx.save();
 
-        let zoom = getZoom();
-        ctx.translate(zoom.x, zoom.y)
-        ctx.scale(zoom.k, zoom.k)
+        ctx.translate(mZoomTransform.x, mZoomTransform.y)
+        ctx.scale(mZoomTransform.k, mZoomTransform.k)
 
         mModel.getElements().forEach(elem => {
             elem.strokes.forEach(stroke => {
@@ -244,9 +239,8 @@ function StrokeViewController() {
 
         ctx.save();
 
-        let zoom = getZoom();
-        ctx.translate(zoom.x, zoom.y)
-        ctx.scale(zoom.k, zoom.k)
+        ctx.translate(mZoomTransform.x, mZoomTransform.y)
+        ctx.scale(mZoomTransform.k, mZoomTransform.k)
 
         mModel.getElements().forEach(elem => {
             elem.strokes.forEach(stroke => {
@@ -256,7 +250,7 @@ function StrokeViewController() {
 
                 ctx.translate(elem.x, elem.y);
                 ctx.strokeStyle = code;
-                ctx.lineWidth = stroke.size + mTargetIncrease / zoom.k;
+                ctx.lineWidth = stroke.size + mTargetIncrease / mZoomTransform.k;
 
                 ctx.beginPath();
                 ctx.moveTo(stroke.path[0].x - 1, stroke.path[0].y - 1);
@@ -273,13 +267,12 @@ function StrokeViewController() {
     function drawInterface() {
         let ctx = mInterfaceCanvas.node().getContext("2d");
         ctx.clearRect(0, 0, mInterfaceCanvas.attr("width"), mInterfaceCanvas.attr("height"));
-        let zoom = getZoom();
 
         if (mBrushActive) {
             ctx.save();
 
-            ctx.translate(zoom.x, zoom.y)
-            ctx.scale(zoom.k, zoom.k)
+            ctx.translate(mZoomTransform.x, mZoomTransform.y)
+            ctx.scale(mZoomTransform.k, mZoomTransform.k)
 
             if (mBrushActive) {
                 ctx.strokeStyle = mBrushOptions.color;
@@ -297,10 +290,10 @@ function StrokeViewController() {
 
         if (mHighlightBoundingBoxes) {
             ctx.save();
-            ctx.translate(zoom.x, zoom.y)
-            ctx.scale(zoom.k, zoom.k)
-            ctx.lineWidth = 2 / zoom.k;
-            ctx.setLineDash([5 / zoom.k, 10 / zoom.k]);
+            ctx.translate(mZoomTransform.x, mZoomTransform.y)
+            ctx.scale(mZoomTransform.k, mZoomTransform.k)
+            ctx.lineWidth = 2 / mZoomTransform.k;
+            ctx.setLineDash([5 / mZoomTransform.k, 10 / mZoomTransform.k]);
             ctx.strokeStyle = "grey";
             mHighlightBoundingBoxes.forEach(boundingBox => {
                 ctx.beginPath();
@@ -309,10 +302,6 @@ function StrokeViewController() {
             })
             ctx.restore();
         }
-    }
-
-    function getZoom() {
-        return d3.zoomTransform(mInterfaceCanvas.node());
     }
 
     function getInteractionTarget(screenCoords) {
@@ -336,11 +325,10 @@ function StrokeViewController() {
 
     function screenToModelCoords(screenCoords) {
         let boundingBox = mInterfaceCanvas.node().getBoundingClientRect();
-        let zoomPan = getZoom();
-        if (ValUtil.checkConvertionState(screenCoords, boundingBox, zoomPan)) {
+        if (ValUtil.checkConvertionState(screenCoords, boundingBox, mZoomTransform)) {
             return {
-                x: (screenCoords.x - boundingBox.x - zoomPan.x) / zoomPan.k,
-                y: (screenCoords.y - boundingBox.y - zoomPan.y) / zoomPan.k
+                x: (screenCoords.x - boundingBox.x - mZoomTransform.x) / mZoomTransform.k,
+                y: (screenCoords.y - boundingBox.y - mZoomTransform.y) / mZoomTransform.k
             };
         } else {
             return { x: 0, y: 0 };
@@ -349,11 +337,10 @@ function StrokeViewController() {
 
     function modelToScreenCoords(modelCoords) {
         let boundingBox = mInterfaceCanvas.node().getBoundingClientRect();
-        let zoomPan = getZoom();
-        if (ValUtil.checkConvertionState(screenCoords, boundingBox, zoomPan)) {
+        if (ValUtil.checkConvertionState(screenCoords, boundingBox, mZoomTransform)) {
             return {
-                x: (modelCoords.x * zoomPan.k) + boundingBox.x + zoomPan.x,
-                y: (modelCoords.y * zoomPan.k) + boundingBox.y + zoomPan.y
+                x: (modelCoords.x * mZoomTransform.k) + boundingBox.x + mZoomTransform.x,
+                y: (modelCoords.y * mZoomTransform.k) + boundingBox.y + mZoomTransform.y
             };
         } else {
             return { x: 0, y: 0 };
