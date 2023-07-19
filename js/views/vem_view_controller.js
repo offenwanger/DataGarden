@@ -228,12 +228,12 @@ function VemViewController() {
         ctx.translate(elem.vemX, elem.vemY);
 
         ctx.save();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'black';
         ctx.beginPath();
         ctx.rect(0, 0, 64, 64);
         ctx.stroke();
 
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 2;
         ctx.shadowColor = "black";
         ctx.shadowOffsetX = 1;
         ctx.shadowOffsetY = 1;
@@ -253,11 +253,14 @@ function VemViewController() {
             ctx.save();
             ctx.strokeStyle = stroke.color;
             ctx.lineWidth = stroke.size;
+            ctx.moveTo(stroke.path[0].x, stroke.path[0].y);
             ctx.beginPath();
-            ctx.moveTo(stroke.path[0].x - 1, stroke.path[0].y - 1);
-            stroke.path.forEach(p => ctx.lineTo(p.x, p.y));
+            stroke.path.forEach(p => {
+                ctx.lineTo(p.x, p.y);
+            });
+
             ctx.stroke();
-            ctx.restore(); a
+            ctx.restore();
         })
 
         ctx.restore();

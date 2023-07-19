@@ -146,6 +146,13 @@ let DataUtil = function () {
             b.toString(16).padStart(2, "0");
     }
 
+    function imageDataToHex(imgData) {
+        return "#" +
+            imgData.data[0].toString(16).padStart(2, "0") +
+            imgData.data[1].toString(16).padStart(2, "0") +
+            imgData.data[2].toString(16).padStart(2, "0");
+    }
+
     function getBoundingBox(objs) {
         // if it's not an array assume it's a single instance and carry forward.
         if (!Array.isArray(objs)) {
@@ -192,6 +199,7 @@ let DataUtil = function () {
     return {
         numToColor,
         rgbToHex,
+        imageDataToHex,
         getBoundingBox,
     }
 }();

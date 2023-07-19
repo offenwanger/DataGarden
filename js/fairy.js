@@ -47,18 +47,25 @@ let Fairies = function () {
         modelController.addGroup(group);
     }
 
-    function elementMergeFairy(elementIds, mergeIntoId, modelController) {
+    function elementMergeFairy(elementIds, mergeTargetId, modelController) {
         let model = modelController.getModel();
-        let elements = model.getElements().filter(e => elementIds.includes(e.id));
-        let mergeInto = model.getElement(mergeIntoId);
-        elements.forEach(element => {
-            modelController.removeElement(element.id);
-            let pathTranslation = MathUtil.subtract(element, mergeInto);
-            element.strokes.forEach(stroke => {
-                stroke.path = PathUtil.translate(stroke.path, pathTranslation);
-                modelController.addStroke(mergeInto.id, stroke)
-            })
+        let strokes = model.getStrokesInLocalCoords(elementIds.concat([mergeTargetId]));
+        let bb = DataUtil.getBoundingBox(strokes);
+        let mergeTarget = model.getElement(mergeTargetId);
+        let mergeTargetGroup = model.getGroupForElement(mergeTargetId);
+
+        mergeTarget.x = bb.x;
+        mergeTarget.y = bb.y;
+        strokes.forEach(stroke => {
+            stroke.path = PathUtil.translate(stroke.path, { x: -bb.x, y: -bb.y })
+        })
+        mergeTarget.strokes = strokes;
+
+        elementIds.forEach(elementId => {
+            modelController.removeElement(elementId);
         });
+        modelController.removeElement(mergeTargetId);
+        modelController.addElement(mergeTargetGroup.id, mergeTarget);
     }
 
     return {

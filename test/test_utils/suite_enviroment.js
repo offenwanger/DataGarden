@@ -22,7 +22,7 @@ function init() {
     let consoleError = console.error;
     console.error = function (message) {
         consoleError(...arguments);
-        assert.fail("No Error", "Error: " + message);
+        assert.equal("No Error", "Error: " + message);
     }
 
     // Overwrite the setTimeout function for manual control

@@ -1,4 +1,5 @@
-let mockCanvas = require("./mock_canvas");
+const { createCanvas } = require('canvas')
+const fs = require('fs')
 
 function MockElement(type) {
     let mAttrs = {};
@@ -7,7 +8,7 @@ function MockElement(type) {
     let mChildren = [];
     let mClasses = [];
     let mCallBacks = {};
-    let mContext = null;
+    let mCanvas = null;
     let transform = new mockTransform();
 
     this.append = function (appendee) {
@@ -65,11 +66,11 @@ function MockElement(type) {
         }
     }
     this.getContext = function (type) {
-        if (!mContext) {
-            mContext = mockCanvas.getContext(mAttrs['width'], mAttrs['height'])
+        if (!mCanvas) {
+            mCanvas = createCanvas(mAttrs['width'], mAttrs['height'])
         };
 
-        return mContext;
+        return mCanvas.getContext(type);
     }
     this.getBoundingClientRect = function () {
         let x = 0, y = 0;
@@ -95,7 +96,14 @@ function MockElement(type) {
     this.getTransform = function () {
         return transform;
     }
-
+    this.console = {
+        log: function () {
+            const out = fs.createWriteStream(__dirname + '/debug.jpeg')
+            const stream = mCanvas.createJPEGStream()
+            stream.pipe(out)
+            out.on('finish', () => { /** keeping this in case need it for debugging */ })
+        }
+    }
 }
 
 function mockTransform(x = 0, y = 0, k = 1) {

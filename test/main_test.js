@@ -52,14 +52,14 @@ describe('Test Main - Integration Test', function () {
             assert.equal(model.getGroups().length, 1);
             let group = model.getGroups()[0];
 
-            let ctx = d3.getRoot().select("#struct-view").select('.canvas-container').select('.interface-canvas').getContext();
-            assert.equal(ctx.array[group.structX][group.structY], "red");
+            let ctx = d3.getRoot().select("#struct-view").select('.canvas-container').select('.interface-canvas').getContext('2d');
+            assert.equal(DataUtil.imageDataToHex(ctx.getImageData(group.structX, group.structY, 1, 1)), "#ff0000");
 
             assert.equal(model.getElements().length, 1);
             let element = model.getElements()[0];
 
-            ctx = d3.getRoot().select("#vem-view").select('.canvas-container').select('.interface-canvas').getContext();
-            assert.equal(ctx.array[element.vemX][element.vemY], "red");
+            ctx = d3.getRoot().select("#vem-view").select('.canvas-container').select('.interface-canvas').getContext('2d');
+            assert.equal(DataUtil.imageDataToHex(ctx.getImageData(group.structX, group.structY, 1, 1)), "#ff0000");
         });
 
         it('should highlight all three views when mousing over the vem view', function () {
@@ -73,12 +73,12 @@ describe('Test Main - Integration Test', function () {
             assert.equal(model.getElements().length, 1);
             assert.equal(model.getGroups().length, 1);
 
-            let ctx = d3.getRoot().select("#vem-view").select('.canvas-container').select('.interface-canvas').getContext();
-            assert.equal(ctx.array[30][30], "red");
+            let ctx = d3.getRoot().select("#vem-view").select('.canvas-container').select('.interface-canvas').getContext('2d');
+            assert.equal(DataUtil.imageDataToHex(ctx.getImageData(40, 40, 1, 1)), "#ff0000");
 
             let group = model.getGroups()[0];
-            ctx = d3.getRoot().select("#struct-view").select('.canvas-container').select('.interface-canvas').getContext();
-            assert.equal(ctx.array[group.structX][group.structY], "red");
+            ctx = d3.getRoot().select("#struct-view").select('.canvas-container').select('.interface-canvas').getContext('2d');
+            assert.equal(DataUtil.imageDataToHex(ctx.getImageData(group.structX, group.structY, 1, 1)), "#ff0000");
         });
     })
 });
