@@ -69,9 +69,9 @@ describe('Test Data Model', function () {
 
         it('should return null for not found elements', function () {
             let dataModel = utility.makeModel();
-            assert.equal(null, dataModel.getGroup("badId"));
-            assert.equal(null, dataModel.getElement("badId"));
-            assert.equal(null, dataModel.getElementForStroke("badId"));
+            assert.equal(null, dataModel.getGroup(IdUtil.getUniqueId(Data.Group)));
+            assert.equal(null, dataModel.getElement(IdUtil.getUniqueId(Data.Element)));
+            assert.equal(null, dataModel.getElementForStroke(IdUtil.getUniqueId(Data.Stroke)));
         });
 
     })

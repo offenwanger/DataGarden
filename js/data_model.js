@@ -50,10 +50,12 @@ function DataModel() {
     }
 
     function getElement(elementId) {
+        if (!IdUtil.isType(elementId, Data.Element)) { console.error("Not an element id! " + elementId); return null; };
         return getElements().find(e => e.id == elementId);
     }
 
     function getElementForStroke(strokeId) {
+        if (!IdUtil.isType(strokeId, Data.Stroke)) { console.error("Not an stroke id! " + strokeId); return null; };
         return getElements().find(e => e.strokes.some(s => s.id == strokeId))
     }
 
@@ -62,6 +64,7 @@ function DataModel() {
     }
 
     function getElementDecendants(elementId) {
+        if (!IdUtil.isType(elementId, Data.Element)) { console.error("Not an element id! " + elementId); return null; };
         let elements = [];
         let elementQueue = [getElement(elementId)];
         let allElements = getElements();
@@ -74,10 +77,12 @@ function DataModel() {
     }
 
     function getGroup(groupId) {
+        if (!IdUtil.isType(groupId, Data.Group)) { console.error("Not an group id! " + groupId); return null; };
         return getGroups().find(g => g.id == groupId)
     }
 
     function getGroupForElement(elementId) {
+        if (!IdUtil.isType(elementId, Data.Element)) { console.error("Not an element id! " + elementId); return null; };
         return getGroups().find(g => g.elements.some(e => e.id == elementId));
     }
 

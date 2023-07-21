@@ -1,5 +1,7 @@
 
 function StructViewController() {
+    const ICON_SIZE = 128;
+
     let mCanvas = d3.select('#struct-view').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
     let mInterfaceCanvas = d3.select("#struct-view").select('.canvas-container').append('canvas')
@@ -144,6 +146,12 @@ function StructViewController() {
         ctx.translate(mZoomTransform.x, mZoomTransform.y)
         ctx.scale(mZoomTransform.k, mZoomTransform.k)
 
+        mModel.getGroups().filter(g => g.parentId).forEach(g => {
+            let parent = mModel.getGroup(g.parentId);
+            if (!parent) { console.error("Bad state, parent not found!"); return; }
+            drawParentConnector(ctx, g, parent);
+        })
+
         mModel.getGroups().forEach(g => {
             drawIcon(ctx, g);
         })
@@ -163,7 +171,7 @@ function StructViewController() {
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.rect(0, 0, 128, 128);
+        ctx.rect(0, 0, ICON_SIZE, ICON_SIZE);
         ctx.stroke();
 
         ctx.shadowColor = "black";
@@ -171,15 +179,15 @@ function StructViewController() {
         ctx.shadowOffsetY = 1;
         ctx.shadowBlur = 3;
         ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, 128, 128);
+        ctx.fillRect(0, 0, ICON_SIZE, ICON_SIZE);
         ctx.restore();
 
         ctx.save();
-        let miniScale = 110 / Math.max(boundingBox.height, boundingBox.width);
+        let miniScale = (ICON_SIZE - 10) / Math.max(boundingBox.height, boundingBox.width);
         ctx.beginPath();
-        ctx.rect(0, 0, 128, 128);
+        ctx.rect(0, 0, ICON_SIZE, ICON_SIZE);
         ctx.clip();
-        ctx.translate((128 - (boundingBox.width * miniScale)) / 2, (128 - (boundingBox.height * miniScale)) / 2)
+        ctx.translate((ICON_SIZE - (boundingBox.width * miniScale)) / 2, (ICON_SIZE - (boundingBox.height * miniScale)) / 2)
         ctx.scale(miniScale, miniScale);
 
         group.elements.forEach(elem => {
@@ -204,6 +212,40 @@ function StructViewController() {
         ctx.restore();
     }
 
+    function drawParentConnector(ctx, group, parent) {
+        ctx.save();
+
+        let groupConnectorPoint = { x: group.structX + ICON_SIZE / 2, y: group.structY };
+        let parentConnectorPoint = { x: parent.structX + ICON_SIZE / 2, y: parent.structY + ICON_SIZE };
+
+        let path;
+        if (parentConnectorPoint.y > groupConnectorPoint.y) {
+            path = [
+                [groupConnectorPoint.x, groupConnectorPoint.y],
+                [groupConnectorPoint.x, groupConnectorPoint.y - 5],
+                [(parentConnectorPoint.x + groupConnectorPoint.x) / 2, groupConnectorPoint.y - 5],
+                [(parentConnectorPoint.x + groupConnectorPoint.x) / 2, parentConnectorPoint.y + 5],
+                [parentConnectorPoint.x, parentConnectorPoint.y + 5],
+                [parentConnectorPoint.x, parentConnectorPoint.y],
+            ]
+        } else {
+            path = [
+                [groupConnectorPoint.x, groupConnectorPoint.y],
+                [groupConnectorPoint.x, (groupConnectorPoint.y + parentConnectorPoint.y) / 2],
+                [parentConnectorPoint.x, (groupConnectorPoint.y + parentConnectorPoint.y) / 2],
+                [parentConnectorPoint.x, parentConnectorPoint.y],
+            ]
+        }
+
+        // draw the tails
+        ctx.moveTo(path[0][0], path[0][1]);
+        ctx.beginPath();
+        path.forEach(p => ctx.lineTo(p[0], p[1]));
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
     function drawInteraction() {
         let ctx = mInteractionCanvas.node().getContext('2d');
         ctx.clearRect(0, 0, mCanvas.attr("width"), mCanvas.attr("height"));
@@ -217,7 +259,7 @@ function StructViewController() {
             ctx.save();
             ctx.translate(g.structX, g.structY);
             ctx.fillStyle = code;
-            ctx.fillRect(0, 0, 128, 128);
+            ctx.fillRect(0, 0, ICON_SIZE, ICON_SIZE);
             ctx.restore();
         })
 
@@ -238,7 +280,7 @@ function StructViewController() {
                 ctx.translate(g.structX, g.structY);
                 ctx.strokeStyle = "red";
                 ctx.beginPath();
-                ctx.rect(0, 0, 128, 128);
+                ctx.rect(0, 0, ICON_SIZE, ICON_SIZE);
                 ctx.stroke();
                 ctx.restore();
             })
