@@ -7,6 +7,8 @@ function VemViewController() {
     const TARGET_MERGE = 'mergeTarget';
     const TARGET_ELEMENT = 'elementTarget';
 
+    const ICON_SIZE = 64;
+
     let mCanvas = d3.select('#vem-view').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
     let mInterfaceCanvas = d3.select("#vem-view").select('.canvas-container').append('canvas')
@@ -19,6 +21,7 @@ function VemViewController() {
     let mSelectionCallback = () => { };
     let mMoveElementCallback = () => { };
     let mMergeElementCallback = () => { };
+    let mParentElementCallback = () => { };
     let mHighlightElementIds = null;
     let mSelectedElements = null;
 
@@ -167,7 +170,7 @@ function VemViewController() {
                     if (dropTarget.type == TARGET_MERGE) {
                         mMergeElementCallback(mSelectedElements, dropTarget.id);
                     } else if (dropTarget.type == TARGET_PARENT) {
-                        console.log("Parent!")
+                        mParentElementCallback(mSelectedElements, dropTarget.id);
                     } else {
                         console.error("Bad State", dropTarget);
                     }
@@ -177,6 +180,10 @@ function VemViewController() {
             } else {
                 console.log("Subselect!")
             }
+        }
+
+        if (interaction && (toolState == Buttons.ZOOM_BUTTON || toolState == Buttons.PANNING_BUTTON)) {
+            drawInteraction();
         }
     }
 
@@ -215,9 +222,10 @@ function VemViewController() {
         ctx.translate(mZoomTransform.x, mZoomTransform.y)
         ctx.scale(mZoomTransform.k, mZoomTransform.k)
 
-        mModel.getElements().forEach(elem => {
-            drawIcon(ctx, elem);
-        })
+        let elements = mModel.getElements()
+        elements.filter(e => e.parentId)
+            .forEach(elem => drawParentConnector(ctx, elem, mModel.getElement(elem.parentId)))
+        elements.forEach(elem => drawIcon(ctx, elem))
 
         ctx.restore();
     }
@@ -231,7 +239,7 @@ function VemViewController() {
         ctx.lineWidth = 2;
         ctx.strokeStyle = 'black';
         ctx.beginPath();
-        ctx.rect(0, 0, 64, 64);
+        ctx.rect(0, 0, ICON_SIZE, ICON_SIZE);
         ctx.stroke();
 
         ctx.shadowColor = "black";
@@ -239,14 +247,14 @@ function VemViewController() {
         ctx.shadowOffsetY = 1;
         ctx.shadowBlur = 3;
         ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, 64, 64);
+        ctx.fillRect(0, 0, ICON_SIZE, ICON_SIZE);
         ctx.restore();
 
-        let miniScale = 56 / Math.max(boundingBox.height, boundingBox.width);
+        let miniScale = (ICON_SIZE - 10) / Math.max(boundingBox.height, boundingBox.width);
         ctx.beginPath();
-        ctx.rect(0, 0, 64, 64);
+        ctx.rect(0, 0, ICON_SIZE, ICON_SIZE);
         ctx.clip();
-        ctx.translate((64 - (boundingBox.width * miniScale)) / 2, (64 - (boundingBox.height * miniScale)) / 2)
+        ctx.translate((ICON_SIZE - (boundingBox.width * miniScale)) / 2, (ICON_SIZE - (boundingBox.height * miniScale)) / 2)
         ctx.scale(miniScale, miniScale);
 
         elem.strokes.forEach(stroke => {
@@ -266,6 +274,40 @@ function VemViewController() {
         ctx.restore();
     }
 
+    function drawParentConnector(ctx, element, parent) {
+        ctx.save();
+
+        let elementConnectorPoint = { x: element.vemX + ICON_SIZE / 2, y: element.vemY };
+        let parentConnectorPoint = { x: parent.vemX + ICON_SIZE / 2, y: parent.vemY + ICON_SIZE };
+
+        let path;
+        if (parentConnectorPoint.y > elementConnectorPoint.y) {
+            path = [
+                [elementConnectorPoint.x, elementConnectorPoint.y],
+                [elementConnectorPoint.x, elementConnectorPoint.y - 5],
+                [(parentConnectorPoint.x + elementConnectorPoint.x) / 2, elementConnectorPoint.y - 5],
+                [(parentConnectorPoint.x + elementConnectorPoint.x) / 2, parentConnectorPoint.y + 5],
+                [parentConnectorPoint.x, parentConnectorPoint.y + 5],
+                [parentConnectorPoint.x, parentConnectorPoint.y],
+            ]
+        } else {
+            path = [
+                [elementConnectorPoint.x, elementConnectorPoint.y],
+                [elementConnectorPoint.x, (elementConnectorPoint.y + parentConnectorPoint.y) / 2],
+                [parentConnectorPoint.x, (elementConnectorPoint.y + parentConnectorPoint.y) / 2],
+                [parentConnectorPoint.x, parentConnectorPoint.y],
+            ]
+        }
+
+        // draw the tails
+        ctx.moveTo(path[0][0], path[0][1]);
+        ctx.beginPath();
+        path.forEach(p => ctx.lineTo(p[0], p[1]));
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
     function drawInteraction() {
         let ctx = mInteractionCanvas.node().getContext('2d');
         ctx.clearRect(0, 0, mCanvas.attr("width"), mCanvas.attr("height"));
@@ -281,10 +323,10 @@ function VemViewController() {
                         ctx.save();
                         ctx.translate(e.vemX, e.vemY);
                         ctx.fillStyle = getCode(e.id, TARGET_MERGE);
-                        ctx.fillRect(0, 0, 64, 44);
+                        ctx.fillRect(0, 0, ICON_SIZE, ICON_SIZE * 0.75);
 
                         ctx.fillStyle = getCode(e.id, TARGET_PARENT);
-                        ctx.fillRect(0, 44, 44, 64);
+                        ctx.fillRect(0, ICON_SIZE * 0.75, ICON_SIZE, ICON_SIZE);
 
                         ctx.restore();
                     }
@@ -296,7 +338,7 @@ function VemViewController() {
                 ctx.save();
                 ctx.translate(e.vemX, e.vemY);
                 ctx.fillStyle = code;
-                ctx.fillRect(0, 0, 64, 64);
+                ctx.fillRect(0, 0, ICON_SIZE, ICON_SIZE);
                 ctx.restore();
             })
         }
@@ -319,7 +361,7 @@ function VemViewController() {
                 ctx.lineWidth = 1;
                 ctx.strokeStyle = "red";
                 ctx.beginPath();
-                ctx.rect(0, 0, 64, 64);
+                ctx.rect(0, 0, ICON_SIZE, ICON_SIZE);
                 ctx.stroke();
                 ctx.restore();
             })
@@ -384,5 +426,6 @@ function VemViewController() {
         setSelectionCallback: (func) => mSelectionCallback = func,
         setMoveElementCallback: (func) => mMoveElementCallback = func,
         setMergeElementCallback: (func) => mMergeElementCallback = func,
+        setParentElementCallback: (func) => mParentElementCallback = func,
     }
 }

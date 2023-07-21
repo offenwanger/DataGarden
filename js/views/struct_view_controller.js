@@ -154,6 +154,7 @@ function StructViewController() {
     }
 
     function drawIcon(ctx, group) {
+        ctx.save();
         let boundingBox = PathUtil.getBoundingBox(group.elements.map(e => e.strokes.map(s => PathUtil.translate(s.path, e)).flat()));
         if (!boundingBox) return;
         ctx.translate(group.structX, group.structY);
@@ -173,6 +174,7 @@ function StructViewController() {
         ctx.fillRect(0, 0, 128, 128);
         ctx.restore();
 
+        ctx.save();
         let miniScale = 110 / Math.max(boundingBox.height, boundingBox.width);
         ctx.beginPath();
         ctx.rect(0, 0, 128, 128);
@@ -198,6 +200,7 @@ function StructViewController() {
             ctx.restore();
         });
 
+        ctx.restore();
         ctx.restore();
     }
 

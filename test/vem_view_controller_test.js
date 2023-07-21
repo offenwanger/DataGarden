@@ -61,6 +61,33 @@ describe('Test Main - Integration Test', function () {
             assert.equal(DataUtil.imageDataToHex(ctx.getImageData(109, 73, 1, 1)), "#ffffff");
             assert.equal(DataUtil.imageDataToHex(ctx.getImageData(104, 12, 1, 1)), "#ffffff");
         });
+
+        it('should parent elements', function () {
+            utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 40, y: 80 },])
+            utility.drawStroke(integrationEnv, [{ x: 60, y: 20 }, { x: 60, y: 40 }, { x: 60, y: 60 }, { x: 60, y: 80 },])
+            let model = integrationEnv.instances.ModelController.getModel();
+            assert.equal(model.getElements().length, 2);
+            assert.equal(model.getGroups().length, 1);
+
+            utility.drag(integrationEnv, "#vem-view", [{ x: 20, y: 20 }, { x: 40, y: 20 }, { x: 60, y: 60 }, { x: 100, y: 115 },])
+
+            model = integrationEnv.instances.ModelController.getModel();
+            assert.equal(model.getElements().length, 2);
+            assert.equal(model.getGroups().length, 2);
+            let parented = model.getElements().filter(e => e.parentId);
+            let notParented = model.getElements().filter(e => !e.parentId);
+            assert.equal(parented.length, 1);
+            assert.equal(notParented.length, 1);
+            assert.equal(parented[0].parentId, notParented[0].id);
+            assert.equal(parented[0].vemY > notParented[0].vemY, true);
+
+            parented = model.getGroups().filter(g => g.parentId);
+            notParented = model.getGroups().filter(g => !g.parentId);
+            assert.equal(parented.length, 1);
+            assert.equal(notParented.length, 1);
+            assert.equal(parented[0].parentId, notParented[0].id);
+            assert.equal(parented[0].structY > notParented[0].structY, true);
+        });
     });
 
     describe('zoom tests', function () {

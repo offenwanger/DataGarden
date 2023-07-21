@@ -40,6 +40,11 @@ document.addEventListener('DOMContentLoaded', function (e) {
         modelUpdate();
     })
 
+    mVemViewController.setParentElementCallback((selection, parentElementId) => {
+        Fairies.elementParentFairy(selection, parentElementId, mModelController);
+        modelUpdate();
+    })
+
     mVemViewController.setSelectionCallback((selection) => {
         // selections could be strokes or elements. 
         // Update the stroke and Struct selections

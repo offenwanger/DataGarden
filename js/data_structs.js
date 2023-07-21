@@ -23,7 +23,7 @@ let Data = function () {
 
         this.vemX = null;
         this.vemY = null;
-        this.parent = null;
+        this.parentId = null;
 
         this.clone = function () {
             let clone = new Element();
@@ -32,7 +32,7 @@ let Data = function () {
             clone.id = this.id;
             clone.vemX = this.vemX;
             clone.vemY = this.vemY;
-            clone.parent = this.parent;
+            clone.parentId = this.parentId;
             clone.creationTime = this.creationTime;
             clone.strokes = this.strokes.map(s => s.clone());
             return clone;
@@ -46,7 +46,7 @@ let Data = function () {
 
         this.structX = null;
         this.structY = null;
-        this.parent = null;
+        this.parentId = null;
 
         this.orientationBinding = null;
         this.formBinding = null;
@@ -58,7 +58,7 @@ let Data = function () {
             clone.id = this.id;
             clone.structX = this.structX;
             clone.structY = this.structY;
-            clone.parent = this.parent;
+            clone.parentId = this.parentId;
             clone.orientationBinding = this.orientationBinding;
             clone.formBinding = this.formBinding;
             clone.cardinatlityBinding = this.cardinatlityBinding;
