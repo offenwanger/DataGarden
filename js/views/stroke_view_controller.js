@@ -68,6 +68,7 @@ function StrokeViewController() {
             return true;
         } else if (toolState == Buttons.BRUSH_BUTTON) {
             mInteracting = true;
+            mBrushOptions.currentStroke = [screenToModelCoords(screenCoords)];
             return true;
         } else if (toolState == Buttons.SELECTION_BUTTON) {
             // are we clicking outside our selection
