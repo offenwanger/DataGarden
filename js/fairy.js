@@ -5,9 +5,11 @@ let Fairies = function () {
 
         // Right now just make the dumb decision to create a new element every time.
         let boundingBox = DataUtil.getBoundingBox(stroke);
-
-        let elem = new Data.Element(boundingBox.x, boundingBox.y);
         stroke.path = PathUtil.translate(stroke.path, { x: -boundingBox.x, y: -boundingBox.y })
+
+        let elem = new Data.Element();
+        elem.x = boundingBox.x;
+        elem.y = boundingBox.y; s
         elem.strokes.push(stroke);
 
         newElementFairy(elem, modelController);
@@ -80,70 +82,131 @@ let Fairies = function () {
         let strokes = model.getStrokesInLocalCoords(elementIds.concat([mergeTargetId]));
         let bb = DataUtil.getBoundingBox(strokes);
         let mergeTarget = model.getElement(mergeTargetId);
-        let mergeTargetGroup = model.getGroupForElement(mergeTargetId);
+        let children = elementIds
+            .map(elementId => model.getElementChildren(elementId))
+            .flat()
+            .filter(d => !elementIds.includes(d.id));
+        // this is used later for group correction
+        let decendants = DataUtil.unique(elementIds
+            .map(elementId => model.getElementDecendants(elementId))
+            .flat()
+            .filter(e => !elementIds.includes(e.id)));
 
-        let elementGroupIds = elementIds.map(eId => model.getGroupForElement(eId).id)
-            .filter((id, index, array) => array.indexOf(id) === index);
-
+        // update the target data and strokes
         mergeTarget.x = bb.x;
         mergeTarget.y = bb.y;
         strokes.forEach(stroke => {
             stroke.path = PathUtil.translate(stroke.path, { x: -bb.x, y: -bb.y })
         })
         mergeTarget.strokes = strokes;
+        modelController.updateElement(mergeTarget);
 
+        // remove the merged elements
         elementIds.forEach(elementId => {
             modelController.removeElement(elementId);
         });
-        modelController.removeElement(mergeTargetId);
-        modelController.addElement(mergeTargetGroup.id, mergeTarget);
 
-        model = modelController.getModel();
-        elementGroupIds.forEach(groupId => {
-            if (model.getGroup(groupId).elements.length == 0) {
-                modelController.removeGroup(groupId);
+        // update the merged elements childrens parent pointers
+        children.forEach(element => {
+            if (elementIds.includes(element.parentId)) {
+                element.parentId = mergeTargetId;
+                modelController.updateElement(element);
             }
-        })
+        });
+
+        groupCorrectionFairy(decendants, modelController)
     }
 
     function elementParentFairy(elementIds, parentTargetId, modelController) {
         let model = modelController.getModel();
         let elements = model.getElements().filter(e => elementIds.includes(e.id));
-        let parentGroup = model.getGroupForElement(parentTargetId);
-        let childGroups = model.getGroups().filter(g => g.parentId == parentGroup.id);
+        let decendants = DataUtil.unique(elementIds.map(elementId => model.getElementDecendants(elementId)).flat());
 
-        let elementGroupIds = elementIds.map(eId => model.getGroupForElement(eId).id)
-            .filter((id, index, array) => array.indexOf(id) === index);
-
+        let skips = [];
         elements.forEach(element => {
+            // first add a skip for loops
+            let curr = parentTargetId;
+            // this is for a check to prevent infinite loops
+            let touchedIds = [];
+            while (curr != null) {
+                let currElement = model.getElement(curr);
+                if (!currElement) (console.error("invalid state, parent element not found", curr))
+                if (currElement.parentId == element.id) {
+                    // Loop found. 
+                    // This can only happen when a parent element is parented lower in the tree, we therefore
+                    // don't need to worry about additional elements being affected. 
+                    currElement.parentId = element.parentId;
+                    currElement.vemX = null;
+                    currElement.vemY = null;
+                    elementVemPositionFairy(currElement, model);
+                    skips.push(currElement);
+                    break;
+                } else {
+                    curr = currElement.parentId;
+                    if (touchedIds.includes(curr)) { console.error("Bad state, loop in parenting"); break; }
+                    touchedIds.push(curr);
+                }
+            }
+
+            // then update the element data
             element.parentId = parentTargetId;
             element.vemX = null;
             element.vemY = null;
             elementVemPositionFairy(element, model);
-
-            let group = model.getGroupForElement(element.id);
-            modelController.removeElement(element.id);
-            if (childGroups.some(g => g.id == group.id)) {
-                // the group is fine and doesn't need to change. 
-            } else {
-                // We need a new group. 
-                if (childGroups.length == 0) {
-                    group = new Data.Group();
-                    group.parentId = parentGroup.id;
-                    childGroups.push(group);
-                    newGroupFairy(group, modelController);
-                } else {
-                    // just be dump and pick the first one. 
-                    group = childGroups[0];
-                }
-            }
-            modelController.addElement(group.id, element);
         });
 
+        elements.concat(skips).forEach(e => modelController.updateElement(e));
+
+        groupCorrectionFairy(decendants, modelController)
+    }
+
+    function groupCorrectionFairy(affectedElements, modelController) {
+        // sort the elements by their level and do them top to bottom
+        let levels = [];
+        let model = modelController.getModel();
+        affectedElements.forEach(element => {
+            let level = DataUtil.getElementLevel(element, model);
+            if (!levels[level]) levels[level] = [];
+            levels[level].push(element);
+        })
+        levels.forEach((elements, index) => elements.forEach(element => {
+            let model = modelController.getModel();
+            if (!ValUtil.isGroupValid(element, modelController.getModel())) {
+                let group;
+                if (!element.parentId) {
+                    group = model.getGroups().find(g => !g.parentId);
+                    if (!group) {
+                        group = new Data.Group();
+                        newGroupFairy(group, modelController);
+                    }
+                } else {
+                    let parentGroup = model.getGroups().find(g => g.elements.some(e => e.id == element.parentId));
+                    if (!parentGroup) { console.error("Cannot find parent group invalid state", element); return; }
+
+                    // first see if this elements parents has a group with unaffected children in it. 
+                    group = model.getGroups().find(g => g.elements.filter(e => !affectedElements.some(ae => ae.id == e.id))
+                        .some(e => e.parentId == element.parentId));
+                    // if not, see if the parent's group has any child groups. 
+                    if (!group) {
+                        group = model.getGroups().find(g => g.parentId == parentGroup.id);
+                    }
+                    // if not, make a new group. 
+                    if (!group) {
+                        group = new Data.Group();
+                        group.parentId = parentGroup.id;
+                        newGroupFairy(group, modelController);
+                    }
+                }
+
+                modelController.removeElement(element.id);
+                modelController.addElement(group.id, element);
+            };
+        }))
+
         model = modelController.getModel();
-        elementGroupIds.forEach(groupId => {
-            if (model.getGroup(groupId).elements.length == 0) {
-                modelController.removeGroup(groupId);
+        model.getGroups().forEach(group => {
+            if (group.elements.length == 0) {
+                modelController.removeGroup(group.id);
             }
         })
     }

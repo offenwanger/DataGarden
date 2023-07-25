@@ -29,7 +29,7 @@ describe('Test Data Model', function () {
 
     describe('clone test', function () {
         it('should clone and be the same but a different object', function () {
-            let dataModel = utility.makeModel();
+            let dataModel = utility.makeModel(0);
             assert.exists(dataModel);
 
             let clone = dataModel.clone();
@@ -41,13 +41,13 @@ describe('Test Data Model', function () {
 
     describe('get test', function () {
         it('should get element by id', function () {
-            let dataModel = utility.makeModel();
+            let dataModel = utility.makeModel(0);
             let elem = dataModel.getGroups()[0].elements[1];
             assert.equal(elem, dataModel.getElement(elem.id));
         });
 
         it('should get element by strokeId', function () {
-            let dataModel = utility.makeModel();
+            let dataModel = utility.makeModel(0);
             let elem = dataModel.getGroups()[0].elements[1];
             assert.equal(elem, dataModel.getElementForStroke(elem.strokes[0].id));
             assert.equal(elem, dataModel.getElementForStroke(elem.strokes[1].id));
@@ -56,23 +56,32 @@ describe('Test Data Model', function () {
         });
 
         it('should get group by id', function () {
-            let dataModel = utility.makeModel();
+            let dataModel = utility.makeModel(0);
             let group = dataModel.getGroups()[0];
             assert.equal(group, dataModel.getGroup(group.id));
         });
 
         it('should get group by elementId', function () {
-            let dataModel = utility.makeModel();
+            let dataModel = utility.makeModel(0);
             let group = dataModel.getGroups()[0];
             assert.equal(group, dataModel.getGroupForElement(group.elements[0].id));
         });
 
         it('should return null for not found elements', function () {
-            let dataModel = utility.makeModel();
+            let dataModel = utility.makeModel(0);
             assert.equal(null, dataModel.getGroup(IdUtil.getUniqueId(Data.Group)));
             assert.equal(null, dataModel.getElement(IdUtil.getUniqueId(Data.Element)));
             assert.equal(null, dataModel.getElementForStroke(IdUtil.getUniqueId(Data.Stroke)));
         });
 
+    })
+
+    describe("get children tests", function () {
+        it('should get all decdendants and the item', function () {
+            let dataModel = utility.makeModel(1);
+            assert.equal(dataModel.getElements().length, 9)
+            expect(dataModel.getElements().map(e => dataModel.getElementDecendants(e.id)).map(arr => arr.length).sort())
+                .to.eql([1, 1, 1, 1, 1, 1, 2, 2, 7]);
+        });
     })
 });

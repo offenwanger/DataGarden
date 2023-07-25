@@ -224,7 +224,11 @@ function VemViewController() {
 
         let elements = mModel.getElements()
         elements.filter(e => e.parentId)
-            .forEach(elem => drawParentConnector(ctx, elem, mModel.getElement(elem.parentId)))
+            .forEach(elem => {
+                let parent = mModel.getElement(elem.parentId);
+                if (!parent) { console.error("Bad state, parent not found! ", elem.parentId); return; }
+                drawParentConnector(ctx, elem, parent)
+            })
         elements.forEach(elem => drawIcon(ctx, elem))
 
         ctx.restore();

@@ -23,12 +23,34 @@ let ValUtil = function () {
     }
 
     function isCoord(v) {
-        return isNum(v.x) && isNum(v.y);
+        return v && isNum(v.x) && isNum(v.y);
 
     }
 
     function isNum(num) {
         return typeof num == 'number' && !isNaN(num);
+    }
+
+    function isType(obj, type) {
+        return obj instanceof type;
+    }
+
+    function isGroupValid(element, model) {
+        if (!ValUtil.isType(element, Data.Element)) { console.error("invalid element", element); return; }
+        let group = model.getGroupForElement(element.id);
+        if (!group) {
+            return false;
+        } else {
+            if (DataUtil.getGroupLevel(group, model) != DataUtil.getElementLevel(element, model)) {
+                return false
+            } else if (element.parentId) {
+                let parentGroup = model.getGroupForElement(element.parentId)
+                if (!parentGroup) { console.error("Invalid state, can't get group for parent", element.parentId); return false; }
+                return group.parentId == parentGroup.id;
+            } else {
+                return true;
+            }
+        }
     }
 
     function outOfBounds(point, box) {
@@ -46,6 +68,8 @@ let ValUtil = function () {
         isCoord,
         isNum,
         isPath,
+        isType,
+        isGroupValid,
         checkConvertionState,
         outOfBounds,
     }
@@ -196,11 +220,53 @@ let DataUtil = function () {
         return { x, y, width: xMax - x, height: yMax - y, }
     }
 
+    function getElementLevel(element, model) {
+        if (!ValUtil.isType(element, Data.Element)) { console.error("invalid element", element); return -1; }
+
+        let level = 0;
+        let touched = [element.id];
+        let curr = element;
+        while (curr.parentId) {
+            let parent = model.getElement(curr.parentId)
+            if (!parent) { console.error("Invalid state, parent not found", curr.parentId); return -1; };
+            level++;
+            curr = parent;
+            if (touched.includes(curr.id)) { console.error("Invalid State, loop", touched); return -1; }
+            touched.push(curr.id);
+        }
+        return level;
+    }
+
+    function getGroupLevel(group, model) {
+        if (!ValUtil.isType(group, Data.Group)) { console.error("invalid group", group); return -1; }
+
+        let level = 0;
+        let touched = [group.id];
+        let curr = group;
+        while (curr.parentId) {
+            let parent = model.getGroup(curr.parentId)
+            if (!parent) { console.error("Invalid state, parent not found", curr.parentId); return -1; };
+            level++;
+            curr = parent;
+            if (touched.includes(curr.id)) { console.error("Invalid State, loop", touched); return -1; }
+            touched.push(curr.id);
+        }
+        return level;
+    }
+
+    function unique(arr) {
+        return [...new Map(arr.map(item =>
+            [item.id, item])).values()];
+    }
+
     return {
         numToColor,
         rgbToHex,
         imageDataToHex,
         getBoundingBox,
+        getElementLevel,
+        getGroupLevel,
+        unique,
     }
 }();
 

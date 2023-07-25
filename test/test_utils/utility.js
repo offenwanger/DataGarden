@@ -15,20 +15,49 @@ function deepEquals(original, obj) {
     }
 }
 
-function makeModel() {
+function makeModel(version = 0) {
     let dataModel = new DataModel();
     dataModel.getGroups().push(new Data.Group());
-    dataModel.getGroups()[0].elements.push(new Data.Element(10, 10, 20, 20));
+    dataModel.getGroups()[0].elements.push(new Data.Element(10, 10));
     dataModel.getGroups()[0].elements[0].strokes.push(new Data.Stroke([{ x: 5, y: 5 }, { x: 10, y: 10 }, { x: 15, y: 5 }], 10, "#000000FF"));
     dataModel.getGroups()[0].elements[0].strokes.push(new Data.Stroke([{ x: 5, y: 15 }, { x: 10, y: 10 }, { x: 15, y: 10 }], 10, "#000000FF"));
 
-    dataModel.getGroups()[0].elements.push(new Data.Element(30, 30, 20, 20));
+    dataModel.getGroups()[0].elements.push(new Data.Element(30, 30));
     dataModel.getGroups()[0].elements[1].strokes.push(new Data.Stroke([{ x: 5, y: 5 }, { x: 10, y: 10 }, { x: 15, y: 10 }], 10, "#000000FF"));
     dataModel.getGroups()[0].elements[1].strokes.push(new Data.Stroke([{ x: 5, y: 15 }, { x: 10, y: 10 }, { x: 15, y: 5 }], 10, "#000000FF"));
 
     dataModel.getGroups().push(new Data.Group());
-    dataModel.getGroups()[1].elements.push(new Data.Element(-10, -10, 40, 40));
+    dataModel.getGroups()[1].elements.push(new Data.Element(-10, -10));
     dataModel.getGroups()[1].elements[0].strokes.push(new Data.Stroke([{ x: 5, y: 5 }, { x: 35, y: 35 }], 10, "#000000FF"));
+
+    if (version > 0) {
+        dataModel.getGroups().push(new Data.Group());
+        dataModel.getGroups()[2].parentId = dataModel.getGroups()[1].id;
+        dataModel.getGroups()[2].elements.push(new Data.Element(20, 20));
+        dataModel.getGroups()[2].elements.push(new Data.Element(40, 40));
+        dataModel.getGroups()[2].elements[0].strokes.push(new Data.Stroke([{ x: 15, y: 105 }, { x: 15, y: 35 }], 10, "#000000FF"));
+        dataModel.getGroups()[2].elements[1].strokes.push(new Data.Stroke([{ x: 25, y: 105 }, { x: 25, y: 35 }], 10, "#000000FF"));
+        dataModel.getGroups()[2].elements[0].parentId = dataModel.getGroups()[1].elements[0].id;
+        dataModel.getGroups()[2].elements[1].parentId = dataModel.getGroups()[1].elements[0].id;
+
+        dataModel.getGroups().push(new Data.Group());
+        dataModel.getGroups()[3].parentId = dataModel.getGroups()[1].id;
+        dataModel.getGroups()[3].elements.push(new Data.Element(50, 50));
+        dataModel.getGroups()[3].elements.push(new Data.Element(80, 80));
+        dataModel.getGroups()[3].elements[0].strokes.push(new Data.Stroke([{ x: 35, y: 105 }, { x: 35, y: 35 }], 10, "#000000FF"));
+        dataModel.getGroups()[3].elements[1].strokes.push(new Data.Stroke([{ x: 65, y: 105 }, { x: 65, y: 35 }], 10, "#000000FF"));
+        dataModel.getGroups()[3].elements[0].parentId = dataModel.getGroups()[1].elements[0].id;
+        dataModel.getGroups()[3].elements[1].parentId = dataModel.getGroups()[1].elements[0].id;
+
+        dataModel.getGroups().push(new Data.Group());
+        dataModel.getGroups()[4].parentId = dataModel.getGroups()[3].id;
+        dataModel.getGroups()[4].elements.push(new Data.Element(60, 60));
+        dataModel.getGroups()[4].elements.push(new Data.Element(70, 70));
+        dataModel.getGroups()[4].elements[0].strokes.push(new Data.Stroke([{ x: 45, y: 105 }, { x: 45, y: 35 }], 10, "#000000FF"));
+        dataModel.getGroups()[4].elements[1].strokes.push(new Data.Stroke([{ x: 55, y: 105 }, { x: 55, y: 35 }], 10, "#000000FF"));
+        dataModel.getGroups()[4].elements[0].parentId = dataModel.getGroups()[3].elements[0].id;
+        dataModel.getGroups()[4].elements[1].parentId = dataModel.getGroups()[3].elements[1].id;
+    }
 
     return dataModel;
 }

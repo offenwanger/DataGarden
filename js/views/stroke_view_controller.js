@@ -117,8 +117,8 @@ function StrokeViewController() {
             } else {
                 if (!ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
                     let targetId = getInteractionTarget(screenCoords);
-                    let element = mModel.getElementForStroke(targetId);
-                    if (element) {
+                    if (targetId) {
+                        let element = mModel.getElementForStroke(targetId);
                         let elements = mModel.getElementDecendants(element.id);
                         mHighlightBoundingBoxes = [DataUtil.getBoundingBox(elements)];
                         mHighlightCallback(elements.map(e => e.id));
