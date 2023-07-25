@@ -14,11 +14,11 @@ let Data = function () {
         };
     }
 
-    function Element(x, y) {
+    function Element() {
         this.id = IdUtil.getUniqueId(Element);
-        this.x = x;
-        this.y = y;
         this.creationTime = Date.now();
+        this.x = null;
+        this.y = null;
         this.strokes = [];
 
         this.vemX = null;
@@ -36,6 +36,17 @@ let Data = function () {
             clone.creationTime = this.creationTime;
             clone.strokes = this.strokes.map(s => s.clone());
             return clone;
+        };
+
+        this.update = function (element) {
+            this.x = element.x;
+            this.y = element.y;
+            this.id = element.id;
+            this.vemX = element.vemX;
+            this.vemY = element.vemY;
+            this.parentId = element.parentId;
+            this.creationTime = element.creationTime;
+            this.strokes = element.strokes.map(s => s.clone());
         };
     }
 
