@@ -63,15 +63,19 @@ function DataModel() {
         return getGroups().map(g => g.elements).flat();
     }
 
+    function getElementChildren(elementId) {
+        return getElements().filter(e => e.parentId == elementId);
+    }
+
     function getElementDecendants(elementId) {
         if (!IdUtil.isType(elementId, Data.Element)) { console.error("Not an element id! " + elementId); return null; };
         let elements = [];
-        let elementQueue = [getElement(elementId)];
-        let allElements = getElements();
+        let elementQueue = [this.getElement(elementId)];
+        let allElements = this.getElements();
         while (elementQueue.length > 0) {
             let elem = elementQueue.shift();
             elements.push(elem);
-            elementQueue.push(...allElements.filter(e => e.parent == elem.id));
+            elementQueue.push(...allElements.filter(e => e.parentId == elem.id));
         }
         return elements;
     }
@@ -98,6 +102,7 @@ function DataModel() {
     this.getElementForStroke = getElementForStroke;
     this.getElements = getElements;
     this.getElementDecendants = getElementDecendants;
+    this.getElementChildren = getElementChildren;
     this.getGroup = getGroup;
     this.getGroupForElement = getGroupForElement;
     this.getGroups = getGroups;

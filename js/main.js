@@ -30,7 +30,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
     mVemViewController.setMoveElementCallback((selection, translation) => {
         let elements = mModelController.getModel().getElements().filter(e => selection.includes(e.id))
         elements.forEach(element => {
-            mModelController.updateElementVemPosition(element.id, element.vemX + translation.x, element.vemY + translation.y);
+            element.vemX = element.vemX + translation.x;
+            element.vemY = element.vemY + translation.y;
+            mModelController.updateElement(element);
         })
         modelUpdate();
     })
