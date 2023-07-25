@@ -9,7 +9,7 @@ let Fairies = function () {
 
         let elem = new Data.Element();
         elem.x = boundingBox.x;
-        elem.y = boundingBox.y; s
+        elem.y = boundingBox.y;
         elem.strokes.push(stroke);
 
         newElementFairy(elem, modelController);
