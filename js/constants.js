@@ -8,6 +8,7 @@ const Buttons = {
 const Size = {
     ICON_LARGE: 128,
     ICON_MEDIUM: 64,
+    NODE_TINY: 16,
 }
 
 const DimentionTypes = {

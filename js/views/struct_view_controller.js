@@ -171,112 +171,154 @@ function StructViewController() {
     }
 
     function drawIcon(ctx, group) {
-        ctx.save();
-        let boundingBox = PathUtil.getBoundingBox(group.elements.map(e => e.strokes.map(s => PathUtil.translate(s.path, e)).flat()));
-        if (!boundingBox) return;
-        ctx.translate(group.structX, group.structY);
+        ctx.save(); {
+            let boundingBox = PathUtil.getBoundingBox(group.elements.map(e => e.strokes.map(s => PathUtil.translate(s.path, e)).flat()));
+            if (!boundingBox) return;
+            ctx.translate(group.structX, group.structY);
 
-        ctx.save();
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.rect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE);
-        ctx.stroke();
-
-        ctx.shadowColor = "black";
-        ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 1;
-        ctx.shadowBlur = 3;
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE);
-        ctx.restore();
-
-        ctx.save();
-        let miniScale = (Size.ICON_LARGE - 10) / Math.max(boundingBox.height, boundingBox.width);
-        ctx.beginPath();
-        ctx.rect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE);
-        ctx.clip();
-        ctx.translate((Size.ICON_LARGE - (boundingBox.width * miniScale)) / 2, (Size.ICON_LARGE - (boundingBox.height * miniScale)) / 2)
-        ctx.scale(miniScale, miniScale);
-
-        group.elements.forEach(elem => {
-            ctx.save();
-            let offset = MathUtil.subtract(elem, boundingBox);
-            ctx.translate(offset.x, offset.y)
-
-            elem.strokes.forEach(stroke => {
-                ctx.save();
-                ctx.strokeStyle = stroke.color;
-                ctx.lineWidth = stroke.size;
+            ctx.save(); {
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.moveTo(stroke.path[0].x - 1, stroke.path[0].y - 1);
-                stroke.path.forEach(p => ctx.lineTo(p.x, p.y));
+                ctx.rect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE);
                 ctx.stroke();
-                ctx.restore();
-            });
-            ctx.restore();
-        });
 
-        ctx.restore();
-        ctx.restore();
+                ctx.shadowColor = "black";
+                ctx.shadowOffsetX = 1;
+                ctx.shadowOffsetY = 1;
+                ctx.shadowBlur = 3;
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE);
+            } ctx.restore();
+
+            ctx.save(); {
+                let miniScale = (Size.ICON_LARGE - 10) / Math.max(boundingBox.height, boundingBox.width);
+                ctx.beginPath();
+                ctx.rect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE);
+                ctx.clip();
+                ctx.translate((Size.ICON_LARGE - (boundingBox.width * miniScale)) / 2, (Size.ICON_LARGE - (boundingBox.height * miniScale)) / 2)
+                ctx.scale(miniScale, miniScale);
+
+                group.elements.forEach(elem => {
+                    ctx.save();
+                    let offset = MathUtil.subtract(elem, boundingBox);
+                    ctx.translate(offset.x, offset.y)
+
+                    elem.strokes.forEach(stroke => {
+                        ctx.save();
+                        ctx.strokeStyle = stroke.color;
+                        ctx.lineWidth = stroke.size;
+                        ctx.beginPath();
+                        ctx.moveTo(stroke.path[0].x - 1, stroke.path[0].y - 1);
+                        stroke.path.forEach(p => ctx.lineTo(p.x, p.y));
+                        ctx.stroke();
+                        ctx.restore();
+                    });
+                    ctx.restore();
+                });
+
+            } ctx.restore();
+
+            ctx.save(); {
+                ctx.strokeStyle = 'black';
+                ctx.fillStyle = "white";
+                ctx.lineWidth = 1;
+                if (group.parentId) {
+                    ctx.beginPath();
+                    ctx.arc(Size.ICON_LARGE / 2, 0, Size.NODE_TINY / 2, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+                ctx.beginPath();
+                ctx.arc(Size.ICON_LARGE, Size.ICON_LARGE * 0.25, Size.NODE_TINY / 2, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(Size.ICON_LARGE, Size.ICON_LARGE * 0.5, Size.NODE_TINY / 2, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(Size.ICON_LARGE, Size.ICON_LARGE * 0.75, Size.NODE_TINY / 2, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = "black";
+                let fontSize = (Size.NODE_TINY * 0.75);
+                ctx.font = fontSize + "px Verdana";
+                let horizontalTextOffset = -fontSize * 0.4;
+                let verticalTextOffset = fontSize / 2 - 1;
+                if (group.parentId) ctx.fillText("P", Size.ICON_LARGE / 2 + horizontalTextOffset, verticalTextOffset);
+                ctx.fillText("O", Size.ICON_LARGE + horizontalTextOffset, Size.ICON_LARGE * 0.25 + verticalTextOffset);
+                ctx.fillText("F", Size.ICON_LARGE + horizontalTextOffset, Size.ICON_LARGE * 0.5 + verticalTextOffset);
+                ctx.fillText("N", Size.ICON_LARGE + horizontalTextOffset, Size.ICON_LARGE * 0.75 + verticalTextOffset);
+
+            } ctx.restore();
+
+        } ctx.restore();
     }
 
     function drawParentConnector(ctx, group, parent) {
-        ctx.save();
+        ctx.save(); {
+            let groupConnectorPoint = { x: group.structX + Size.ICON_LARGE / 2, y: group.structY };
+            let parentConnectorPoint = { x: parent.structX + Size.ICON_LARGE / 2, y: parent.structY + Size.ICON_LARGE };
 
-        let groupConnectorPoint = { x: group.structX + Size.ICON_LARGE / 2, y: group.structY };
-        let parentConnectorPoint = { x: parent.structX + Size.ICON_LARGE / 2, y: parent.structY + Size.ICON_LARGE };
+            let path;
+            if (parentConnectorPoint.y > groupConnectorPoint.y) {
+                path = [
+                    [groupConnectorPoint.x, groupConnectorPoint.y],
+                    [groupConnectorPoint.x, groupConnectorPoint.y - 5],
+                    [(parentConnectorPoint.x + groupConnectorPoint.x) / 2, groupConnectorPoint.y - 5],
+                    [(parentConnectorPoint.x + groupConnectorPoint.x) / 2, parentConnectorPoint.y + 5],
+                    [parentConnectorPoint.x, parentConnectorPoint.y + 5],
+                    [parentConnectorPoint.x, parentConnectorPoint.y],
+                ]
+            } else {
+                path = [
+                    [groupConnectorPoint.x, groupConnectorPoint.y],
+                    [groupConnectorPoint.x, (groupConnectorPoint.y + parentConnectorPoint.y) / 2],
+                    [parentConnectorPoint.x, (groupConnectorPoint.y + parentConnectorPoint.y) / 2],
+                    [parentConnectorPoint.x, parentConnectorPoint.y],
+                ]
+            }
 
-        let path;
-        if (parentConnectorPoint.y > groupConnectorPoint.y) {
-            path = [
-                [groupConnectorPoint.x, groupConnectorPoint.y],
-                [groupConnectorPoint.x, groupConnectorPoint.y - 5],
-                [(parentConnectorPoint.x + groupConnectorPoint.x) / 2, groupConnectorPoint.y - 5],
-                [(parentConnectorPoint.x + groupConnectorPoint.x) / 2, parentConnectorPoint.y + 5],
-                [parentConnectorPoint.x, parentConnectorPoint.y + 5],
-                [parentConnectorPoint.x, parentConnectorPoint.y],
-            ]
-        } else {
-            path = [
-                [groupConnectorPoint.x, groupConnectorPoint.y],
-                [groupConnectorPoint.x, (groupConnectorPoint.y + parentConnectorPoint.y) / 2],
-                [parentConnectorPoint.x, (groupConnectorPoint.y + parentConnectorPoint.y) / 2],
-                [parentConnectorPoint.x, parentConnectorPoint.y],
-            ]
-        }
+            // draw the tails
+            ctx.moveTo(path[0][0], path[0][1]);
+            ctx.beginPath();
+            path.forEach(p => ctx.lineTo(p[0], p[1]));
+            ctx.stroke();
 
-        // draw the tails
-        ctx.moveTo(path[0][0], path[0][1]);
-        ctx.beginPath();
-        path.forEach(p => ctx.lineTo(p[0], p[1]));
-        ctx.stroke();
-
-        ctx.restore();
+        } ctx.restore();
     }
 
     function drawDimention(ctx, dimention) {
-        ctx.save();
-        ctx.translate(dimention.structX, dimention.structY);
+        ctx.save(); {
+            ctx.translate(dimention.structX, dimention.structY);
 
-        ctx.save();
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.rect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE * 0.25);
-        ctx.stroke();
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.rect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE * 0.25);
+            ctx.stroke();
 
-        ctx.shadowColor = "black";
-        ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 1;
-        ctx.shadowBlur = 3;
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE * 0.25);
-        ctx.restore();
+            ctx.save(); {
+                ctx.shadowColor = "black";
+                ctx.shadowOffsetX = 1;
+                ctx.shadowOffsetY = 1;
+                ctx.shadowBlur = 3;
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE * 0.25);
+            } ctx.restore();
 
-        // Draw the label text and stuff
+            ctx.fillStyle = "black";
+            let fontSize = Size.ICON_LARGE * 0.25 * 0.5 - 4;
+            ctx.font = fontSize + "px Verdana";
+            ctx.fillText(dimention.name, 5, fontSize + 2);
+            let dataStr = dimention.type == DimentionTypes.CONTINUOUS ? dimention.range : "[" + dimention.levels.length + "]";
+            ctx.fillText("[" + dimention.type + "] " + dataStr, 5, fontSize * 2 + 3);
 
-        ctx.restore();
+        } ctx.restore();
     }
 
     function drawInteraction() {
