@@ -96,6 +96,12 @@ document.addEventListener('DOMContentLoaded', function (e) {
         modelUpdate();
     })
 
+    mStructViewController.setLinkCallback((groupId, dimentionId, channelType) => {
+        console.error("Link!", groupId, dimentionId, channelType);
+    })
+
+
+
 
     function modelUpdate() {
         let model = mModelController.getModel();

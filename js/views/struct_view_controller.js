@@ -3,6 +3,12 @@ function StructViewController() {
     const DRAG_MOVE = "moveDrag";
     const DRAG_SELECT = "selectDrag"
 
+    const TARGET_LINK_POSITION = 'positionLinkTarget';
+    const TARGET_LINK_ORIENTATION = 'orientationLinkTarget';
+    const TARGET_LINK_FORM = 'formLinkTarget';
+    const TARGET_LINK_NUMBER = 'numberLinkTarget';
+    const TARGET_GROUP = 'groupTarget';
+    const TARGET_DIMENTION = 'dimentionTarget';
 
     let mCanvas = d3.select('#struct-view').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
@@ -16,6 +22,7 @@ function StructViewController() {
     let mSelectionCallback = () => { };
     let mDimentionCreationCallback = () => { };
     let mMoveObjectsCallback = () => { };
+    let mLinkCallback = () => { };
     let mHighlightObjectIds = null;
 
 
@@ -65,9 +72,9 @@ function StructViewController() {
 
             let target = getInteractionTarget(screenCoords);
             if (target) {
-                if (!mSelectedObjectIds || !mSelectedObjectIds.find(id => id == target)) {
+                if (!mSelectedObjectIds || !mSelectedObjectIds.find(id => id == target.id)) {
                     // item not in selection
-                    mSelectedObjectIds = [target];
+                    mSelectedObjectIds = [target.id];
                     mSelectionCallback(mSelectedObjectIds);
                 }
                 mInteraction.type = DRAG_MOVE;
@@ -119,9 +126,9 @@ function StructViewController() {
                 }
             } else {
                 if (!ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
-                    let targetId = getInteractionTarget(screenCoords);
-                    if (targetId) {
-                        mHighlightObjectIds = [targetId];
+                    let target = getInteractionTarget(screenCoords);
+                    if (target) {
+                        mHighlightObjectIds = [target.id];
                         mHighlightCallback(mHighlightObjectIds);
                     } else {
                         mHighlightObjectIds = null;
@@ -146,7 +153,18 @@ function StructViewController() {
             if (MathUtil.length(moveDiff) > 5) {
                 let dropTarget = getInteractionTarget(screenCoords);
                 if (dropTarget) {
-                    // do drop targetStuff
+                    if (mSelectedObjectIds.length == 1 && IdUtil.isType(mSelectedObjectIds[0], Data.Dimention))
+                        if (dropTarget.type == TARGET_LINK_POSITION) {
+                            mLinkCallback(dropTarget.id, mSelectedObjectIds[0], ChannelTypes.POSITION)
+                        } else if (dropTarget.type == TARGET_LINK_ORIENTATION) {
+                            mLinkCallback(dropTarget.id, mSelectedObjectIds[0], ChannelTypes.ORIENTATION)
+                        } else if (dropTarget.type == TARGET_LINK_FORM) {
+                            mLinkCallback(dropTarget.id, mSelectedObjectIds[0], ChannelTypes.FORM)
+                        } else if (dropTarget.type == TARGET_LINK_NUMBER) {
+                            mLinkCallback(dropTarget.id, mSelectedObjectIds[0], ChannelTypes.NUMBER)
+                        } else {
+                            console.error("Invalid drop target", dropTarget);
+                        }
                 } else {
                     mMoveObjectsCallback(mSelectedObjectIds, moveDiff)
                 }
@@ -155,10 +173,7 @@ function StructViewController() {
             }
         }
 
-        if (interaction && (toolState == Buttons.ZOOM_BUTTON || toolState == Buttons.PANNING_BUTTON)) {
-            drawInteraction();
-        }
-
+        drawInteraction();
         mInteraction = false;
     }
 
@@ -382,10 +397,41 @@ function StructViewController() {
         ctx.scale(mZoomTransform.k, mZoomTransform.k)
 
         if (mInteraction && mInteraction.type == DRAG_MOVE) {
+            mModel.getGroups().filter(g => !mSelectedObjectIds.includes(g.id)).forEach(g => {
+                ctx.save();
+                ctx.translate(g.structX, g.structY);
+                ctx.fillStyle = getCode(g.id, TARGET_LINK_POSITION);
+                if (g.parentId) {
+                    ctx.beginPath();
+                    ctx.arc(Size.ICON_LARGE / 2, 0, Size.NODE_TINY / 2, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+
+                ctx.fillStyle = getCode(g.id, TARGET_LINK_ORIENTATION);
+                ctx.beginPath();
+                ctx.arc(Size.ICON_LARGE, Size.ICON_LARGE * 0.25, Size.NODE_TINY / 2, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = getCode(g.id, TARGET_LINK_FORM);
+                ctx.beginPath();
+                ctx.arc(Size.ICON_LARGE, Size.ICON_LARGE * 0.5, Size.NODE_TINY / 2, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = getCode(g.id, TARGET_LINK_NUMBER);
+                ctx.beginPath();
+                ctx.arc(Size.ICON_LARGE, Size.ICON_LARGE * 0.75, Size.NODE_TINY / 2, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.restore();
+            })
 
         } else {
             mModel.getGroups().forEach(g => {
-                let code = getCode(g.id);
+                let code = getCode(g.id, TARGET_GROUP);
                 ctx.save();
                 ctx.translate(g.structX, g.structY);
                 ctx.fillStyle = code;
@@ -394,7 +440,7 @@ function StructViewController() {
             })
 
             mModel.getDimentions().forEach(d => {
-                let code = getCode(d.id);
+                let code = getCode(d.id, TARGET_DIMENTION);
                 ctx.save();
                 ctx.translate(d.structX, d.structY);
                 ctx.fillStyle = code;
@@ -465,12 +511,12 @@ function StructViewController() {
         }
     }
 
-    function getCode(itemId) {
-        if (mReverseInteractionLookup[itemId]) return mReverseInteractionLookup[itemId];
+    function getCode(itemId, type) {
+        if (mReverseInteractionLookup[itemId + "_" + type]) return mReverseInteractionLookup[itemId + "_" + type];
         else {
             let code = DataUtil.numToColor(mColorIndex++);
-            mInteractionLookup[code] = itemId;
-            mReverseInteractionLookup[itemId] = code;
+            mInteractionLookup[code] = { id: itemId, type };
+            mReverseInteractionLookup[itemId + "_" + type] = code;
             return code;
         }
     }
@@ -487,5 +533,6 @@ function StructViewController() {
         setSelectionCallback: (func) => mSelectionCallback = func,
         setDimentionCreationCallback: (func) => mDimentionCreationCallback = func,
         setMoveObjectsCallback: (func) => mMoveObjectsCallback = func,
+        setLinkCallback: (func) => mLinkCallback = func,
     }
 }

@@ -11,6 +11,13 @@ const Size = {
     NODE_TINY: 16,
 }
 
+const ChannelTypes = {
+    POSITION: "position",
+    ORIENTATION: "orientation",
+    FORM: "form",
+    NUMBER: "number",
+}
+
 const DimentionTypes = {
     CATEGORICAL: "categorical",
     ORDINAL: "ordinal",
