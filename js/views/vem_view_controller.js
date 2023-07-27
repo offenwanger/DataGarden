@@ -79,8 +79,7 @@ function VemViewController() {
             return true;
         } else if (toolState == Buttons.SELECTION_BUTTON) {
             mInteraction = {
-                start: screenToModelCoords(screenCoords),
-                startTime: Date.now(),
+                start: screenToModelCoords(screenCoords)
             }
 
             let target = getInteractionTarget(screenCoords);
@@ -176,7 +175,7 @@ function VemViewController() {
                     mMoveElementCallback(mSelectedElements, moveDiff)
                 }
             } else {
-                console.log("Subselect!")
+                console.error("Subselect!")
             }
         }
 

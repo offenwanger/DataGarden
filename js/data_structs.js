@@ -78,6 +78,19 @@ let Data = function () {
             clone.elements = this.elements.map(s => s.clone());
             return clone;
         };
+
+        this.update = function (dimention) {
+            this.id = dimention.id;
+            this.structX = dimention.structX;
+            this.structY = dimention.structY;
+            this.parentId = dimention.parentId;
+            this.orientationBinding = dimention.orientationBinding;
+            this.formBinding = dimention.formBinding;
+            this.cardinatlityBinding = dimention.cardinatlityBinding;
+            this.positionBinding = dimention.positionBinding;
+            this.creationTime = dimention.creationTime;
+            this.elements = dimention.elements.map(s => s.clone());
+        };
     }
 
     function Dimention() {

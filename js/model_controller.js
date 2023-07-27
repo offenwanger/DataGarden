@@ -12,6 +12,13 @@ function ModelController() {
         mDataModel.setGroups(mDataModel.getGroups().filter(g => g.id != groupId));
     }
 
+    function updateGroup(group) {
+        if (!ValUtil.isType(group, Data.Group)) { console.error("Invalid group", group); return; }
+        let currGroup = mDataModel.getGroup(group.id);
+        if (!currGroup) { console.error("Group not found for id", group.id); return; }
+        currGroup.update(group);
+    }
+
     function addDimention(dimention) {
         if (!ValUtil.isType(dimention, Data.Dimention)) { console.error("Invalid dimention", dimention); return; }
         mDataModel.getDimentions().push(dimention);
@@ -22,11 +29,11 @@ function ModelController() {
         mDataModel.setDimentions(mDataModel.getDimentions().filter(d => d.id != dimentionId));
     }
 
-    function updateGroup(group) {
-        if (!ValUtil.isType(group, Data.Group)) { console.error("Invalid group", group); return; }
-        let currGroup = mDataModel.getElement(group.id);
-        if (!currGroup) { console.error("Group not found for id", group.id); return; }
-        currGroup.set(group);
+    function updateDimention(dimention) {
+        if (!ValUtil.isType(dimention, Data.Dimention)) { console.error("Invalid dimention", dimention); return; }
+        let currDimention = mDataModel.getDimention(dimention.id);
+        if (!currDimention) { console.error("Dimention not found for id", dimention.id); return; }
+        currDimention.update(dimention);
     }
 
     function addElement(groupId, elem) {
@@ -73,6 +80,7 @@ function ModelController() {
         updateGroup,
         addDimention,
         removeDimention,
+        updateDimention,
         addElement,
         removeElement,
         updateElement,

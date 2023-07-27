@@ -77,6 +77,25 @@ document.addEventListener('DOMContentLoaded', function (e) {
         modelUpdate();
     })
 
+    mStructViewController.setMoveObjectsCallback((objects, translation) => {
+        let model = mModelController.getModel();
+        objects.filter(i => IdUtil.isType(i, Data.Dimention))
+            .forEach(dimentionId => {
+                let dimention = model.getDimention(dimentionId);
+                dimention.structX += translation.x;
+                dimention.structY += translation.y;
+                mModelController.updateDimention(dimention);
+            })
+        objects.filter(i => IdUtil.isType(i, Data.Group))
+            .forEach(groupId => {
+                let group = model.getGroup(groupId);
+                group.structX += translation.x;
+                group.structY += translation.y;
+                mModelController.updateGroup(group);
+            })
+        modelUpdate();
+    })
+
 
     function modelUpdate() {
         let model = mModelController.getModel();
