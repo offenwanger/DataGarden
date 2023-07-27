@@ -83,25 +83,67 @@ let Data = function () {
     function Dimention() {
         this.id = IdUtil.getUniqueId(Dimention);
         this.creationTime = Date.now();
+        this.name = "Dimention";
+        this.type = DimentionTypes.CATEGORICAL;
+        this.range = [0, 1];
+        this.levels = [];
         this.structX = null;
         this.structY = null;
+
+        this.clone = function () {
+            let clone = new Dimention();
+            clone.id = this.id;
+            clone.creationTime = this.creationTime;
+            clone.name = this.name;
+            clone.type = this.type;
+            clone.structX = this.structX;
+            clone.structY = this.structY;
+            clone.range = [...this.range];
+            clone.levels = this.levels.map(c => c.clone())
+            return clone;
+        };
+
+        this.update = function (dimention) {
+            this.id = dimention.id;
+            this.creationTime = dimention.creationTime;
+            this.name = dimention.name;
+            this.type = dimention.type;
+            this.structX = dimention.structX;
+            this.structY = dimention.structY;
+            this.range = [...dimention.range];
+            this.levels = dimention.levels.map(c => c.clone())
+        };
     }
 
-    function Binding() {
-        this.id = IdUtil.getUniqueId(Binding);
+    /**  A catigorical or ordinal level.  */
+    function Level() {
+        this.id = IdUtil.getUniqueId(Level);
         this.creationTime = Date.now();
+        this.name = "Category";
+        this.order = null;
 
-        this.structX = null;
-        this.structY = null;
+        this.clone = function () {
+            let clone = new Level();
+            clone.id = this.id;
+            clone.creationTime = this.creationTime;
+            clone.name = this.name;
+            clone.order = this.order;
+            return clone;
+        };
 
-        this.dimention = null;
+        this.update = function (dimention) {
+            this.id = dimention.id;
+            this.creationTime = dimention.creationTime;
+            this.name = dimention.name;
+            this.order = dimention.order;
+        };
     }
 
     return {
         Stroke,
         Element,
         Group,
-        Binding,
         Dimention,
+        Level,
     }
 }();

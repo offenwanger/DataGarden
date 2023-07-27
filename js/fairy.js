@@ -77,6 +77,35 @@ let Fairies = function () {
             .map(g => g.structX + 140));
     }
 
+    function dimentionStructPositionFairy(dimention, model) {
+        // if the struct position is not set, set it. 
+        let boundingBox = {
+            x: ValUtil.isNum(dimention.structX) ? dimention.structX : 10,
+            y: ValUtil.isNum(dimention.structY) ? dimention.structY : 10,
+            height: Size.ICON_LARGE * 0.25 + 10,
+            width: Size.ICON_LARGE + 10
+        };
+        let boundingBoxes = model.getDimentions().map(d => {
+            return {
+                x: d.structX,
+                y: d.structY,
+                height: Size.ICON_LARGE * 0.25,
+                width: Size.ICON_LARGE
+            };
+        }).concat(model.getGroups().map(g => {
+            return {
+                x: g.structX,
+                y: g.structY,
+                height: Size.ICON_LARGE,
+                width: Size.ICON_LARGE
+            };
+        }))
+
+        let coords = DataUtil.findEmptyPlace(boundingBox, boundingBoxes);
+        dimention.structX = coords.x;
+        dimention.structY = coords.y;
+    }
+
     function elementMergeFairy(elementIds, mergeTargetId, modelController) {
         let model = modelController.getModel();
         let strokes = model.getStrokesInLocalCoords(elementIds.concat([mergeTargetId]));
@@ -215,5 +244,6 @@ let Fairies = function () {
         strokeFairy,
         elementMergeFairy,
         elementParentFairy,
+        dimentionStructPositionFairy,
     }
 }();

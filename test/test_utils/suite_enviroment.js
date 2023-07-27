@@ -13,7 +13,6 @@ let assert = chai.assert;
 let mockD3 = require("./mock_d3.js");
 
 let initialized = false;
-let timeoutCallbacks = []
 
 function init() {
     vm.runInThisContext(fs.readFileSync(__dirname + "/" + "../../js/constants.js"));
@@ -23,11 +22,6 @@ function init() {
     console.error = function (message) {
         consoleError(...arguments);
         assert.equal("No Error", "Error: " + message);
-    }
-
-    // Overwrite the setTimeout function for manual control
-    setTimeout = function (callback, delay) {
-        timeoutCallbacks.push(callback);
     }
 
     global.document = {
@@ -68,9 +62,22 @@ function getIntegrationEnviroment() {
         }
     };
 
+    let timeoutCallbacks = []
+    let event_manager = rewireJs('event_manager.js');
+    event_manager.__set__({
+        // Overwrite the setTimeout function for manual control
+        setTimeout: function (callback, delay) {
+            timeoutCallbacks.push(callback);
+            return timeoutCallbacks.length - 1;
+        },
+        clearTimeout: function (index = null) {
+            if (index || index == 0) timeoutCallbacks[index] = null;
+        }
+    })
+
     let integrationEnv = {
         d3: new mockD3(),
-        EventManager: rewireJs('event_manager.js').__get__("EventManager"),
+        EventManager: event_manager.__get__("EventManager"),
         MenuController: rewireJs('menu_controller.js').__get__("MenuController"),
         ModelController: snagConstructor(rewireJs('model_controller.js'), "ModelController"),
         Data: rewireJs('data_structs.js').__get__("Data"),
@@ -91,25 +98,24 @@ function getIntegrationEnviroment() {
     integrationEnv.documentLoad = documentLoad;
     integrationEnv.instances = instances;
 
+    integrationEnv.triggerTimeouts = function () {
+        timeoutCallbacks.forEach(callback => {
+            if (callback) callback();
+        });
+        timeoutCallbacks = [];
+    }
+
     integrationEnv.cleanup = function (done) {
+        this.triggerTimeouts();
         Object.keys(integrationEnv).forEach((key) => {
             delete global[key];
         })
-        triggerTimeouts();
         done();
     }
 
     return integrationEnv;
 }
 
-function triggerTimeouts() {
-    timeoutCallbacks.forEach(callback => {
-        callback();
-    });
-    timeoutCallbacks = [];
-}
-
 module.exports = {
     getIntegrationEnviroment,
-    triggerTimeouts
 }

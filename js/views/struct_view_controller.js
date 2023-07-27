@@ -1,7 +1,5 @@
 
 function StructViewController() {
-    const ICON_SIZE = 128;
-
     let mCanvas = d3.select('#struct-view').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
     let mInterfaceCanvas = d3.select("#struct-view").select('.canvas-container').append('canvas')
@@ -12,6 +10,7 @@ function StructViewController() {
 
     let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
+    let mDimentionCreationCallback = () => { };
     let mHighlightGroupIds = null;
 
     let mInteractionLookup = {};
@@ -125,6 +124,12 @@ function StructViewController() {
         drawInterface();
     }
 
+    function onLongPress(screenCoords, toolState) {
+        if (toolState == Buttons.SELECTION_BUTTON) {
+            mDimentionCreationCallback(screenToModelCoords(screenCoords));
+        }
+    }
+
     function highlight(ids) {
         if (!ids || (Array.isArray(ids) && ids.length == 0)) {
             mHighlightGroupIds = null;
@@ -156,6 +161,10 @@ function StructViewController() {
             drawIcon(ctx, g);
         })
 
+        mModel.getDimentions().forEach(d => {
+            drawDimention(ctx, d);
+        })
+
         ctx.restore();
 
         drawInteraction();
@@ -171,7 +180,7 @@ function StructViewController() {
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.rect(0, 0, ICON_SIZE, ICON_SIZE);
+        ctx.rect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE);
         ctx.stroke();
 
         ctx.shadowColor = "black";
@@ -179,15 +188,15 @@ function StructViewController() {
         ctx.shadowOffsetY = 1;
         ctx.shadowBlur = 3;
         ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, ICON_SIZE, ICON_SIZE);
+        ctx.fillRect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE);
         ctx.restore();
 
         ctx.save();
-        let miniScale = (ICON_SIZE - 10) / Math.max(boundingBox.height, boundingBox.width);
+        let miniScale = (Size.ICON_LARGE - 10) / Math.max(boundingBox.height, boundingBox.width);
         ctx.beginPath();
-        ctx.rect(0, 0, ICON_SIZE, ICON_SIZE);
+        ctx.rect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE);
         ctx.clip();
-        ctx.translate((ICON_SIZE - (boundingBox.width * miniScale)) / 2, (ICON_SIZE - (boundingBox.height * miniScale)) / 2)
+        ctx.translate((Size.ICON_LARGE - (boundingBox.width * miniScale)) / 2, (Size.ICON_LARGE - (boundingBox.height * miniScale)) / 2)
         ctx.scale(miniScale, miniScale);
 
         group.elements.forEach(elem => {
@@ -215,8 +224,8 @@ function StructViewController() {
     function drawParentConnector(ctx, group, parent) {
         ctx.save();
 
-        let groupConnectorPoint = { x: group.structX + ICON_SIZE / 2, y: group.structY };
-        let parentConnectorPoint = { x: parent.structX + ICON_SIZE / 2, y: parent.structY + ICON_SIZE };
+        let groupConnectorPoint = { x: group.structX + Size.ICON_LARGE / 2, y: group.structY };
+        let parentConnectorPoint = { x: parent.structX + Size.ICON_LARGE / 2, y: parent.structY + Size.ICON_LARGE };
 
         let path;
         if (parentConnectorPoint.y > groupConnectorPoint.y) {
@@ -246,6 +255,30 @@ function StructViewController() {
         ctx.restore();
     }
 
+    function drawDimention(ctx, dimention) {
+        ctx.save();
+        ctx.translate(dimention.structX, dimention.structY);
+
+        ctx.save();
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.rect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE * 0.25);
+        ctx.stroke();
+
+        ctx.shadowColor = "black";
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
+        ctx.shadowBlur = 3;
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE * 0.25);
+        ctx.restore();
+
+        // Draw the label text and stuff
+
+        ctx.restore();
+    }
+
     function drawInteraction() {
         let ctx = mInteractionCanvas.node().getContext('2d');
         ctx.clearRect(0, 0, mCanvas.attr("width"), mCanvas.attr("height"));
@@ -259,7 +292,7 @@ function StructViewController() {
             ctx.save();
             ctx.translate(g.structX, g.structY);
             ctx.fillStyle = code;
-            ctx.fillRect(0, 0, ICON_SIZE, ICON_SIZE);
+            ctx.fillRect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE);
             ctx.restore();
         })
 
@@ -280,7 +313,7 @@ function StructViewController() {
                 ctx.translate(g.structX, g.structY);
                 ctx.strokeStyle = "red";
                 ctx.beginPath();
-                ctx.rect(0, 0, ICON_SIZE, ICON_SIZE);
+                ctx.rect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE);
                 ctx.stroke();
                 ctx.restore();
             })
@@ -339,9 +372,11 @@ function StructViewController() {
         onPointerDown,
         onPointerMove,
         onPointerUp,
+        onLongPress,
         onResize,
         highlight,
         setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,
+        setDimentionCreationCallback: (func) => mDimentionCreationCallback = func,
     }
 }

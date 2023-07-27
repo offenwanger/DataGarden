@@ -19,6 +19,9 @@ function EventManager(strokeController, vemController, structController, tableCo
     let mMenuController = new MenuController(mInterface);
     let mCurrentToolState = Buttons.SELECTION_BUTTON;
 
+    let mCurrentMousePosistion;
+    let mLongPressTimeout;
+
     let mKeysDown = [];
     let mKeyBindingArray = [
         [Buttons.BRUSH_BUTTON, "d"],
@@ -52,6 +55,16 @@ function EventManager(strokeController, vemController, structController, tableCo
     mInterface.on("pointerdown", (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY, };
 
+        mStartPos = screenCoords;
+        mCurrentMousePosistion = mStartPos;
+        clearTimeout(mLongPressTimeout);
+        mLongPressTimeout = setTimeout(() => {
+            let motion = MathUtil.length(MathUtil.subtract(mStartPos, mCurrentMousePosistion));
+            if (motion < 5) {
+                mStructViewController.onLongPress(screenCoords, mCurrentToolState);
+            }
+        }, 800);
+
         let hold = mStrokeViewController.onPointerDown(screenCoords, mCurrentToolState);
         hold = hold || mVemViewController.onPointerDown(screenCoords, mCurrentToolState);
         hold = hold || mStructViewController.onPointerDown(screenCoords, mCurrentToolState);
@@ -60,6 +73,8 @@ function EventManager(strokeController, vemController, structController, tableCo
     });
     d3.select(document).on('pointermove', (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY };
+        mCurrentMousePosistion = screenCoords;
+
         mStrokeViewController.onPointerMove(screenCoords, mCurrentToolState);
         mVemViewController.onPointerMove(screenCoords, mCurrentToolState);
         mStructViewController.onPointerMove(screenCoords, mCurrentToolState);
@@ -71,6 +86,7 @@ function EventManager(strokeController, vemController, structController, tableCo
         mVemViewController.onPointerUp(screenCoords, mCurrentToolState);
         mStructViewController.onPointerUp(screenCoords, mCurrentToolState);
         releaseState();
+        clearTimeout(mLongPressTimeout);
     });
 
     let mLockedState = false;

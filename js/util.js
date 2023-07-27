@@ -220,6 +220,12 @@ let DataUtil = function () {
         return { x, y, width: xMax - x, height: yMax - y, }
     }
 
+    function overlap(bb1, bb2) {
+        let overlap1D = (min1, max1, min2, max2) => max1 >= min2 && max2 >= min1;
+        return overlap1D(bb1.x, bb1.x + bb1.width, bb2.x, bb2.x + bb2.width) &&
+            overlap1D(bb1.y, bb1.y + bb1.height, bb2.y, bb2.y + bb2.height);
+    }
+
     function getElementLevel(element, model) {
         if (!ValUtil.isType(element, Data.Element)) { console.error("invalid element", element); return -1; }
 
@@ -259,14 +265,52 @@ let DataUtil = function () {
             [item.id, item])).values()];
     }
 
+    function findEmptyPlace(boundingBox, boundingBoxes) {
+        function check(x, y) {
+            if (boundingBoxes.some(b => overlap(b, {
+                x: boundingBox.x + boundingBox.width * x,
+                y: boundingBox.y + boundingBox.height * y,
+                width: boundingBox.width,
+                height: boundingBox.height,
+            }))) {
+                return null;
+            } else {
+                return {
+                    x: boundingBox.x + boundingBox.width * x,
+                    y: boundingBox.y + boundingBox.height * y
+                }
+            }
+        }
+        let location = check(0, 0);
+        let round = 1;
+        while (!location) {
+            for (let n = 0; n <= round; n++) {
+                location = location || check(n, round);
+                location = location || check(n, -round);
+                location = location || check(-n, round);
+                location = location || check(-n, -round);
+                if (n != round) {
+                    location = location || check(round, n);
+                    location = location || check(-round, n);
+                    location = location || check(round, -n);
+                    location = location || check(-round, -n);
+                }
+            }
+            round++;
+        }
+        return location;
+    }
+
     return {
         numToColor,
         rgbToHex,
         imageDataToHex,
         getBoundingBox,
+        overlap,
         getElementLevel,
         getGroupLevel,
         unique,
+        findEmptyPlace,
     }
 }();
 

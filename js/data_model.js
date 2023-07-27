@@ -1,9 +1,11 @@
 function DataModel() {
-    let groups = [];
+    let mGroups = [];
+    let mDimentions = [];
 
     function clone() {
         let clone = new DataModel();
         clone.setGroups(getGroups().map(e => e.clone()));
+        clone.setDimentions(getDimentions().map(e => e.clone()));
         return clone;
     }
 
@@ -91,7 +93,24 @@ function DataModel() {
     }
 
     function getGroups() {
-        return groups;
+        return mGroups;
+    }
+
+    function setGroups(groups) {
+        mGroups = groups;
+    }
+
+    function getDimention(dimentionId) {
+        if (!IdUtil.isType(dimentionId, Data.Dimention)) { console.error("Not an dimention id! " + dimentionId); return null; };
+        return getDimentions().find(d => d.id == dimentionId)
+    }
+
+    function getDimentions() {
+        return mDimentions;
+    }
+
+    function setDimentions(dimentions) {
+        mDimentions = dimentions;
     }
 
     this.clone = clone;
@@ -106,5 +125,8 @@ function DataModel() {
     this.getGroup = getGroup;
     this.getGroupForElement = getGroupForElement;
     this.getGroups = getGroups;
-    this.setGroups = (g) => groups = g;
+    this.setGroups = setGroups;
+    this.getDimention = getDimention;
+    this.getDimentions = getDimentions;
+    this.setDimentions = setDimentions;
 }

@@ -68,6 +68,15 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mVemViewController.highlight(selection);
     })
 
+    mStructViewController.setDimentionCreationCallback((coords) => {
+        let dimention = new Data.Dimention();
+        dimention.structX = coords.x;
+        dimention.structY = coords.y;
+        Fairies.dimentionStructPositionFairy(dimention, mModelController.getModel());
+        mModelController.addDimention(dimention);
+        modelUpdate();
+    })
+
 
     function modelUpdate() {
         let model = mModelController.getModel();

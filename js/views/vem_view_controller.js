@@ -7,8 +7,6 @@ function VemViewController() {
     const TARGET_MERGE = 'mergeTarget';
     const TARGET_ELEMENT = 'elementTarget';
 
-    const ICON_SIZE = 64;
-
     let mCanvas = d3.select('#vem-view').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
     let mInterfaceCanvas = d3.select("#vem-view").select('.canvas-container').append('canvas')
@@ -243,7 +241,7 @@ function VemViewController() {
         ctx.lineWidth = 2;
         ctx.strokeStyle = 'black';
         ctx.beginPath();
-        ctx.rect(0, 0, ICON_SIZE, ICON_SIZE);
+        ctx.rect(0, 0, Size.ICON_MEDIUM, Size.ICON_MEDIUM);
         ctx.stroke();
 
         ctx.shadowColor = "black";
@@ -251,14 +249,14 @@ function VemViewController() {
         ctx.shadowOffsetY = 1;
         ctx.shadowBlur = 3;
         ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, ICON_SIZE, ICON_SIZE);
+        ctx.fillRect(0, 0, Size.ICON_MEDIUM, Size.ICON_MEDIUM);
         ctx.restore();
 
-        let miniScale = (ICON_SIZE - 10) / Math.max(boundingBox.height, boundingBox.width);
+        let miniScale = (Size.ICON_MEDIUM - 10) / Math.max(boundingBox.height, boundingBox.width);
         ctx.beginPath();
-        ctx.rect(0, 0, ICON_SIZE, ICON_SIZE);
+        ctx.rect(0, 0, Size.ICON_MEDIUM, Size.ICON_MEDIUM);
         ctx.clip();
-        ctx.translate((ICON_SIZE - (boundingBox.width * miniScale)) / 2, (ICON_SIZE - (boundingBox.height * miniScale)) / 2)
+        ctx.translate((Size.ICON_MEDIUM - (boundingBox.width * miniScale)) / 2, (Size.ICON_MEDIUM - (boundingBox.height * miniScale)) / 2)
         ctx.scale(miniScale, miniScale);
 
         elem.strokes.forEach(stroke => {
@@ -281,8 +279,8 @@ function VemViewController() {
     function drawParentConnector(ctx, element, parent) {
         ctx.save();
 
-        let elementConnectorPoint = { x: element.vemX + ICON_SIZE / 2, y: element.vemY };
-        let parentConnectorPoint = { x: parent.vemX + ICON_SIZE / 2, y: parent.vemY + ICON_SIZE };
+        let elementConnectorPoint = { x: element.vemX + Size.ICON_MEDIUM / 2, y: element.vemY };
+        let parentConnectorPoint = { x: parent.vemX + Size.ICON_MEDIUM / 2, y: parent.vemY + Size.ICON_MEDIUM };
 
         let path;
         if (parentConnectorPoint.y > elementConnectorPoint.y) {
@@ -327,10 +325,10 @@ function VemViewController() {
                         ctx.save();
                         ctx.translate(e.vemX, e.vemY);
                         ctx.fillStyle = getCode(e.id, TARGET_MERGE);
-                        ctx.fillRect(0, 0, ICON_SIZE, ICON_SIZE * 0.75);
+                        ctx.fillRect(0, 0, Size.ICON_MEDIUM, Size.ICON_MEDIUM * 0.75);
 
                         ctx.fillStyle = getCode(e.id, TARGET_PARENT);
-                        ctx.fillRect(0, ICON_SIZE * 0.75, ICON_SIZE, ICON_SIZE);
+                        ctx.fillRect(0, Size.ICON_MEDIUM * 0.75, Size.ICON_MEDIUM, Size.ICON_MEDIUM);
 
                         ctx.restore();
                     }
@@ -342,7 +340,7 @@ function VemViewController() {
                 ctx.save();
                 ctx.translate(e.vemX, e.vemY);
                 ctx.fillStyle = code;
-                ctx.fillRect(0, 0, ICON_SIZE, ICON_SIZE);
+                ctx.fillRect(0, 0, Size.ICON_MEDIUM, Size.ICON_MEDIUM);
                 ctx.restore();
             })
         }
@@ -365,7 +363,7 @@ function VemViewController() {
                 ctx.lineWidth = 1;
                 ctx.strokeStyle = "red";
                 ctx.beginPath();
-                ctx.rect(0, 0, ICON_SIZE, ICON_SIZE);
+                ctx.rect(0, 0, Size.ICON_MEDIUM, Size.ICON_MEDIUM);
                 ctx.stroke();
                 ctx.restore();
             })

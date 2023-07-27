@@ -1,6 +1,7 @@
 let chai = require('chai');
 let assert = chai.assert;
 let expect = chai.expect;
+let suite = require("./suite_enviroment")
 
 function deepEquals(original, obj) {
     if (original && typeof original == 'object') {
@@ -122,6 +123,16 @@ function zoom(integrationEnv, id, zoomCenter, scale) {
     integrationEnv.d3.getCallbacks()['keyup']({ key: "a" });
 }
 
+function longPress(integrationEnv, id, x, y) {
+    let offset = { x: 0, y: 0 }
+    if (id == "#vem-view") offset.y += window.innerHeight / 2;
+    if (id == "#struct-view") offset.x += window.innerWidth / 2;
+    integrationEnv.d3.select('#interface-container').select('#interface-svg')
+        .getCallbacks()['pointerdown']({ clientX: x + offset.x, clientY: y + offset.y });
+    integrationEnv.triggerTimeouts();
+    integrationEnv.d3.getCallbacks()['pointerup']({ clientX: x + offset.x, clientY: y + offset.y });
+}
+
 module.exports = {
     makeModel,
     deepEquals,
@@ -129,4 +140,5 @@ module.exports = {
     drag,
     mouseOver,
     pan, zoom,
+    longPress,
 }

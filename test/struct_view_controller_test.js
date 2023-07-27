@@ -37,4 +37,40 @@ describe('Struct View Controller Test', function () {
             assert.equal(DataUtil.imageDataToHex(ctx.getImageData(0, 0, 1, 1)), "#ff0000");
         });
     });
+
+    describe('dimention tests', function () {
+        it('should create a dimention', async function () {
+            integrationEnv.d3.getCallbacks()['keydown']({ key: "s" });
+            utility.longPress(integrationEnv, "#struct-view", 50, 50);
+            utility.longPress(integrationEnv, "#struct-view", 25, 50);
+            integrationEnv.d3.getCallbacks()['keyup']({ key: "s" });
+
+            let model = integrationEnv.instances.ModelController.getModel();
+            assert.equal(model.getDimentions().length, 2);
+
+            let ctx = d3.getRoot().select("#struct-view").select('.canvas-container').select('.view-canvas').getContext('2d');
+            assert.equal(DataUtil.imageDataToHex(ctx.getImageData(30, 30, 1, 1)), "#000000");
+            assert.equal(DataUtil.imageDataToHex(ctx.getImageData(26, 51, 1, 1)), "#000000");
+            assert.equal(DataUtil.imageDataToHex(ctx.getImageData(51, 51, 1, 1)), "#ffffff");
+            assert.equal(DataUtil.imageDataToHex(ctx.getImageData(26, 100, 1, 1)), "#ffffff");
+        });
+
+        it('should create a dimention around groups', async function () {
+            utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }])
+            utility.drawStroke(integrationEnv, [{ x: 40, y: 20 }, { x: 45, y: 40 }, { x: 40, y: 60 }])
+            utility.drag(integrationEnv, "#vem-view", [{ x: 20, y: 20 }, { x: 80, y: 70 },])
+
+            integrationEnv.d3.getCallbacks()['keydown']({ key: "s" });
+            utility.longPress(integrationEnv, "#struct-view", 50, 50);
+            utility.longPress(integrationEnv, "#struct-view", 100, 100);
+            integrationEnv.d3.getCallbacks()['keyup']({ key: "s" });
+
+            let model = integrationEnv.instances.ModelController.getModel();
+            assert.equal(model.getDimentions().length, 2);
+
+            let ctx = d3.getRoot().select("#struct-view").select('.canvas-container').select('.view-canvas').getContext('2d');
+            assert.equal(DataUtil.imageDataToHex(ctx.getImageData(30, 30, 1, 1)), "#ffffff");
+            assert.equal(DataUtil.imageDataToHex(ctx.getImageData(30, 70, 1, 1)), "#ffffff");
+        });
+    });
 });
