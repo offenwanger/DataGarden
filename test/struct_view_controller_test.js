@@ -88,7 +88,7 @@ describe('Struct View Controller Test', function () {
             utility.drag(integrationEnv, "#struct-view", [{ x: 20, y: 20 }, { x: 80, y: 70 },])
 
             integrationEnv.d3.getCallbacks()['keydown']({ key: "s" });
-            utility.longPress(integrationEnv, "#struct-view", 0, 0); d3.getRoot().select("#struct-view").select('.canvas-container').select('.view-canvas').console.log()
+            utility.longPress(integrationEnv, "#struct-view", 0, 0);
             utility.longPress(integrationEnv, "#struct-view", 150, 200);
             integrationEnv.d3.getCallbacks()['keyup']({ key: "s" });
 
