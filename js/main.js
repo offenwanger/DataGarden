@@ -97,7 +97,8 @@ document.addEventListener('DOMContentLoaded', function (e) {
     })
 
     mStructViewController.setLinkCallback((groupId, dimentionId, channelType) => {
-        console.error("Link!", groupId, dimentionId, channelType);
+        Fairies.newMappingFairy(groupId, dimentionId, channelType, mModelController);
+        modelUpdate();
     })
 
 

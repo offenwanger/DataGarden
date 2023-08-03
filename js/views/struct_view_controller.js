@@ -224,8 +224,12 @@ function StructViewController() {
             drawParentConnector(ctx, g, parent);
         })
 
+        mModel.getMappings().forEach(mapping => {
+            drawMapping(ctx, mapping, mModel.getGroup(mapping.groupId), mModel.getDimention(mapping.dimentionId));
+        })
+
         mModel.getGroups().forEach(g => {
-            drawIcon(ctx, g);
+            drawGroup(ctx, g);
         })
 
         mModel.getDimentions().forEach(d => {
@@ -237,7 +241,7 @@ function StructViewController() {
         drawInteraction();
     }
 
-    function drawIcon(ctx, group) {
+    function drawGroup(ctx, group) {
         ctx.save(); {
             let boundingBox = PathUtil.getBoundingBox(group.elements.map(e => e.strokes.map(s => PathUtil.translate(s.path, e)).flat()));
             if (!boundingBox) return;
@@ -290,24 +294,29 @@ function StructViewController() {
                 ctx.strokeStyle = 'black';
                 ctx.fillStyle = "white";
                 ctx.lineWidth = 1;
+                let posPos;
                 if (group.parentId) {
                     ctx.beginPath();
-                    ctx.arc(Size.ICON_LARGE / 2, 0, Size.NODE_TINY / 2, 0, 2 * Math.PI);
+                    posPos = getChannelNodePosition(ChannelTypes.POSITION);
+                    ctx.arc(posPos.x, posPos.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
                     ctx.fill();
                     ctx.stroke();
                 }
                 ctx.beginPath();
-                ctx.arc(Size.ICON_LARGE, Size.ICON_LARGE * 0.25, Size.NODE_TINY / 2, 0, 2 * Math.PI);
+                let orPos = getChannelNodePosition(ChannelTypes.ORIENTATION)
+                ctx.arc(orPos.x, orPos.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
                 ctx.fill();
                 ctx.stroke();
 
                 ctx.beginPath();
-                ctx.arc(Size.ICON_LARGE, Size.ICON_LARGE * 0.5, Size.NODE_TINY / 2, 0, 2 * Math.PI);
+                let formPos = getChannelNodePosition(ChannelTypes.FORM)
+                ctx.arc(formPos.x, formPos.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
                 ctx.fill();
                 ctx.stroke();
 
                 ctx.beginPath();
-                ctx.arc(Size.ICON_LARGE, Size.ICON_LARGE * 0.75, Size.NODE_TINY / 2, 0, 2 * Math.PI);
+                let numPos = getChannelNodePosition(ChannelTypes.NUMBER)
+                ctx.arc(numPos.x, numPos.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
                 ctx.fill();
                 ctx.stroke();
 
@@ -316,10 +325,10 @@ function StructViewController() {
                 ctx.font = fontSize + "px Verdana";
                 let horizontalTextOffset = -fontSize * 0.4;
                 let verticalTextOffset = fontSize / 2 - 1;
-                if (group.parentId) ctx.fillText("P", Size.ICON_LARGE / 2 + horizontalTextOffset, verticalTextOffset);
-                ctx.fillText("O", Size.ICON_LARGE + horizontalTextOffset, Size.ICON_LARGE * 0.25 + verticalTextOffset);
-                ctx.fillText("F", Size.ICON_LARGE + horizontalTextOffset, Size.ICON_LARGE * 0.5 + verticalTextOffset);
-                ctx.fillText("N", Size.ICON_LARGE + horizontalTextOffset, Size.ICON_LARGE * 0.75 + verticalTextOffset);
+                if (group.parentId) ctx.fillText("P", posPos.x + horizontalTextOffset, posPos.y + verticalTextOffset);
+                ctx.fillText("O", orPos.x + horizontalTextOffset, orPos.y + verticalTextOffset);
+                ctx.fillText("F", formPos.x + horizontalTextOffset, formPos.y + verticalTextOffset);
+                ctx.fillText("N", numPos.x + horizontalTextOffset, numPos.y + verticalTextOffset);
 
             } ctx.restore();
 
@@ -349,12 +358,62 @@ function StructViewController() {
                     [parentConnectorPoint.x, parentConnectorPoint.y],
                 ]
             }
-
-            // draw the tails
             ctx.moveTo(path[0][0], path[0][1]);
             ctx.beginPath();
             path.forEach(p => ctx.lineTo(p[0], p[1]));
             ctx.stroke();
+
+        } ctx.restore();
+    }
+
+    function drawMapping(ctx, mapping, group, dimention) {
+        ctx.save(); {
+            let groupConnectorPoint = MathUtil.add(getChannelNodePosition(mapping.channel), { x: group.structX, y: group.structY });
+            let dimentionConnectorPoint = { x: dimention.structX, y: dimention.structY + Size.ICON_LARGE * 0.25 * 0.5 };
+
+            let path = [];
+            if (mapping.channel == ChannelTypes.POSITION) {
+                path.push({ x: groupConnectorPoint.x, y: groupConnectorPoint.y });
+                groupConnectorPoint.y = groupConnectorPoint.y - 5;
+            }
+            if (dimentionConnectorPoint.x < groupConnectorPoint.x) {
+                path.push(
+                    { x: groupConnectorPoint.x, y: groupConnectorPoint.y },
+                    { x: groupConnectorPoint.x + 10, y: groupConnectorPoint.y },
+                    { x: groupConnectorPoint.x + 10, y: (dimentionConnectorPoint.y + groupConnectorPoint.y) / 2 },
+                    { x: dimentionConnectorPoint.x - 5, y: (dimentionConnectorPoint.y + groupConnectorPoint.y) / 2 },
+                    { x: dimentionConnectorPoint.x - 5, y: dimentionConnectorPoint.y },
+                    { x: dimentionConnectorPoint.x, y: dimentionConnectorPoint.y },
+                )
+            } else {
+                path.push(
+                    { x: groupConnectorPoint.x, y: groupConnectorPoint.y },
+                    { x: (groupConnectorPoint.x + dimentionConnectorPoint.x) / 2, y: groupConnectorPoint.y },
+                    { x: (groupConnectorPoint.x + dimentionConnectorPoint.x) / 2, y: dimentionConnectorPoint.y },
+                    { x: dimentionConnectorPoint.x, y: dimentionConnectorPoint.y },
+                )
+            }
+            ctx.moveTo(path[0].x, path[0].y);
+            ctx.beginPath();
+            path.forEach(p => ctx.lineTo(p.x, p.y));
+            ctx.stroke();
+
+            // draw the M marker
+            ctx.beginPath();
+            let midPoint = {
+                y: (dimentionConnectorPoint.y + groupConnectorPoint.y) / 2,
+                x: (groupConnectorPoint.x + dimentionConnectorPoint.x) / 2
+            }
+            ctx.arc(midPoint.x, midPoint.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = "white";
+            let fontSize = (Size.NODE_TINY * 0.75);
+            ctx.font = fontSize + "px Verdana";
+            let horizontalTextOffset = -fontSize * 0.4;
+            let verticalTextOffset = fontSize / 2 - 1;
+            ctx.fillText("M", midPoint.x + horizontalTextOffset, midPoint.y + verticalTextOffset);
 
         } ctx.restore();
     }
@@ -381,9 +440,9 @@ function StructViewController() {
             ctx.fillStyle = "black";
             let fontSize = Size.ICON_LARGE * 0.25 * 0.5 - 4;
             ctx.font = fontSize + "px Verdana";
-            ctx.fillText(dimention.name, 5, fontSize + 2);
+            ctx.fillText(dimention.name, 10, fontSize + 2);
             let dataStr = dimention.type == DimentionTypes.CONTINUOUS ? dimention.range : "[" + dimention.levels.length + "]";
-            ctx.fillText("[" + dimention.type + "] " + dataStr, 5, fontSize * 2 + 3);
+            ctx.fillText("[" + dimention.type + "] " + dataStr, 10, fontSize * 2 + 3);
 
         } ctx.restore();
     }
@@ -403,26 +462,30 @@ function StructViewController() {
                 ctx.fillStyle = getCode(g.id, TARGET_LINK_POSITION);
                 if (g.parentId) {
                     ctx.beginPath();
-                    ctx.arc(Size.ICON_LARGE / 2, 0, Size.NODE_TINY / 2, 0, 2 * Math.PI);
+                    let posPos = getChannelNodePosition(ChannelTypes.POSITION);
+                    ctx.arc(posPos.x, posPos.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
                     ctx.fill();
                     ctx.stroke();
                 }
 
                 ctx.fillStyle = getCode(g.id, TARGET_LINK_ORIENTATION);
                 ctx.beginPath();
-                ctx.arc(Size.ICON_LARGE, Size.ICON_LARGE * 0.25, Size.NODE_TINY / 2, 0, 2 * Math.PI);
+                let orPos = getChannelNodePosition(ChannelTypes.ORIENTATION)
+                ctx.arc(orPos.x, orPos.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
                 ctx.fill();
                 ctx.stroke();
 
                 ctx.fillStyle = getCode(g.id, TARGET_LINK_FORM);
                 ctx.beginPath();
-                ctx.arc(Size.ICON_LARGE, Size.ICON_LARGE * 0.5, Size.NODE_TINY / 2, 0, 2 * Math.PI);
+                let formPos = getChannelNodePosition(ChannelTypes.FORM)
+                ctx.arc(formPos.x, formPos.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
                 ctx.fill();
                 ctx.stroke();
 
                 ctx.fillStyle = getCode(g.id, TARGET_LINK_NUMBER);
                 ctx.beginPath();
-                ctx.arc(Size.ICON_LARGE, Size.ICON_LARGE * 0.75, Size.NODE_TINY / 2, 0, 2 * Math.PI);
+                let numPos = getChannelNodePosition(ChannelTypes.NUMBER)
+                ctx.arc(numPos.x, numPos.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
                 ctx.fill();
                 ctx.stroke();
 
@@ -518,6 +581,18 @@ function StructViewController() {
             mInteractionLookup[code] = { id: itemId, type };
             mReverseInteractionLookup[itemId + "_" + type] = code;
             return code;
+        }
+    }
+
+    function getChannelNodePosition(channelType) {
+        if (channelType == ChannelTypes.POSITION) {
+            return { x: Size.ICON_LARGE / 2, y: 0 };
+        } else if (channelType == ChannelTypes.ORIENTATION) {
+            return { x: Size.ICON_LARGE, y: Size.ICON_LARGE * 0.25 };
+        } else if (channelType == ChannelTypes.FORM) {
+            return { x: Size.ICON_LARGE, y: Size.ICON_LARGE * 0.5 };
+        } else if (channelType == ChannelTypes.NUMBER) {
+            return { x: Size.ICON_LARGE, y: Size.ICON_LARGE * 0.75 };
         }
     }
 

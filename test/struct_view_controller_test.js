@@ -96,7 +96,89 @@ describe('Struct View Controller Test', function () {
 
             let ctx = d3.getRoot().select("#struct-view").select('.canvas-container').select('.view-canvas').getContext('2d');
             assert.equal(DataUtil.imageDataToHex(ctx.getImageData(80, 80, 1, 1)), "#ffffff");
-            assert.equal(DataUtil.imageDataToHex(ctx.getImageData(220, 210, 1, 1)), "#ffffff");
+            assert.equal(DataUtil.imageDataToHex(ctx.getImageData(230, 210, 1, 1)), "#ffffff");
         });
+    });
+
+
+    describe('mapping tests', function () {
+        it('should link number to cont', async function () {
+            // each test needs to test a dimention without values and one with existing values
+            assert.equal("done", true);
+        });
+
+        it('should link number to ord', async function () {
+            assert.equal("done", true);
+        });
+
+        it('should link number to cat', async function () {
+            utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }])
+            utility.drawStroke(integrationEnv, [{ x: 40, y: 20 }, { x: 45, y: 40 }, { x: 40, y: 60 }])
+            integrationEnv.d3.getCallbacks()['keydown']({ key: "s" });
+            utility.longPress(integrationEnv, "#struct-view", 150, 20);
+            integrationEnv.d3.getCallbacks()['keyup']({ key: "s" });
+
+            utility.drag(integrationEnv, "#struct-view", [{ x: 155, y: 30 }, { x: 200, y: 30 }, { x: 140, y: 110 }])
+
+            assert.equal(model().getDimentions().length, 1);
+            assert.equal(model().getDimentions()[0].levels.length, 2);
+            assert.equal(model().getMappings().length, 1);
+            assert.equal(model().getMappings()[0].links.length, 2);
+
+            integrationEnv.d3.getCallbacks()['keydown']({ key: "s" });
+            utility.longPress(integrationEnv, "#struct-view", 150, 120);
+            integrationEnv.d3.getCallbacks()['keyup']({ key: "s" });
+
+            utility.drag(integrationEnv, "#struct-view", [{ x: 155, y: 130 }, { x: 200, y: 30 }, { x: 140, y: 110 }])
+
+            assert.equal(model().getMappings().length, 1);
+            assert.equal(model().getDimentions().length, 2);
+            assert.equal(model().getDimentions()[0].levels.length, 2);
+            assert.equal(model().getDimentions()[1].levels.length, 2);
+            assert.equal(model().getMappings().length, 1);
+            assert.equal(model().getMappings()[0].links.length, 2);
+        });
+
+        it('should link form to cont', async function () {
+            assert.equal("done", true);
+        });
+
+        it('should link form to ord', async function () {
+            assert.equal("done", true);
+        });
+
+        it('should link form to cat', async function () {
+            assert.equal("done", true);
+        });
+
+        it('should link orientation to cont', async function () {
+            assert.equal("done", true);
+        });
+
+        it('should link orientation to ord', async function () {
+            assert.equal("done", true);
+        });
+
+        it('should link orientation to cat', async function () {
+            assert.equal("done", true);
+        });
+
+        it('should link position to cont', async function () {
+            assert.equal("done", true);
+        });
+
+        it('should link position to ord', async function () {
+            assert.equal("done", true);
+        });
+
+        it('should link position to cat', async function () {
+            assert.equal("done", true);
+        });
+
+        it('should replace existing mapping', async function () {
+            assert.equal("done", true);
+        });
+
+
     });
 });

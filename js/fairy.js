@@ -240,10 +240,125 @@ let Fairies = function () {
         })
     }
 
+    function newMappingFairy(groupId, dimentionId, channelType, modelController) {
+        let model = modelController.getModel();
+        let existingMapping = model.getMappings().find(m => m.groupId == groupId && m.channel == channelType);
+        if (existingMapping) {
+            if (existingMapping.dimentionId == dimentionId) {
+                // already exists, nothing more to do here. 
+                return;
+            } else {
+                modelController.removeMapping(existingMapping.id);
+                model = modelController.getModel();
+            }
+        }
+        existingMapping = model.getMappings().find(m => m.dimentionId == dimentionId);
+        if (existingMapping) {
+            modelController.removeMapping(existingMapping.id);
+            model = modelController.getModel();
+        }
+
+        let newMapping = new Data.Mapping();
+        newMapping.groupId = groupId;
+        newMapping.dimentionId = dimentionId;
+        newMapping.channel = channelType;
+
+        let dimention = model.getDimention(dimentionId);
+        let group = model.getGroup(groupId);
+        if (channelType == ChannelTypes.NUMBER) {
+            if (dimention.type == DimentionTypes.CATEGORICAL || dimention.type == DimentionTypes.ORDINAL) {
+                group.elements.forEach((element, index) => {
+                    let level = dimention.levels[index];
+                    if (!level) {
+                        level = new Data.Level();
+                        modelController.addLevel(dimentionId, level);
+                    }
+                    let link = new Data.Link();
+                    link.elementId = element.id;
+                    link.levelId = level.id;
+                    newMapping.links.push(link);
+                });
+            } else if (dimention.type == DimentionTypes.CONTINUOUS) {
+                group.elements.forEach((element, index) => {
+                    let link = new Data.Link();
+                    link.elementId = element.id;
+                    link.rangePercent = index * 1 / group.elements.length;
+                    newMapping.links.push(link);
+                });
+            }
+        } else if (channelType == ChannelTypes.FORM) {
+            if (group.forms.length == 0) {
+                formBucketFairy(groupId, modelController);
+                model = modelController.getModel();
+                group = modelController.getGroup(groupId);
+            }
+
+            if (dimention.type == DimentionTypes.CATEGORICAL || dimention.type == DimentionTypes.ORDINAL) {
+                group.forms.forEach((form, index) => {
+                    let level = dimention.levels[index];
+                    if (!level) {
+                        level = new Data.Level();
+                        modelController.addLevel(dimentionId, level);
+                    }
+
+                    let link = new Data.Link();
+                    link.formId = form.id;
+                    link.levelId = level.id;
+                    newMapping.links.push(link);
+                });
+            } else if (dimention.type == DimentionTypes.CONTINUOUS) {
+                group.forms.forEach((form, index) => {
+                    let link = new Data.Link();
+                    link.formId = form.id;
+                    link.rangePercent = index * 1 / group.forms.length;
+                    newMapping.links.push(link);
+                });
+            }
+        } else if (channelType == ChannelTypes.ORIENTATION || channelType == ChannelTypes.POSITION) {
+            console.error("Need to ensure element has a spine and the elements are mapped to it")
+            if (dimention.type == DimentionTypes.CATEGORICAL || dimention.type == DimentionTypes.ORDINAL) {
+                let buckets;
+                if (dimention.levels.length == 0 && channelType == ChannelTypes.ORIENTATION) {
+                    buckets = orientationBucketFairy(group, 0, modelController);
+                } else if (dimention.levels.length == 0 && channelType == ChannelTypes.POSITION) {
+                    buckets = positionBucketFairy(group, 0, modelController);
+                } else if (channelType == ChannelTypes.ORIENTATION) {
+                    buckets = orientationBucketFairy(group, dimention.levels.length, modelController);
+                } else if (channelType == ChannelTypes.POSITION) {
+                    buckets = positionBucketFairy(group, dimention.levels.length, modelController);
+                }
+
+                buckets.forEach(bucket => {
+                    let level = new Data.Level();
+                    modelController.addLevel(dimentionId, level);
+
+                    let link = new Data.Link();
+                    link.levelId = level.id;
+                    link.channelMin = bucket.min;
+                    link.channelMax = bucket.max;
+                    newMapping.links.push(link);
+                })
+            } else if (dimention.type == DimentionTypes.CONTINUOUS) {
+                // nothing further needs doing, all elements have a 1-1 mapping with no abiguity. 
+            }
+        }
+
+        modelController.addMapping(newMapping);
+    }
+
+    function formBucketFairy(groupId, modelController) {
+        // Group the group's elements into forms. 
+        let group = modelController.getModel().getGroup(groupId);
+        let form = new Data.Form();
+        form.elementIds = group.elements.map(i => i.id);
+        modelController.addForm(groupId, form);
+    }
+
     return {
         strokeFairy,
         elementMergeFairy,
         elementParentFairy,
         dimentionStructPositionFairy,
+        newMappingFairy,
     }
 }();

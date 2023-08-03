@@ -36,6 +36,23 @@ function ModelController() {
         currDimention.update(dimention);
     }
 
+    function addMapping(mapping) {
+        if (!ValUtil.isType(mapping, Data.Mapping)) { console.error("Invalid mapping", mapping); return; }
+        mDataModel.getMappings().push(mapping);
+    }
+
+    function removeMapping(mappingId) {
+        if (!IdUtil.isType(mappingId, Data.Mapping)) { console.error("Invalid mapping id", mappingId); return; }
+        mDataModel.setMappings(mDataModel.getMappings().filter(d => d.id != mappingId));
+    }
+
+    function updateMapping(mapping) {
+        if (!ValUtil.isType(mapping, Data.Mapping)) { console.error("Invalid mapping", mapping); return; }
+        let currMapping = mDataModel.getMapping(mapping.id);
+        if (!currMapping) { console.error("Mapping not found for id", mapping.id); return; }
+        currMapping.update(mapping);
+    }
+
     function addElement(groupId, elem) {
         if (!ValUtil.isType(elem, Data.Element)) { console.error("Invalid element", element); return; }
         if (!IdUtil.isType(groupId, Data.Group)) { console.error("Invalid group id", groupId); return; }
@@ -56,6 +73,28 @@ function ModelController() {
         let currElement = mDataModel.getElement(element.id);
         if (!currElement) { console.error("Element not found for id", element.id); return; }
         currElement.update(element);
+    }
+
+    function addLevel(dimentionId, level) {
+        if (!ValUtil.isType(level, Data.Level)) { console.error("Invalid level", level); return; }
+        if (!IdUtil.isType(dimentionId, Data.Dimention)) { console.error("Invalid dimention id", dimentionId); return; }
+        let dimention = mDataModel.getDimention(dimentionId);
+        if (!dimention) { console.error("Dimention not found for id: ", dimentionId); return; };
+        dimention.levels.push(level);
+    }
+
+    function removeLevel(levelId) {
+        if (!IdUtil.isType(levelId, Data.Level)) { console.error("Invalid dimention id", dimentionId); return; }
+        let dimention = mDataModel.getDimentionForLevel(levelId);
+        if (!dimention) { console.error("Dimention not found for level: ", levelId); return; };
+        dimention.levels = dimention.levels.filter(e => e.id != levelId);
+    }
+
+    function updateLevel(level) {
+        if (!ValUtil.isType(level, Data.Level)) { console.error("Invalid level", level); return; }
+        let currLevel = mDataModel.getLevel(level.id);
+        if (!currLevel) { console.error("Level not found for id", level.id); return; }
+        currLevel.update(level);
     }
 
     function addStroke(elementId, stroke) {
@@ -81,9 +120,15 @@ function ModelController() {
         addDimention,
         removeDimention,
         updateDimention,
+        addMapping,
+        removeMapping,
+        updateMapping,
         addElement,
         removeElement,
         updateElement,
+        addLevel,
+        removeLevel,
+        updateLevel,
         addStroke,
         removeStorke,
         getModel,

@@ -1,11 +1,13 @@
 function DataModel() {
     let mGroups = [];
     let mDimentions = [];
+    let mMappings = [];
 
     function clone() {
         let clone = new DataModel();
         clone.setGroups(getGroups().map(e => e.clone()));
         clone.setDimentions(getDimentions().map(e => e.clone()));
+        clone.setMappings(getMappings().map(e => e.clone()));
         return clone;
     }
 
@@ -113,6 +115,19 @@ function DataModel() {
         mDimentions = dimentions;
     }
 
+    function getMapping(mappingId) {
+        if (!IdUtil.isType(mappingId, Data.Mapping)) { console.error("Not an mapping id! " + mappingId); return null; };
+        return getMappings().find(d => d.id == mappingId)
+    }
+
+    function getMappings() {
+        return mMappings;
+    }
+
+    function setMappings(mappings) {
+        mMappings = mappings;
+    }
+
     this.clone = clone;
     this.getStroke = getStroke;
     this.getStrokes = getStrokes;
@@ -129,4 +144,7 @@ function DataModel() {
     this.getDimention = getDimention;
     this.getDimentions = getDimentions;
     this.setDimentions = setDimentions;
+    this.getMapping = getMapping;
+    this.getMappings = getMappings;
+    this.setMappings = setMappings;
 }

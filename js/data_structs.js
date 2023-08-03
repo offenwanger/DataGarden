@@ -53,7 +53,8 @@ let Data = function () {
     function Group() {
         this.id = IdUtil.getUniqueId(Group);
         this.creationTime = Date.now();
-        this.elements = [];
+        this.elements = []
+        this.forms = [];
 
         this.structX = null;
         this.structY = null;
@@ -90,6 +91,26 @@ let Data = function () {
             this.positionBinding = dimention.positionBinding;
             this.creationTime = dimention.creationTime;
             this.elements = dimention.elements.map(s => s.clone());
+        };
+    }
+
+    function Form() {
+        this.id = IdUtil.getUniqueId(Group);
+        this.creationTime = Date.now();
+        this.elementIds = []
+
+        this.clone = function () {
+            let clone = new Form();
+            clone.id = this.id;
+            clone.creationTime = this.creationTime;
+            clone.elementIds = [...this.elementIds];
+            return clone;
+        };
+
+        this.update = function (form) {
+            this.id = form.id;
+            this.creationTime = form.creationTime;
+            this.elementIds = [...form.elementIds];
         };
     }
 
@@ -133,30 +154,92 @@ let Data = function () {
         this.id = IdUtil.getUniqueId(Level);
         this.creationTime = Date.now();
         this.name = "Category";
-        this.order = null;
 
         this.clone = function () {
             let clone = new Level();
             clone.id = this.id;
             clone.creationTime = this.creationTime;
             clone.name = this.name;
-            clone.order = this.order;
             return clone;
         };
 
-        this.update = function (dimention) {
-            this.id = dimention.id;
-            this.creationTime = dimention.creationTime;
-            this.name = dimention.name;
-            this.order = dimention.order;
+        this.update = function (level) {
+            this.id = level.id;
+            this.creationTime = level.creationTime;
+            this.name = level.name;
         };
     }
+
+    function Mapping() {
+        this.id = IdUtil.getUniqueId(Mapping);
+        this.creationTime = Date.now();
+        this.groupId = null;
+        this.channel = null;
+        this.dimentionId = null;
+
+        this.links = [];
+
+        this.clone = function () {
+            let clone = new Mapping();
+            clone.id = this.id;
+            clone.creationTime = this.creationTime;
+            clone.groupId = this.groupId;
+            clone.channel = this.channel;
+            clone.dimentionId = this.dimentionId;
+            clone.links = this.links.map(l => l.clone())
+            return clone;
+        };
+
+        this.update = function (mapping) {
+            this.id = mapping.id;
+            this.creationTime = mapping.creationTime;
+            this.groupId = mapping.groupId;
+            this.channel = mapping.channel;
+            this.dimentionId = mapping.dimentionId;
+            this.links = mapping.links.map(l => l.clone())
+        };
+
+    }
+
+    function Link() {
+        this.id = IdUtil.getUniqueId(Link);
+        this.creationTime = Date.now();
+        this.form = null; // linking channel[form]
+        this.element = null; // linking channel[number]
+        this.rangeMin = null; // linking channel[form/number] to dimention[cont]
+        this.rangeMax = null; // linking channel[form/number] to dimention[cont]
+
+        this.level = null; // linking dimention[cat/ord]
+        this.channelMin = null; // linking channel[orientation/position] to dimention[cat/ord]
+        this.channelMax = null; // linking channel[orientation/position] to dimention[cat/ord]
+
+        this.clone = function () {
+            let clone = new Link();
+            clone.id = this.id;
+            clone.creationTime = this.creationTime;
+            clone.form = this.form;
+            clone.level = this.level;
+            clone.bucketValue = this.bucketValue;
+            return clone;
+        };
+
+        this.update = function (link) {
+            this.id = link.id;
+            this.form = link.form;
+            this.level = link.level;
+            this.bucketValue = link.bucketValue;
+        };
+    }
+
 
     return {
         Stroke,
         Element,
         Group,
+        Form,
         Dimention,
         Level,
+        Mapping,
+        Link,
     }
 }();
