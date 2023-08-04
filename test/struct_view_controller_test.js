@@ -137,6 +137,8 @@ describe('Struct View Controller Test', function () {
             assert.equal(model().getDimentions()[1].levels.length, 2);
             assert.equal(model().getMappings().length, 1);
             assert.equal(model().getMappings()[0].links.length, 2);
+            expect(model().getMappings()[0].links.map(l => l.elementId).sort())
+                .to.eql(model().getElements().map(e => e.id).sort());
         });
 
         it('should link form to cont', async function () {
