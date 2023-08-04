@@ -177,16 +177,16 @@ function DataModel() {
         let rows = allElements.filter(e => e.parentId == element.id).map(e => getRows(e, allElements)).flat();
         let group = getGroupForElement(element.id);
         let mappings = mMappings.filter(m => m.groupId == group.id);
-        if (mappings.length == 0) {
+        let values = mappings.map(mapping => DataUtil.getValue(element, mapping, getDimention(mapping.dimentionId)));
+        if (mappings.length == 0 || values.filter(v => v).length == 0) {
             return rows;
         } else {
-            let values = mappings.map(mapping => DataUtil.getValue(element, group, mapping, getDimention(mapping.dimentionId)));
             if (rows.length == 0) {
                 let row = {};
-                mappings.forEach((m, index) => row[m.dimentionId] = values[index])
+                mappings.forEach((m, index) => { if (values[index]) row[m.dimentionId] = values[index] })
                 return [row];
             } else {
-                rows.forEach(row => mappings.forEach((m, index) => row[m.dimentionId] = values[index]));
+                rows.forEach(row => mappings.forEach((m, index) => { if (values[index]) row[m.dimentionId] = values[index] }));
                 return rows;
             }
         }
