@@ -271,6 +271,7 @@ let Fairies = function () {
                     let level = dimention.levels[index];
                     if (!level) {
                         level = new Data.Level();
+                        level.name = "Level" + (index + 1);
                         modelController.addLevel(dimentionId, level);
                     }
                     let link = new Data.Link();
@@ -298,6 +299,7 @@ let Fairies = function () {
                     let level = dimention.levels[index];
                     if (!level) {
                         level = new Data.Level();
+                        level.name = "Level" + (index + 1);
                         modelController.addLevel(dimentionId, level);
                     }
 
@@ -330,6 +332,7 @@ let Fairies = function () {
 
                 buckets.forEach(bucket => {
                     let level = new Data.Level();
+                    level.name = "Level" + bucket.mix + "-" + bucket.max;
                     modelController.addLevel(dimentionId, level);
 
                     let link = new Data.Link();
