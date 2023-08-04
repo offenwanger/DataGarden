@@ -301,6 +301,22 @@ let DataUtil = function () {
         return location;
     }
 
+    function getValue(element, group, mapping, dimention) {
+        if (mapping.channel == ChannelTypes.NUMBER) {
+            let link = mapping.links.find(link => link.elementId == element.id);
+            if (!link) { console.error("Bad parameters, link not found for element.", element.id); return null; };
+            if (dimention.type == DimentionTypes.CATEGORICAL) {
+                let level = dimention.levels.find(level => level.id == link.levelId);
+                if (!level) { console.error("Bad parameters, level not found for link.", link.level); return null; };
+                return level.name;
+            } else {
+                console.error("unimplimented");
+            }
+        } else {
+            console.error("unimplimented");
+        }
+    }
+
     return {
         numToColor,
         rgbToHex,
@@ -311,6 +327,7 @@ let DataUtil = function () {
         getGroupLevel,
         unique,
         findEmptyPlace,
+        getValue,
     }
 }();
 

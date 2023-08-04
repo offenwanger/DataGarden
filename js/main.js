@@ -4,12 +4,14 @@ document.addEventListener('DOMContentLoaded', function (e) {
     let mStrokeViewController = new StrokeViewController();
     let mVemViewController = new VemViewController();
     let mStructViewController = new StructViewController();
+    let mTableViewController = new TableViewController();
 
     mStrokeViewController.onResize(window.innerWidth * 0.5, window.innerHeight * 0.5);
     mVemViewController.onResize(window.innerWidth * 0.5, window.innerHeight * 0.5);
     mStructViewController.onResize(window.innerWidth * 0.5, window.innerHeight * 0.5);
+    mTableViewController.onResize(window.innerWidth * 0.5, window.innerHeight * 0.5);
 
-    let mEventManager = new EventManager(mStrokeViewController, mVemViewController, mStructViewController);
+    let mEventManager = new EventManager(mStrokeViewController, mVemViewController, mStructViewController, mTableViewController);
 
     mStrokeViewController.setStrokeCallback((stroke) => {
         Fairies.strokeFairy(stroke, mModelController);
@@ -109,5 +111,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mStrokeViewController.onModelUpdate(model);
         mVemViewController.onModelUpdate(model);
         mStructViewController.onModelUpdate(model);
+        mTableViewController.onModelUpdate(model);
     }
 });

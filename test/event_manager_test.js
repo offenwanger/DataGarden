@@ -28,7 +28,7 @@ describe('EventManager Tests', function () {
 
     describe('window resize test', function () {
         it('should call the resize functions', function () {
-            let called = [false, false, false];
+            let called = [false, false, false, false];
             let eventManager = new EventManager({
                 onResize: (w, h) => {
                     called[0] = true;
@@ -47,8 +47,13 @@ describe('EventManager Tests', function () {
                     assert.equal(w, 500);
                     assert.equal(h, 400);
                 }
-            }
-            );
+            }, {
+                onResize: (w, h) => {
+                    called[3] = true;
+                    assert.equal(w, 500);
+                    assert.equal(h, 400);
+                }
+            });
 
             d3.getCallbacks()['resize']();
 

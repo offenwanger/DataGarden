@@ -34,6 +34,7 @@ function EventManager(strokeController, vemController, structController, tableCo
         mStrokeViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight * mHorizontalBarPercent);
         mVemViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight * mHorizontalBarPercent);
         mStructViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight * mHorizontalBarPercent);
+        mTableViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight * mHorizontalBarPercent);
         mInterface.attr('width', window.innerWidth).attr('height', window.innerHeight);
         mMenuController.onResize(window.innerWidth, window.innerHeight);
     });

@@ -178,6 +178,9 @@ function StructViewController() {
     }
 
     function onResize(height, width) {
+        d3.select("#struct-view")
+            .style('width', height + "px")
+            .style('height', width + "px");
         mCanvas
             .attr('width', height)
             .attr('height', width);

@@ -1,6 +1,8 @@
 const { createCanvas } = require('canvas')
 const fs = require('fs')
 
+let mJspreadsheet;
+
 function MockElement(type) {
     let mAttrs = {};
     let mStyles = {};
@@ -23,6 +25,15 @@ function MockElement(type) {
     }
     this.select = function (selector) {
         return mChildren.find(child => child.matches(selector)) || { node: () => null }
+    }
+    // this is only ever used to remove the tables
+    this.selectAll = function (selector) {
+        return {
+            remove: () => {
+                mChildren.forEach(c => mJspreadsheet.removeTable(c));
+                mChildren = [];
+            }
+        }
     }
     this.attr = function (att, val = null) {
         if (val !== null) {
@@ -57,7 +68,9 @@ function MockElement(type) {
         return this;
     }
     this.matches = function (selector) {
-        if (selector[0] == "#") {
+        if (selector == "*") {
+            return true;
+        } else if (selector[0] == "#") {
             return "#" + mAttrs["id"] == selector;
         } else if (selector[0] == ".") {
             return mClasses.some(c => "." + c == selector);
@@ -114,11 +127,13 @@ function mockTransform(x = 0, y = 0, k = 1) {
     this.scale = function (k) { return new mockTransform(this.x, this.y, this.k * k) }
 }
 
-module.exports = function () {
+module.exports = function (jspreadsheet) {
+    mJspreadsheet = jspreadsheet;
     let rootNode = new MockElement();
     rootNode.append('div').attr("id", "stroke-view").append(new MockElement().classed("canvas-container", true));
     rootNode.append('div').attr("id", "vem-view").append(new MockElement().classed("canvas-container", true));
     rootNode.append('div').attr("id", "struct-view").append(new MockElement().classed("canvas-container", true));
+    rootNode.append('div').attr("id", "table-view");
     rootNode.append('div').attr("id", "interface-container");
 
     let documentCallbacks = {};

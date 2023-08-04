@@ -169,6 +169,9 @@ function StrokeViewController() {
     }
 
     function onResize(height, width) {
+        d3.select("#stroke-view")
+            .style('width', height + "px")
+            .style('height', width + "px");
         mCanvas
             .attr('width', height)
             .attr('height', width);
