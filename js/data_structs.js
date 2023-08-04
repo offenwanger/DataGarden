@@ -204,30 +204,39 @@ let Data = function () {
     function Link() {
         this.id = IdUtil.getUniqueId(Link);
         this.creationTime = Date.now();
-        this.form = null; // linking channel[form]
-        this.element = null; // linking channel[number]
+        this.formId = null; // linking channel[form]
+        this.elementId = null; // linking channel[number]
         this.rangeMin = null; // linking channel[form/number] to dimention[cont]
         this.rangeMax = null; // linking channel[form/number] to dimention[cont]
 
-        this.level = null; // linking dimention[cat/ord]
+        this.levelId = null; // linking dimention[cat/ord]
         this.channelMin = null; // linking channel[orientation/position] to dimention[cat/ord]
         this.channelMax = null; // linking channel[orientation/position] to dimention[cat/ord]
 
         this.clone = function () {
             let clone = new Link();
-            clone.id = this.id;
-            clone.creationTime = this.creationTime;
-            clone.form = this.form;
-            clone.level = this.level;
-            clone.bucketValue = this.bucketValue;
+            clone.id = this.id
+            clone.creationTime = this.creationTime
+            clone.formId = this.formId
+            clone.elementId = this.elementId
+            clone.rangeMin = this.rangeMin
+            clone.rangeMax = this.rangeMax
+            clone.levelId = this.levelId
+            clone.channelMin = this.channelMin
+            clone.channelMax = this.channelMax
             return clone;
         };
 
         this.update = function (link) {
-            this.id = link.id;
-            this.form = link.form;
-            this.level = link.level;
-            this.bucketValue = link.bucketValue;
+            this.id = link.id
+            this.creationTime = link.creationTime
+            this.formId = link.formId
+            this.elementId = link.elementId
+            this.rangeMin = link.rangeMin
+            this.rangeMax = link.rangeMax
+            this.levelId = link.levelId
+            this.channelMin = link.channelMin
+            this.channelMax = link.channelMax
         };
     }
 
