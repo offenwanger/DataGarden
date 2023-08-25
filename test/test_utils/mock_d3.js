@@ -82,8 +82,15 @@ function MockElement(type) {
         if (!mCanvas) {
             mCanvas = createCanvas(mAttrs['width'], mAttrs['height'])
         };
+        let context = mCanvas.getContext(type);
+        context.reset = function () {
+            mCanvas.height = mAttrs['height'];
+            mCanvas.width = mAttrs['width'];
+            this.setTransform(createCanvas(1, 1).getContext("2d").getTransform());
+        }
 
-        return mCanvas.getContext(type);
+
+        return context;
     }
     this.getBoundingClientRect = function () {
         let x = 0, y = 0;

@@ -10,6 +10,8 @@ function StructViewController() {
     const TARGET_GROUP = 'groupTarget';
     const TARGET_DIMENTION = 'dimentionTarget';
 
+    const GROUP_PADDING = 10;
+
     let mCanvas = d3.select('#struct-view').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
     let mInterfaceCanvas = d3.select("#struct-view").select('.canvas-container').append('canvas')
@@ -17,6 +19,11 @@ function StructViewController() {
     let mInteractionCanvas = d3.select("#struct-view").select('.canvas-container').append('canvas')
         .style("opacity", 0)
         .classed('interaction-canvas', true);
+    let mDrawingUtil = new DrawingUtil(
+        mCanvas.node().getContext("2d"),
+        mInteractionCanvas.node().getContext("2d"),
+        mInterfaceCanvas.node().getContext("2d"),
+    );
 
     let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
@@ -29,7 +36,6 @@ function StructViewController() {
     let mInteractionLookup = {};
     let mReverseInteractionLookup = {};
     let mColorIndex = 1;
-    let mTargetIncrease = 5;
 
     let mZoomTransform = d3.zoomIdentity;
 
@@ -40,6 +46,7 @@ function StructViewController() {
     function onModelUpdate(model) {
         mModel = model;
         draw();
+        drawInterface();
     }
 
     function onPointerDown(screenCoords, toolState) {
@@ -79,7 +86,7 @@ function StructViewController() {
                 }
                 mInteraction.type = DRAG_MOVE;
                 mInteraction.originalModel = mModel.clone();
-                drawInteraction();
+                draw();
             } else {
                 mSelectedObjectIds = null;
                 mSelectionCallback(null);
@@ -173,7 +180,7 @@ function StructViewController() {
             }
         }
 
-        drawInteraction();
+        draw();
         mInteraction = false;
     }
 
@@ -214,330 +221,112 @@ function StructViewController() {
 
 
     function draw() {
-        let ctx = mCanvas.node().getContext('2d');
-        ctx.clearRect(0, 0, mCanvas.attr("width"), mCanvas.attr("height"));
-        ctx.save();
-
-        ctx.translate(mZoomTransform.x, mZoomTransform.y)
-        ctx.scale(mZoomTransform.k, mZoomTransform.k)
-
-        mModel.getGroups().filter(g => g.parentId).forEach(g => {
-            let parent = mModel.getGroup(g.parentId);
+        mDrawingUtil.reset(mCanvas.attr("width"), mCanvas.attr("height"), mZoomTransform);
+        mModel.getGroups().filter(g => g.parentId).forEach(group => {
+            let parent = mModel.getGroup(group.parentId);
             if (!parent) { console.error("Bad state, parent not found!"); return; }
-            drawParentConnector(ctx, g, parent);
+            let groupConnectorPoint = { x: group.structX + Size.ICON_LARGE / 2, y: group.structY };
+            let parentConnectorPoint = { x: parent.structX + Size.ICON_LARGE / 2, y: parent.structY + Size.ICON_LARGE };
+            mDrawingUtil.drawConnector(parentConnectorPoint, groupConnectorPoint, null, null);
         })
 
         mModel.getMappings().forEach(mapping => {
-            drawMapping(ctx, mapping, mModel.getGroup(mapping.groupId), mModel.getDimention(mapping.dimentionId));
+            drawMapping(mapping, mModel.getGroup(mapping.groupId), mModel.getDimention(mapping.dimentionId));
         })
 
         mModel.getGroups().forEach(g => {
-            drawGroup(ctx, g);
+            drawGroup(g);
         })
 
         mModel.getDimentions().forEach(d => {
-            drawDimention(ctx, d);
+            drawDimention(d);
         })
-
-        ctx.restore();
-
-        drawInteraction();
     }
 
-    function drawGroup(ctx, group) {
-        ctx.save(); {
-            let boundingBox = PathUtil.getBoundingBox(group.elements.map(e => e.strokes.map(s => PathUtil.translate(s.path, e)).flat()));
-            if (!boundingBox) return;
-            ctx.translate(group.structX, group.structY);
-
-            ctx.save(); {
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.rect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE);
-                ctx.stroke();
-
-                ctx.shadowColor = "black";
-                ctx.shadowOffsetX = 1;
-                ctx.shadowOffsetY = 1;
-                ctx.shadowBlur = 3;
-                ctx.fillStyle = "white";
-                ctx.fillRect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE);
-            } ctx.restore();
-
-            ctx.save(); {
-                let miniScale = (Size.ICON_LARGE - 10) / Math.max(boundingBox.height, boundingBox.width);
-                ctx.beginPath();
-                ctx.rect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE);
-                ctx.clip();
-                ctx.translate((Size.ICON_LARGE - (boundingBox.width * miniScale)) / 2, (Size.ICON_LARGE - (boundingBox.height * miniScale)) / 2)
-                ctx.scale(miniScale, miniScale);
-
-                group.elements.forEach(elem => {
-                    ctx.save();
-                    let offset = MathUtil.subtract(elem, boundingBox);
-                    ctx.translate(offset.x, offset.y)
-
-                    elem.strokes.forEach(stroke => {
-                        ctx.save();
-                        ctx.strokeStyle = stroke.color;
-                        ctx.lineWidth = stroke.size;
-                        ctx.beginPath();
-                        ctx.moveTo(stroke.path[0].x - 1, stroke.path[0].y - 1);
-                        stroke.path.forEach(p => ctx.lineTo(p.x, p.y));
-                        ctx.stroke();
-                        ctx.restore();
-                    });
-                    ctx.restore();
-                });
-
-            } ctx.restore();
-
-            ctx.save(); {
-                ctx.strokeStyle = 'black';
-                ctx.fillStyle = "white";
-                ctx.lineWidth = 1;
-                let posPos;
-                if (group.parentId) {
-                    ctx.beginPath();
-                    posPos = getChannelNodePosition(ChannelTypes.POSITION);
-                    ctx.arc(posPos.x, posPos.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
-                    ctx.fill();
-                    ctx.stroke();
-                }
-                ctx.beginPath();
-                let orPos = getChannelNodePosition(ChannelTypes.ORIENTATION)
-                ctx.arc(orPos.x, orPos.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.stroke();
-
-                ctx.beginPath();
-                let formPos = getChannelNodePosition(ChannelTypes.FORM)
-                ctx.arc(formPos.x, formPos.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.stroke();
-
-                ctx.beginPath();
-                let numPos = getChannelNodePosition(ChannelTypes.NUMBER)
-                ctx.arc(numPos.x, numPos.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.stroke();
-
-                ctx.fillStyle = "black";
-                let fontSize = (Size.NODE_TINY * 0.75);
-                ctx.font = fontSize + "px Verdana";
-                let horizontalTextOffset = -fontSize * 0.4;
-                let verticalTextOffset = fontSize / 2 - 1;
-                if (group.parentId) ctx.fillText("P", posPos.x + horizontalTextOffset, posPos.y + verticalTextOffset);
-                ctx.fillText("O", orPos.x + horizontalTextOffset, orPos.y + verticalTextOffset);
-                ctx.fillText("F", formPos.x + horizontalTextOffset, formPos.y + verticalTextOffset);
-                ctx.fillText("N", numPos.x + horizontalTextOffset, numPos.y + verticalTextOffset);
-
-            } ctx.restore();
-
-        } ctx.restore();
-    }
-
-    function drawParentConnector(ctx, group, parent) {
-        ctx.save(); {
-            let groupConnectorPoint = { x: group.structX + Size.ICON_LARGE / 2, y: group.structY };
-            let parentConnectorPoint = { x: parent.structX + Size.ICON_LARGE / 2, y: parent.structY + Size.ICON_LARGE };
-
-            let path;
-            if (parentConnectorPoint.y > groupConnectorPoint.y) {
-                path = [
-                    [groupConnectorPoint.x, groupConnectorPoint.y],
-                    [groupConnectorPoint.x, groupConnectorPoint.y - 5],
-                    [(parentConnectorPoint.x + groupConnectorPoint.x) / 2, groupConnectorPoint.y - 5],
-                    [(parentConnectorPoint.x + groupConnectorPoint.x) / 2, parentConnectorPoint.y + 5],
-                    [parentConnectorPoint.x, parentConnectorPoint.y + 5],
-                    [parentConnectorPoint.x, parentConnectorPoint.y],
-                ]
-            } else {
-                path = [
-                    [groupConnectorPoint.x, groupConnectorPoint.y],
-                    [groupConnectorPoint.x, (groupConnectorPoint.y + parentConnectorPoint.y) / 2],
-                    [parentConnectorPoint.x, (groupConnectorPoint.y + parentConnectorPoint.y) / 2],
-                    [parentConnectorPoint.x, parentConnectorPoint.y],
-                ]
-            }
-            ctx.moveTo(path[0][0], path[0][1]);
-            ctx.beginPath();
-            path.forEach(p => ctx.lineTo(p[0], p[1]));
-            ctx.stroke();
-
-        } ctx.restore();
-    }
-
-    function drawMapping(ctx, mapping, group, dimention) {
-        ctx.save(); {
-            let groupConnectorPoint = MathUtil.add(getChannelNodePosition(mapping.channel), { x: group.structX, y: group.structY });
-            let dimentionConnectorPoint = { x: dimention.structX, y: dimention.structY + Size.ICON_LARGE * 0.25 * 0.5 };
-
-            let path = [];
-            if (mapping.channel == ChannelTypes.POSITION) {
-                path.push({ x: groupConnectorPoint.x, y: groupConnectorPoint.y });
-                groupConnectorPoint.y = groupConnectorPoint.y - 5;
-            }
-            if (dimentionConnectorPoint.x < groupConnectorPoint.x) {
-                path.push(
-                    { x: groupConnectorPoint.x, y: groupConnectorPoint.y },
-                    { x: groupConnectorPoint.x + 10, y: groupConnectorPoint.y },
-                    { x: groupConnectorPoint.x + 10, y: (dimentionConnectorPoint.y + groupConnectorPoint.y) / 2 },
-                    { x: dimentionConnectorPoint.x - 5, y: (dimentionConnectorPoint.y + groupConnectorPoint.y) / 2 },
-                    { x: dimentionConnectorPoint.x - 5, y: dimentionConnectorPoint.y },
-                    { x: dimentionConnectorPoint.x, y: dimentionConnectorPoint.y },
-                )
-            } else {
-                path.push(
-                    { x: groupConnectorPoint.x, y: groupConnectorPoint.y },
-                    { x: (groupConnectorPoint.x + dimentionConnectorPoint.x) / 2, y: groupConnectorPoint.y },
-                    { x: (groupConnectorPoint.x + dimentionConnectorPoint.x) / 2, y: dimentionConnectorPoint.y },
-                    { x: dimentionConnectorPoint.x, y: dimentionConnectorPoint.y },
-                )
-            }
-            ctx.moveTo(path[0].x, path[0].y);
-            ctx.beginPath();
-            path.forEach(p => ctx.lineTo(p.x, p.y));
-            ctx.stroke();
-
-            // draw the M marker
-            ctx.beginPath();
-            let midPoint = {
-                y: (dimentionConnectorPoint.y + groupConnectorPoint.y) / 2,
-                x: (groupConnectorPoint.x + dimentionConnectorPoint.x) / 2
-            }
-            ctx.arc(midPoint.x, midPoint.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.fillStyle = "white";
-            let fontSize = (Size.NODE_TINY * 0.75);
-            ctx.font = fontSize + "px Verdana";
-            let horizontalTextOffset = -fontSize * 0.4;
-            let verticalTextOffset = fontSize / 2 - 1;
-            ctx.fillText("M", midPoint.x + horizontalTextOffset, midPoint.y + verticalTextOffset);
-
-        } ctx.restore();
-    }
-
-    function drawDimention(ctx, dimention) {
-        ctx.save(); {
-            ctx.translate(dimention.structX, dimention.structY);
-
-            ctx.strokeStyle = 'black';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.rect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE * 0.25);
-            ctx.stroke();
-
-            ctx.save(); {
-                ctx.shadowColor = "black";
-                ctx.shadowOffsetX = 1;
-                ctx.shadowOffsetY = 1;
-                ctx.shadowBlur = 3;
-                ctx.fillStyle = "white";
-                ctx.fillRect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE * 0.25);
-            } ctx.restore();
-
-            ctx.fillStyle = "black";
-            let fontSize = Size.ICON_LARGE * 0.25 * 0.5 - 4;
-            ctx.font = fontSize + "px Verdana";
-            ctx.fillText(dimention.name, 10, fontSize + 2);
-            let dataStr = dimention.type == DimentionTypes.CONTINUOUS ? dimention.range : "[" + dimention.levels.length + "]";
-            ctx.fillText("[" + dimention.type + "] " + dataStr, 10, fontSize * 2 + 3);
-
-        } ctx.restore();
-    }
-
-    function drawInteraction() {
-        let ctx = mInteractionCanvas.node().getContext('2d');
-        ctx.clearRect(0, 0, mCanvas.attr("width"), mCanvas.attr("height"));
-
-        ctx.save();
-        ctx.translate(mZoomTransform.x, mZoomTransform.y)
-        ctx.scale(mZoomTransform.k, mZoomTransform.k)
-
-        if (mInteraction && mInteraction.type == DRAG_MOVE) {
-            mModel.getGroups().filter(g => !mSelectedObjectIds.includes(g.id)).forEach(g => {
-                ctx.save();
-                ctx.translate(g.structX, g.structY);
-                ctx.fillStyle = getCode(g.id, TARGET_LINK_POSITION);
-                if (g.parentId) {
-                    ctx.beginPath();
-                    let posPos = getChannelNodePosition(ChannelTypes.POSITION);
-                    ctx.arc(posPos.x, posPos.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
-                    ctx.fill();
-                    ctx.stroke();
-                }
-
-                ctx.fillStyle = getCode(g.id, TARGET_LINK_ORIENTATION);
-                ctx.beginPath();
-                let orPos = getChannelNodePosition(ChannelTypes.ORIENTATION)
-                ctx.arc(orPos.x, orPos.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.stroke();
-
-                ctx.fillStyle = getCode(g.id, TARGET_LINK_FORM);
-                ctx.beginPath();
-                let formPos = getChannelNodePosition(ChannelTypes.FORM)
-                ctx.arc(formPos.x, formPos.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.stroke();
-
-                ctx.fillStyle = getCode(g.id, TARGET_LINK_NUMBER);
-                ctx.beginPath();
-                let numPos = getChannelNodePosition(ChannelTypes.NUMBER)
-                ctx.arc(numPos.x, numPos.y, Size.NODE_TINY / 2, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.stroke();
-
-                ctx.restore();
-            })
+    function drawGroup(group) {
+        let code = null;
+        if (mInteraction) {
 
         } else {
-            mModel.getGroups().forEach(g => {
-                let code = getCode(g.id, TARGET_GROUP);
-                ctx.save();
-                ctx.translate(g.structX, g.structY);
-                ctx.fillStyle = code;
-                ctx.fillRect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE);
-                ctx.restore();
-            })
-
-            mModel.getDimentions().forEach(d => {
-                let code = getCode(d.id, TARGET_DIMENTION);
-                ctx.save();
-                ctx.translate(d.structX, d.structY);
-                ctx.fillStyle = code;
-                ctx.fillRect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE * 0.25);
-                ctx.restore();
-            })
+            code = getCode(group.id, TARGET_GROUP);
         }
 
-        ctx.restore();
+        mDrawingUtil.drawContainerRect(group.structX, group.structY, Size.ICON_LARGE, Size.ICON_LARGE, code);
+        let boundingBox = PathUtil.getBoundingBox(group.elements.map(e => e.strokes.map(s => PathUtil.translate(s.path, e)).flat()));
+        if (!boundingBox) return;
+
+        let drawingArea = Size.ICON_LARGE - GROUP_PADDING;
+        let scale = drawingArea / Math.max(boundingBox.height, boundingBox.width);
+        let offsetX = group.structX + GROUP_PADDING / 2 + (drawingArea - scale * boundingBox.width) / 2;
+        let offsetY = group.structY + GROUP_PADDING / 2 + (drawingArea - scale * boundingBox.height) / 2;
+        let clipBox = { x: group.structX, y: group.structY, height: Size.ICON_LARGE, width: Size.ICON_LARGE };
+
+        group.elements.forEach(element => {
+            let elementOffset = MathUtil.subtract(element, boundingBox);
+            element.strokes.forEach(stroke => {
+                mDrawingUtil.drawStroke(stroke.path,
+                    offsetX + elementOffset.x * scale, offsetY + elementOffset.y * scale,
+                    scale, stroke.color, stroke.size, clipBox)
+            });
+        });
+
+        let pos;
+        if (group.parentId) {
+            code = getCode(group.id, TARGET_LINK_POSITION)
+            pos = getChannelNodePosition(ChannelTypes.POSITION);
+            mDrawingUtil.drawCircle(pos.x + group.structX, pos.y + group.structY, Size.NODE_TINY / 2, "P", code)
+        }
+
+        code = getCode(group.id, TARGET_LINK_ORIENTATION)
+        pos = getChannelNodePosition(ChannelTypes.ORIENTATION);
+        mDrawingUtil.drawCircle(pos.x + group.structX, pos.y + group.structY, Size.NODE_TINY / 2, "O", code)
+
+        code = getCode(group.id, TARGET_LINK_FORM)
+        pos = getChannelNodePosition(ChannelTypes.FORM);
+        mDrawingUtil.drawCircle(pos.x + group.structX, pos.y + group.structY, Size.NODE_TINY / 2, "F", code)
+
+        code = getCode(group.id, TARGET_LINK_NUMBER)
+        pos = getChannelNodePosition(ChannelTypes.NUMBER);
+        mDrawingUtil.drawCircle(pos.x + group.structX, pos.y + group.structY, Size.NODE_TINY / 2, "N", code)
+    }
+
+    function drawMapping(mapping, group, dimention) {
+        let groupConnectorPoint = MathUtil.add(getChannelNodePosition(mapping.channel), { x: group.structX, y: group.structY });
+        let dimentionConnectorPoint = { x: dimention.structX, y: dimention.structY + Size.ICON_LARGE * 0.25 * 0.5 };
+        let midPoint;
+        if (mapping.channel == ChannelTypes.POSITION) {
+            midPoint = mDrawingUtil.drawConnector(null, groupConnectorPoint, null, dimentionConnectorPoint);
+        } else {
+            midPoint = mDrawingUtil.drawConnector(null, null, groupConnectorPoint, dimentionConnectorPoint);
+        }
+        mDrawingUtil.drawCircle(midPoint.x, midPoint.y, Size.NODE_TINY / 2, "M");
+    }
+
+    function drawDimention(dimention) {
+        let code = null;
+        if (mInteraction) {
+
+        } else {
+            code = getCode(dimention.id, TARGET_DIMENTION);
+        }
+
+        let dataStr = dimention.type == DimentionTypes.CONTINUOUS ? dimention.range : "[" + dimention.levels.length + "]";
+        let lines = [
+            dimention.name,
+            "[" + dimention.type + "] " + dataStr,
+        ];
+
+        mDrawingUtil.drawTextContainerRect(dimention.structX, dimention.structY, Size.ICON_LARGE, Size.ICON_LARGE * 0.25, lines, code);
     }
 
     function drawInterface() {
-        let ctx = mInterfaceCanvas.node().getContext("2d");
-        ctx.clearRect(0, 0, mInterfaceCanvas.attr("width"), mInterfaceCanvas.attr("height"));
-
+        mDrawingUtil.resetInterface(mCanvas.attr("width"), mCanvas.attr("height"), mZoomTransform);
         if (mHighlightObjectIds) {
-            ctx.save();
-            ctx.translate(mZoomTransform.x, mZoomTransform.y)
-            ctx.scale(mZoomTransform.k, mZoomTransform.k)
             mHighlightObjectIds.forEach(id => {
                 let isGroup = IdUtil.isType(id, Data.Group);
                 let o = isGroup ? mModel.getGroup(id) : mModel.getDimention(id);
-                ctx.save();
-                ctx.translate(o.structX, o.structY);
-                ctx.strokeStyle = "red";
-                ctx.beginPath();
-                ctx.rect(0, 0, Size.ICON_LARGE, Size.ICON_LARGE * (isGroup ? 1 : 0.25));
-                ctx.stroke();
-                ctx.restore();
+                mDrawingUtil.highlightContainerRect(o.structX, o.structY, Size.ICON_LARGE, Size.ICON_LARGE * (isGroup ? 1 : 0.25));
             })
-            ctx.restore();
         }
     }
 

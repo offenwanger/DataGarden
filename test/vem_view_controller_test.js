@@ -110,7 +110,7 @@ describe('Vem View Controller Test', function () {
             assert.equal(model().getElements().length, 2);
             assert.equal(model().getGroups().length, 1);
 
-            utility.drag(integrationEnv, "#vem-view", [{ x: 20, y: 20 }, { x: 40, y: 20 }, { x: 60, y: 60 }, { x: 100, y: 115 },])
+            utility.drag(integrationEnv, "#vem-view", [{ x: 20, y: 20 }, { x: 40, y: 20 }, { x: 60, y: 60 }, { x: 100, y: 60 },])
 
             assert.equal(model().getElements().length, 2);
             assert.equal(model().getGroups().length, 2);

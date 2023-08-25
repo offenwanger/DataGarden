@@ -7,6 +7,8 @@ function VemViewController() {
     const TARGET_MERGE = 'mergeTarget';
     const TARGET_ELEMENT = 'elementTarget';
 
+    const ELEMENT_PADDING = 10;
+
     let mCanvas = d3.select('#vem-view').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
     let mInterfaceCanvas = d3.select("#vem-view").select('.canvas-container').append('canvas')
@@ -14,6 +16,11 @@ function VemViewController() {
     let mInteractionCanvas = d3.select("#vem-view").select('.canvas-container').append('canvas')
         .style("opacity", 0)
         .classed('interaction-canvas', true);
+    let mDrawingUtil = new DrawingUtil(
+        mCanvas.node().getContext("2d"),
+        mInteractionCanvas.node().getContext("2d"),
+        mInterfaceCanvas.node().getContext("2d"),
+    );
 
     let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
@@ -26,13 +33,11 @@ function VemViewController() {
     let mInteractionLookup = {};
     let mReverseInteractionLookup = {};
     let mColorIndex = 1;
-    let mTargetIncrease = 5;
 
     let mZoomTransform = d3.zoomIdentity;
 
     let mModel = new DataModel();
     let mInteraction = null;
-    let mStartPos;
 
     function onModelUpdate(model) {
         mModel = model;
@@ -48,7 +53,6 @@ function VemViewController() {
         }
 
         draw();
-        drawInteraction();
         drawInterface();
     }
 
@@ -91,7 +95,7 @@ function VemViewController() {
                 }
                 mInteraction.type = DRAG_MOVE;
                 mInteraction.originalModel = mModel.clone();
-                drawInteraction();
+                draw();
             } else {
                 mSelectedElements = null;
                 mSelectionCallback(null);
@@ -180,7 +184,7 @@ function VemViewController() {
         }
 
         if (interaction && (toolState == Buttons.ZOOM_BUTTON || toolState == Buttons.PANNING_BUTTON)) {
-            drawInteraction();
+            draw();
         }
     }
 
@@ -198,7 +202,6 @@ function VemViewController() {
             .attr('width', height)
             .attr('height', width);
         draw();
-        drawInteraction();
         drawInterface();
     }
 
@@ -215,161 +218,55 @@ function VemViewController() {
     }
 
     function draw() {
-        let ctx = mCanvas.node().getContext('2d');
-        ctx.clearRect(0, 0, mCanvas.attr("width"), mCanvas.attr("height"));
-        ctx.save();
-
-        ctx.translate(mZoomTransform.x, mZoomTransform.y)
-        ctx.scale(mZoomTransform.k, mZoomTransform.k)
+        mDrawingUtil.reset(mCanvas.attr("width"), mCanvas.attr("height"), mZoomTransform);
 
         let elements = mModel.getElements()
-        elements.filter(e => e.parentId)
-            .forEach(elem => {
-                let parent = mModel.getElement(elem.parentId);
-                if (!parent) { console.error("Bad state, parent not found! ", elem.parentId); return; }
-                drawParentConnector(ctx, elem, parent)
-            })
-        elements.forEach(elem => drawIcon(ctx, elem))
-
-        ctx.restore();
-    }
-
-    function drawIcon(ctx, elem) {
-        let boundingBox = DataUtil.getBoundingBox(elem);
-        ctx.save();
-        ctx.translate(elem.vemX, elem.vemY);
-
-        ctx.save();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = 'black';
-        ctx.beginPath();
-        ctx.rect(0, 0, Size.ICON_MEDIUM, Size.ICON_MEDIUM);
-        ctx.stroke();
-
-        ctx.shadowColor = "black";
-        ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 1;
-        ctx.shadowBlur = 3;
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, Size.ICON_MEDIUM, Size.ICON_MEDIUM);
-        ctx.restore();
-
-        let miniScale = (Size.ICON_MEDIUM - 10) / Math.max(boundingBox.height, boundingBox.width);
-        ctx.beginPath();
-        ctx.rect(0, 0, Size.ICON_MEDIUM, Size.ICON_MEDIUM);
-        ctx.clip();
-        ctx.translate((Size.ICON_MEDIUM - (boundingBox.width * miniScale)) / 2, (Size.ICON_MEDIUM - (boundingBox.height * miniScale)) / 2)
-        ctx.scale(miniScale, miniScale);
-
-        elem.strokes.forEach(stroke => {
-            ctx.save();
-            ctx.strokeStyle = stroke.color;
-            ctx.lineWidth = stroke.size;
-            ctx.moveTo(stroke.path[0].x, stroke.path[0].y);
-            ctx.beginPath();
-            stroke.path.forEach(p => {
-                ctx.lineTo(p.x, p.y);
-            });
-
-            ctx.stroke();
-            ctx.restore();
+        elements.filter(e => e.parentId).forEach(element => {
+            let parent = mModel.getElement(element.parentId);
+            if (!parent) { console.error("Bad state, parent not found! ", element.parentId); return; }
+            let elementConnectorPoint = { x: element.vemX + Size.ICON_MEDIUM / 2, y: element.vemY };
+            let parentConnectorPoint = { x: parent.vemX + Size.ICON_MEDIUM / 2, y: parent.vemY + Size.ICON_MEDIUM };
+            mDrawingUtil.drawConnector(parentConnectorPoint, elementConnectorPoint, null, null);
         })
 
-        ctx.restore();
-    }
-
-    function drawParentConnector(ctx, element, parent) {
-        ctx.save();
-
-        let elementConnectorPoint = { x: element.vemX + Size.ICON_MEDIUM / 2, y: element.vemY };
-        let parentConnectorPoint = { x: parent.vemX + Size.ICON_MEDIUM / 2, y: parent.vemY + Size.ICON_MEDIUM };
-
-        let path;
-        if (parentConnectorPoint.y > elementConnectorPoint.y) {
-            path = [
-                [elementConnectorPoint.x, elementConnectorPoint.y],
-                [elementConnectorPoint.x, elementConnectorPoint.y - 5],
-                [(parentConnectorPoint.x + elementConnectorPoint.x) / 2, elementConnectorPoint.y - 5],
-                [(parentConnectorPoint.x + elementConnectorPoint.x) / 2, parentConnectorPoint.y + 5],
-                [parentConnectorPoint.x, parentConnectorPoint.y + 5],
-                [parentConnectorPoint.x, parentConnectorPoint.y],
-            ]
-        } else {
-            path = [
-                [elementConnectorPoint.x, elementConnectorPoint.y],
-                [elementConnectorPoint.x, (elementConnectorPoint.y + parentConnectorPoint.y) / 2],
-                [parentConnectorPoint.x, (elementConnectorPoint.y + parentConnectorPoint.y) / 2],
-                [parentConnectorPoint.x, parentConnectorPoint.y],
-            ]
-        }
-
-        // draw the tails
-        ctx.moveTo(path[0][0], path[0][1]);
-        ctx.beginPath();
-        path.forEach(p => ctx.lineTo(p[0], p[1]));
-        ctx.stroke();
-
-        ctx.restore();
-    }
-
-    function drawInteraction() {
-        let ctx = mInteractionCanvas.node().getContext('2d');
-        ctx.clearRect(0, 0, mCanvas.attr("width"), mCanvas.attr("height"));
-
-        ctx.save();
-        ctx.translate(mZoomTransform.x, mZoomTransform.y)
-        ctx.scale(mZoomTransform.k, mZoomTransform.k)
-
-        if (mInteraction) {
-            if (mInteraction.type == DRAG_MOVE) {
-                mModel.getElements().forEach(e => {
-                    if (!mSelectedElements.includes(e.id)) {
-                        ctx.save();
-                        ctx.translate(e.vemX, e.vemY);
-                        ctx.fillStyle = getCode(e.id, TARGET_MERGE);
-                        ctx.fillRect(0, 0, Size.ICON_MEDIUM, Size.ICON_MEDIUM * 0.75);
-
-                        ctx.fillStyle = getCode(e.id, TARGET_PARENT);
-                        ctx.fillRect(0, Size.ICON_MEDIUM * 0.75, Size.ICON_MEDIUM, Size.ICON_MEDIUM);
-
-                        ctx.restore();
-                    }
-                })
+        elements.forEach(element => {
+            let code = null;
+            let code2 = null;
+            if (mInteraction) {
+                if (mInteraction.type == DRAG_MOVE && !mSelectedElements.includes(element.id)) {
+                    code = getCode(element.id, TARGET_MERGE);
+                    code2 = getCode(element.id, TARGET_PARENT);
+                }
+            } else {
+                code = getCode(element.id, TARGET_ELEMENT);
             }
-        } else {
-            mModel.getElements().forEach(e => {
-                let code = getCode(e.id, TARGET_ELEMENT);
-                ctx.save();
-                ctx.translate(e.vemX, e.vemY);
-                ctx.fillStyle = code;
-                ctx.fillRect(0, 0, Size.ICON_MEDIUM, Size.ICON_MEDIUM);
-                ctx.restore();
-            })
-        }
 
-        ctx.restore();
+            mDrawingUtil.drawContainerRect(element.vemX, element.vemY, Size.ICON_MEDIUM, Size.ICON_MEDIUM, code);
+            // overwrite the bottom half with a split interaction
+            if (code2) mDrawingUtil.drawContainerRectSplitInteraction(
+                element.vemX, element.vemY, Size.ICON_MEDIUM, Size.ICON_MEDIUM, 0.25, code2)
+
+            let boundingBox = DataUtil.getBoundingBox(element);
+            let drawingArea = Size.ICON_MEDIUM - ELEMENT_PADDING;
+            let scale = drawingArea / Math.max(boundingBox.height, boundingBox.width);
+            let offsetX = element.vemX + 5 + (drawingArea - scale * boundingBox.width) / 2;
+            let offsetY = element.vemY + 5 + (drawingArea - scale * boundingBox.height) / 2;
+            let clipBox = { x: element.vemX, y: element.vemY, height: Size.ICON_MEDIUM, width: Size.ICON_MEDIUM };
+
+            element.strokes.forEach(stroke => {
+                mDrawingUtil.drawStroke(stroke.path, offsetX, offsetY, scale, stroke.color, stroke.size, clipBox)
+            });
+        })
     }
 
+    // interface is separate so we can redraw highlights without redrawing everything
     function drawInterface() {
-        let ctx = mInterfaceCanvas.node().getContext("2d");
-        ctx.clearRect(0, 0, mInterfaceCanvas.attr("width"), mInterfaceCanvas.attr("height"));
-
+        mDrawingUtil.resetInterface(mCanvas.attr("width"), mCanvas.attr("height"), mZoomTransform);
         if (mHighlightElementIds) {
-            ctx.save();
-            ctx.translate(mZoomTransform.x, mZoomTransform.y)
-            ctx.scale(mZoomTransform.k, mZoomTransform.k)
             mHighlightElementIds.forEach(eId => {
                 let e = mModel.getElement(eId)
-                ctx.save();
-                ctx.translate(e.vemX, e.vemY);
-                ctx.lineWidth = 1;
-                ctx.strokeStyle = "red";
-                ctx.beginPath();
-                ctx.rect(0, 0, Size.ICON_MEDIUM, Size.ICON_MEDIUM);
-                ctx.stroke();
-                ctx.restore();
+                mDrawingUtil.highlightContainerRect(e.vemX, e.vemY, Size.ICON_MEDIUM, Size.ICON_MEDIUM);
             })
-            ctx.restore();
         }
     }
 
