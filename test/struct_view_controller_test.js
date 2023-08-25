@@ -104,11 +104,11 @@ describe('Struct View Controller Test', function () {
     describe('mapping tests', function () {
         it('should link number to cont', async function () {
             // each test needs to test a dimention without values and one with existing values
-            assert.equal("done", true);
+            assert.equal("unImplimented", false);
         });
 
         it('should link number to ord', async function () {
-            assert.equal("done", true);
+            assert.equal("unImplimented", false);
         });
 
         it('should link number to cat', async function () {
@@ -142,43 +142,43 @@ describe('Struct View Controller Test', function () {
         });
 
         it('should link form to cont', async function () {
-            assert.equal("done", true);
+            assert.equal("unImplimented", false);
         });
 
         it('should link form to ord', async function () {
-            assert.equal("done", true);
+            assert.equal("unImplimented", false);
         });
 
         it('should link form to cat', async function () {
-            assert.equal("done", true);
+            assert.equal("unImplimented", false);
         });
 
         it('should link orientation to cont', async function () {
-            assert.equal("done", true);
+            assert.equal("unImplimented", false);
         });
 
         it('should link orientation to ord', async function () {
-            assert.equal("done", true);
+            assert.equal("unImplimented", false);
         });
 
         it('should link orientation to cat', async function () {
-            assert.equal("done", true);
+            assert.equal("unImplimented", false);
         });
 
         it('should link position to cont', async function () {
-            assert.equal("done", true);
+            assert.equal("unImplimented", false);
         });
 
         it('should link position to ord', async function () {
-            assert.equal("done", true);
+            assert.equal("unImplimented", false);
         });
 
         it('should link position to cat', async function () {
-            assert.equal("done", true);
+            assert.equal("unImplimented", false);
         });
 
         it('should replace existing mapping', async function () {
-            assert.equal("done", true);
+            assert.equal("unImplimented", false);
         });
 
 
