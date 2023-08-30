@@ -5,18 +5,19 @@
 let fs = require('fs');
 let vm = require('vm');
 let rewire = require('rewire');
-let rewireJs = function (name) { return rewire("../../js/" + name) }
+let rewireJs = function (name) { return rewire("../../local/js/" + name) }
 let chai = require('chai')
 
 let assert = chai.assert;
 
 let mockD3 = require("./mock_d3.js");
 let mockJspreadsheet = require("./mock_jspreadsheet.js");
+let mockServer = require("./mock_server.js");
 
 let initialized = false;
 
 function init() {
-    vm.runInThisContext(fs.readFileSync(__dirname + "/" + "../../js/constants.js"));
+    vm.runInThisContext(fs.readFileSync(__dirname + "/" + "../../local/js/constants.js"));
 
     // Trap error and trigger a failure. 
     let consoleError = console.error;
@@ -76,9 +77,12 @@ function getIntegrationEnviroment() {
         }
     })
 
+    let server = new mockServer();
     let jspreadsheet = new mockJspreadsheet();
     let integrationEnv = {
         d3: new mockD3(jspreadsheet),
+        server: server,
+        fetch: () => server.fetch(...arguments),
         jspreadsheet,
         EventManager: event_manager.__get__("EventManager"),
         MenuController: rewireJs('menu_controller.js').__get__("MenuController"),
@@ -91,6 +95,7 @@ function getIntegrationEnviroment() {
         MathUtil: rewireJs('utils/util.js').__get__("MathUtil"),
         IdUtil: rewireJs('utils/util.js').__get__("IdUtil"),
         DrawingUtil: rewireJs('utils/drawing_util.js').__get__("DrawingUtil"),
+        ServerRequestUtil: rewireJs('utils/server_request_util.js').__get__("ServerRequestUtil"),
         Fairies: rewireJs('fairy.js').__get__("Fairies"),
         StrokeViewController: rewireJs('views/stroke_view_controller.js').__get__("StrokeViewController"),
         VemViewController: rewireJs('views/vem_view_controller.js').__get__("VemViewController"),

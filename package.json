@@ -1,22 +1,25 @@
 {
-    "name": "timealine",
+    "name": "datagarden",
     "version": "1.0.0",
     "dependencies": {
         "canvas": "^2.11.2",
         "chai": "^4.3.4",
         "chai-fs": "^2.0.0",
         "d3": "^7.8.4",
+        "express": "^4.18.2",
         "fs": "0.0.1-security",
         "jquery": "^3.7.0",
         "mocha": "^9.1.3",
+        "mock-fs": "^5.2.0",
         "nyc": "^15.1.0",
         "rewire": "^6.0.0",
         "vm": "^0.1.0"
     },
     "scripts": {
-        "test": "mocha --timeout=3000",
-        "testOnly": "mocha -g \"filter text\" --timeout=3000",
-        "coverage": "nyc --reporter=html --reporter=text mocha --timeout=3000",
-        "coverageOnly": "nyc --reporter=html --reporter=text mocha -g \"filter text\" --timeout=3000"
+        "test": "mocha local-test --timeout=3000 && mocha server-test --timeout=3000",
+        "testOnly": "mocha local-test -g \"filter text\" --timeout=3000 && mocha server-test -g \"filter text\" --timeout=3000",
+        "coverage": "nyc --reporter=html --reporter=text mocha local-test --timeout=3000",
+        "coverageServer": "nyc --reporter=html --reporter=text mocha server-test --timeout=3000",
+        "coverageOnly": "nyc --reporter=html --reporter=text mocha local-test -g \"filter text\" --timeout=3000"
     }
 }

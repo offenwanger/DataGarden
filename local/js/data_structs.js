@@ -20,6 +20,7 @@ let Data = function () {
         this.x = null;
         this.y = null;
         this.strokes = [];
+        this.spine = null;
 
         this.vemX = null;
         this.vemY = null;

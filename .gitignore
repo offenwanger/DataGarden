@@ -104,4 +104,4 @@ dist
 .tern-port
 
 package-lock.json
-test/test_utils/debug.jpeg
+local-test/test_utils/debug.jpeg

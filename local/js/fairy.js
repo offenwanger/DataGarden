@@ -11,6 +11,7 @@ let Fairies = function () {
         elem.x = boundingBox.x;
         elem.y = boundingBox.y;
         elem.strokes.push(stroke);
+        spineFairy(elem);
 
         newElementFairy(elem, modelController);
     }
@@ -128,6 +129,8 @@ let Fairies = function () {
             stroke.path = PathUtil.translate(stroke.path, { x: -bb.x, y: -bb.y })
         })
         mergeTarget.strokes = strokes;
+        spineFairy(mergeTarget);
+
         modelController.updateElement(mergeTarget);
 
         // remove the merged elements
@@ -357,11 +360,29 @@ let Fairies = function () {
         modelController.addForm(groupId, form);
     }
 
+    function spineFairy(element) {
+        let xs = element.strokes.map(s => s.path.map(p => p.x)).flat();
+        let ys = element.strokes.map(s => s.path.map(p => p.y)).flat();
+        let localSpine = [{ x: Math.min(...xs), y: Math.min(...ys) }, { x: Math.max(...xs), y: Math.max(...ys) }];
+        if (!element.spine) {
+            element.spine = localSpine;
+        }
+        ServerRequestUtil.getSpine(element).then(result => {
+            if (result) {
+                // TODO: Rework Fairies to run async. 
+                element.spine = result;
+            }
+        }).catch(e => {
+            console.error("Error, could not get spine.", e)
+        })
+    }
+
     return {
         strokeFairy,
         elementMergeFairy,
         elementParentFairy,
         dimentionStructPositionFairy,
         newMappingFairy,
+        spineFairy,
     }
 }();
