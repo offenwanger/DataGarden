@@ -105,3 +105,4 @@ dist
 
 package-lock.json
 local-test/test_utils/debug.jpeg
+server/scaps/
