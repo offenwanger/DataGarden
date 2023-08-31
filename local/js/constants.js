@@ -3,6 +3,7 @@ const Buttons = {
     SELECTION_BUTTON: "Selection",
     PANNING_BUTTON: "Pan",
     ZOOM_BUTTON: "Zoom",
+    VIEW_BUTTON: "View",
 }
 
 const Size = {

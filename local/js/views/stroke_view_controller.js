@@ -15,6 +15,7 @@ function StrokeViewController() {
     let mZoomTransform = d3.zoomIdentity;
     let mBrushActive = false;
     let mHighlightBoundingBoxes = null;
+    let mShowSpines = null;
 
     let mBrushOptions = {
         size: 10,
@@ -129,7 +130,17 @@ function StrokeViewController() {
                 }
                 drawInterface();
             }
-
+        } else if (toolState == Buttons.VIEW_BUTTON) {
+            let targetId = getInteractionTarget(screenCoords);
+            if (targetId) {
+                let element = mModel.getElementForStroke(targetId);
+                let elements = mModel.getElementDecendants(element.id);
+                mShowSpines = elements;
+                drawInterface();
+            } else {
+                mShowSpines = null;
+                drawInterface();
+            }
         }
 
         if (mBrushActive && toolState != Buttons.BRUSH_BUTTON) {
@@ -139,6 +150,11 @@ function StrokeViewController() {
 
         if (mHighlightBoundingBoxes && toolState != Buttons.SELECTION_BUTTON) {
             mHighlightBoundingBoxes = null;
+            drawInterface();
+        }
+
+        if (mShowSpines && toolState != Buttons.VIEW_BUTTON) {
+            mShowSpines = null;
             drawInterface();
         }
     }
@@ -302,6 +318,27 @@ function StrokeViewController() {
             mHighlightBoundingBoxes.forEach(boundingBox => {
                 ctx.beginPath();
                 ctx.rect(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
+                ctx.stroke();
+            })
+            ctx.restore();
+        }
+
+        if (mShowSpines) {
+            ctx.save();
+            ctx.translate(mZoomTransform.x, mZoomTransform.y)
+            ctx.scale(mZoomTransform.k, mZoomTransform.k)
+            ctx.setLineDash([5 / mZoomTransform.k, 10 / mZoomTransform.k]);
+            mShowSpines.forEach(element => {
+                ctx.beginPath();
+                element.spine.forEach(p => {
+                    p = MathUtil.add(p, element);
+                    ctx.lineTo(p.x, p.y)
+                });
+                ctx.strokeStyle = "white";
+                ctx.lineWidth = 4 / mZoomTransform.k;
+                ctx.stroke();
+                ctx.strokeStyle = "blue";
+                ctx.lineWidth = 2 / mZoomTransform.k;
                 ctx.stroke();
             })
             ctx.restore();

@@ -36,6 +36,7 @@ let Data = function () {
             clone.parentId = this.parentId;
             clone.creationTime = this.creationTime;
             clone.strokes = this.strokes.map(s => s.clone());
+            clone.spine = this.spine.map(p => { return { x: p.x, y: p.y } });
             return clone;
         };
 
@@ -48,6 +49,7 @@ let Data = function () {
             this.parentId = element.parentId;
             this.creationTime = element.creationTime;
             this.strokes = element.strokes.map(s => s.clone());
+            this.spine = element.spine.map(p => { return { x: p.x, y: p.y } });
         };
     }
 

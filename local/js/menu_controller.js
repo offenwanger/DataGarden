@@ -5,6 +5,7 @@ function MenuController(svg) {
     let mSelectionButton;
     let mPanButton;
     let mZoomButton;
+    let mViewButton;
 
     function createInterface(svg) {
         mPanButton = new MenuButton(svg, "img/panning_button.svg")
@@ -12,6 +13,7 @@ function MenuController(svg) {
         mZoomButton.isSubButton(20, 10)
         mBrushButton = new MenuButton(svg, "img/color_brush_button.svg")
         mSelectionButton = new MenuButton(svg, "img/selection_button.svg")
+        mViewButton = new MenuButton(svg, "img/eyecon_button.svg")
 
         defineFilters(svg);
         layout(svg.attr('width'), svg.attr('height'));
@@ -60,6 +62,8 @@ function MenuController(svg) {
             mPanButton.setActive(true)
         } else if (buttonId == Buttons.ZOOM_BUTTON) {
             mZoomButton.setActive(true)
+        } else if (buttonId == Buttons.VIEW_BUTTON) {
+            mViewButton.setActive(true)
         } else {
             console.error("Invalid activate button id: " + buttonId)
         }
@@ -74,6 +78,8 @@ function MenuController(svg) {
             mPanButton.setActive(false)
         } else if (buttonId == Buttons.ZOOM_BUTTON) {
             mZoomButton.setActive(false)
+        } else if (buttonId == Buttons.VIEW_BUTTON) {
+            mViewButton.setActive(false)
         } else {
             console.error("Invalid deactivate button id: " + buttonId)
         }
@@ -102,6 +108,7 @@ function MenuController(svg) {
         mSelectionButton.setPosition(buttonSpacing * 1.5, height - BUTTON_SIZE);
         mPanButton.setPosition(buttonSpacing * 0.5, height - BUTTON_SIZE);
         mZoomButton.setPosition(buttonSpacing * 0.5, height - BUTTON_SIZE);
+        mViewButton.setPosition(buttonSpacing * 3.5, height - BUTTON_SIZE);
     }
 
     function MenuButton(svg, img) {

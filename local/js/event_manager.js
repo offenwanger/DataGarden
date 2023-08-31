@@ -28,6 +28,7 @@ function EventManager(strokeController, vemController, structController, tableCo
         [Buttons.SELECTION_BUTTON, "s"],
         [Buttons.PANNING_BUTTON, "a"],
         [Buttons.ZOOM_BUTTON, "a", "s"],
+        [Buttons.VIEW_BUTTON, "f"],
     ]
 
     d3.select(window).on('resize', () => {
