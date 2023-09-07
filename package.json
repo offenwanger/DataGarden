@@ -16,8 +16,8 @@
         "vm": "^0.1.0"
     },
     "scripts": {
-        "test": "mocha local-test --timeout=3000 && mocha server-test --timeout=3000",
-        "testOnly": "mocha local-test -g \"filter text\" --timeout=3000 && mocha server-test -g \"filter text\" --timeout=3000",
+        "test": "mocha local-test --timeout=3000 & mocha server-test --timeout=3000",
+        "testOnly": "mocha local-test -g \"filter text\" --timeout=3000 & mocha server-test -g \"filter text\" --timeout=3000",
         "coverage": "nyc --reporter=html --reporter=text mocha local-test --timeout=3000",
         "coverageServer": "nyc --reporter=html --reporter=text mocha server-test --timeout=3000",
         "coverageOnly": "nyc --reporter=html --reporter=text mocha local-test -g \"filter text\" --timeout=3000"
