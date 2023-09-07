@@ -36,7 +36,7 @@ let Data = function () {
             clone.parentId = this.parentId;
             clone.creationTime = this.creationTime;
             clone.strokes = this.strokes.map(s => s.clone());
-            clone.spine = this.spine.map(p => { return { x: p.x, y: p.y } });
+            clone.spine = this.spine ? this.spine.map(p => { return { x: p.x, y: p.y } }) : null;
             return clone;
         };
 
