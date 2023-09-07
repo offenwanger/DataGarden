@@ -34,17 +34,18 @@ app.post('/getspine', function (req, res) {
 
     let scap = utility.elementToScap(element);
     let filename = element.id + ".scap";
-    let outFilename = element.id + "_out.scap";
-    fileHandler.writeScap(filename, scap);
-    cppConnector.runStrokeStrip(filename, outFilename).then(() => {
-        // try to read the result, see if it's any good. 
-        return fileHandler.readScap(outFilename);
-    }).then(outScap => {
-        let path = utility.scapToPath(outScap)
-        res.status(200).send(path);
-    }).catch(error => {
-        res.status(500).send();
-    });
+    let outFilename = element.id + "_out.scap"
+    fileHandler.writeScap(filename, scap)
+        .then(() => cppConnector.runStrokeStrip(filename))
+        .then(() => {
+            // try to read the result, see if it's any good. 
+            return fileHandler.readScap(outFilename);
+        }).then(outScap => {
+            let path = utility.scapToPath(outScap)
+            res.status(200).send(path);
+        }).catch(error => {
+            res.status(500).send();
+        });
 });
 
 // Start the application

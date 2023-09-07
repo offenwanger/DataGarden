@@ -3,16 +3,14 @@ function elementToScap(element) {
 
     let width = Math.max(...element.strokes.map(s => s.path.map(p => p.x)).flat());
     let height = Math.max(...element.strokes.map(s => s.path.map(p => p.y)).flat());
-    let elementId = element.id.split("_")[1] + element.id.split("_")[2];
     let size = element.strokes.map(s => s.size).reduce((a, b) => a + b, 0) / element.strokes.length;
 
     scap += "#" + width + "\t" + height + "\n";
     scap += "@" + size + "\n";
 
-    element.strokes.forEach(stroke => {
-        let strokeId = stroke.id.split("_")[1] + stroke.id.split("_")[2];
+    element.strokes.forEach((stroke, index) => {
         scap += "{\n";
-        scap += "\t#" + strokeId + "\t" + elementId + "\n";
+        scap += "\t#" + index + "\t" + 0 + "\n";
         stroke.path.forEach(p => {
             scap += "\t" + p.x + "\t" + p.y + "\t0\n";
         })

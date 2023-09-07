@@ -1,13 +1,12 @@
 const { spawn } = require('child_process');
 const utility = require("./utility.js");
+const config = require("../app_config.js");
 
-function runStrokeStrip(scapFilename, outname) {
+function runStrokeStrip(scapFilename) {
     return new Promise(resolve => {
-        let command = "strokestrip";
-
-        utility.log("Spinning up strokestrip");
+        utility.log("Spinning up StripMaker");
         try {
-            const cpp = spawn(command, ['param1', scapFilename, outname], { cwd: __dirname });
+            const cpp = spawn(config.STRIP_MAKER_EXE, ["-i", __dirname + "/scaps/" + scapFilename, "-o", __dirname + "/scaps"]);
 
             // collect output from console
             cpp.stdout.on('data', function (data) {
@@ -36,6 +35,7 @@ function runStrokeStrip(scapFilename, outname) {
 
             cpp.on("exit", function () {
                 resolve();
+                utility.log("StripMaker finished.")
             })
         } catch (e) {
             console.error(e);
