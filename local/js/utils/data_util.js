@@ -100,6 +100,17 @@ let DataUtil = function () {
         return level;
     }
 
+    function isDecendant(acestorId, decendantId, model) {
+        let parentId = decendantId;
+        while (parentId) {
+            parentId = model.getElement(parentId).parentId;
+            if (parentId == acestorId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function unique(arr) {
         return [...new Map(arr.map(item =>
             [item.id, item])).values()];
@@ -157,6 +168,16 @@ let DataUtil = function () {
         }
     }
 
+    function getStrokesInLocalCoords(element) {
+        let returnable = [];
+        element.strokes.forEach(stroke => {
+            stroke = stroke.clone();
+            stroke.path = PathUtil.translate(stroke.path, element);
+            returnable.push(stroke);
+        });
+        return returnable;
+    }
+
     return {
         numToColor,
         rgbToHex,
@@ -165,8 +186,10 @@ let DataUtil = function () {
         overlap,
         getElementLevel,
         getGroupLevel,
+        isDecendant,
         unique,
         findEmptyPlace,
         getValue,
+        getStrokesInLocalCoords,
     }
 }();

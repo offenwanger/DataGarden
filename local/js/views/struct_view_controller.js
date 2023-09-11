@@ -45,6 +45,10 @@ function StructViewController() {
 
     function onModelUpdate(model) {
         mModel = model;
+
+        if (mHighlightObjectIds) mHighlightObjectIds = mHighlightObjectIds
+            .filter(id => mModel.getGroups().includes(id) || mModel.getDimentions().includes(id));
+
         draw();
         drawInterface();
     }
@@ -325,6 +329,7 @@ function StructViewController() {
             mHighlightObjectIds.forEach(id => {
                 let isGroup = IdUtil.isType(id, Data.Group);
                 let o = isGroup ? mModel.getGroup(id) : mModel.getDimention(id);
+                if (!o) { console.error("Object not found for id: " + id); return; }
                 mDrawingUtil.highlightContainerRect(o.structX, o.structY, Size.ICON_LARGE, Size.ICON_LARGE * (isGroup ? 1 : 0.25));
             })
         }

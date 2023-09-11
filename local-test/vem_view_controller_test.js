@@ -58,19 +58,44 @@ describe('Vem View Controller Test', function () {
         });
 
         it('should correctly update element parenting on merge', function () {
+            // Setup, draw three strokes
             utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }])
             utility.drawStroke(integrationEnv, [{ x: 40, y: 20 }, { x: 45, y: 40 }, { x: 40, y: 60 }])
             utility.drawStroke(integrationEnv, [{ x: 60, y: 20 }, { x: 55, y: 40 }, { x: 60, y: 60 }])
             assert.equal(model().getElements().length, 3);
             assert.equal(model().getGroups().length, 1);
 
-            utility.drag(integrationEnv, "#vem-view", [{ x: 20, y: 20 }, { x: 80, y: 70 },])
+            // Parents those strokes to eachother
+            utility.drag(integrationEnv, "#vem-view", [{ x: 40, y: 40 }, { x: 80, y: 70 },])
             utility.drag(integrationEnv, "#vem-view", [{ x: 180, y: 40 }, { x: 100, y: 160 },])
 
             assert.equal(model().getElements().length, 3);
             assert.equal(model().getGroups().length, 3);
 
             utility.drag(integrationEnv, "#vem-view", [{ x: 100, y: 140 }, { x: 100, y: 40 },])
+
+            assert.equal(model().getElements().length, 2);
+            assert.equal(model().getGroups().length, 2);
+        });
+
+        it('should correctly remove element parenting on merge', function () {
+            // Setup, draw three strokes
+            utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }])
+            utility.drawStroke(integrationEnv, [{ x: 40, y: 20 }, { x: 45, y: 40 }, { x: 40, y: 60 }])
+            utility.drawStroke(integrationEnv, [{ x: 60, y: 20 }, { x: 55, y: 40 }, { x: 60, y: 60 }])
+            assert.equal(model().getElements().length, 3);
+            assert.equal(model().getGroups().length, 1);
+
+            // Parents those strokes to eachother
+            utility.drag(integrationEnv, "#vem-view", [{ x: 40, y: 40 }, { x: 80, y: 70 }])
+            utility.drag(integrationEnv, "#vem-view", [{ x: 180, y: 40 }, { x: 100, y: 160 }])
+
+            assert.equal(model().getElements().length, 3);
+            assert.equal(model().getGroups().length, 3);
+
+            utility.drag(integrationEnv, "#vem-view", [{ x: 80, y: 40 }, { x: 80, y: 140 }]);
+
+            d3.getRoot().select("#vem-view").select('.canvas-container').select('.view-canvas').console.log();
 
             assert.equal(model().getElements().length, 2);
             assert.equal(model().getGroups().length, 2);

@@ -8,7 +8,7 @@ function StrokeViewController() {
         .style("opacity", 0)
         .classed('interaction-canvas', true);
 
-    let mStrokeCallback = () => { };
+    let mNewStrokeCallback = () => { };
     let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
 
@@ -164,7 +164,7 @@ function StrokeViewController() {
         mStartPos = null;
 
         if (toolState == Buttons.BRUSH_BUTTON && mBrushOptions.currentStroke.length > 1) {
-            mStrokeCallback(new Data.Stroke(mBrushOptions.currentStroke, mBrushOptions.size, mBrushOptions.color))
+            mNewStrokeCallback(new Data.Stroke(mBrushOptions.currentStroke, mBrushOptions.size, mBrushOptions.color))
             mBrushOptions.currentStroke = [screenToModelCoords(screenCoords)];
             drawInterface();
         } else if (toolState == Buttons.SELECTION_BUTTON) {
@@ -395,7 +395,7 @@ function StrokeViewController() {
         onPointerUp,
         onResize,
         highlight,
-        setStrokeCallback: (func) => mStrokeCallback = func,
+        setNewStrokeCallback: (func) => mNewStrokeCallback = func,
         setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,
     }

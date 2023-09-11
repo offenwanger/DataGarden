@@ -19,40 +19,6 @@ function DataModel() {
         getElements().map(e => e.strokes).flat()
     }
 
-    function getStrokesInLocalCoords(ids) {
-        if (typeof ids == 'string') {
-            ids = [ids];
-        }
-        let returnable = [];
-        let strokeIds = ids.filter(id => IdUtil.isType(id, Data.Stroke));
-        strokeIds.forEach(strokeId => {
-            let element = getElementForStroke(strokeId);
-            // TODO: check if stroke exists
-            let stroke = element.strokes.find(s => s.id == strokeId).clone();
-            stroke.path = PathUtil.translate(stroke.path, element);
-            returnable.push(stroke);
-        });
-
-        let elementIds = ids.filter(id => IdUtil.isType(id, Data.Element));
-        let groupIds = ids.filter(id => IdUtil.isType(id, Data.Group));
-        groupIds.forEach(groupId => {
-            // TODO: Check if group exists
-            elementIds.push(...getGroup(groupId).elements.map(e => e.id));
-        })
-        elementIds = elementIds.filter((id, index, array) => array.indexOf(id) === index);
-
-        elementIds.forEach(elementId => {
-            let element = getElement(elementId);
-            element.strokes.forEach(stroke => {
-                stroke = stroke.clone();
-                stroke.path = PathUtil.translate(stroke.path, element);
-                returnable.push(stroke);
-            });
-        });
-
-        return returnable;
-    }
-
     function getElement(elementId) {
         if (!IdUtil.isType(elementId, Data.Element)) { console.error("Not an element id! " + elementId); return null; };
         return getElements().find(e => e.id == elementId);
@@ -71,6 +37,7 @@ function DataModel() {
         return getElements().filter(e => e.parentId == elementId);
     }
 
+    // returns an array with the element and all it's decendants
     function getElementDecendants(elementId) {
         if (!IdUtil.isType(elementId, Data.Element)) { console.error("Not an element id! " + elementId); return null; };
         let elements = [];
@@ -195,7 +162,6 @@ function DataModel() {
     this.clone = clone;
     this.getStroke = getStroke;
     this.getStrokes = getStrokes;
-    this.getStrokesInLocalCoords = getStrokesInLocalCoords;
     this.getElement = getElement;
     this.getElementForStroke = getElementForStroke;
     this.getElements = getElements;

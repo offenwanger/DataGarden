@@ -13,9 +13,36 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     let mEventManager = new EventManager(mStrokeViewController, mVemViewController, mStructViewController, mTableViewController);
 
-    mStrokeViewController.setStrokeCallback((stroke) => {
-        Fairies.strokeFairy(stroke, mModelController);
+    mStrokeViewController.setNewStrokeCallback((stroke) => {
+        let model = mModelController.getModel();
+
+        let element = ModelUtil.wrapStrokeInElement(stroke);
+        element.spine = ModelUtil.getStupidSpine(element);
+        let vemPos = ModelUtil.getVemPosition(element, model);
+        element.vemX = vemPos.x;
+        element.vemY = vemPos.y;
+
+        let group;
+        if (model.getGroups().length == 0) {
+            group = new Data.Group();
+            group.elements.push(element);
+            let structPos = ModelUtil.getStructPosition(group, model)
+            group.structX = structPos.x;
+            group.structY = structPos.y;
+            mModelController.addGroup(group);
+        } else {
+            mModelController.addElement(model.getGroups().find(g => !g.parentId).id, element);
+        }
+
         modelUpdate();
+
+        ServerRequestUtil.getSpine(element).then(result => {
+            if (result) {
+                element = mModelController.getModel().getElement(element.id);
+                element.spine = result;
+                mModelController.updateElement(element);
+            }
+        })
     })
 
     mStrokeViewController.setHighlightCallback((selection) => {
@@ -40,14 +67,38 @@ document.addEventListener('DOMContentLoaded', function (e) {
     })
 
     mVemViewController.setMergeElementCallback((selection, mergeElementId) => {
-        Fairies.elementMergeFairy(selection, mergeElementId, mModelController);
+        selection.forEach(elementId => {
+            let element = mModelController.getModel().getElement(elementId);
+            let children = mModelController.getModel().getElementChildren(elementId);
+            children.forEach(child => {
+                if (child.id == mergeElementId) {
+                    ModelUtil.updateParent(element.parentId, mergeElementId, mModelController);
+                } else {
+                    ModelUtil.updateParent(mergeElementId, child.id, mModelController);
+                }
+            })
+            // handle an edge case where the merge element is a grandchild of this element
+            // it might have been set to this element when updating this elements children
+            if (mModelController.getModel().getElementChildren(elementId).length == 1) {
+                ModelUtil.updateParent(element.parentId, mergeElementId, mModelController);
+            }
+            let mergeElement = mModelController.getModel().getElement(mergeElementId);
+            mergeElement = ModelUtil.mergeStrokes(mergeElement, element);
+            mModelController.removeElement(elementId);
+            mModelController.updateElement(mergeElement);
+        });
+        ModelUtil.clearEmptyGroups(mModelController);
         modelUpdate();
     })
 
     mVemViewController.setParentElementCallback((selection, parentElementId) => {
-        Fairies.elementParentFairy(selection, parentElementId, mModelController);
+        selection.forEach(elementId => {
+            ModelUtil.updateParent(parentElementId, elementId, mModelController)
+        });
+        ModelUtil.clearEmptyGroups(mModelController);
         modelUpdate();
     })
+
 
     mVemViewController.setSelectionCallback((selection) => {
         // selections could be strokes or elements. 
@@ -74,7 +125,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let dimention = new Data.Dimention();
         dimention.structX = coords.x;
         dimention.structY = coords.y;
-        Fairies.dimentionStructPositionFairy(dimention, mModelController.getModel());
+        let structPos = ModelUtil.getStructPosition(dimention, mModelController.getModel())
+        dimention.structX = structPos.x;
+        dimention.structY = structPos.y;
         mModelController.addDimention(dimention);
         modelUpdate();
     })
@@ -99,7 +152,26 @@ document.addEventListener('DOMContentLoaded', function (e) {
     })
 
     mStructViewController.setLinkCallback((groupId, dimentionId, channelType) => {
-        Fairies.newMappingFairy(groupId, dimentionId, channelType, mModelController);
+        // first remove the mapping if it exists. 
+        let existingMapping = mModelController.getModel().getMappings()
+            .find(m => m.groupId == groupId && m.channel == channelType);
+        if (existingMapping) {
+            if (existingMapping.dimentionId == dimentionId) {
+                // already exists, nothing more to do here. 
+                return;
+            } else {
+                mModelController.removeMapping(existingMapping.id);
+            }
+        }
+        existingMapping = mModelController.getModel().getMappings()
+            .find(m => m.dimentionId == dimentionId);
+        if (existingMapping) {
+            mModelController.removeMapping(existingMapping.id);
+        }
+
+        let newMapping = ModelUtil.getMapping(groupId, dimentionId, channelType);
+        mModelController.addMapping(newMapping);
+        ModelUtil.updateDimentionValues(newMapping.id, mModelController);
         modelUpdate();
     })
 
