@@ -6,6 +6,11 @@ function MenuController(svg) {
     let mPanButton;
     let mZoomButton;
     let mViewButton;
+    let mColorSelectorButton;
+    let mColorPicker;
+    let mColorPickerContainer;
+
+    let mColorChangeCallback = () => { };
 
     function createInterface(svg) {
         mPanButton = new MenuButton(svg, "img/panning_button.svg")
@@ -14,6 +19,17 @@ function MenuController(svg) {
         mBrushButton = new MenuButton(svg, "img/color_brush_button.svg")
         mSelectionButton = new MenuButton(svg, "img/selection_button.svg")
         mViewButton = new MenuButton(svg, "img/eyecon_button.svg")
+
+        mColorSelectorButton = new MenuButton(svg, "img/color_selector.svg")
+        mColorSelectorButton.onClick(function () {
+            mColorPicker.openHandler();
+        })
+
+        mColorPickerContainer = d3.select("#color-container");
+        mColorPicker = new Picker({ parent: mColorPickerContainer.node(), popup: "top" });
+        mColorPicker.onChange = function (color) {
+            mColorChangeCallback(color);
+        };
 
         defineFilters(svg);
         layout(svg.attr('width'), svg.attr('height'));
@@ -109,6 +125,10 @@ function MenuController(svg) {
         mPanButton.setPosition(buttonSpacing * 0.5, height - BUTTON_SIZE);
         mZoomButton.setPosition(buttonSpacing * 0.5, height - BUTTON_SIZE);
         mViewButton.setPosition(buttonSpacing * 3.5, height - BUTTON_SIZE);
+        mColorSelectorButton.setPosition(buttonSpacing * 4.5, height - BUTTON_SIZE);
+        console.log(" here", buttonSpacing * 4.5)
+        mColorPickerContainer.style("left", (buttonSpacing * 4.5 - BUTTON_SIZE / 2) + "px").style("top", (height - BUTTON_SIZE * 1.5) + "px");
+
     }
 
     function MenuButton(svg, img) {
@@ -117,8 +137,10 @@ function MenuController(svg) {
             .attr("width", BUTTON_SIZE)
             .attr("href", img)
             .attr("filter", "url(#dropshadow)")
+            .on('pointerup', () => { mClickCallback(...arguments) });
         let mOffsetX = 0;
         let mOffsetY = 0;
+        let mClickCallback = () => { };
 
         function setPosition(x, y) {
             mButton.attr("x", x - BUTTON_SIZE / 2).attr("y", y - BUTTON_SIZE / 2);
@@ -149,10 +171,14 @@ function MenuController(svg) {
             }
         }
 
+        function onClick(func) { mClickCallback = func; }
+
         this.setPosition = setPosition;
         this.isSubButton = isSubButton;
         this.setVisible = setVisible;
         this.setActive = setActive;
+        this.onClick = onClick;
+        this.node = () => mButton.node()
     }
 
     function defineFilters(svg) {
