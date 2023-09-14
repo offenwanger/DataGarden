@@ -194,6 +194,38 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         }
     }
 
+    function drawBubble(outline, color, alpha, code = "#FF0000") {
+        console.log(outline)
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+
+        // move to the first point
+        ctx.moveTo(outline[0].x, outline[0].y);
+        let extendedOutline = outline.concat([outline[0]])
+
+        for (var i = 1; i < extendedOutline.length - 1; i++) {
+            var xc = (extendedOutline[i].x + extendedOutline[i + 1].x) / 2;
+            var yc = (extendedOutline[i].y + extendedOutline[i + 1].y) / 2;
+            ctx.quadraticCurveTo(extendedOutline[i].x, extendedOutline[i].y, xc, yc);
+        }
+
+        ctx.fill();
+        ctx.restore();
+
+        // Interaction //
+        if (code) {
+            intCtx.save();
+            intCtx.fillStyle = code;
+            intCtx.beginPath();
+            intCtx.moveTo(outline[outline.length - 1].x, outline[outline.length - 1].y);
+            outline.forEach(p => intCtx.lineTo(p.x, p.y));
+            intCtx.fill();
+            intCtx.restore();
+        }
+    }
+
     function highlightLink(start, end, r, color) {
         let triangle = getTrianglePointer(start, end, r, 10);
 
@@ -304,6 +336,7 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         drawStroke,
         drawConnector,
         drawLink,
+        drawBubble,
         highlightLink,
     }
 }

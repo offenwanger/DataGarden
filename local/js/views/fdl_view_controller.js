@@ -9,6 +9,178 @@ function FdlViewController() {
 
     const ELEMENT_PADDING = 10;
 
+    /////////////////////////////////////
+    let width = window.innerWidth / 2;
+    let height = window.innerHeight;
+    let padding = 5
+    let clusterPadding = 20
+    let numClusters = 10
+    let maxRadius = 10
+    let radius = d3.scaleLinear().domain([0, 10]).range([3, maxRadius]);
+    const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    const noClusterNodes = d3.range(50).map((idx) => {
+        return {
+            id: idx,
+            cluster: 0,
+            radius: 3,
+            x: Math.random() * width,
+            y: Math.random() * height
+        };
+    });
+    const clusterNodes = d3.range(150).map((idx) => {
+        const i = Math.floor(Math.random() * numClusters);
+        const r = Math.sqrt((i + 1) / numClusters * -Math.log(Math.random())) * maxRadius;
+        return {
+            id: idx + 50,
+            cluster: i,
+            radius: radius(r),
+            x: Math.random() * width,
+            y: Math.random() * height
+        };
+    });
+    let nodes = noClusterNodes.concat(clusterNodes);
+
+    const clusterMap = {};
+    nodes.forEach(n => {
+        if (!clusterMap[n.cluster] || (n.radius > clusterMap[n.cluster].radius)) clusterMap[n.cluster] = n;
+    });
+    let clusters = clusterMap;
+
+    function hullPoints(data) {
+        let pointArr = [];
+        const padding = 2.5;
+        data.forEach(d => {
+            const pad = d.radius + padding;
+            pointArr = pointArr.concat([
+                [d.x - pad, d.y - pad],
+                [d.x - pad, d.y + pad],
+                [d.x + pad, d.y - pad],
+                [d.x + pad, d.y + pad]
+            ]);
+        });
+        return pointArr;
+    }
+
+    let runTimer = 0;
+
+    function ticked() {
+        nodes.forEach(cluster(0.2));
+        nodes.forEach(collide(0.2));
+
+        // runTimer++;
+        // if (runTimer > 50) simulation.stop();
+
+        draw2();
+    }
+
+    function draw2() {
+        // draw nodes
+        mDrawingUtil.reset(mWidth, mHeight, mZoomTransform);
+
+        nodes.forEach(node => {
+            console.log(node)
+            mDrawingUtil.drawColorCircle(node.x, node.y, node.radius, color(+node.cluster))
+        })
+
+        Object.keys(clusters).forEach((cluster) => {
+            if (cluster != 0) {
+                let clusterNodes = nodes.filter((n) => n.cluster == cluster);
+                let hull = d3.polygonHull(hullPoints(clusterNodes)).map(p => { return { x: p[0], y: p[1] } });
+                mDrawingUtil.drawBubble(hull, color(+cluster), 0.4)
+            }
+        })
+    }
+
+    function cluster(alpha) {
+        // https://bl.ocks.org/mbostock/7881887
+        return function (d) {
+            const cluster = clusters[d.cluster];
+            if (cluster === d || d.cluster == 0) return;
+            let x = d.x - cluster.x,
+                y = d.y - cluster.y,
+                l = Math.sqrt(x * x + y * y),
+                r = d.radius + cluster.radius + 3;
+            if (l != r) {
+                l = (l - r) / l * alpha;
+                d.x -= x *= l;
+                d.y -= y *= l;
+                cluster.x += x;
+                cluster.y += y;
+            }
+        };
+    }
+
+    function collide(alpha) {
+        // https://bl.ocks.org/mbostock/7882658
+        const quadtree = d3.quadtree()
+            .x(function (d) { return d.x; })
+            .y(function (d) { return d.y; })
+            .extent([[0, 0], [width, height]])
+            .addAll(nodes);
+        return function (d) {
+            let r = d.radius + (maxRadius * 8) + Math.max(padding, clusterPadding),
+                nx1 = d.x - r,
+                nx2 = d.x + r,
+                ny1 = d.y - r,
+                ny2 = d.y + r;
+            quadtree.visit(function (quad, x1, y1, x2, y2) {
+                let data = quad.data;
+                if (data && data !== d) {
+                    let x = d.x - data.x,
+                        y = d.y - data.y,
+                        l = Math.sqrt(x * x + y * y),
+                        r = d.radius + data.radius + (d.cluster == data.cluster ? padding : clusterPadding);
+                    if (l < r) {
+                        l = (l - r) / l * alpha;
+                        d.x -= x *= l;
+                        d.y -= y *= l;
+                        data.x += x;
+                        data.y += y;
+                    }
+                }
+                return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+            });
+        };
+    }
+
+    const simulation = d3
+        .forceSimulation()
+        .alpha(0.3)
+        .force("center", d3.forceCenter().x(width / 2).y(height / 2))
+        .force("collide", d3.forceCollide((d) => d.radius + padding))
+        .nodes(nodes, (d) => d.id)
+        .on("tick", ticked)
+        .restart();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /////////////////////////////////////
     let mCanvas = d3.select('#fdl-view').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
     let mInterfaceCanvas = d3.select("#fdl-view").select('.canvas-container').append('canvas')
@@ -40,12 +212,11 @@ function FdlViewController() {
     let mHeight = 100;
     const ctx = mCanvas.node().getContext("2d");
     const ctx2 = mInteractionCanvas.node().getContext("2d");
-    const simulation = d3.forceSimulation()
-        .force("link", d3.forceLink().id(d => d.id))
-        .force("charge", d3.forceManyBody())
-        .force("center", d3.forceCenter(mWidth / 2, mHeight / 2))
-        .on("tick", draw);
-    const color = d3.scaleOrdinal(d3.schemeCategory10);
+    // const simulation = d3.forceSimulation()
+    //     .force("link", d3.forceLink().id(d => d.id))
+    //     .force("charge", d3.forceManyBody())
+    //     .force("center", d3.forceCenter(mWidth / 2, mHeight / 2))
+    //     .on("tick", draw);
 
     let mInteraction = null;
 
@@ -169,7 +340,9 @@ function FdlViewController() {
         let interaction = mInteraction;
         mInteraction = null;
         if (interaction && interaction.type == DRAG_ELEMENT) {
-            // Do something with this. 
+            simulation.alphaTarget(0);
+            interaction.node.fx = null;
+            interaction.node.fy = null;
         } else if (interaction && interaction.type == DRAG_LINK) {
             let target = getInteractionTarget(screenCoords);
             if (target && target.type == TARGET_ELEMENT) {
@@ -294,36 +467,7 @@ function FdlViewController() {
         }
     }
 
-    // Add a drag behavior. The _subject_ identifies the closest node to the pointer,
-    // conditional on the distance being less than 20 pixels.
-    // d3.select(canvas)
-    //     .call(d3.drag()
-    //         .subject(event => {
-    //             const [px, py] = d3.pointer(event, canvas);
-    //             return d3.least(nodes, ({ x, y }) => {
-    //                 const dist2 = (x - px) ** 2 + (y - py) ** 2;
-    //                 if (dist2 < 400) return dist2;
-    //             });
-    //         })
-    //         .on("start", dragstarted)
-    //         .on("drag", dragged)
-    //         .on("end", dragended));
 
-    // Reheat the simulation when drag starts, and fix the subject position.
-    function dragstarted(event) {
-    }
-
-    // Update the subject (dragged node) position during drag.
-    function dragged(event) {
-    }
-
-    // Restore the target alpha so the simulation cools after dragging ends.
-    // Unfix the subject position now that it’s no longer being dragged.
-    function dragended(event) {
-        if (!event.active) simulation.alphaTarget(0);
-        event.subject.fx = null;
-        event.subject.fy = null;
-    }
 
 
     return {
