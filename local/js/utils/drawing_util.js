@@ -23,6 +23,7 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
     }
 
     function drawContainerRect(x, y, width, height, code = null) {
+        console.log(ctx)
         ctx.save();
         ctx.lineWidth = 1;
         ctx.strokeStyle = 'black';
@@ -72,6 +73,19 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         intfCtx.restore();
     }
 
+    function highlightCircle(cx, cy, r, color) {
+        intfCtx.save();
+
+        intfCtx.strokeStyle = color;
+        intfCtx.lineWidth = 2;
+
+        intfCtx.beginPath();
+        intfCtx.arc(cx, cy, r, 0, 2 * Math.PI);
+        intfCtx.stroke();
+
+        intfCtx.restore();
+    }
+
     function drawContainerRectSplitInteraction(x, y, width, height, percent, code) {
         intCtx.save();
         y += (1 - percent) * height;
@@ -80,7 +94,7 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         intCtx.restore();
     }
 
-    function drawCircle(cx, cy, r, letter, code = null) {
+    function drawLetterCircle(cx, cy, r, letter, code = null) {
         ctx.save();
 
         ctx.strokeStyle = 'black';
@@ -111,6 +125,85 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         }
 
         ctx.restore();
+    }
+
+    function drawColorCircle(cx, cy, r, color, code = null) {
+        ctx.save();
+
+        ctx.strokeStyle = 'black';
+        ctx.fillStyle = color;
+        ctx.lineWidth = 1;
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+
+        // Interaction //
+        if (code) {
+            intCtx.save();
+            intCtx.fillStyle = code;
+            intCtx.beginPath();
+            intCtx.arc(cx, cy, r, 0, 2 * Math.PI);
+            intCtx.fill();
+            intCtx.restore();
+        }
+
+        ctx.restore();
+    }
+
+    function drawLines(lines, color, alpha) {
+        ctx.save();
+
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        lines.forEach((line) => {
+            ctx.moveTo(line[0].x, line[0].y);
+            ctx.lineTo(line[1].x, line[1].y);
+        });
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    function drawLink(start, end, r, color, alpha, code) {
+        let size = 3;
+        let offset = 2;
+
+        if (!start) {
+            start = { x: end.x, y: end.y - (offset + r) }
+        }
+
+        let direction = MathUtil.normalize(MathUtil.subtract(start, end));
+        let circlePoint = MathUtil.add(start, MathUtil.scale(direction, r + offset));
+        let p1 = MathUtil.add(circlePoint, MathUtil.scale({ y: -direction.x, x: direction.y }, size))
+        let p2 = MathUtil.add(circlePoint, MathUtil.scale({ y: direction.x, x: -direction.y }, size))
+        let p3 = MathUtil.add(start, MathUtil.scale(direction, size));
+
+        ctx.save();
+
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.lineTo(p3.x, p3.y);
+        ctx.fill();
+
+        ctx.restore();
+
+        // Interaction //
+        if (code) {
+            intCtx.save();
+            intCtx.fillStyle = code;
+            intCtx.beginPath();
+            intCtx.moveTo(p1.x, p1.y);
+            intCtx.lineTo(p2.x, p2.y);
+            intCtx.lineTo(p3.x, p3.y);
+            intCtx.fill();
+            intCtx.restore();
+        }
     }
 
     function drawStroke(path, x, y, scale, color, size, clipBox, code = null) {
@@ -185,9 +278,13 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         drawContainerRect,
         drawTextContainerRect,
         highlightContainerRect,
+        highlightCircle,
         drawContainerRectSplitInteraction,
-        drawCircle,
+        drawLetterCircle,
+        drawColorCircle,
+        drawLines,
         drawStroke,
         drawConnector,
+        drawLink,
     }
 }

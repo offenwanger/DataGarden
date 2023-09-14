@@ -2,11 +2,9 @@
  * Listens to all events including buttons, maintains state, and passes commands back to main 
  */
 
-function EventManager(strokeController, vemController, structController, tableController) {
+function EventManager(strokeController, fdlController) {
     let mStrokeViewController = strokeController;
-    let mVemViewController = vemController;
-    let mStructViewController = structController;
-    let mTableViewController = tableController;
+    let mFdlViewController = fdlController;
 
     let mHorizontalBarPercent = 0.5;
     let mVerticalBarPercent = 0.5;
@@ -32,10 +30,8 @@ function EventManager(strokeController, vemController, structController, tableCo
     ]
 
     d3.select(window).on('resize', () => {
-        mStrokeViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight * mHorizontalBarPercent);
-        mVemViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight * mHorizontalBarPercent);
-        mStructViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight * mHorizontalBarPercent);
-        mTableViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight * mHorizontalBarPercent);
+        mStrokeViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight);
+        mFdlViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight);
         mInterface.attr('width', window.innerWidth).attr('height', window.innerHeight);
         mMenuController.onResize(window.innerWidth, window.innerHeight);
     });
@@ -63,13 +59,12 @@ function EventManager(strokeController, vemController, structController, tableCo
         mLongPressTimeout = setTimeout(() => {
             let motion = MathUtil.length(MathUtil.subtract(mStartPos, mCurrentMousePosistion));
             if (motion < 5) {
-                mStructViewController.onLongPress(screenCoords, mCurrentToolState);
+                // on long press
             }
         }, 800);
 
         let hold = mStrokeViewController.onPointerDown(screenCoords, mCurrentToolState);
-        hold = hold || mVemViewController.onPointerDown(screenCoords, mCurrentToolState);
-        hold = hold || mStructViewController.onPointerDown(screenCoords, mCurrentToolState);
+        hold = hold || mFdlViewController.onPointerDown(screenCoords, mCurrentToolState);
 
         if (hold) { holdState(); }
     });
@@ -78,15 +73,13 @@ function EventManager(strokeController, vemController, structController, tableCo
         mCurrentMousePosistion = screenCoords;
 
         mStrokeViewController.onPointerMove(screenCoords, mCurrentToolState);
-        mVemViewController.onPointerMove(screenCoords, mCurrentToolState);
-        mStructViewController.onPointerMove(screenCoords, mCurrentToolState);
+        mFdlViewController.onPointerMove(screenCoords, mCurrentToolState);
     });
 
     d3.select(document).on('pointerup', (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY };
         mStrokeViewController.onPointerUp(screenCoords, mCurrentToolState);
-        mVemViewController.onPointerUp(screenCoords, mCurrentToolState);
-        mStructViewController.onPointerUp(screenCoords, mCurrentToolState);
+        mFdlViewController.onPointerUp(screenCoords, mCurrentToolState);
         releaseState();
         clearTimeout(mLongPressTimeout);
     });

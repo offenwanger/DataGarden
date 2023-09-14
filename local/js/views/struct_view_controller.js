@@ -278,20 +278,20 @@ function StructViewController() {
         if (group.parentId) {
             code = getCode(group.id, TARGET_LINK_POSITION)
             pos = getChannelNodePosition(ChannelTypes.POSITION);
-            mDrawingUtil.drawCircle(pos.x + group.structX, pos.y + group.structY, Size.NODE_TINY / 2, "P", code)
+            mDrawingUtil.drawLetterCircle(pos.x + group.structX, pos.y + group.structY, Size.NODE_TINY / 2, "P", code)
         }
 
         code = getCode(group.id, TARGET_LINK_ORIENTATION)
         pos = getChannelNodePosition(ChannelTypes.ORIENTATION);
-        mDrawingUtil.drawCircle(pos.x + group.structX, pos.y + group.structY, Size.NODE_TINY / 2, "O", code)
+        mDrawingUtil.drawLetterCircle(pos.x + group.structX, pos.y + group.structY, Size.NODE_TINY / 2, "O", code)
 
         code = getCode(group.id, TARGET_LINK_FORM)
         pos = getChannelNodePosition(ChannelTypes.FORM);
-        mDrawingUtil.drawCircle(pos.x + group.structX, pos.y + group.structY, Size.NODE_TINY / 2, "F", code)
+        mDrawingUtil.drawLetterCircle(pos.x + group.structX, pos.y + group.structY, Size.NODE_TINY / 2, "F", code)
 
         code = getCode(group.id, TARGET_LINK_NUMBER)
         pos = getChannelNodePosition(ChannelTypes.NUMBER);
-        mDrawingUtil.drawCircle(pos.x + group.structX, pos.y + group.structY, Size.NODE_TINY / 2, "N", code)
+        mDrawingUtil.drawLetterCircle(pos.x + group.structX, pos.y + group.structY, Size.NODE_TINY / 2, "N", code)
     }
 
     function drawMapping(mapping, group, dimention) {
@@ -303,7 +303,7 @@ function StructViewController() {
         } else {
             midPoint = mDrawingUtil.drawConnector(null, null, groupConnectorPoint, dimentionConnectorPoint);
         }
-        mDrawingUtil.drawCircle(midPoint.x, midPoint.y, Size.NODE_TINY / 2, "M");
+        mDrawingUtil.drawLetterCircle(midPoint.x, midPoint.y, Size.NODE_TINY / 2, "M");
     }
 
     function drawDimention(dimention) {

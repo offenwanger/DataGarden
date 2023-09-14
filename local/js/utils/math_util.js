@@ -30,10 +30,20 @@ let MathUtil = function () {
         return Math.sqrt(v.x * v.x + v.y * v.y);
     }
 
+    // function angle(v1, v2) {
+    //     return Math.atan2(v2.y - v1.y, v2.x - v1.x);
+    // }
+
+    function normalize(v) {
+        let len = length(v);
+        return { x: v.x / len, y: v.y / len }
+    }
+
     return {
         add,
         subtract,
         scale,
         length,
+        normalize,
     }
 }();
