@@ -55,6 +55,12 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mStrokeViewController.highlight(selection);
     })
 
+    mFdlViewController.setParentElementCallback((elementId, parentElementId) => {
+        ModelUtil.updateParent(parentElementId, elementId, mModelController)
+        ModelUtil.clearEmptyGroups(mModelController);
+        modelUpdate();
+    })
+
     function modelUpdate() {
         let model = mModelController.getModel();
         mStrokeViewController.onModelUpdate(model);

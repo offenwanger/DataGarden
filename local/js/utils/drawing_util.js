@@ -168,27 +168,15 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
     }
 
     function drawLink(start, end, r, color, alpha, code) {
-        let size = 3;
-        let offset = 2;
-
-        if (!start) {
-            start = { x: end.x, y: end.y - (offset + r) }
-        }
-
-        let direction = MathUtil.normalize(MathUtil.subtract(start, end));
-        let circlePoint = MathUtil.add(start, MathUtil.scale(direction, r + offset));
-        let p1 = MathUtil.add(circlePoint, MathUtil.scale({ y: -direction.x, x: direction.y }, size))
-        let p2 = MathUtil.add(circlePoint, MathUtil.scale({ y: direction.x, x: -direction.y }, size))
-        let p3 = MathUtil.add(start, MathUtil.scale(direction, size));
-
+        let triangle = getTrianglePointer(start, end, r, 10);
         ctx.save();
 
         ctx.globalAlpha = alpha;
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-        ctx.lineTo(p3.x, p3.y);
+        ctx.moveTo(triangle[0].x, triangle[0].y);
+        ctx.lineTo(triangle[1].x, triangle[1].y);
+        ctx.lineTo(triangle[2].x, triangle[2].y);
         ctx.fill();
 
         ctx.restore();
@@ -198,12 +186,42 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
             intCtx.save();
             intCtx.fillStyle = code;
             intCtx.beginPath();
-            intCtx.moveTo(p1.x, p1.y);
-            intCtx.lineTo(p2.x, p2.y);
-            intCtx.lineTo(p3.x, p3.y);
+            intCtx.moveTo(triangle[0].x, triangle[0].y);
+            intCtx.lineTo(triangle[1].x, triangle[1].y);
+            intCtx.lineTo(triangle[2].x, triangle[2].y);
             intCtx.fill();
             intCtx.restore();
         }
+    }
+
+    function highlightLink(start, end, r, color) {
+        let triangle = getTrianglePointer(start, end, r, 10);
+
+        intfCtx.save();
+
+        intfCtx.fillStyle = color;
+        intfCtx.beginPath();
+        intfCtx.moveTo(triangle[0].x, triangle[0].y);
+        intfCtx.lineTo(triangle[1].x, triangle[1].y);
+        intfCtx.lineTo(triangle[2].x, triangle[2].y);
+        intfCtx.fill();
+
+        ctx.restore();
+    }
+
+    function getTrianglePointer(start, end, r, size) {
+        if (!start) {
+            start = { x: end.x, y: end.y - (2 * r + size) }
+        }
+
+        let direction = MathUtil.normalize(MathUtil.subtract(end, start));
+        let triangleBase = MathUtil.add(start, MathUtil.scale(direction, r));
+
+        return [
+            MathUtil.add(triangleBase, MathUtil.scale({ y: -direction.x, x: direction.y }, size / 2)),
+            MathUtil.add(triangleBase, MathUtil.scale({ y: direction.x, x: -direction.y }, size / 2)),
+            MathUtil.add(triangleBase, MathUtil.scale(direction, size))
+        ]
     }
 
     function drawStroke(path, x, y, scale, color, size, clipBox, code = null) {
@@ -286,5 +304,6 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         drawStroke,
         drawConnector,
         drawLink,
+        highlightLink,
     }
 }
