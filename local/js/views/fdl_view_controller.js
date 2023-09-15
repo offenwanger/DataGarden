@@ -8,179 +8,8 @@ function FdlViewController() {
     const TARGET_ELEMENT = 'elementTarget';
 
     const ELEMENT_PADDING = 10;
+    const NODE_SIZE = 8;
 
-    /////////////////////////////////////
-    let width = window.innerWidth / 2;
-    let height = window.innerHeight;
-    let padding = 5
-    let clusterPadding = 20
-    let numClusters = 10
-    let maxRadius = 10
-    let radius = d3.scaleLinear().domain([0, 10]).range([3, maxRadius]);
-    const color = d3.scaleOrdinal(d3.schemeCategory10);
-
-    const noClusterNodes = d3.range(50).map((idx) => {
-        return {
-            id: idx,
-            cluster: 0,
-            radius: 3,
-            x: Math.random() * width,
-            y: Math.random() * height
-        };
-    });
-    const clusterNodes = d3.range(150).map((idx) => {
-        const i = Math.floor(Math.random() * numClusters);
-        const r = Math.sqrt((i + 1) / numClusters * -Math.log(Math.random())) * maxRadius;
-        return {
-            id: idx + 50,
-            cluster: i,
-            radius: radius(r),
-            x: Math.random() * width,
-            y: Math.random() * height
-        };
-    });
-    let nodes = noClusterNodes.concat(clusterNodes);
-
-    const clusterMap = {};
-    nodes.forEach(n => {
-        if (!clusterMap[n.cluster] || (n.radius > clusterMap[n.cluster].radius)) clusterMap[n.cluster] = n;
-    });
-    let clusters = clusterMap;
-
-    function hullPoints(data) {
-        let pointArr = [];
-        const padding = 2.5;
-        data.forEach(d => {
-            const pad = d.radius + padding;
-            pointArr = pointArr.concat([
-                [d.x - pad, d.y - pad],
-                [d.x - pad, d.y + pad],
-                [d.x + pad, d.y - pad],
-                [d.x + pad, d.y + pad]
-            ]);
-        });
-        return pointArr;
-    }
-
-    let runTimer = 0;
-
-    function ticked() {
-        nodes.forEach(cluster(0.2));
-        nodes.forEach(collide(0.2));
-
-        // runTimer++;
-        // if (runTimer > 50) simulation.stop();
-
-        draw2();
-    }
-
-    function draw2() {
-        // draw nodes
-        mDrawingUtil.reset(mWidth, mHeight, mZoomTransform);
-
-        nodes.forEach(node => {
-            console.log(node)
-            mDrawingUtil.drawColorCircle(node.x, node.y, node.radius, color(+node.cluster))
-        })
-
-        Object.keys(clusters).forEach((cluster) => {
-            if (cluster != 0) {
-                let clusterNodes = nodes.filter((n) => n.cluster == cluster);
-                let hull = d3.polygonHull(hullPoints(clusterNodes)).map(p => { return { x: p[0], y: p[1] } });
-                mDrawingUtil.drawBubble(hull, color(+cluster), 0.4)
-            }
-        })
-    }
-
-    function cluster(alpha) {
-        // https://bl.ocks.org/mbostock/7881887
-        return function (d) {
-            const cluster = clusters[d.cluster];
-            if (cluster === d || d.cluster == 0) return;
-            let x = d.x - cluster.x,
-                y = d.y - cluster.y,
-                l = Math.sqrt(x * x + y * y),
-                r = d.radius + cluster.radius + 3;
-            if (l != r) {
-                l = (l - r) / l * alpha;
-                d.x -= x *= l;
-                d.y -= y *= l;
-                cluster.x += x;
-                cluster.y += y;
-            }
-        };
-    }
-
-    function collide(alpha) {
-        // https://bl.ocks.org/mbostock/7882658
-        const quadtree = d3.quadtree()
-            .x(function (d) { return d.x; })
-            .y(function (d) { return d.y; })
-            .extent([[0, 0], [width, height]])
-            .addAll(nodes);
-        return function (d) {
-            let r = d.radius + (maxRadius * 8) + Math.max(padding, clusterPadding),
-                nx1 = d.x - r,
-                nx2 = d.x + r,
-                ny1 = d.y - r,
-                ny2 = d.y + r;
-            quadtree.visit(function (quad, x1, y1, x2, y2) {
-                let data = quad.data;
-                if (data && data !== d) {
-                    let x = d.x - data.x,
-                        y = d.y - data.y,
-                        l = Math.sqrt(x * x + y * y),
-                        r = d.radius + data.radius + (d.cluster == data.cluster ? padding : clusterPadding);
-                    if (l < r) {
-                        l = (l - r) / l * alpha;
-                        d.x -= x *= l;
-                        d.y -= y *= l;
-                        data.x += x;
-                        data.y += y;
-                    }
-                }
-                return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
-            });
-        };
-    }
-
-    const simulation = d3
-        .forceSimulation()
-        .alpha(0.3)
-        .force("center", d3.forceCenter().x(width / 2).y(height / 2))
-        .force("collide", d3.forceCollide((d) => d.radius + padding))
-        .nodes(nodes, (d) => d.id)
-        .on("tick", ticked)
-        .restart();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    /////////////////////////////////////
     let mCanvas = d3.select('#fdl-view').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
     let mInterfaceCanvas = d3.select("#fdl-view").select('.canvas-container').append('canvas')
@@ -208,15 +37,28 @@ function FdlViewController() {
 
     let mModel = new DataModel();
     let mData = { "nodes": [], "links": [] };
-    let mWidth = 100;
-    let mHeight = 100;
-    const ctx = mCanvas.node().getContext("2d");
-    const ctx2 = mInteractionCanvas.node().getContext("2d");
+    let mWidth = window.innerWidth / 2;
+    let mHeight = window.innerHeight;
+    let mClusterMap = {};
+    let mColorMap = d3.scaleOrdinal(d3.schemeCategory10);
+
     // const simulation = d3.forceSimulation()
-    //     .force("link", d3.forceLink().id(d => d.id))
+    //    .force("link", d3.forceLink().id(d => d.id))
     //     .force("charge", d3.forceManyBody())
     //     .force("center", d3.forceCenter(mWidth / 2, mHeight / 2))
     //     .on("tick", draw);
+    const simulation = d3.forceSimulation()
+        .force("center", d3.forceCenter().x(mWidth / 2).y(mHeight / 2))
+        .force("collide", d3.forceCollide((d) => d.radius + padding))
+        .force("link", d3.forceLink().id(d => d.id))
+        .nodes(mData.nodes, (d) => d.id)
+        .alpha(0.3)
+        .on("tick", () => {
+            mData.nodes.forEach(cluster(0.2));
+            mData.nodes.forEach(collide(0.2));
+            draw();
+        })
+        .restart();
 
     let mInteraction = null;
 
@@ -225,11 +67,30 @@ function FdlViewController() {
         let elements = mModel.getElements();
         mData = { nodes: [], links: [] };
         elements.forEach(element => {
-            mData.nodes.push({ "id": element.id, hasParent: element.parentId ? true : false, "group": 1 })
+            mData.nodes.push({
+                id: element.id,
+                hasParent: element.parentId ? true : false,
+                cluster: mModel.getGroupForElement(element.id).id,
+                radius: NODE_SIZE,
+                x: mWidth / 2,
+                y: mHeight / 2,
+            })
+
             if (element.parentId) {
-                mData.links.push({ "source": element.parentId, "target": element.id, "value": 1 })
+                mData.links.push({
+                    source: element.parentId,
+                    target: element.id,
+                    value: 1
+                })
             }
         });
+
+        mClusterMap = {};
+        mData.nodes.forEach(n => {
+            if (!mClusterMap[n.cluster]) mClusterMap[n.cluster] = n;
+        });
+
+        mColorMap = mColorMap.domain(Object.keys(mClusterMap));
 
         // Redefine and restart simulation
         simulation.nodes(mData.nodes);
@@ -237,6 +98,27 @@ function FdlViewController() {
         simulation.alpha(0.3).restart();
 
         drawInterface();
+    }
+
+    let width = window.innerWidth / 2;
+    let height = window.innerHeight;
+    let padding = 5
+    let clusterPadding = 20
+    let maxRadius = 10
+
+    function hullPoints(data) {
+        let pointArr = [];
+        const padding = 2.5;
+        data.forEach(d => {
+            const pad = d.radius + padding;
+            pointArr = pointArr.concat([
+                [d.x - pad, d.y - pad],
+                [d.x - pad, d.y + pad],
+                [d.x + pad, d.y - pad],
+                [d.x + pad, d.y + pad]
+            ]);
+        });
+        return pointArr;
     }
 
     function onPointerDown(screenCoords, toolState) {
@@ -254,7 +136,6 @@ function FdlViewController() {
         } else if (toolState == Buttons.SELECTION_BUTTON) {
             let target = getInteractionTarget(screenCoords);
             if (target && target.type == TARGET_ELEMENT) {
-                console.log(target)
                 let node = mData.nodes.find(n => n.id == target.id);
                 mInteraction = { type: DRAG_ELEMENT, node };
                 node.fx = node.x;
@@ -314,7 +195,6 @@ function FdlViewController() {
                         if (!mHighlightLink) {
                             mHighlightLink = { source: null, target: mData.nodes.find(n => n.id == target.id) };
                         }
-                        console.log(target, mHighlightLink)
                         drawInterface();
                     } else {
                         mHighlightElementIds = null;
@@ -346,7 +226,6 @@ function FdlViewController() {
         } else if (interaction && interaction.type == DRAG_LINK) {
             let target = getInteractionTarget(screenCoords);
             if (target && target.type == TARGET_ELEMENT) {
-                console.log(interaction)
                 mParentElementCallback(interaction.id, target.id);
             }
         }
@@ -391,6 +270,15 @@ function FdlViewController() {
 
     function draw() {
         mDrawingUtil.reset(mCanvas.attr("width"), mCanvas.attr("height"), mZoomTransform);
+
+        Object.keys(mClusterMap).forEach((cluster) => {
+            if (cluster != 0) {
+                let clusterNodes = mData.nodes.filter((n) => n.cluster == cluster);
+                let hull = d3.polygonHull(hullPoints(clusterNodes)).map(p => { return { x: p[0], y: p[1] } });
+                mDrawingUtil.drawBubble(hull, mColorMap(cluster), 0.4)
+            }
+        })
+
         mDrawingUtil.drawLines(mData.links.map(link => [link.source, link.target]), "#999", 0.6);
         mData.links.forEach(link => {
             mDrawingUtil.drawLink(link.source, link.target, 5, "#999", 0.6, getCode(link.target.id, TARGET_LINK));
@@ -400,7 +288,7 @@ function FdlViewController() {
             if (!node.hasParent) {
                 mDrawingUtil.drawLink(null, node, 5, "#999", 0.6, getCode(node.id, TARGET_LINK));
             }
-            mDrawingUtil.drawColorCircle(node.x, node.y, 5, color(node.group), getCode(node.id, TARGET_ELEMENT));
+            mDrawingUtil.drawColorCircle(node.x, node.y, node.radius, mColorMap(node.cluster), getCode(node.id, TARGET_ELEMENT));
         });
 
         drawInterface();
@@ -413,11 +301,11 @@ function FdlViewController() {
         if (mHighlightElementIds) {
             mHighlightElementIds.forEach(eId => {
                 let e = mData.nodes.find(n => n.id == eId);
-                mDrawingUtil.highlightCircle(e.x, e.y, 6, "#FF0000");
+                mDrawingUtil.highlightCircle(e.x, e.y, NODE_SIZE, "#FF0000");
             })
         }
         if (mHighlightLink) {
-            mDrawingUtil.highlightLink(mHighlightLink.source, mHighlightLink.target, 5, "#FF0000");
+            mDrawingUtil.highlightLink(mHighlightLink.source, mHighlightLink.target, NODE_SIZE, "#FF0000");
         }
     }
 
@@ -467,8 +355,57 @@ function FdlViewController() {
         }
     }
 
+    function cluster(alpha) {
+        // https://bl.ocks.org/mbostock/7881887
+        return function (d) {
+            const cluster = mClusterMap[d.cluster];
+            if (cluster === d || d.cluster == 0) return;
+            let x = d.x - cluster.x,
+                y = d.y - cluster.y,
+                l = Math.sqrt(x * x + y * y),
+                r = d.radius + cluster.radius + 3;
+            if (l != r) {
+                l = (l - r) / l * alpha;
+                d.x -= x *= l;
+                d.y -= y *= l;
+                cluster.x += x;
+                cluster.y += y;
+            }
+        };
+    }
 
-
+    function collide(alpha) {
+        // https://bl.ocks.org/mbostock/7882658
+        const quadtree = d3.quadtree()
+            .x(function (d) { return d.x; })
+            .y(function (d) { return d.y; })
+            .extent([[0, 0], [width, height]])
+            .addAll(mData.nodes);
+        return function (d) {
+            let r = d.radius + (maxRadius * 8) + Math.max(padding, clusterPadding),
+                nx1 = d.x - r,
+                nx2 = d.x + r,
+                ny1 = d.y - r,
+                ny2 = d.y + r;
+            quadtree.visit(function (quad, x1, y1, x2, y2) {
+                let data = quad.data;
+                if (data && data !== d) {
+                    let x = d.x - data.x,
+                        y = d.y - data.y,
+                        l = Math.sqrt(x * x + y * y),
+                        r = d.radius + data.radius + (d.cluster == data.cluster ? padding : clusterPadding);
+                    if (l < r) {
+                        l = (l - r) / l * alpha;
+                        d.x -= x *= l;
+                        d.y -= y *= l;
+                        data.x += x;
+                        data.y += y;
+                    }
+                }
+                return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+            });
+        };
+    }
 
     return {
         onModelUpdate,
