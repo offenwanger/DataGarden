@@ -139,7 +139,7 @@ let ModelUtil = function () {
             groups = model.getGroups().filter(g => !g.parentId);
         } else {
             let parentGroup = model.getGroupForElement(element.parentId);
-            groups = model.getGroups().filter(g => g.parentId == parentGroup);
+            groups = model.getGroups().filter(g => g.parentId == parentGroup.id);
         }
         if (groups.length == 0) {
             return null;

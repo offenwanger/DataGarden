@@ -153,6 +153,27 @@ describe('Vem View Controller Test', function () {
             assert.equal(parented[0].parentId, notParented[0].id);
             assert.equal(parented[0].structY > notParented[0].structY, true);
         });
+
+        it('should set elements group', function () {
+            utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }])
+            utility.drawStroke(integrationEnv, [{ x: 40, y: 20 }, { x: 45, y: 40 }, { x: 40, y: 60 }])
+            utility.drawStroke(integrationEnv, [{ x: 60, y: 20 }, { x: 55, y: 40 }, { x: 60, y: 60 }])
+            assert.equal(model().getElements().length, 3);
+            assert.equal(model().getGroups().length, 1);
+
+            utility.drag(integrationEnv, "#vem-view", [{ x: 20, y: 20 }, { x: 80, y: 70 },])
+            utility.drag(integrationEnv, "#vem-view", [{ x: 180, y: 40 }, { x: 80, y: 70 },])
+
+            let parent = model().getElements().filter(e => !e.parentId);
+            let children = model().getElements().filter(e => e.parentId);
+
+            assert.equal(parent.length, 1);
+            assert.equal(children.length, 2);
+            assert.equal(model().getGroups().length, 2);
+
+            assert.notEqual(model().getGroupForElement(parent[0].id).id, model().getGroupForElement(children[0].id).id);
+            assert.equal(model().getGroupForElement(children[0].id).id, model().getGroupForElement(children[1].id).id);
+        });
     });
 
     describe('zoom tests', function () {
