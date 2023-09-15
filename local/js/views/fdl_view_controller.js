@@ -10,6 +10,25 @@ function FdlViewController() {
     const ELEMENT_PADDING = 10;
     const NODE_SIZE = 8;
 
+    let mShowGroups = true;
+    let mShowLinks = true;
+
+    d3.select(document).on('keypress', function (e) {
+        if (e.key == 't') {
+            mShowGroups = !mShowGroups;
+            simulation.alpha(0.1).restart();
+        }
+        if (e.key == 'y') {
+            if (mShowLinks) {
+                simulation.force("link").links([]);
+            } else {
+                simulation.force("link").links(mData.links);
+            }
+            mShowLinks = !mShowLinks;
+            simulation.alpha(0.1).restart();
+        }
+    });
+
     let mCanvas = d3.select('#fdl-view').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
     let mInterfaceCanvas = d3.select("#fdl-view").select('.canvas-container').append('canvas')
@@ -54,7 +73,7 @@ function FdlViewController() {
         .nodes(mData.nodes, (d) => d.id)
         .alpha(0.3)
         .on("tick", () => {
-            mData.nodes.forEach(cluster(0.2));
+            if (mShowGroups) mData.nodes.forEach(cluster(0.2));
             mData.nodes.forEach(collide(0.2));
             draw();
         })
@@ -65,15 +84,17 @@ function FdlViewController() {
     function onModelUpdate(model) {
         mModel = model;
         let elements = mModel.getElements();
+        let oldData = mData;
         mData = { nodes: [], links: [] };
         elements.forEach(element => {
+            let oldNode = oldData.nodes.find(n => n.id == element.id);
             mData.nodes.push({
                 id: element.id,
                 hasParent: element.parentId ? true : false,
                 cluster: mModel.getGroupForElement(element.id).id,
                 radius: NODE_SIZE,
-                x: mWidth / 2,
-                y: mHeight / 2,
+                x: oldNode ? oldNode.x : mWidth / 2,
+                y: oldNode ? oldNode.y : mHeight / 2,
             })
 
             if (element.parentId) {
@@ -271,21 +292,26 @@ function FdlViewController() {
     function draw() {
         mDrawingUtil.reset(mCanvas.attr("width"), mCanvas.attr("height"), mZoomTransform);
 
-        Object.keys(mClusterMap).forEach((cluster) => {
-            if (cluster != 0) {
-                let clusterNodes = mData.nodes.filter((n) => n.cluster == cluster);
-                let hull = d3.polygonHull(hullPoints(clusterNodes)).map(p => { return { x: p[0], y: p[1] } });
-                mDrawingUtil.drawBubble(hull, mColorMap(cluster), 0.4)
-            }
-        })
+        if (mShowGroups) {
+            Object.keys(mClusterMap).forEach((cluster) => {
+                if (cluster != 0) {
+                    let clusterNodes = mData.nodes.filter((n) => n.cluster == cluster);
+                    let hull = d3.polygonHull(hullPoints(clusterNodes)).map(p => { return { x: p[0], y: p[1] } });
+                    mDrawingUtil.drawBubble(hull, mColorMap(cluster), 0.4)
+                }
+            })
+        }
 
-        mDrawingUtil.drawLines(mData.links.map(link => [link.source, link.target]), "#999", 0.6);
-        mData.links.forEach(link => {
-            mDrawingUtil.drawLink(link.source, link.target, 5, "#999", 0.6, getCode(link.target.id, TARGET_LINK));
-        })
+        if (mShowLinks) {
+            mDrawingUtil.drawLines(mData.links.map(link => [link.source, link.target]), "#999", 0.6);
+            mData.links.forEach(link => {
+                mDrawingUtil.drawLink(link.source, link.target, 5, "#999", 0.6, getCode(link.target.id, TARGET_LINK));
+            })
+
+        }
 
         mData.nodes.forEach(node => {
-            if (!node.hasParent) {
+            if (!node.hasParent && mShowLinks) {
                 mDrawingUtil.drawLink(null, node, 5, "#999", 0.6, getCode(node.id, TARGET_LINK));
             }
             mDrawingUtil.drawColorCircle(node.x, node.y, node.radius, mColorMap(node.cluster), getCode(node.id, TARGET_ELEMENT));
