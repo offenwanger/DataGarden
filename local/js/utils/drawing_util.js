@@ -23,7 +23,6 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
     }
 
     function drawContainerRect(x, y, width, height, code = null) {
-        console.log(ctx)
         ctx.save();
         ctx.lineWidth = 1;
         ctx.strokeStyle = 'black';
@@ -195,7 +194,6 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
     }
 
     function drawBubble(outline, color, alpha, code = "#FF0000") {
-        console.log(outline)
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.fillStyle = color;
