@@ -18,7 +18,7 @@ function StrokeViewController() {
     let mShowSpines = null;
 
     let mBrushOptions = {
-        size: 10,
+        size: 1,
         color: "#000000FF",
         currentStroke: [{ x: 0, y: 0 }]
     }
@@ -221,6 +221,10 @@ function StrokeViewController() {
         drawInterface();
     }
 
+    function setColor(color) {
+        mBrushOptions.color = color;
+    }
+
     function draw() {
         let ctx = mCanvas.node().getContext('2d');
         ctx.clearRect(0, 0, mCanvas.attr("width"), mCanvas.attr("height"));
@@ -394,6 +398,7 @@ function StrokeViewController() {
         onPointerMove,
         onPointerUp,
         onResize,
+        setColor,
         highlight,
         setNewStrokeCallback: (func) => mNewStrokeCallback = func,
         setHighlightCallback: (func) => mHighlightCallback = func,

@@ -84,6 +84,10 @@ function EventManager(strokeController, fdlController) {
         clearTimeout(mLongPressTimeout);
     });
 
+    mMenuController.setColorChangeCallback((color) => {
+        mStrokeViewController.setColor(color);
+    })
+
     let mLockedState = false;
     function holdState() { mLockedState = true; }
     function releaseState() {

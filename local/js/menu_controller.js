@@ -9,8 +9,11 @@ function MenuController(svg) {
     let mColorSelectorButton;
     let mColorPicker;
     let mColorPickerContainer;
+    let mPlayButton;
+    let mPauseButton;
 
     let mColorChangeCallback = () => { };
+    let mPauseCallback = () => { };
 
     function createInterface(svg) {
         mPanButton = new MenuButton(svg, "img/panning_button.svg")
@@ -20,15 +23,33 @@ function MenuController(svg) {
         mSelectionButton = new MenuButton(svg, "img/selection_button.svg")
         mViewButton = new MenuButton(svg, "img/eyecon_button.svg")
 
-        mColorSelectorButton = new MenuButton(svg, "img/color_selector.svg")
-        mColorSelectorButton.onClick(function () {
+        mPlayButton = new MenuButton(svg, "img/play_button.svg")
+        mPlayButton.hide();
+        mPlayButton.setOnClickCallback(() => {
+            mPlayButton.hide();
+            mPauseButton.show();
+            mPauseCallback(false);
+        })
+        mPauseButton = new MenuButton(svg, "img/pause_button.svg")
+        mPauseButton.setOnClickCallback(() => {
+            mPlayButton.show();
+            mPauseButton.hide();
+            mPauseCallback(true);
+        })
+
+        mColorSelectorButton = new MenuButton(svg, "img/color_selector.svg", () => {
+            // this triggers on change
+            mColorPicker.setColor(DataUtil.getRandomColor(), false)
+        })
+        mColorSelectorButton.setOnClickCallback(function () {
             mColorPicker.openHandler();
         })
 
         mColorPickerContainer = d3.select("#color-container");
         mColorPicker = new Picker({ parent: mColorPickerContainer.node(), popup: "top" });
         mColorPicker.onChange = function (color) {
-            mColorChangeCallback(color);
+            mColorChangeCallback(color.hex);
+            d3.select("#color-selector-color").style("fill", color.hex)
         };
 
         defineFilters(svg);
@@ -103,7 +124,7 @@ function MenuController(svg) {
 
     function showButton(buttonId) {
         if (buttonId == Buttons.ZOOM_BUTTON) {
-            mZoomButton.setVisible(true)
+            mZoomButton.show()
         } else {
             console.error("Invalid show button id: " + buttonId)
         }
@@ -111,7 +132,7 @@ function MenuController(svg) {
 
     function hideButton(buttonId) {
         if (buttonId == Buttons.ZOOM_BUTTON) {
-            mZoomButton.setVisible(false)
+            mZoomButton.hide()
         } else {
             console.error("Invalid hide button id: " + buttonId)
         }
@@ -126,31 +147,43 @@ function MenuController(svg) {
         mZoomButton.setPosition(buttonSpacing * 0.5, height - BUTTON_SIZE);
         mViewButton.setPosition(buttonSpacing * 3.5, height - BUTTON_SIZE);
         mColorSelectorButton.setPosition(buttonSpacing * 4.5, height - BUTTON_SIZE);
-        console.log(" here", buttonSpacing * 4.5)
         mColorPickerContainer.style("left", (buttonSpacing * 4.5 - BUTTON_SIZE / 2) + "px").style("top", (height - BUTTON_SIZE * 1.5) + "px");
-
+        mPlayButton.setPosition(buttonSpacing * 0.5 + width / 2, buttonSpacing * 0.5);
+        mPauseButton.setPosition(buttonSpacing * 0.5 + width / 2, buttonSpacing * 0.5);
     }
 
-    function MenuButton(svg, img) {
-        let mButton = svg.append("image")
-            .attr("height", BUTTON_SIZE)
-            .attr("width", BUTTON_SIZE)
-            .attr("href", img)
-            .attr("filter", "url(#dropshadow)")
-            .on('pointerup', () => { mClickCallback(...arguments) });
-        let mOffsetX = 0;
-        let mOffsetY = 0;
+    function MenuButton(svg, img, onLoad) {
         let mClickCallback = () => { };
 
+        let mButton = svg.append('g');
+        let mSvg = mButton.append('g')
+            .attr("filter", "url(#dropshadow)");
+        let mOverlay = mButton.append("rect")
+            .attr("height", BUTTON_SIZE)
+            .attr("width", BUTTON_SIZE)
+            .attr("opacity", 0)
+            .on('pointerup', () => { mClickCallback(); });
+
+        d3.xml(img).then(data => {
+            let width = data.documentElement.getAttribute('width');
+            let scale = BUTTON_SIZE / width;
+            mSvg.attr("transform", "scale(" + scale + " " + scale + ")")
+            mSvg.node().append(data.documentElement);
+            onLoad ? onLoad() : null;
+        });
+
+        let mOffsetX = 0;
+        let mOffsetY = 0;
+
         function setPosition(x, y) {
-            mButton.attr("x", x - BUTTON_SIZE / 2).attr("y", y - BUTTON_SIZE / 2);
+            mButton.attr("transform", "translate(" + (x - BUTTON_SIZE / 2 + mOffsetX) + "," + (y - BUTTON_SIZE / 2 + mOffsetY) + ")");
         }
 
         function isSubButton(offsetX, offsetY) {
             mButton.lower();
             mOffsetX = offsetX;
             mOffsetY = offsetY;
-            setVisible(false);
+            hide();
         }
 
         function setActive(active) {
@@ -161,24 +194,21 @@ function MenuController(svg) {
             }
         }
 
-        function setVisible(visible) {
-            if (visible) {
-                mButton.attr("opacity", 100);
-                mButton.attr("transform", "translate(" + mOffsetX + " " + mOffsetY + ")")
-            } else {
-                mButton.attr("opacity", 0);
-                mButton.attr("transform", "")
-            }
+        function hide() {
+            mButton.style("display", "none");
         }
 
-        function onClick(func) { mClickCallback = func; }
+        function show() {
+            mButton.style("display", "");
+
+        }
 
         this.setPosition = setPosition;
         this.isSubButton = isSubButton;
-        this.setVisible = setVisible;
+        this.hide = hide;
+        this.show = show;
         this.setActive = setActive;
-        this.onClick = onClick;
-        this.node = () => mButton.node()
+        this.setOnClickCallback = (func) => mClickCallback = func;
     }
 
     function defineFilters(svg) {
@@ -234,5 +264,6 @@ function MenuController(svg) {
     return {
         onResize: layout,
         stateTransition,
+        setColorChangeCallback: (func) => mColorChangeCallback = func,
     }
 }
