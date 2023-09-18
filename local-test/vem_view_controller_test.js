@@ -95,8 +95,6 @@ describe('Vem View Controller Test', function () {
 
             utility.drag(integrationEnv, "#vem-view", [{ x: 80, y: 40 }, { x: 80, y: 140 }]);
 
-            d3.getRoot().select("#vem-view").select('.canvas-container').select('.view-canvas').console.log();
-
             assert.equal(model().getElements().length, 2);
             assert.equal(model().getGroups().length, 2);
         });
