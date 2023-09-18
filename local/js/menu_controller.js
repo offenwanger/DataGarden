@@ -170,6 +170,12 @@ function MenuController(svg) {
             mSvg.attr("transform", "scale(" + scale + " " + scale + ")")
             mSvg.node().append(data.documentElement);
             onLoad ? onLoad() : null;
+        }).catch(() => {
+            // Failed to load XML, we are probably not on the server, getting images instead
+            mSvg.append("image")
+                .attr("href", img)
+                .attr("height", BUTTON_SIZE)
+                .attr("width", BUTTON_SIZE);
         });
 
         let mOffsetX = 0;
