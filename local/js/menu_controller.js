@@ -271,5 +271,6 @@ function MenuController(svg) {
         onResize: layout,
         stateTransition,
         setColorChangeCallback: (func) => mColorChangeCallback = func,
+        setPauseCallback: (func) => mPauseCallback = func,
     }
 }

@@ -12,20 +12,32 @@ function FdlViewController() {
 
     let mShowGroups = true;
     let mShowLinks = true;
+    let mRunningSimulation = true;
 
     d3.select(document).on('keypress', function (e) {
         if (e.key == 't') {
             mShowGroups = !mShowGroups;
-            simulation.alpha(0.1).restart();
+            if (mRunningSimulation) {
+                mSimulation.alpha(0.1).restart();
+            } else {
+                draw();
+                drawInterface();
+            }
         }
+
         if (e.key == 'y') {
             if (mShowLinks) {
-                simulation.force("link").links([]);
+                mSimulation.force("link").links([]);
             } else {
-                simulation.force("link").links(mData.links);
+                mSimulation.force("link").links(mData.links);
             }
             mShowLinks = !mShowLinks;
-            simulation.alpha(0.1).restart();
+            if (mRunningSimulation) {
+                mSimulation.alpha(0.1).restart();
+            } else {
+                draw();
+                drawInterface();
+            }
         }
     });
 
@@ -61,12 +73,7 @@ function FdlViewController() {
     let mClusterMap = {};
     let mColorMap = d3.scaleOrdinal(d3.schemeCategory10);
 
-    // const simulation = d3.forceSimulation()
-    //    .force("link", d3.forceLink().id(d => d.id))
-    //     .force("charge", d3.forceManyBody())
-    //     .force("center", d3.forceCenter(mWidth / 2, mHeight / 2))
-    //     .on("tick", draw);
-    const simulation = d3.forceSimulation()
+    let mSimulation = d3.forceSimulation()
         .force("center", d3.forceCenter().x(mWidth / 2).y(mHeight / 2))
         .force("collide", d3.forceCollide((d) => d.radius + padding))
         .force("link", d3.forceLink().id(d => d.id))
@@ -114,9 +121,9 @@ function FdlViewController() {
         mColorMap = mColorMap.domain(Object.keys(mClusterMap));
 
         // Redefine and restart simulation
-        simulation.nodes(mData.nodes);
-        simulation.force("link").links(mData.links);
-        simulation.alpha(0.3).restart();
+        mSimulation.nodes(mData.nodes);
+        mSimulation.force("link").links(mData.links);
+        if (mRunningSimulation) mSimulation.alpha(0.3).restart();
 
         drawInterface();
     }
@@ -161,11 +168,11 @@ function FdlViewController() {
                 mInteraction = { type: DRAG_ELEMENT, node };
                 node.fx = node.x;
                 node.fy = node.y;
-                simulation.alphaTarget(0.3).restart();
+                if (mRunningSimulation) mSimulation.alphaTarget(0.3).restart();
             } else if (target && target.type == TARGET_LINK) {
                 // show the link being dragged
-                console.log("dragging link!")
-                mInteraction = { type: DRAG_LINK, id: target.id };
+                mInteraction = { type: DRAG_LINK, id: target.id, mousePosition: screenToModelCoords(screenCoords) };
+                mSimulation.stop();
             } else if (!target) {
                 mInteraction = { type: DRAG_SELECT }
             } else {
@@ -199,10 +206,19 @@ function FdlViewController() {
         } else if (toolState == Buttons.SELECTION_BUTTON) {
             let coords = screenToModelCoords(screenCoords);
             if (mInteraction && mInteraction.type == DRAG_ELEMENT) {
-                mInteraction.node.fx = coords.x;
-                mInteraction.node.fy = coords.y;
+                if (mRunningSimulation) {
+                    mInteraction.node.fx = coords.x;
+                    mInteraction.node.fy = coords.y;
+                } else {
+                    mInteraction.node.x = coords.x;
+                    mInteraction.node.y = coords.y;
+                    draw();
+                    drawInterface();
+                }
             } else if (mInteraction && mInteraction.type == DRAG_LINK) {
-                console.log("Show link dragging!")
+                mInteraction.mousePosition = coords;
+                draw();
+                drawInterface();
             } else if (!mInteraction) {
                 if (!ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
                     let target = getInteractionTarget(screenCoords);
@@ -241,13 +257,19 @@ function FdlViewController() {
         let interaction = mInteraction;
         mInteraction = null;
         if (interaction && interaction.type == DRAG_ELEMENT) {
-            simulation.alphaTarget(0);
+            mSimulation.alphaTarget(0);
             interaction.node.fx = null;
             interaction.node.fy = null;
         } else if (interaction && interaction.type == DRAG_LINK) {
             let target = getInteractionTarget(screenCoords);
             if (target && target.type == TARGET_ELEMENT) {
                 mParentElementCallback(interaction.id, target.id);
+            }
+            if (mRunningSimulation) {
+                mSimulation.alphaTarget(0.3).restart();
+            } else {
+                draw();
+                drawInterface();
             }
         }
 
@@ -289,6 +311,16 @@ function FdlViewController() {
         drawInterface();
     }
 
+    function pauseSimulation() {
+        mRunningSimulation = false;
+        mSimulation.stop();
+    }
+
+    function runSimulation() {
+        mRunningSimulation = true;
+        mSimulation.alphaTarget(0.3).restart();
+    }
+
     function draw() {
         mDrawingUtil.reset(mCanvas.attr("width"), mCanvas.attr("height"), mZoomTransform);
 
@@ -303,15 +335,26 @@ function FdlViewController() {
         }
 
         if (mShowLinks) {
-            mDrawingUtil.drawLines(mData.links.map(link => [link.source, link.target]), "#999", 0.6);
-            mData.links.forEach(link => {
+            if (mInteraction && mInteraction.type == DRAG_LINK) {
+                let node = mData.nodes.find(n => n.id == mInteraction.id);
+                mDrawingUtil.drawLines([[mInteraction.mousePosition, node]], "#999", 0.6);
+                mDrawingUtil.drawLink(mInteraction.mousePosition, node, 0, "#999", 0.6);
+            }
+
+            let links = mData.links;
+            if (mInteraction && mInteraction.type == DRAG_LINK) {
+                links = links.filter(link => mInteraction.id != link.target.id);
+            }
+
+            mDrawingUtil.drawLines(links.map(link => [link.source, link.target]), "#999", 0.6);
+            links.forEach(link => {
                 mDrawingUtil.drawLink(link.source, link.target, 5, "#999", 0.6, getCode(link.target.id, TARGET_LINK));
             })
-
         }
 
         mData.nodes.forEach(node => {
-            if (!node.hasParent && mShowLinks) {
+            let linkIsDragged = mInteraction && mInteraction.type == DRAG_LINK && mInteraction.id == node.id;
+            if (!node.hasParent && mShowLinks && !linkIsDragged) {
                 mDrawingUtil.drawLink(null, node, 5, "#999", 0.6, getCode(node.id, TARGET_LINK));
             }
             mDrawingUtil.drawColorCircle(node.x, node.y, node.radius, mColorMap(node.cluster), getCode(node.id, TARGET_ELEMENT));
@@ -330,7 +373,7 @@ function FdlViewController() {
                 mDrawingUtil.highlightCircle(e.x, e.y, NODE_SIZE, "#FF0000");
             })
         }
-        if (mHighlightLink) {
+        if (mHighlightLink && (!mInteraction || mInteraction.type != DRAG_LINK)) {
             mDrawingUtil.highlightLink(mHighlightLink.source, mHighlightLink.target, NODE_SIZE, "#FF0000");
         }
     }
@@ -440,6 +483,8 @@ function FdlViewController() {
         onPointerUp,
         onResize,
         highlight,
+        pauseSimulation,
+        runSimulation,
         setHighlightCallback: (func) => mHighlightCallback = func,
         setParentElementCallback: (func) => mParentElementCallback = func,
     }

@@ -88,6 +88,10 @@ function EventManager(strokeController, fdlController) {
         mStrokeViewController.setColor(color);
     })
 
+    mMenuController.setPauseCallback((pause) => {
+        pause ? mFdlViewController.pauseSimulation() : mFdlViewController.runSimulation();
+    })
+
     let mLockedState = false;
     function holdState() { mLockedState = true; }
     function releaseState() {
