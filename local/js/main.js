@@ -61,6 +61,31 @@ document.addEventListener('DOMContentLoaded', function (e) {
         modelUpdate();
     })
 
+    mFdlViewController.setMergeElementCallback((selection, mergeElementId) => {
+        selection.forEach(elementId => {
+            let element = mModelController.getModel().getElement(elementId);
+            let children = mModelController.getModel().getElementChildren(elementId);
+            children.forEach(child => {
+                if (child.id == mergeElementId) {
+                    ModelUtil.updateParent(element.parentId, mergeElementId, mModelController);
+                } else {
+                    ModelUtil.updateParent(mergeElementId, child.id, mModelController);
+                }
+            })
+            // handle an edge case where the merge element is a grandchild of this element
+            // it might have been set to this element when updating this elements children
+            if (mModelController.getModel().getElementChildren(elementId).length == 1) {
+                ModelUtil.updateParent(element.parentId, mergeElementId, mModelController);
+            }
+            let mergeElement = mModelController.getModel().getElement(mergeElementId);
+            mergeElement = ModelUtil.mergeStrokes(mergeElement, element);
+            mModelController.removeElement(elementId);
+            mModelController.updateElement(mergeElement);
+        });
+        ModelUtil.clearEmptyGroups(mModelController);
+        modelUpdate();
+    })
+
     function modelUpdate() {
         let model = mModelController.getModel();
         mStrokeViewController.onModelUpdate(model);

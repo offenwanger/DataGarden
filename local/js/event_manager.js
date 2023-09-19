@@ -3,11 +3,16 @@
  */
 
 function EventManager(strokeController, fdlController) {
+    const DBL_CLICK_SPEED = 500;
+    const DBL_CLICK_DIST = 10;
+
     let mStrokeViewController = strokeController;
     let mFdlViewController = fdlController;
 
     let mHorizontalBarPercent = 0.5;
     let mVerticalBarPercent = 0.5;
+
+    let mLastClick = { x: -10, y: -10, time: Date.now() };
 
     let mInterface = d3.select('#interface-container').append('svg')
         .attr('id', 'interface-svg')
@@ -63,10 +68,16 @@ function EventManager(strokeController, fdlController) {
             }
         }, 800);
 
-        let hold = mStrokeViewController.onPointerDown(screenCoords, mCurrentToolState);
-        hold = hold || mFdlViewController.onPointerDown(screenCoords, mCurrentToolState);
+        let hold;
+        hold = mStrokeViewController.onPointerDown(screenCoords, mCurrentToolState);
+        if (Date.now() - mLastClick.time < DBL_CLICK_SPEED && MathUtil.length(MathUtil.subtract(screenCoords, mLastClick)) < DBL_CLICK_DIST) {
+            hold = hold || mFdlViewController.onDblClick(screenCoords, mCurrentToolState);
+        } else {
+            hold = hold || mFdlViewController.onPointerDown(screenCoords, mCurrentToolState);
+        }
 
         if (hold) { holdState(); }
+        mLastClick = { x: screenCoords.x, y: screenCoords.y, time: Date.now() };
     });
     d3.select(document).on('pointermove', (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY };
