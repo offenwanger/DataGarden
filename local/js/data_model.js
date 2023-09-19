@@ -12,7 +12,7 @@ function DataModel() {
     }
 
     function getStroke(strokeId) {
-        return getStrokes.find(s => s.id == strokeId);
+        return getStrokes().find(s => s.id == strokeId);
     }
 
     function getStrokes() {
