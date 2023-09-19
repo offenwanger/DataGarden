@@ -16,7 +16,7 @@ function DataModel() {
     }
 
     function getStrokes() {
-        getElements().map(e => e.strokes).flat()
+        return getElements().map(e => e.strokes).flat();
     }
 
     function getElement(elementId) {
