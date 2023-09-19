@@ -44,7 +44,7 @@ let DataUtil = function () {
             });
         } else {
             console.error("Invalid array. Not a set of Elements or Strokes", objs);
-            return null;
+            return { x: 0, y: 0, height: 1, width: 1 };
         }
 
         if (boundingBoxes.length == 0) {
