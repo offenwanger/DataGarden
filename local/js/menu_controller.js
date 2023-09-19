@@ -39,7 +39,7 @@ function MenuController(svg) {
 
         mColorSelectorButton = new MenuButton(svg, "img/color_selector.svg", () => {
             // this triggers on change
-            mColorPicker.setColor(DataUtil.getRandomColor(), false)
+            mColorPicker.setColor("#333333", false)
         })
         mColorSelectorButton.setOnClickCallback(function () {
             mColorPicker.openHandler();

@@ -178,10 +178,6 @@ let DataUtil = function () {
         return returnable;
     }
 
-    function getRandomColor() {
-        return "#" + [0, 0, 0, 0, 0, 0].map(() => '0123456789ABCDEF'[Math.floor(Math.random() * 16)]).join("");
-    }
-
 
     return {
         numToColor,
@@ -196,6 +192,5 @@ let DataUtil = function () {
         findEmptyPlace,
         getValue,
         getStrokesInLocalCoords,
-        getRandomColor,
     }
 }();
