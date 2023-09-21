@@ -103,7 +103,7 @@ function ModelController() {
         elem.strokes.push(stroke);
     }
 
-    function removeStorke(strokeId) {
+    function removeStroke(strokeId) {
         let elem = mDataModel.getElementForStroke(strokeId);
         if (!elem) { console.error("Element not found for stroke: ", strokeId); return; };
         elem.strokes = elem.strokes.filter(s => s.id != strokeId);
@@ -130,7 +130,7 @@ function ModelController() {
         removeLevel,
         updateLevel,
         addStroke,
-        removeStorke,
+        removeStroke,
         getModel,
     }
 }
