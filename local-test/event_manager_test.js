@@ -28,30 +28,18 @@ describe('EventManager Tests', function () {
 
     describe('window resize test', function () {
         it('should call the resize functions', function () {
-            let called = [false, false, false, false];
+            let called = [false, false];
             let eventManager = new EventManager({
                 onResize: (w, h) => {
                     called[0] = true;
                     assert.equal(w, 500);
-                    assert.equal(h, 400);
+                    assert.equal(h, 800);
                 }
             }, {
                 onResize: (w, h) => {
                     called[1] = true;
                     assert.equal(w, 500);
-                    assert.equal(h, 400);
-                }
-            }, {
-                onResize: (w, h) => {
-                    called[2] = true;
-                    assert.equal(w, 500);
-                    assert.equal(h, 400);
-                }
-            }, {
-                onResize: (w, h) => {
-                    called[3] = true;
-                    assert.equal(w, 500);
-                    assert.equal(h, 400);
+                    assert.equal(h, 800);
                 }
             });
 

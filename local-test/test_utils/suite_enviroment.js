@@ -13,6 +13,7 @@ let assert = chai.assert;
 let mockD3 = require("./mock_d3.js");
 let mockJspreadsheet = require("./mock_jspreadsheet.js");
 let mockServer = require("./mock_server.js");
+let mockPicker = require("./mock_color_picker.js");
 
 let initialized = false;
 
@@ -84,6 +85,7 @@ function getIntegrationEnviroment() {
         server: server,
         fetch: () => server.fetch(...arguments),
         jspreadsheet,
+        Picker: mockPicker,
         EventManager: event_manager.__get__("EventManager"),
         MenuController: rewireJs('menu_controller.js').__get__("MenuController"),
         ModelController: snagConstructor(rewireJs('model_controller.js'), "ModelController"),
@@ -98,9 +100,7 @@ function getIntegrationEnviroment() {
         DrawingUtil: rewireJs('utils/drawing_util.js').__get__("DrawingUtil"),
         ServerRequestUtil: rewireJs('utils/server_request_util.js').__get__("ServerRequestUtil"),
         StrokeViewController: rewireJs('views/stroke_view_controller.js').__get__("StrokeViewController"),
-        VemViewController: rewireJs('views/vem_view_controller.js').__get__("VemViewController"),
-        StructViewController: rewireJs('views/struct_view_controller.js').__get__("StructViewController"),
-        TableViewController: rewireJs('views/table_view_controller.js').__get__("TableViewController"),
+        FdlViewController: rewireJs('views/fdl_view_controller.js').__get__("FdlViewController"),
     };
 
     main.__set__(integrationEnv);

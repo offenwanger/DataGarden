@@ -17,22 +17,13 @@ let Data = function () {
     function Element() {
         this.id = IdUtil.getUniqueId(Element);
         this.creationTime = Date.now();
-        this.x = null;
-        this.y = null;
         this.strokes = [];
         this.spine = null;
-
-        this.vemX = null;
-        this.vemY = null;
         this.parentId = null;
 
         this.clone = function () {
             let clone = new Element();
-            clone.x = this.x;
-            clone.y = this.y;
             clone.id = this.id;
-            clone.vemX = this.vemX;
-            clone.vemY = this.vemY;
             clone.parentId = this.parentId;
             clone.creationTime = this.creationTime;
             clone.strokes = this.strokes.map(s => s.clone());
@@ -41,11 +32,7 @@ let Data = function () {
         };
 
         this.update = function (element) {
-            this.x = element.x;
-            this.y = element.y;
             this.id = element.id;
-            this.vemX = element.vemX;
-            this.vemY = element.vemY;
             this.parentId = element.parentId;
             this.creationTime = element.creationTime;
             this.strokes = element.strokes.map(s => s.clone());
@@ -59,8 +46,6 @@ let Data = function () {
         this.elements = []
         this.forms = [];
 
-        this.structX = null;
-        this.structY = null;
         this.parentId = null;
 
         this.orientationBinding = null;
@@ -71,8 +56,6 @@ let Data = function () {
         this.clone = function () {
             let clone = new Group();
             clone.id = this.id;
-            clone.structX = this.structX;
-            clone.structY = this.structY;
             clone.parentId = this.parentId;
             clone.orientationBinding = this.orientationBinding;
             clone.formBinding = this.formBinding;
@@ -85,8 +68,6 @@ let Data = function () {
 
         this.update = function (dimention) {
             this.id = dimention.id;
-            this.structX = dimention.structX;
-            this.structY = dimention.structY;
             this.parentId = dimention.parentId;
             this.orientationBinding = dimention.orientationBinding;
             this.formBinding = dimention.formBinding;

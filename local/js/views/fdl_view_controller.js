@@ -1,11 +1,11 @@
 
 function FdlViewController() {
-    const DRAG_ELEMENT = "draggingElement";
-    const DRAG_LINK = "dragging link";
+    const DRAG_NODE = "draggingNode";
+    const DRAG_LINK = "draggingLink";
     const DRAG_SELECT = "selectDrag";
 
     const TARGET_LINK = 'linkTarget';
-    const TARGET_ELEMENT = 'elementTarget';
+    const TARGET_NODE = 'elementTarget';
     const TARGET_BUBBLE = 'bubbleTarget';
 
     const NODE_SIZE = 8;
@@ -14,7 +14,8 @@ function FdlViewController() {
     let mShowLinks = true;
     let mRunningSimulation = true;
 
-    let mHighlightElementIds = [];
+    let mHighlightObjects = [];
+    let mExplodedElements = [];
     let mHighlightLink = null;
 
     let mInteraction = null;
@@ -22,12 +23,16 @@ function FdlViewController() {
     let mHighlightCallback = () => { };
     let mParentElementCallback = () => { };
     let mMergeElementCallback = () => { };
+    let mNewElementCallback = () => { }
+    let mMoveElementCallback = () => { }
+    let mMoveStrokeCallback = () => { }
+    let mNewGroupCallback = () => { }
 
     let mModel = new DataModel();
 
     let mInteractionLookup = {};
     let mReverseInteractionLookup = {};
-    let mColorIndex = 1;
+    let mColorIndex = 10000;
 
     let mZoomTransform = d3.zoomIdentity;
     let mWidth = window.innerWidth / 2;
@@ -65,42 +70,54 @@ function FdlViewController() {
     function onModelUpdate(model) {
         mModel = model;
 
-        mHighlightElementIds = mHighlightElementIds.filter(id => mModel.getElement(id));
+        mHighlightObjects = mHighlightObjects.filter(id => IdUtil.isType(id, Data.Element) ? mModel.getElement(id) : mModel.getStroke(id));
         mHighlightLink = null
 
         setupSimulation();
-
-        if (mRunningSimulation) {
-            mSimulation.alpha(0.3).restart();
-        } else {
-            draw();
-            drawInterface();
-        }
+        triggerDraw(0.3);
     }
 
     function setupSimulation() {
         let oldData = mData;
         mData = { nodes: [], links: [], clusters: {} };
         mModel.getElements().forEach(element => {
-            let oldNode = oldData.nodes.find(n => n.id == element.id);
-            let node = {
-                id: element.id,
-                hasParent: element.parentId ? true : false,
-                cluster: mModel.getGroupForElement(element.id).id,
-                radius: NODE_SIZE,
-                x: oldNode ? oldNode.x : mWidth / 2,
-                y: oldNode ? oldNode.y : mHeight / 2,
-            }
-            mData.nodes.push(node);
-
-            if (!mData.clusters[node.cluster]) mData.clusters[node.cluster] = node;
-
-            if (element.parentId) {
-                mData.links.push({
-                    source: element.parentId,
-                    target: element.id,
-                    value: 1
+            if (mExplodedElements.includes(element.id)) {
+                let group = mModel.getGroupForElement(element.id).id;
+                element.strokes.forEach(stroke => {
+                    let oldNode = oldData.nodes.find(n => n.id == stroke.id);
+                    if (!oldNode) oldNode = oldData.nodes.find(n => n.id == element.id);
+                    let node = {
+                        id: stroke.id,
+                        isStroke: true,
+                        clusters: [group, element.id],
+                        radius: NODE_SIZE * 0.75,
+                        x: oldNode ? oldNode.x : mWidth / 2,
+                        y: oldNode ? oldNode.y : mHeight / 2,
+                    }
+                    mData.nodes.push(node);
+                    node.clusters.forEach(cluster => {
+                        if (!mData.clusters[cluster]) mData.clusters[cluster] = node;
+                    })
                 })
+            } else {
+                let oldNode = oldData.nodes.find(n => n.id == element.id);
+                let node = {
+                    id: element.id,
+                    hasParent: element.parentId ? true : false,
+                    clusters: [mModel.getGroupForElement(element.id).id],
+                    radius: NODE_SIZE,
+                    x: oldNode ? oldNode.x : mWidth / 2,
+                    y: oldNode ? oldNode.y : mHeight / 2,
+                }
+                mData.nodes.push(node);
+                if (!mData.clusters[node.clusters[0]]) mData.clusters[node.clusters[0]] = node;
+                if (element.parentId) {
+                    mData.links.push({
+                        source: element.parentId,
+                        target: element.id,
+                        value: 1
+                    })
+                }
             }
         });
 
@@ -114,12 +131,7 @@ function FdlViewController() {
     d3.select(document).on('keypress', function (e) {
         if (e.key == 't') {
             mShowGroups = !mShowGroups;
-            if (mRunningSimulation) {
-                mSimulation.alpha(0.1).restart();
-            } else {
-                draw();
-                drawInterface();
-            }
+            triggerDraw(0.1);
         }
 
         if (e.key == 'y') {
@@ -129,12 +141,7 @@ function FdlViewController() {
                 mSimulation.force("link").links(mData.links);
             }
             mShowLinks = !mShowLinks;
-            if (mRunningSimulation) {
-                mSimulation.alpha(0.1).restart();
-            } else {
-                draw();
-                drawInterface();
-            }
+            triggerDraw(0.1);
         }
     });
 
@@ -158,18 +165,27 @@ function FdlViewController() {
             return true;
         } else if (toolState == Buttons.SELECTION_BUTTON) {
             let target = getInteractionTarget(screenCoords);
-            if (target && target.type == TARGET_ELEMENT) {
+            if (target && target.type == TARGET_NODE) {
                 let node = mData.nodes.find(n => n.id == target.id);
-                mInteraction = { type: DRAG_ELEMENT, node };
                 node.fx = node.x;
                 node.fy = node.y;
-                // do this to make sure the interaction target is gone.
+                mInteraction = {
+                    type: DRAG_NODE,
+                    id: node.id,
+                    node: node,
+                };
+
+                // do this syncronously to make sure the interaction target is gone.
                 draw();
-                if (mRunningSimulation) mSimulation.alphaTarget(0.3).restart();
+                if (mRunningSimulation) {
+                    mSimulation.alphaTarget(0.3).restart();
+                }
             } else if (target && target.type == TARGET_LINK) {
                 // show the link being dragged
                 mInteraction = { type: DRAG_LINK, id: target.id, mousePosition: screenToModelCoords(screenCoords) };
                 mSimulation.stop();
+            } else if (target && target.type == TARGET_BUBBLE) {
+                // nothing doing atm
             } else if (!target) {
                 mInteraction = { type: DRAG_SELECT }
             } else {
@@ -195,10 +211,14 @@ function FdlViewController() {
     function onDblClick(screenCoords, toolState) {
         // tool state doesn't really matter atm
         let target = getInteractionTarget(screenCoords);
-        if (target && target.type == TARGET_ELEMENT) {
-            console.log("explode")
+        if (target && target.type == TARGET_NODE) {
+            mExplodedElements.push(target.id);
+            setupSimulation()
+            triggerDraw(0.1);
         } else if (target && target.type == TARGET_BUBBLE) {
-            console.log("implode")
+            mExplodedElements.splice(mExplodedElements.indexOf(target.id), 1);
+            setupSimulation()
+            triggerDraw(0.1);
         }
     }
 
@@ -209,39 +229,30 @@ function FdlViewController() {
             mZoomTransform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mInteraction.scale);
 
             draw();
-            drawInterface();
         } else if (toolState == Buttons.SELECTION_BUTTON) {
             let coords = screenToModelCoords(screenCoords);
-            if (mInteraction && mInteraction.type == DRAG_ELEMENT) {
-                if (mRunningSimulation) {
-                    mInteraction.node.fx = coords.x;
-                    mInteraction.node.fy = coords.y;
-                } else {
-                    mInteraction.node.x = coords.x;
-                    mInteraction.node.y = coords.y;
+            if (mInteraction && mInteraction.type == DRAG_NODE) {
+                mInteraction.node.fx = coords.x;
+                mInteraction.node.fy = coords.y;
+                if (!mRunningSimulation) {
                     draw();
-                    drawInterface();
                 }
             } else if (mInteraction && mInteraction.type == DRAG_LINK) {
                 mInteraction.mousePosition = coords;
                 draw();
-                drawInterface();
             } else if (!mInteraction) {
                 if (!ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
                     let target = getInteractionTarget(screenCoords);
-                    if (target && target.type == TARGET_ELEMENT) {
+                    if (target && target.type == TARGET_NODE) {
                         mHighlightLink = null;
-                        mHighlightElementIds = [target.id];
-                        mHighlightCallback(mHighlightElementIds);
+                        mHighlightObjects = [target.id];
+                        mHighlightCallback(mHighlightObjects);
                     } else if (target && target.type == TARGET_LINK) {
-                        mHighlightElementIds = [];
-                        mHighlightLink = mData.links.find(l => l.target.id == target.id);
-                        if (!mHighlightLink) {
-                            mHighlightLink = { source: null, target: mData.nodes.find(n => n.id == target.id) };
-                        }
+                        mHighlightObjects = [];
+                        mHighlightLink = target.id;
                         drawInterface();
                     } else {
-                        mHighlightElementIds = [];
+                        mHighlightObjects = [];
                         mHighlightLink = null;
                         mHighlightCallback(null);
                     }
@@ -256,38 +267,51 @@ function FdlViewController() {
             let transformY = -(mInteraction.pointerY * zoomChange) + mInteraction.transformY;
             mZoomTransform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
             draw();
-            drawInterface();
         }
     }
 
     function onPointerUp(screenCoords, toolState) {
         let interaction = mInteraction;
         mInteraction = null;
-        if (interaction && interaction.type == DRAG_ELEMENT) {
+        if (interaction && interaction.type == DRAG_NODE) {
+            interaction.node.fx = null;
+            interaction.node.fy = null;
             if (mRunningSimulation) {
                 mSimulation.alphaTarget(0);
-                interaction.node.fx = null;
-                interaction.node.fy = null;
             } else {
                 let target = getInteractionTarget(screenCoords);
-                if (target && target.type == TARGET_ELEMENT) {
-                    mMergeElementCallback([interaction.node.id], target.id);
+                if (target) {
+                    if (IdUtil.isType(interaction.id, Data.Stroke) && IdUtil.isType(target.id, Data.Element)) {
+                        if (mModel.getElementForStroke(target.id).id == target.id) {
+                            interaction.node.x = coords.x;
+                            interaction.node.y = coords.y;
+                        } else {
+                            mMoveStrokeCallback(target.id, interaction.id);
+                        }
+                    } else if (IdUtil.isType(interaction.id, Data.Stroke) && IdUtil.isType(target.id, Data.Group)) {
+                        mNewElementCallback(target.id, interaction.id);
+                    } else if (IdUtil.isType(interaction.id, Data.Element) && IdUtil.isType(target.id, Data.Element)) {
+                        mMergeElementCallback([interaction.node.id], target.id);
+                    } else if (IdUtil.isType(interaction.id, Data.Element) && IdUtil.isType(target.id, Data.Group)) {
+                        if (mModel.getGroupForElement(interaction.id).id == target.id) {
+                            let coords = screenToModelCoords(screenCoords);
+                            interaction.node.x = coords.x;
+                            interaction.node.y = coords.y;
+                        } else {
+                            mMoveElementCallback(target.id, interaction.id);
+                        }
+                    }
                 } else {
-                    draw();
-                    drawInterface();
+                    mNewGroupCallback(interaction.id);
                 }
+                draw();
             }
         } else if (interaction && interaction.type == DRAG_LINK) {
             let target = getInteractionTarget(screenCoords);
-            if (target && target.type == TARGET_ELEMENT) {
+            if (target && target.type == TARGET_NODE) {
                 mParentElementCallback(interaction.id, target.id);
             }
-            if (mRunningSimulation) {
-                mSimulation.alphaTarget(0.3).restart();
-            } else {
-                draw();
-                drawInterface();
-            }
+            triggerDraw(0.3);
         }
 
         if (interaction && (toolState == Buttons.ZOOM_BUTTON || toolState == Buttons.PANNING_BUTTON)) {
@@ -313,19 +337,17 @@ function FdlViewController() {
         mHeight = height;
 
         draw();
-        drawInterface();
     }
 
     function highlight(ids) {
         if (!ids || (Array.isArray(ids) && ids.length == 0)) {
-            mHighlightElementIds = [];
+            mHighlightObjects = [];
         } else {
-            mHighlightElementIds = ids.filter(id => IdUtil.isType(id, Data.Element));
-            mHighlightElementIds.push(...ids.filter(id => IdUtil.isType(id, Data.Group)).map(groupId => mModel.getGroup(groupId).elements.map(e => e.id)).flat());
-            mHighlightElementIds.push(...ids.filter(id => IdUtil.isType(id, Data.Stroke)).map(sId => mModel.getElementForStroke(sId).id));
-            mHighlightElementIds = mHighlightElementIds.filter((elementId, index, self) => self.findIndex(id => id == elementId) == index);
+            mHighlightObjects = ids.filter(id => IdUtil.isType(id, Data.Element));
+            mHighlightObjects.push(...ids.filter(id => IdUtil.isType(id, Data.Group)).map(groupId => mModel.getGroup(groupId).elements.map(e => e.id)).flat());
+            mHighlightObjects.push(...ids.filter(id => IdUtil.isType(id, Data.Stroke)).map(sId => mModel.getElementForStroke(sId).id));
+            mHighlightObjects = mHighlightObjects.filter((elementId, index, self) => self.findIndex(id => id == elementId) == index);
         }
-        drawInterface();
     }
 
     function pauseSimulation() {
@@ -338,24 +360,35 @@ function FdlViewController() {
         mSimulation.alphaTarget(0.3).restart();
     }
 
+    function triggerDraw(alpha) {
+        if (mRunningSimulation) {
+            mSimulation.alpha(alpha).restart();
+        } else {
+            draw();
+        }
+    }
+
     function draw() {
         mDrawingUtil.reset(mCanvas.attr("width"), mCanvas.attr("height"), mZoomTransform);
 
         if (mShowGroups) {
-            Object.keys(mData.clusters).forEach((cluster) => {
-                if (cluster != 0) {
-                    let clusterNodes = mData.nodes.filter((n) => n.cluster == cluster);
-                    let hull = d3.polygonHull(hullPoints(clusterNodes)).map(p => { return { x: p[0], y: p[1] } });
-                    mDrawingUtil.drawBubble(hull, mColorMap(cluster), 0.4)
-                }
+            getOrderedClusters().forEach((c) => {
+                let clusterNodes = mData.nodes.filter((n) => n.clusters.includes(c));
+                let hull = d3.polygonHull(hullPoints(clusterNodes)).map(p => { return { x: p[0], y: p[1] } });
+                mDrawingUtil.drawBubble(hull, mColorMap(cluster), 0.4, getCode(c, TARGET_BUBBLE));
             })
         }
 
         if (mShowLinks) {
             if (mInteraction && mInteraction.type == DRAG_LINK) {
-                let node = mData.nodes.find(n => n.id == mInteraction.id);
-                mDrawingUtil.drawLines([[mInteraction.mousePosition, node]], "#999", 0.6);
-                mDrawingUtil.drawLink(mInteraction.mousePosition, node, 0, "#999", 0.6);
+                let pos;
+                if (mExplodedElements.includes(mInteraction.id)) {
+                    pos = MathUtil.average(mData.nodes.filter((n) => n.clusters.includes(mInteraction.id)))
+                } else {
+                    pos = mData.nodes.find(n => n.id == mInteraction.id);
+                }
+                mDrawingUtil.drawLines([[mInteraction.mousePosition, pos]], "#999", 0.6);
+                mDrawingUtil.drawLink(mInteraction.mousePosition, pos, 0, "#999", 0.6);
             }
 
             let links = mData.links;
@@ -372,12 +405,19 @@ function FdlViewController() {
         mData.nodes.forEach(node => {
             // if we are dragging the link it was already drawn so don't do it again
             let linkIsDragged = mInteraction && mInteraction.type == DRAG_LINK && mInteraction.id == node.id;
-            if (!node.isStroke && !node.hasParent && mShowLinks && !linkIsDragged) {
+            let nodeIsDragged = mInteraction && mInteraction.type == DRAG_NODE && mInteraction.id == node.id;
+            if (!node.isStroke && !nodeIsDragged && !node.hasParent && mShowLinks && !linkIsDragged) {
                 mDrawingUtil.drawLink(null, node, 5, "#999", 0.6, getCode(node.id, TARGET_LINK));
             }
             // if we are dragging don't draw the interaction target
-            let code = (mInteraction && mInteraction.type == DRAG_ELEMENT && mInteraction.node.id == node.id) ? null : getCode(node.id, TARGET_ELEMENT);
-            mDrawingUtil.drawColorCircle(node.x, node.y, node.radius, mColorMap(node.cluster), code);
+            let code = (mInteraction && mInteraction.type == DRAG_NODE && mInteraction.node.id == node.id) ? null : getCode(node.id, TARGET_NODE);
+            let { x, y } = node;
+            if (!mRunningSimulation && nodeIsDragged) {
+                x = node.fx;
+                y = node.fy;
+            }
+
+            mDrawingUtil.drawColorCircle(x, y, node.radius, mColorMap(node.cluster), code);
         });
 
         drawInterface();
@@ -387,15 +427,60 @@ function FdlViewController() {
     // interface is separate so we can redraw highlights without redrawing everything
     function drawInterface() {
         mDrawingUtil.resetInterface(mCanvas.attr("width"), mCanvas.attr("height"), mZoomTransform);
-        mHighlightElementIds.forEach(eId => {
-            let e = mData.nodes.find(n => n.id == eId);
-            if (!e) { console.error("Bad state! Highlighting non-existant element", eId); return; }
-            mDrawingUtil.highlightCircle(e.x, e.y, NODE_SIZE, "#FF0000");
+        mHighlightObjects.forEach(id => {
+            if (IdUtil.isType(id, Data.Stroke)) {
+                let node = mData.nodes.find(n => n.id == id);
+                if (!node) {
+                    let element = mModel.getElementForStroke(id);
+                    if (!element) { console.error("Bad state! Highlighting non-existant node", id); return; }
+                    node = mData.nodes.find(n => n.id == element.id);
+                    if (!node) { console.error("Bad state! Highlighting non-existant node", element.id); return; }
+                }
+                mDrawingUtil.highlightCircle(node.x, node.y, NODE_SIZE, "#FF0000");
+            } else if (mExplodedElements.includes(id)) {
+                let clusterNodes = mData.nodes.filter((n) => n.clusters.includes(id));
+                let hull = d3.polygonHull(hullPoints(clusterNodes)).map(p => { return { x: p[0], y: p[1] } });
+                mDrawingUtil.highlightBubble(hull, "red");
+            } else {
+                if (mInteraction && mInteraction.type == DRAG_NODE && mInteraction.id == id) { return; }
+                let node = mData.nodes.find(n => n.id == id);
+                if (!node) { console.error("Bad state! Highlighting non-existant node", id); return; }
+                mDrawingUtil.highlightCircle(node.x, node.y, NODE_SIZE, "#FF0000");
+            }
         })
 
         if (mHighlightLink && (!mInteraction || mInteraction.type != DRAG_LINK)) {
-            mDrawingUtil.highlightLink(mHighlightLink.source, mHighlightLink.target, NODE_SIZE, "#FF0000");
+            let target = mData.nodes.find(n => n.id == mHighlightLink);
+            if (!target) {
+                let clusterNodes = mData.nodes.filter((n) => n.clusters.includes(mHighlightLink));
+                if (clusterNodes.length == 0) { console.error("Invalid link highlight target!", mHighlightLink); return; }
+                target = MathUtil.average(clusterNodes);
+            }
+
+            let source = null;
+            let element = mModel.getElement(mHighlightLink);
+            if (!element) { console.error("invalid state, element not found", mHighlightLink); return; }
+            if (element.parentId) {
+                source = mData.nodes.find(n => n.id == element.parentId);
+                if (!source) {
+                    let clusterNodes = mData.nodes.filter((n) => n.clusters.includes(element.parentId));
+                    if (clusterNodes.length == 0) { console.error("Invalid link highlight target!"); return; }
+                    source = MathUtil.average(clusterNodes);
+                }
+            }
+
+            mDrawingUtil.highlightLink(source, target, NODE_SIZE, "#FF0000");
         }
+    }
+
+    function getOrderedClusters() {
+        return Object.keys(mData.clusters).sort((a, b) => {
+            if (IdUtil.isType(a, Data.Element) && IdUtil.isType(b, Data.Group)) {
+                return -1;
+            } else if (IdUtil.isType(b, Data.Element) && IdUtil.isType(a, Data.Group)) {
+                return 1
+            } else return 0;
+        })
     }
 
     function screenToModelCoords(screenCoords) {
@@ -437,7 +522,7 @@ function FdlViewController() {
     function getCode(itemId, type) {
         if (mReverseInteractionLookup[itemId + "_" + type]) return mReverseInteractionLookup[itemId + "_" + type];
         else {
-            let code = DataUtil.numToColor(mColorIndex++);
+            let code = DataUtil.numToColor(mColorIndex += 100);
             mInteractionLookup[code] = { id: itemId, type };
             mReverseInteractionLookup[itemId + "_" + type] = code;
             return code;
@@ -447,20 +532,23 @@ function FdlViewController() {
     function cluster(alpha) {
         // https://bl.ocks.org/mbostock/7881887
         return function (d) {
-            const clusterHeart = mData.clusters[d.cluster];
-            if (clusterHeart === d || d.cluster == 0) return;
-            let x = d.x - clusterHeart.x;
-            let y = d.y - clusterHeart.y;
-            let l = Math.sqrt(x * x + y * y);
-            let r = d.radius + clusterHeart.radius + 3;
-            // if they aren't at min dist
-            if (l != r) {
-                l = (l - r) / l * alpha;
-                d.x -= x *= l;
-                d.y -= y *= l;
-                clusterHeart.x += x;
-                clusterHeart.y += y;
-            }
+            d.clusters.forEach(c => {
+                const clusterHeart = mData.clusters[c];
+                if (clusterHeart === d || c == 0) return;
+                let x = d.x - clusterHeart.x;
+                let y = d.y - clusterHeart.y;
+                let l = Math.sqrt(x * x + y * y);
+                let r = d.radius + clusterHeart.radius + 3;
+                // if they aren't at min dist
+                if (l != r) {
+                    l = (l - r) / l * alpha;
+                    d.x -= x *= l;
+                    d.y -= y *= l;
+                    clusterHeart.x += x;
+                    clusterHeart.y += y;
+                }
+
+            })
         };
     }
 
@@ -483,7 +571,7 @@ function FdlViewController() {
                     let x = d.x - data.x,
                         y = d.y - data.y,
                         l = Math.sqrt(x * x + y * y),
-                        r = d.radius + data.radius + (d.cluster == data.cluster ? padding : clusterPadding);
+                        r = d.radius + data.radius + (d.clusters.some(c => { data.clusters.includes(c) }) ? padding : clusterPadding);
                     if (l < r) {
                         l = (l - r) / l * alpha;
                         d.x -= x *= l;
@@ -525,5 +613,9 @@ function FdlViewController() {
         setHighlightCallback: (func) => mHighlightCallback = func,
         setParentElementCallback: (func) => mParentElementCallback = func,
         setMergeElementCallback: (func) => mMergeElementCallback = func,
+        setNewElementCallback: (func) => mNewElementCallback = func,
+        setMoveElementCallback: (func) => mMoveElementCallback = func,
+        setMoveStrokeCallback: (func) => mMoveStrokeCallback = func,
+        setNewGroupCallback: (func) => mNewGroupCallback = func,
     }
 }

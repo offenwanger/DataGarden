@@ -71,23 +71,33 @@ function drawStroke(integrationEnv, path) {
 
 function drag(integrationEnv, id, path) {
     let offset = { x: 0, y: 0 }
-    if (id == "#vem-view") offset.y += window.innerHeight / 2;
-    if (id == "#struct-view") offset.x += window.innerWidth / 2;
+    if (id == "#fdl-view") offset.x += window.innerWidth / 2;
 
     let start = { clientX: path[0].x + offset.x, clientY: path[0].y + offset.y };
+    let end = { clientX: path[path.length - 1].x + offset.x, clientY: path[path.length - 1].y + offset.y };
     integrationEnv.d3.getCallbacks()['pointermove'](start);
     integrationEnv.d3.select('#interface-container').select('#interface-svg').getCallbacks()['pointerdown'](start);
     path.forEach(p => {
         integrationEnv.d3.getCallbacks()['pointermove']({ clientX: p.x + offset.x, clientY: p.y + offset.y });
     })
-    integrationEnv.d3.getCallbacks()['pointerup']({ clientX: path[path.length - 1].x + offset.x, clientY: path[path.length - 1].y + offset.y });
+    integrationEnv.d3.getCallbacks()['pointerup'](end);
+    // this last simulates the actual input that a mouse would give
+    integrationEnv.d3.getCallbacks()['pointermove'](end);
 }
 
-function mouseOver(integrationEnv, id, x, y) {
+function click(integrationEnv, id, pos) {
     let offset = { x: 0, y: 0 }
-    if (id == "#vem-view") offset.y += window.innerHeight / 2;
-    if (id == "#struct-view") offset.x += window.innerWidth / 2;
-    integrationEnv.d3.getCallbacks()['pointermove']({ clientX: x + offset.x, clientY: y + offset.y });
+    if (id == "#fdl-view") offset.x += window.innerWidth / 2;
+
+    integrationEnv.d3.select('#interface-container').select('#interface-svg').getCallbacks()['pointerdown']({ clientX: pos.x + offset.x, clientY: pos.y + offset.y });
+    integrationEnv.d3.getCallbacks()['pointerup']({ clientX: pos.x + offset.x, clientY: pos.y + offset.y });
+}
+
+function mouseOver(integrationEnv, id, point) {
+    let offset = { x: 0, y: 0 }
+    if (id == "#fdl-view") offset.x += window.innerWidth / 2;
+
+    integrationEnv.d3.getCallbacks()['pointermove']({ clientX: point.x + offset.x, clientY: point.y + offset.y });
 }
 
 function pan(integrationEnv, id, x, y) {
@@ -133,12 +143,25 @@ function longPress(integrationEnv, id, x, y) {
     integrationEnv.d3.getCallbacks()['pointerup']({ clientX: x + offset.x, clientY: y + offset.y });
 }
 
+function clickMenuButton(integrationEnv, id) {
+    d3.select('#interface-container').select('#interface-svg').select(id).select('.button-overlay').getCallbacks()['pointerup']()
+}
+
+function getCanvas(view, layer) {
+    // view can be stroke or fdl
+    // layer can be view, interaction, or interface
+    return d3.select("#" + view + "-view").select('.canvas-container').select('.' + layer + '-canvas');
+}
+
 module.exports = {
     makeModel,
     deepEquals,
     drawStroke,
     drag,
+    click,
     mouseOver,
     pan, zoom,
     longPress,
+    clickMenuButton,
+    getCanvas,
 }

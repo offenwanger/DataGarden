@@ -1,15 +1,4 @@
 let ModelUtil = function () {
-    function wrapStrokeInElement(stroke) {
-        let boundingBox = DataUtil.getBoundingBox(stroke);
-        stroke.path = PathUtil.translate(stroke.path, { x: -boundingBox.x, y: -boundingBox.y })
-
-        let elem = new Data.Element();
-        elem.x = boundingBox.x;
-        elem.y = boundingBox.y;
-        elem.strokes.push(stroke);
-        return elem;
-    }
-
     function getStupidSpine(element) {
         let points = element.strokes.map(s => s.path).flat();
         let yMax = points.reduce((prev, current) => (prev.y > current.y) ? prev : current);
@@ -22,81 +11,6 @@ let ModelUtil = function () {
         return pairs[dists.findIndex(i => i == Math.max(...dists))];
     }
 
-    function getVemPosition(element, model) {
-        let vemX = element.vemX;
-        let vemY = element.vemY;
-        if (!ValUtil.isNum(vemX) || !ValUtil.isNum(vemY)) {
-            vemY = 10;
-            vemX = 10;
-        }
-
-        if (element.parentId) {
-            let parent = model.getElement(element.parentId);
-            vemY = parent.vemY + 90;
-            vemX = parent.vemX;
-        }
-
-        // it's dump and just parks it to the right.
-        vemX = Math.max(vemX, ...model.getElements()
-            .filter(e => e.id != element.id)
-            .filter(e => e.vemY > vemY - 70 && e.vemY < vemY + 70)
-            .map(e => e.vemX + 70));
-
-        return { x: vemX, y: vemY };
-    }
-
-    function getStructPosition(item, model) {
-        if (IdUtil.isType(item.id, Data.Group)) {
-            let x = item.structX;
-            let y = item.structY;
-            let group = item;
-            // if the struct position is not set, set it. 
-            if (!ValUtil.isNum(x) || !ValUtil.isNum(y)) {
-                if (group.parentId) {
-                    let parent = model.getGroup(group.parentId);
-                    y = parent.structY + 140;
-                    x = parent.structX;
-                } else {
-                    y = 10;
-                    x = 10;
-                }
-            }
-
-            // it's dump and just parks it to the right.
-            x = Math.max(x, ...model.getGroups()
-                .filter(g => g.id != group.id)
-                .filter(g => g.structY > y - 140 && g.structY < y + 140)
-                .map(g => g.structX + 140));
-
-            return { x, y }
-        } else {
-            let dimention = item;
-            let boundingBox = {
-                x: ValUtil.isNum(dimention.structX) ? dimention.structX : 10,
-                y: ValUtil.isNum(dimention.structY) ? dimention.structY : 10,
-                height: Size.ICON_LARGE * 0.25 + 10,
-                width: Size.ICON_LARGE + 10
-            };
-            let boundingBoxes = model.getDimentions().map(d => {
-                return {
-                    x: d.structX,
-                    y: d.structY,
-                    height: Size.ICON_LARGE * 0.25,
-                    width: Size.ICON_LARGE
-                };
-            }).concat(model.getGroups().map(g => {
-                return {
-                    x: g.structX,
-                    y: g.structY,
-                    height: Size.ICON_LARGE,
-                    width: Size.ICON_LARGE
-                };
-            }))
-
-            return DataUtil.findEmptyPlace(boundingBox, boundingBoxes);
-        }
-    }
-
     function updateParent(parentElementId, elementId, modelController) {
         if (parentElementId == elementId) { console.error("Can't parent a node to itself! " + parentElementId); return; }
         let model = modelController.getModel();
@@ -106,9 +20,6 @@ let ModelUtil = function () {
             model = modelController.getModel();
         }
         element.parentId = parentElementId;
-        let vemPos = ModelUtil.getVemPosition(element, model);
-        element.vemX = vemPos.x;
-        element.vemY = vemPos.y;
 
         //TODO improve the efficiency here.
         function updateGroup(element, modelController) {
@@ -117,9 +28,6 @@ let ModelUtil = function () {
             if (!group) {
                 group = new Data.Group();
                 group.parentId = element.parentId ? model.getGroupForElement(element.parentId).id : null;
-                let structPos = ModelUtil.getStructPosition(group, model)
-                group.structX = structPos.x;
-                group.structY = structPos.y;
                 modelController.addGroup(group);
             }
             modelController.removeElement(element.id);
@@ -147,23 +55,6 @@ let ModelUtil = function () {
             // this should actually see which group is most appropriate or if it should make a new group
             return groups[0];
         }
-    }
-
-    function mergeStrokes(mergeTarget, mergeElement) {
-        let strokes = DataUtil.getStrokesInLocalCoords(mergeTarget)
-            .concat(DataUtil.getStrokesInLocalCoords(mergeElement))
-
-        let bb = DataUtil.getBoundingBox(strokes);
-
-        // update the target data and strokes
-        mergeTarget.x = bb.x;
-        mergeTarget.y = bb.y;
-        strokes.forEach(stroke => {
-            stroke.path = PathUtil.translate(stroke.path, { x: -bb.x, y: -bb.y })
-        })
-        mergeTarget.strokes = strokes;
-
-        return mergeTarget;
     }
 
     function updateDimentionValues(mappingId, modelController) {
@@ -284,13 +175,9 @@ let ModelUtil = function () {
     }
 
     return {
-        wrapStrokeInElement,
         getStupidSpine,
-        getVemPosition,
-        getStructPosition,
         updateParent,
         getValidGroup,
-        mergeStrokes,
         getMapping,
         updateDimentionValues,
         clearEmptyGroups,

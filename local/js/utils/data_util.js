@@ -38,8 +38,6 @@ let DataUtil = function () {
         } else if (objs.every(o => o instanceof Data.Element)) {
             boundingBoxes = objs.map(elem => {
                 let bb = getBoundingBox(elem.strokes);
-                bb.x += elem.x
-                bb.y += elem.y
                 return bb;
             });
         } else {
@@ -112,8 +110,14 @@ let DataUtil = function () {
     }
 
     function unique(arr) {
-        return [...new Map(arr.map(item =>
-            [item.id, item])).values()];
+        if (arr.length == 0) return arr;
+        if (arr[0].id) {
+            return [...new Map(arr.map(item =>
+                [item.id, item])).values()];
+        } else {
+            return [...new Map(arr.map(item =>
+                [item, item])).values()];
+        }
     }
 
     function findEmptyPlace(boundingBox, boundingBoxes) {

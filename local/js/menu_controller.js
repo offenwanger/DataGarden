@@ -16,28 +16,28 @@ function MenuController(svg) {
     let mPauseCallback = () => { };
 
     function createInterface(svg) {
-        mPanButton = new MenuButton(svg, "img/panning_button.svg")
-        mZoomButton = new MenuButton(svg, "img/zoom_button.svg")
+        mPanButton = new MenuButton("pan-button", svg, "img/panning_button.svg")
+        mZoomButton = new MenuButton("zoom-button", svg, "img/zoom_button.svg")
         mZoomButton.isSubButton(20, 10)
-        mBrushButton = new MenuButton(svg, "img/color_brush_button.svg")
-        mSelectionButton = new MenuButton(svg, "img/selection_button.svg")
-        mViewButton = new MenuButton(svg, "img/eyecon_button.svg")
+        mBrushButton = new MenuButton("brush-button", svg, "img/color_brush_button.svg")
+        mSelectionButton = new MenuButton("selection-button", svg, "img/selection_button.svg")
+        mViewButton = new MenuButton("view-button", svg, "img/eyecon_button.svg")
 
-        mPlayButton = new MenuButton(svg, "img/play_button.svg")
+        mPlayButton = new MenuButton("play-button", svg, "img/play_button.svg")
         mPlayButton.hide();
         mPlayButton.setOnClickCallback(() => {
             mPlayButton.hide();
             mPauseButton.show();
             mPauseCallback(false);
         })
-        mPauseButton = new MenuButton(svg, "img/pause_button.svg")
+        mPauseButton = new MenuButton("pause-button", svg, "img/pause_button.svg")
         mPauseButton.setOnClickCallback(() => {
             mPlayButton.show();
             mPauseButton.hide();
             mPauseCallback(true);
         })
 
-        mColorSelectorButton = new MenuButton(svg, "img/color_selector.svg", () => {
+        mColorSelectorButton = new MenuButton("color-button", svg, "img/color_selector.svg", () => {
             // this triggers on change
             mColorPicker.setColor("#333333", false)
         })
@@ -152,13 +152,15 @@ function MenuController(svg) {
         mPauseButton.setPosition(buttonSpacing * 0.5 + width / 2, buttonSpacing * 0.5);
     }
 
-    function MenuButton(svg, img, onLoad) {
+    function MenuButton(id, svg, img, onLoad) {
         let mClickCallback = () => { };
 
-        let mButton = svg.append('g');
+        let mButton = svg.append('g')
+            .attr("id", id);
         let mSvg = mButton.append('g')
             .attr("filter", "url(#dropshadow)");
         let mOverlay = mButton.append("rect")
+            .classed("button-overlay", true)
             .attr("height", BUTTON_SIZE)
             .attr("width", BUTTON_SIZE)
             .attr("opacity", 0)

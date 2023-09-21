@@ -206,17 +206,29 @@ function StrokeViewController() {
             mHighlightBoundingBoxes = null;
         } else {
             mHighlightBoundingBoxes = [];
-            mHighlightBoundingBoxes.push(...ids
-                .filter(id => IdUtil.isType(id, Data.Element))
-                .map(id => DataUtil.getBoundingBox(mModel.getElement(id))));
-            mHighlightBoundingBoxes.push(...ids
-                .filter(id => IdUtil.isType(id, Data.Group))
-                .map(gId => mModel.getGroup(gId).elements)
-                .flat()
-                .map(e => DataUtil.getBoundingBox(e)));
-            mHighlightBoundingBoxes.push(...ids
-                .filter(id => IdUtil.isType(id, Data.Stroke))
-                .map(sId => DataUtil.getBoundingBox(mModel.getStroke(sId))))
+
+            let groupIds = ids.filter(id => IdUtil.isType(id, Data.Group));
+            let elementsIds = ids.filter(id => IdUtil.isType(id, Data.Element));
+            let strokeIds = ids.filter(id => IdUtil.isType(id, Data.Stroke));
+
+            groupIds.forEach(gId => {
+                let group = mModel.getGroup(gId);
+                if (!group) { console.error("Invalid State, group not found", gId); return; }
+                elementsIds.push(...group.elements.map(e => e.id));
+            });
+            elementsIds = DataUtil.unique(elementsIds);
+
+            elementsIds.forEach(eId => {
+                let element = mModel.getElement(eId);
+                if (!element) { console.error("Invalid State, element not found", eId); return; }
+                mHighlightBoundingBoxes.push(DataUtil.getBoundingBox(element));
+            });
+
+            strokeIds.forEach(sId => {
+                let stroke = mModel.getStroke(sId);
+                if (!stroke) { console.error("Invalid State, element not found", sId); return; }
+                mHighlightBoundingBoxes.push(DataUtil.getBoundingBox(stroke));
+            });
         }
         drawInterface();
     }
@@ -238,7 +250,6 @@ function StrokeViewController() {
             elem.strokes.forEach(stroke => {
                 ctx.save();
 
-                ctx.translate(elem.x, elem.y);
                 ctx.strokeStyle = stroke.color;
                 ctx.lineWidth = stroke.size;
 
