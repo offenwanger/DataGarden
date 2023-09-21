@@ -26,6 +26,11 @@ let MathUtil = function () {
         };
     }
 
+    function average(vs) {
+        let total = vs.reduce((prev, cur) => add(prev, cur));
+        return scale(total, vs.length);
+    }
+
     function length(v) {
         return Math.sqrt(v.x * v.x + v.y * v.y);
     }
@@ -43,6 +48,7 @@ let MathUtil = function () {
         add,
         subtract,
         scale,
+        average,
         length,
         normalize,
     }
