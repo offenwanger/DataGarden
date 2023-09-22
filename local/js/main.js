@@ -27,13 +27,22 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         modelUpdate();
 
-        // ServerRequestUtil.getSpine(element).then(result => {
-        //     if (result) {
-        //         element = mModelController.getModel().getElement(element.id);
-        //         element.spine = result;
-        //         mModelController.updateElement(element);
-        //     }
-        // })
+        ServerRequestUtil.suggestGrouping(mModelController.getModel().getElements()).then(grouping => {
+            let group = grouping.find(g => g.includes(stroke.id));
+            let model = mModelController.getModel();
+            let elements = DataUtil.unique(group.map(s => model.getElementForStroke(s))).filter(e => e);
+            let oldestElement = elements.reduce((prev, cur) => (cur.creationTime < prev.creationTime) ? cur : prev);
+            ModelUtil.mergeElements(mModelController, elements.map(e => e.id).filter(id => id != oldestElement.id), oldestElement.id);
+            modelUpdate();
+        });
+
+        ServerRequestUtil.getSpine(element).then(result => {
+            if (result) {
+                element = mModelController.getModel().getElement(element.id);
+                element.spine = result;
+                mModelController.updateElement(element);
+            }
+        })
     })
 
     mStrokeViewController.setHighlightCallback((selection) => {
@@ -56,27 +65,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
     })
 
     mFdlViewController.setMergeElementCallback((selection, mergeElementId) => {
-        selection.forEach(elementId => {
-            let element = mModelController.getModel().getElement(elementId);
-            let children = mModelController.getModel().getElementChildren(elementId);
-            children.forEach(child => {
-                if (child.id == mergeElementId) {
-                    ModelUtil.updateParent(element.parentId, mergeElementId, mModelController);
-                } else {
-                    ModelUtil.updateParent(mergeElementId, child.id, mModelController);
-                }
-            })
-            // handle an edge case where the merge element is a grandchild of this element
-            // it might have been set to this element when updating this elements children
-            if (mModelController.getModel().getElementChildren(elementId).length == 1) {
-                ModelUtil.updateParent(element.parentId, mergeElementId, mModelController);
-            }
-            let mergeElement = mModelController.getModel().getElement(mergeElementId);
-            mergeElement.strokes = mergeElement.strokes.concat(element.strokes);
-            mModelController.removeElement(elementId);
-            mModelController.updateElement(mergeElement);
-        });
-        ModelUtil.clearEmptyGroups(mModelController);
+        ModelUtil.mergeElements(mModelController, selection, mergeElementId);
         modelUpdate();
     })
 
