@@ -28,7 +28,7 @@ function elementsToScap(elements, idMap) {
         return {
             elementId: e.id,
             strokeId: s.id,
-            path: s.path,
+            path: samplePath(s.path, 5),
             creationTime: s.creationTime,
         }
     })).flat().sort((a, b) => a.creationTime - b.creationTime);
@@ -46,6 +46,15 @@ function elementsToScap(elements, idMap) {
         scap += "}\n";
     })
     return scap;
+}
+
+function samplePath(path, sampleRate) {
+    let result = []
+    for (let i = 0; i < path.length - 1; i += sampleRate) {
+        result.push(path[i])
+    }
+    result.push(path[path.length - 1]);
+    return result;
 }
 
 function scapToPath(scap) {

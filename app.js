@@ -27,6 +27,9 @@ app.use('/', express.static(__dirname + '/local'));
  *  Fairy module requests  *
  ************************/
 app.post('/getspine', function (req, res) {
+    res.status(200).send(null);
+    return;
+
     let element = req.body;
     if (!element.strokes) {
         res.status(400).send("Error! Invalid element provided!");
@@ -50,6 +53,7 @@ app.post('/getspine', function (req, res) {
 });
 
 app.post('/suggestgrouping', function (req, res) {
+    utility.log("Grouping request recieved, starting processing.")
     if (!req.body.elements) {
         res.status(400).send("Error! Elements not provided!");
         return;

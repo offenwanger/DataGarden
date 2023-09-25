@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
     mFdlViewController.onResize(window.innerWidth * 0.5, window.innerHeight);
 
     let mEventManager = new EventManager(mStrokeViewController, mFdlViewController);
+    let mCallingDelay = 0;
 
     mStrokeViewController.setNewStrokeCallback((stroke) => {
         let model = mModelController.getModel();
@@ -27,14 +28,17 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         modelUpdate();
 
-        ServerRequestUtil.suggestGrouping(mModelController.getModel().getElements()).then(grouping => {
-            let group = grouping.find(g => g.includes(stroke.id));
-            let model = mModelController.getModel();
-            let elements = DataUtil.unique(group.map(s => model.getElementForStroke(s))).filter(e => e);
-            let oldestElement = elements.reduce((prev, cur) => (cur.creationTime < prev.creationTime) ? cur : prev);
-            ModelUtil.mergeElements(mModelController, elements.map(e => e.id).filter(id => id != oldestElement.id), oldestElement.id);
-            modelUpdate();
-        });
+        clearTimeout(mCallingDelay);
+        mCallingDelay = setTimeout(() => {
+            ServerRequestUtil.suggestGrouping(mModelController.getModel().getElements()).then(grouping => {
+                let group = grouping.find(g => g.includes(stroke.id));
+                let model = mModelController.getModel();
+                let elements = DataUtil.unique(group.map(s => model.getElementForStroke(s))).filter(e => e);
+                let oldestElement = elements.reduce((prev, cur) => (cur.creationTime < prev.creationTime) ? cur : prev);
+                ModelUtil.mergeElements(mModelController, elements.map(e => e.id).filter(id => id != oldestElement.id), oldestElement.id);
+                modelUpdate();
+            });
+        }, 2000);
 
         ServerRequestUtil.getSpine(element).then(result => {
             if (result) {
