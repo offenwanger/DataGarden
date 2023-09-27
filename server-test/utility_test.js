@@ -35,12 +35,13 @@ describe('Test Fairy Connector', function () {
                 "parentId": null
             }
 
-            let scap = utility.elementToScap(simpleElement);
+            let idMap = new utility.IdMap()
+            let scap = utility.elementToScap(simpleElement, idMap);
             expect(scap.split("\n").map(l => l.split("\t"))).to.eql([
                 ["#226", "32"],
                 ["@10"],
                 ["{"],
-                ["", "#0", "0"],
+                ["", "#0", "1"],
                 ["", "5", "32", "0"],
                 ["", "6", "31", "0"],
                 ["", "14", "29", "0"],
@@ -113,12 +114,13 @@ describe('Test Fairy Connector', function () {
                 "parentId": null
             }
 
-            let scap = utility.elementToScap(simpleElement);
+            let idMap = new utility.IdMap()
+            let scap = utility.elementToScap(simpleElement, idMap);
             expect(scap.split("\n").map(l => l.split("\t"))).to.eql([
                 ["#83", "84"],
                 ["@10"],
                 ["{"],
-                ["", "#0", "0"],
+                ["", "#0", "1"],
                 ["", "67", "84", "0"],
                 ["", "68", "84", "0"],
                 ["", "70", "84", "0"],
@@ -126,7 +128,7 @@ describe('Test Fairy Connector', function () {
                 ["", "83", "80", "0"],
                 ["}"],
                 ["{"],
-                ["", "#1", "0"],
+                ["", "#2", "1"],
                 ["", "20", "46", "0"],
                 ["", "21", "46", "0"],
                 ["", "22", "46", "0"],
@@ -135,7 +137,7 @@ describe('Test Fairy Connector', function () {
                 ["", "34", "39", "0"],
                 ["}"],
                 ["{"],
-                ["", "#2", "0"],
+                ["", "#3", "1"],
                 ["", "5", "10", "0"],
                 ["", "9", "10", "0"],
                 ["", "14", "5", "0"],
