@@ -31,11 +31,39 @@ document.addEventListener('DOMContentLoaded', function (e) {
         clearTimeout(mCallingDelay);
         mCallingDelay = setTimeout(() => {
             ServerRequestUtil.suggestGrouping(mModelController.getModel().getElements()).then(grouping => {
-                let group = grouping.find(g => g.includes(stroke.id));
-                let model = mModelController.getModel();
-                let elements = DataUtil.unique(group.map(s => model.getElementForStroke(s))).filter(e => e);
-                let oldestElement = elements.reduce((prev, cur) => (cur.creationTime < prev.creationTime) ? cur : prev);
-                ModelUtil.mergeElements(mModelController, elements.map(e => e.id).filter(id => id != oldestElement.id), oldestElement.id);
+                let elements = mModelController.getModel().getElements();
+
+                // reconcile the algorithm results with the curdrent state. 
+                let elementStrips = elements.map(element => {
+                    return {
+                        id: element.id,
+                        strips: DataUtil.unique(element.strokes.map(s => grouping.findIndex(g => g.includes(s.id))))
+                    }
+                });
+
+                let singletons = elementStrips.filter(s => s.strips.length == 1);
+                let nonSingletons = elementStrips.filter(s => s.strips.length > 1)
+
+                nonSingletons.forEach(elementData => {
+                    elementData.strips.forEach(sId => {
+                        let mergies = singletons.filter(s => s.strips[0] == sId).map(ed => ed.id);
+                        singletons = singletons.filter(s => s.strips[0] != sId);
+                        ModelUtil.mergeElements(mModelController, mergies, elementData.id);
+                    })
+                })
+
+                let mergeGroups = {};
+                singletons.forEach(elementData => {
+                    if (!mergeGroups[elementData.strips[0]]) mergeGroups[elementData.strips[0]] = [];
+                    mergeGroups[elementData.strips[0]].push(elementData.id);
+                });
+                Object.values(mergeGroups).forEach(group => {
+                    if (group.length > 1) {
+                        let groupElements = elements.filter(e => group.includes(e.id));
+                        let oldestElement = groupElements.reduce((prev, cur) => (cur.creationTime < prev.creationTime) ? cur : prev);
+                        ModelUtil.mergeElements(mModelController, groupElements.map(e => e.id).filter(id => id != oldestElement.id), oldestElement.id);
+                    }
+                });
                 modelUpdate();
             });
         }, 2000);

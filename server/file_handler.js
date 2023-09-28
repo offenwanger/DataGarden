@@ -10,7 +10,12 @@ async function readScap(filename) {
     return fs.readFileSync(SCAP_FOLDER + filename, 'utf8');
 }
 
+async function deleteScap(filename) {
+    return fs.unlinkSync(SCAP_FOLDER + filename, 'utf8');
+}
+
 module.exports = {
     writeScap,
     readScap,
+    deleteScap,
 }

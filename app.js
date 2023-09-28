@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const utility = require('./server/utility.js');
 const fileHandler = require('./server/file_handler.js');
 const cppConnector = require('./server/cpp_connector.js');
+const config = require("./app_config.js");
 
 const app = express();
 // Required to send and recieve JSON
@@ -49,6 +50,11 @@ app.post('/getspine', function (req, res) {
             res.status(200).send(path);
         }).catch(error => {
             res.status(500).send();
+        }).then(() => {
+            if (!config.DEBUG) {
+                fileHandler.deleteScap(filename);
+                fileHandler.deleteScap(outFilename);
+            }
         });
 });
 
@@ -74,6 +80,11 @@ app.post('/suggestgrouping', function (req, res) {
         }).catch(error => {
             console.error(error);
             res.status(500).send();
+        }).then(() => {
+            if (!config.DEBUG) {
+                fileHandler.deleteScap(filename);
+                fileHandler.deleteScap(outFilename);
+            }
         });
 });
 
