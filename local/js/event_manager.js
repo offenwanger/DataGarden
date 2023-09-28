@@ -12,6 +12,12 @@ function EventManager(strokeController, fdlController) {
     let mHorizontalBarPercent = 0.5;
     let mVerticalBarPercent = 0.5;
 
+    // these functions are asyncronous because they have to call file access. 
+    let mUndoCallback = async () => { };
+    let mRedoCallback = async () => { };
+
+    let mDeleteCallback = async () => { };
+
     let mLastClick = { x: -10, y: -10, time: Date.now() };
 
     let mInterface = d3.select('#interface-container').append('svg')
@@ -48,6 +54,16 @@ function EventManager(strokeController, fdlController) {
         mKeysDown.push(e.key)
 
         updateState();
+
+        if ((e.ctrlKey || e.metaKey) && e.key == 'z') {
+            // return the promise for syncronization control and testing purposes.
+            return mUndoCallback();
+        } else if (((e.ctrlKey || e.metaKey) && e.key == 'y') || ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key == 'z')) {
+            // return the promise for syncronization control and testing purposes.
+            return mRedoCallback();
+        } else if (/* delete */ e.which == 46) {
+            mDeleteCallback();
+        }
     });
 
     d3.select(document).on('keyup', function (e) {
@@ -119,7 +135,7 @@ function EventManager(strokeController, fdlController) {
         }
     }
 
-    function getStateFromInput(keysDown) {
+    function getStateFromInput() {
         let keys = [...mKeysDown];
         let validStates = mKeyBindingArray;
         let checkIndex = 1;
@@ -145,7 +161,9 @@ function EventManager(strokeController, fdlController) {
     // });
 
     return {
-
+        onUndo: func => mUndoCallback = func,
+        onRedo: func => mRedoCallback = func,
+        onDelete: func => mDeleteCallback = func,
     }
 }
 

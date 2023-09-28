@@ -113,6 +113,10 @@ function ModelController() {
         return mDataModel.clone();
     }
 
+    function setModel(model) {
+        mDataModel = model.clone();
+    }
+
     return {
         addGroup,
         removeGroup,
@@ -132,5 +136,6 @@ function ModelController() {
         addStroke,
         removeStroke,
         getModel,
+        setModel,
     }
 }

@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     let mEventManager = new EventManager(mStrokeViewController, mFdlViewController);
     let mCallingDelay = 0;
+    let mVersionController = new VersionController();
+    let mLastStrokeStacked = Date.now();
+    mVersionController.setStash(new MemoryStash());
 
     mStrokeViewController.setNewStrokeCallback((stroke) => {
         let model = mModelController.getModel();
@@ -28,6 +31,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         modelUpdate();
 
+        if (Date.now() - mLastStrokeStacked > 5000) {
+            mVersionController.stack(mModelController.getModel());
+            mLastStrokeStacked = Date.now();
+        } else {
+            mVersionController.replace(mModelController.getModel());
+        }
+
         clearTimeout(mCallingDelay);
         mCallingDelay = setTimeout(() => {
             ServerRequestUtil.suggestGrouping(mModelController.getModel().getElements()).then(grouping => {
@@ -37,10 +47,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 let elementStrips = elements.map(element => {
                     return {
                         id: element.id,
-                        strips: DataUtil.unique(element.strokes.map(s => grouping.findIndex(g => g.includes(s.id))))
+                        strips: DataUtil.unique(element.strokes
+                            .map(s => grouping.findIndex(g => g.includes(s.id)))
+                            .filter(index => index != -1))
                     }
-                });
+                }).filter(elementData => elementData.strips.length > 0);
 
+                let hasChanged = false;
                 let singletons = elementStrips.filter(s => s.strips.length == 1);
                 let nonSingletons = elementStrips.filter(s => s.strips.length > 1)
 
@@ -49,6 +62,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
                         let mergies = singletons.filter(s => s.strips[0] == sId).map(ed => ed.id);
                         singletons = singletons.filter(s => s.strips[0] != sId);
                         ModelUtil.mergeElements(mModelController, mergies, elementData.id);
+                        hasChanged = true;
                     })
                 })
 
@@ -62,9 +76,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
                         let groupElements = elements.filter(e => group.includes(e.id));
                         let oldestElement = groupElements.reduce((prev, cur) => (cur.creationTime < prev.creationTime) ? cur : prev);
                         ModelUtil.mergeElements(mModelController, groupElements.map(e => e.id).filter(id => id != oldestElement.id), oldestElement.id);
+                        hasChanged = true;
                     }
                 });
-                modelUpdate();
+                if (hasChanged) {
+                    modelUpdate();
+                    mVersionController.stack(mModelController.getModel());
+                }
             });
         }, 2000);
 
@@ -73,6 +91,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 element = mModelController.getModel().getElement(element.id);
                 element.spine = result;
                 mModelController.updateElement(element);
+                mVersionController.stack(mModelController.getModel());
             }
         })
     })
@@ -84,6 +103,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
     mStrokeViewController.setSelectionCallback((selection) => {
         // selection could be strokes or elements
         // might select an entire element tree
+        mVersionController.stack(selection);
     })
 
     mFdlViewController.setHighlightCallback((selection) => {
@@ -148,6 +168,33 @@ document.addEventListener('DOMContentLoaded', function (e) {
         modelUpdate();
     })
 
+    mEventManager.onUndo(async () => {
+        let obj = await mVersionController.reverse();
+        if (obj) {
+            if (Array.isArray(obj)) {
+                // update the selection
+            } else {
+                mModelController.setModel(DataModel.fromObject(obj));
+                modelUpdate();
+            }
+        }
+    })
+
+    mEventManager.onRedo(async () => {
+        let obj = await mVersionController.advance();
+        if (obj) {
+            if (Array.isArray(obj)) {
+                // update the selection
+            } else {
+                mModelController.setModel(DataModel.fromObject(obj));
+                modelUpdate();
+            }
+        }
+    })
+
+    mEventManager.onDelete(() => {
+        // Delete everything in the selection
+    })
 
     function modelUpdate() {
         let model = mModelController.getModel();

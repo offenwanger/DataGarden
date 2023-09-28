@@ -11,6 +11,13 @@ function DataModel() {
         return clone;
     }
 
+    function toObject() {
+        let model = this.clone();
+        return {
+            groups: model.getGroups()
+        }
+    }
+
     function getStroke(strokeId) {
         return getStrokes().find(s => s.id == strokeId);
     }
@@ -160,6 +167,7 @@ function DataModel() {
     }
 
     this.clone = clone;
+    this.toObject = toObject;
     this.getStroke = getStroke;
     this.getStrokes = getStrokes;
     this.getElement = getElement;
@@ -178,4 +186,11 @@ function DataModel() {
     this.getMappings = getMappings;
     this.setMappings = setMappings;
     this.getTables = getTables;
+}
+
+DataModel.fromObject = function (obj) {
+    let model = new DataModel();
+    if (!obj.groups) { console.error("Invalid data model object", obj); return; }
+    model.setGroups(obj.groups.map(g => Data.Group.fromObject(g)));
+    return model;
 }

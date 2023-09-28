@@ -139,12 +139,22 @@ function longPress(integrationEnv, id, x, y) {
     if (id == "#struct-view") offset.x += window.innerWidth / 2;
     integrationEnv.d3.select('#interface-container').select('#interface-svg')
         .getCallbacks()['pointerdown']({ clientX: x + offset.x, clientY: y + offset.y });
-    integrationEnv.triggerTimeouts();
+    integrationEnv.clearTimeouts();
     integrationEnv.d3.getCallbacks()['pointerup']({ clientX: x + offset.x, clientY: y + offset.y });
 }
 
 function clickMenuButton(integrationEnv, id) {
     d3.select('#interface-container').select('#interface-svg').select(id).select('.button-overlay').getCallbacks()['pointerup']()
+}
+
+async function undo(integrationEnv) {
+    await integrationEnv.d3.getCallbacks()['keydown']({ ctrlKey: true, key: "z" });
+    integrationEnv.d3.getCallbacks()['keyup']({ ctrlKey: true, key: "z" });
+}
+
+async function redo(integrationEnv) {
+    await integrationEnv.d3.getCallbacks()['keydown']({ ctrlKey: true, key: "y" });
+    integrationEnv.d3.getCallbacks()['keyup']({ ctrlKey: true, key: "y" });
 }
 
 function getCanvas(view, layer) {
@@ -163,5 +173,6 @@ module.exports = {
     pan, zoom,
     longPress,
     clickMenuButton,
+    undo, redo,
     getCanvas,
 }

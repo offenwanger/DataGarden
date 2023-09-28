@@ -14,6 +14,7 @@ let mockD3 = require("./mock_d3.js");
 let mockJspreadsheet = require("./mock_jspreadsheet.js");
 let mockServer = require("./mock_server.js");
 let mockPicker = require("./mock_color_picker.js");
+let mockDate = require("./mock_date.js");
 
 let initialized = false;
 
@@ -43,6 +44,18 @@ function init() {
         innerWidth: 1000,
         innerHeight: 800,
     }
+
+    global.Date = new mockDate();
+
+    global.timeouts = [];
+    global.setTimeout = function (callback, delay) {
+        global.timeouts.push(callback);
+        return global.timeouts.length - 1;
+    }
+
+    global.clearTimeout = function (index = null) {
+        if (index || index == 0) global.timeouts[index] = null;
+    }
 }
 
 
@@ -65,19 +78,6 @@ function getIntegrationEnviroment() {
         }
     };
 
-    let timeoutCallbacks = []
-    let event_manager = rewireJs('event_manager.js');
-    event_manager.__set__({
-        // Overwrite the setTimeout function for manual control
-        setTimeout: function (callback, delay) {
-            timeoutCallbacks.push(callback);
-            return timeoutCallbacks.length - 1;
-        },
-        clearTimeout: function (index = null) {
-            if (index || index == 0) timeoutCallbacks[index] = null;
-        }
-    })
-
     let server = new mockServer();
     let jspreadsheet = new mockJspreadsheet();
     let integrationEnv = {
@@ -86,8 +86,10 @@ function getIntegrationEnviroment() {
         fetch: () => server.fetch(...arguments),
         jspreadsheet,
         Picker: mockPicker,
-        EventManager: event_manager.__get__("EventManager"),
+        EventManager: rewireJs('event_manager.js').__get__("EventManager"),
         MenuController: rewireJs('menu_controller.js').__get__("MenuController"),
+        VersionController: rewireJs('version_controller.js').__get__("VersionController"),
+        MemoryStash: rewireJs('version_controller.js').__get__("MemoryStash"),
         ModelController: snagConstructor(rewireJs('model_controller.js'), "ModelController"),
         Data: rewireJs('data_structs.js').__get__("Data"),
         DataModel: rewireJs('data_model.js').__get__("DataModel"),
@@ -108,15 +110,15 @@ function getIntegrationEnviroment() {
     integrationEnv.documentLoad = documentLoad;
     integrationEnv.instances = instances;
 
-    integrationEnv.triggerTimeouts = function () {
-        timeoutCallbacks.forEach(callback => {
+    integrationEnv.clearTimeouts = function () {
+        global.timeouts.forEach(callback => {
             if (callback) callback();
         });
-        timeoutCallbacks = [];
+        global.timeouts = [];
     }
 
     integrationEnv.cleanup = function (done) {
-        this.triggerTimeouts();
+        this.clearTimeouts();
         Object.keys(integrationEnv).forEach((key) => {
             delete global[key];
         })
