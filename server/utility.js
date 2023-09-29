@@ -7,7 +7,7 @@ function elementToScap(element, idMap) {
     let height = Math.max(...element.strokes.map(s => s.path.map(p => p.y)).flat());
     let size = element.strokes.map(s => s.size).reduce((a, b) => a + b, 0) / element.strokes.length;
 
-    scap += "#" + width + "\t" + height + os.EOL;
+    scap += "#" + Math.round(width) + "\t" + Math.round(height) + os.EOL;
     scap += "@" + size + os.EOL;
 
     element.strokes.forEach(stroke => {
@@ -36,7 +36,7 @@ function elementsToScap(elements, idMap) {
     })).flat().sort((a, b) => a.creationTime - b.creationTime);
 
     let scap = "";
-    scap += "#" + width + "\t" + height + os.EOL;
+    scap += "#" + Math.round(width) + "\t" + Math.round(height) + os.EOL;
     scap += "@" + size + os.EOL;
 
     data.forEach(item => {
