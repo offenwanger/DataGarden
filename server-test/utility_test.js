@@ -1,3 +1,5 @@
+const os = require('os');
+
 let chai = require('chai');
 let assert = chai.assert;
 let expect = chai.expect;
@@ -37,7 +39,7 @@ describe('Test Fairy Connector', function () {
 
             let idMap = new utility.IdMap()
             let scap = utility.elementToScap(simpleElement, idMap);
-            expect(scap.split("\n").map(l => l.split("\t"))).to.eql([
+            expect(scap.split(os.EOL).map(l => l.split("\t"))).to.eql([
                 ["#226", "32"],
                 ["@10"],
                 ["{"],
@@ -116,7 +118,7 @@ describe('Test Fairy Connector', function () {
 
             let idMap = new utility.IdMap()
             let scap = utility.elementToScap(simpleElement, idMap);
-            expect(scap.split("\n").map(l => l.split("\t"))).to.eql([
+            expect(scap.split(os.EOL).map(l => l.split("\t"))).to.eql([
                 ["#83", "84"],
                 ["@10"],
                 ["{"],
@@ -165,9 +167,8 @@ describe('Test Fairy Connector', function () {
                 ["", "226", "5", "0"],
                 ["}"],
                 [""]
-            ].map(l => l.join("\t")).join("\n");
-            let path = utility.scapToPath(scap);
-            expect(path).to.eql([
+            ].map(l => l.join("\t")).join(os.EOL);
+            expect(utility.scapToPath(scap)).to.eql([
                 { "x": 5, "y": 32 },
                 { "x": 6, "y": 31 },
                 { "x": 14, "y": 29 },

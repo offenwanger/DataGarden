@@ -1,3 +1,5 @@
+const os = require('os');
+
 function elementToScap(element, idMap) {
     let scap = "";
 
@@ -5,16 +7,16 @@ function elementToScap(element, idMap) {
     let height = Math.max(...element.strokes.map(s => s.path.map(p => p.y)).flat());
     let size = element.strokes.map(s => s.size).reduce((a, b) => a + b, 0) / element.strokes.length;
 
-    scap += "#" + width + "\t" + height + "\n";
-    scap += "@" + size + "\n";
+    scap += "#" + width + "\t" + height + os.EOL;
+    scap += "@" + size + os.EOL;
 
     element.strokes.forEach(stroke => {
-        scap += "{\n";
-        scap += "\t#" + idMap.getMapping(stroke.id) + "\t" + idMap.getMapping(element.id) + "\n";
+        scap += "{" + os.EOL;
+        scap += "\t#" + idMap.getMapping(stroke.id) + "\t" + idMap.getMapping(element.id) + os.EOL;
         stroke.path.forEach(p => {
-            scap += "\t" + p.x + "\t" + p.y + "\t0\n";
+            scap += "\t" + p.x + "\t" + p.y + "\t0" + os.EOL;
         })
-        scap += "}\n";
+        scap += "}" + os.EOL;
     })
     return scap;
 }
@@ -34,16 +36,16 @@ function elementsToScap(elements, idMap) {
     })).flat().sort((a, b) => a.creationTime - b.creationTime);
 
     let scap = "";
-    scap += "#" + width + "\t" + height + "\n";
-    scap += "@" + size + "\n";
+    scap += "#" + width + "\t" + height + os.EOL;
+    scap += "@" + size + os.EOL;
 
     data.forEach(item => {
-        scap += "{\n";
-        scap += "\t#" + idMap.getMapping(item.strokeId) + "\t" + idMap.getMapping(item.elementId) + "\n";
+        scap += "{" + os.EOL;
+        scap += "\t#" + idMap.getMapping(item.strokeId) + "\t" + idMap.getMapping(item.elementId) + os.EOL;
         item.path.forEach(p => {
-            scap += "\t" + p.x + "\t" + p.y + "\t0\n";
+            scap += "\t" + p.x + "\t" + p.y + "\t0" + os.EOL;
         })
-        scap += "}\n";
+        scap += "}" + os.EOL;
     })
     return scap;
 }
@@ -58,7 +60,7 @@ function samplePath(path, sampleRate) {
 }
 
 function scapToPath(scap) {
-    let lines = scap.split("{")[1].split("}")[0].split("\n");
+    let lines = scap.split("{")[1].split("}")[0].split(os.EOL);
     return lines.slice(1, lines.length).map(line => {
         let x = line.split("\t")[1];
         let y = line.split("\t")[2];
@@ -67,8 +69,8 @@ function scapToPath(scap) {
 }
 
 function scapToGrouping(scap, idMap) {
-    let tags = scap.split("{\r\n").slice(1).map(stroke => {
-        return stroke.split("\r\n")[0].split("\t").slice(1);
+    let tags = scap.split("{" + os.EOL).slice(1).map(stroke => {
+        return stroke.split(os.EOL)[0].split("\t").slice(1);
     })
     let groups = {};
     tags.forEach(tag => {
