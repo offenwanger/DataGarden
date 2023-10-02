@@ -391,18 +391,6 @@ function StrokeViewController() {
         }
     }
 
-    function modelToScreenCoords(modelCoords) {
-        let boundingBox = mInterfaceCanvas.node().getBoundingClientRect();
-        if (ValUtil.checkConvertionState(screenCoords, boundingBox, mZoomTransform)) {
-            return {
-                x: (modelCoords.x * mZoomTransform.k) + boundingBox.x + mZoomTransform.x,
-                y: (modelCoords.y * mZoomTransform.k) + boundingBox.y + mZoomTransform.y
-            };
-        } else {
-            return { x: 0, y: 0 };
-        }
-    }
-
     return {
         onModelUpdate,
         onPointerDown,
