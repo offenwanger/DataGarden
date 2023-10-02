@@ -59,6 +59,7 @@ function MockElement(type) {
     }
     this.on = function (event, callback) {
         mCallBacks[event] = callback;
+        return this;
     }
     this.node = function () {
         // just put all the D3 and element mocks on the same object. Simpler that way.
@@ -194,13 +195,12 @@ function mockForceSim() {
     this.alphaTarget = () => { return this };
     this.restart = () => { return this };
     this.links = (l) => { links = l; return this };
-    this.on = (event, func) => {
+    this.on = function (event, func) {
         if (event == 'tick') {
             tickCallback = func;
         } else {
             console.error("not handled", event);
         };
-
         return this;
     };
     this.stop = () => { };
