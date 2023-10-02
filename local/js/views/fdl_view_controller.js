@@ -2,6 +2,7 @@
 function FdlViewController() {
     const DRAG_NODE = "draggingNode";
     const DRAG_LINK = "draggingLink";
+    const DRAG_BUBBLE = 'draggingBubble'
     const DRAG_SELECT = "selectDrag";
 
     const TARGET_LINK = 'linkTarget';
@@ -163,6 +164,17 @@ function FdlViewController() {
                 screenCoords,
             }
             return true;
+        } else if (toolState == Buttons.ZOOM_BUTTON) {
+            let zoomCenter = screenToModelCoords(screenCoords)
+            mInteraction = {
+                pointerX: zoomCenter.x,
+                pointerY: zoomCenter.y,
+                transformX: mZoomTransform.x,
+                transformY: mZoomTransform.y,
+                scale: mZoomTransform.k,
+                screenCoords,
+            }
+            return true;
         } else if (toolState == Buttons.SELECTION_BUTTON) {
             let target = getInteractionTarget(screenCoords);
             if (target && target.type == TARGET_NODE) {
@@ -185,26 +197,17 @@ function FdlViewController() {
                 mInteraction = { type: DRAG_LINK, id: target.id, mousePosition: screenToModelCoords(screenCoords) };
                 mSimulation.stop();
             } else if (target && target.type == TARGET_BUBBLE) {
-                // nothing doing atm
+                mInteraction = {
+                    type: DRAG_BUBBLE,
+                    id: target.id,
+                    start: screenCoords
+                };
             } else if (!target) {
                 mInteraction = { type: DRAG_SELECT }
             } else {
                 console.error("Invalid state!", target);
             }
             drawInterface();
-        } else if (toolState == Buttons.ZOOM_BUTTON) {
-
-            let zoomCenter = screenToModelCoords(screenCoords)
-            mInteraction = {
-                pointerX: zoomCenter.x,
-                pointerY: zoomCenter.y,
-                transformX: mZoomTransform.x,
-                transformY: mZoomTransform.y,
-                scale: mZoomTransform.k,
-                screenCoords,
-            }
-
-            return true;
         }
     }
 
@@ -312,6 +315,12 @@ function FdlViewController() {
                 mParentElementCallback(interaction.id, target.id);
             }
             triggerDraw(0.3);
+        } else if (interaction && interaction.type == DRAG_BUBBLE) {
+            let motion = MathUtil.length(MathUtil.subtract(interaction.start, screenCoords))
+            if (motion < 5 && IdUtil.isType(interaction.id, Data.Group)) {
+                mContextItem = interaction.id;
+                return { type: EventResponse.CONTEXT_MENU_GROUP, id: interaction.id }
+            }
         }
 
         if (interaction && (toolState == Buttons.ZOOM_BUTTON || toolState == Buttons.PANNING_BUTTON)) {
@@ -489,18 +498,6 @@ function FdlViewController() {
             return {
                 x: (screenCoords.x - boundingBox.x - mZoomTransform.x) / mZoomTransform.k,
                 y: (screenCoords.y - boundingBox.y - mZoomTransform.y) / mZoomTransform.k
-            };
-        } else {
-            return { x: 0, y: 0 };
-        }
-    }
-
-    function modelToScreenCoords(modelCoords) {
-        let boundingBox = mInterfaceCanvas.node().getBoundingClientRect();
-        if (ValUtil.checkConvertionState(screenCoords, boundingBox, zoomPan)) {
-            return {
-                x: (modelCoords.x * mZoomTransform.k) + boundingBox.x + mZoomTransform.x,
-                y: (modelCoords.y * mZoomTransform.k) + boundingBox.y + mZoomTransform.y
             };
         } else {
             return { x: 0, y: 0 };

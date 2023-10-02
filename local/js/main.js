@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         modelUpdate();
     })
 
-    mEventManager.onUndo(async () => {
+    mEventManager.setUndoCallback(async () => {
         let obj = await mVersionController.reverse();
         if (obj) {
             if (Array.isArray(obj)) {
@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         }
     })
 
-    mEventManager.onRedo(async () => {
+    mEventManager.setRedoCallback(async () => {
         let obj = await mVersionController.advance();
         if (obj) {
             if (Array.isArray(obj)) {
@@ -192,8 +192,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
         }
     })
 
-    mEventManager.onDelete(() => {
+    mEventManager.setDeleteCallback(() => {
         // Delete everything in the selection
+    })
+
+    mEventManager.setNewDimentionCallback((groupId) => {
+        if (!IdUtil.isType(groupId, Data.Group)) { console.error("Bad state, not a group", groupId); return; }
+        console.log(groupId);
     })
 
     function modelUpdate() {

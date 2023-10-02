@@ -24,3 +24,13 @@ const DimentionTypes = {
     ORDINAL: "ordinal",
     CONTINUOUS: "continuous",
 }
+
+const ContextButtons = {
+    CENTER: 'center',
+    ADD_DIMENTION: 'addDimention',
+}
+
+const EventResponse = {
+    HOLD: 'hold',
+    CONTEXT_MENU_GROUP: 'contextMenuGroup'
+}

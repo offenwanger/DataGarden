@@ -12,11 +12,15 @@ function EventManager(strokeController, fdlController) {
     let mHorizontalBarPercent = 0.5;
     let mVerticalBarPercent = 0.5;
 
+    let mContextItem;
+
     // these functions are asyncronous because they have to call file access. 
     let mUndoCallback = async () => { };
     let mRedoCallback = async () => { };
 
     let mDeleteCallback = async () => { };
+
+    let mNewDimentionCallback = () => { };
 
     let mLastClick = { x: -10, y: -10, time: Date.now() };
 
@@ -73,6 +77,7 @@ function EventManager(strokeController, fdlController) {
 
     mInterface.on("pointerdown", (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY, };
+        mMenuController.hideContextMenus();
 
         mStartPos = screenCoords;
         mCurrentMousePosistion = mStartPos;
@@ -105,8 +110,15 @@ function EventManager(strokeController, fdlController) {
 
     d3.select(document).on('pointerup', (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY };
-        mStrokeViewController.onPointerUp(screenCoords, mCurrentToolState);
-        mFdlViewController.onPointerUp(screenCoords, mCurrentToolState);
+        let responses = [];
+        responses.push(mStrokeViewController.onPointerUp(screenCoords, mCurrentToolState));
+        responses.push(mFdlViewController.onPointerUp(screenCoords, mCurrentToolState));
+        responses.filter(r => r).forEach(response => {
+            if (response.type == EventResponse.CONTEXT_MENU_GROUP) {
+                mMenuController.showGroupContextMenu(screenCoords);
+                mContextItem = response.id;
+            }
+        })
         releaseState();
         clearTimeout(mLongPressTimeout);
     });
@@ -118,6 +130,10 @@ function EventManager(strokeController, fdlController) {
     mMenuController.setPauseCallback((pause) => {
         pause ? mFdlViewController.pauseSimulation() : mFdlViewController.runSimulation();
     })
+    mMenuController.setNewDimentionCallback(() => {
+        mNewDimentionCallback(mContextItem);
+        mMenuController.hideContextMenus();
+    });
 
     let mLockedState = false;
     function holdState() { mLockedState = true; }
@@ -161,9 +177,10 @@ function EventManager(strokeController, fdlController) {
     // });
 
     return {
-        onUndo: func => mUndoCallback = func,
-        onRedo: func => mRedoCallback = func,
-        onDelete: func => mDeleteCallback = func,
+        setUndoCallback: func => mUndoCallback = func,
+        setRedoCallback: func => mRedoCallback = func,
+        setDeleteCallback: func => mDeleteCallback = func,
+        setNewDimentionCallback: func => mNewDimentionCallback = func,
     }
 }
 
