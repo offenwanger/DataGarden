@@ -238,8 +238,13 @@ function FdlViewController() {
     function onDblClick(screenCoords, toolState) {
         // tool state doesn't really matter atm
         let target = getInteractionTarget(screenCoords);
-        if (target && target.type == TARGET_NODE) {
+        if (target && target.type == TARGET_NODE && IdUtil.isType(target.id, Data.Element)) {
             mExplodedElements.push(target.id);
+            setupSimulation()
+            triggerDraw(0.1);
+        } else if (target && target.type == TARGET_NODE && IdUtil.isType(target.id, Data.Stroke)) {
+            let element = mModel.getElementForStroke(target.id);
+            mExplodedElements.splice(mExplodedElements.indexOf(element.id), 1);
             setupSimulation()
             triggerDraw(0.1);
         } else if (target && target.type == TARGET_BUBBLE) {
