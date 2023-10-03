@@ -1,12 +1,15 @@
 
 function FdlViewController() {
+    const MODE_STRUCTURE = 'editingStructure';
+    const MODE_DIMENTION = 'editingDimention';
+
     const DRAG_NODE = "draggingNode";
     const DRAG_LINK = "draggingLink";
     const DRAG_BUBBLE = 'draggingBubble'
     const DRAG_SELECT = "selectDrag";
 
     const TARGET_LINK = 'linkTarget';
-    const TARGET_NODE = 'elementTarget';
+    const TARGET_NODE = 'nodeTarget';
     const TARGET_BUBBLE = 'bubbleTarget';
 
     const ELEMENT_NODE_SIZE = 8;
@@ -26,6 +29,8 @@ function FdlViewController() {
     let mHighlightLink = null;
 
     let mInteraction = null;
+
+    let mMode = MODE_STRUCTURE;
 
     let mHighlightCallback = () => { };
     let mParentElementCallback = () => { };
@@ -62,7 +67,7 @@ function FdlViewController() {
         .nodes(mData.nodes, (d) => d.id)
         .alpha(0.3)
         .on("tick", () => {
-            if (mShowGroups) mData.nodes.forEach(cluster(0.2));
+            if (mShowGroups) mData.nodes.filter(n => n.clusters).forEach(cluster(0.2));
             mData.nodes.forEach(collide(0.2));
             draw();
         })
@@ -77,7 +82,7 @@ function FdlViewController() {
     function onModelUpdate(model) {
         mModel = model;
 
-        mHighlightObjects = mHighlightObjects.filter(id => IdUtil.isType(id, Data.Element) ? mModel.getElement(id) : mModel.getStroke(id));
+        mHighlightObjects = [];
         mHighlightLink = null
 
         setupSimulation();
@@ -87,70 +92,114 @@ function FdlViewController() {
     function setupSimulation() {
         let oldData = mData;
         mData = { nodes: [], links: [], clusters: {} };
-        mModel.getElements().forEach(element => {
-            if (mExplodedElements.includes(element.id)) {
-                let group = mModel.getGroupForElement(element.id).id;
-                element.strokes.forEach(stroke => {
-                    let oldNode = oldData.nodes.find(n => n.id == stroke.id);
-                    if (!oldNode) oldNode = oldData.nodes.find(n => n.id == element.id);
+        if (mMode == MODE_STRUCTURE) {
+            mModel.getElements().forEach(element => {
+                if (mExplodedElements.includes(element.id)) {
+                    let group = mModel.getGroupForElement(element.id).id;
+                    element.strokes.forEach(stroke => {
+                        let { x, y } = getNodePosition(stroke.id, oldData.nodes);
+                        let node = {
+                            id: stroke.id,
+                            isStroke: true,
+                            clusters: [group, element.id],
+                            radius: STROKE_NODE_SIZE,
+                            x, y,
+                        }
+                        mData.nodes.push(node);
+                        node.clusters.forEach(cluster => {
+                            if (!mData.clusters[cluster]) mData.clusters[cluster] = node;
+                        })
+                    })
+                } else {
+                    let { x, y } = getNodePosition(element.id, oldData.nodes);
                     let node = {
-                        id: stroke.id,
-                        isStroke: true,
-                        clusters: [group, element.id],
-                        radius: STROKE_NODE_SIZE,
-                        x: oldNode ? oldNode.x : mWidth / 2,
-                        y: oldNode ? oldNode.y : mHeight / 2,
+                        id: element.id,
+                        hasParent: element.parentId ? true : false,
+                        clusters: [mModel.getGroupForElement(element.id).id],
+                        radius: ELEMENT_NODE_SIZE,
+                        x, y,
                     }
                     mData.nodes.push(node);
-                    node.clusters.forEach(cluster => {
-                        if (!mData.clusters[cluster]) mData.clusters[cluster] = node;
-                    })
-                })
-            } else {
-                let oldNode = oldData.nodes.find(n => n.id == element.id);
+                    if (!mData.clusters[node.clusters[0]]) mData.clusters[node.clusters[0]] = node;
+                    if (element.parentId) {
+                        mData.links.push({
+                            source: element.parentId,
+                            target: element.id,
+                            value: 1
+                        })
+                    }
+                }
+            });
+
+            mModel.getDimentions().forEach(dimention => {
+                let { x, y } = getNodePosition(dimention.id, oldData.nodes);
                 let node = {
-                    id: element.id,
-                    hasParent: element.parentId ? true : false,
-                    clusters: [mModel.getGroupForElement(element.id).id],
-                    radius: ELEMENT_NODE_SIZE,
-                    x: oldNode ? oldNode.x : mWidth / 2,
-                    y: oldNode ? oldNode.y : mHeight / 2,
+                    id: dimention.id,
+                    radius: DIMENTION_NODE_SIZE,
+                    clusters: [],
+                    x, y,
                 }
                 mData.nodes.push(node);
-                if (!mData.clusters[node.clusters[0]]) mData.clusters[node.clusters[0]] = node;
-                if (element.parentId) {
-                    mData.links.push({
-                        source: element.parentId,
-                        target: element.id,
-                        value: 1
-                    })
-                }
-            }
-        });
+            });
 
-        mModel.getDimentions().forEach(dimention => {
-            let oldNode = oldData.nodes.find(n => n.id == dimention.id);
-            let node = {
-                id: dimention.id,
-                radius: DIMENTION_NODE_SIZE,
-                clusters: [],
-                x: oldNode ? oldNode.x : mWidth / 2,
-                y: oldNode ? oldNode.y : mHeight / 2,
+            mModel.getGroups().forEach(group => {
+                DataUtil.getMappings(group).forEach(mapping => {
+                    if (mData.clusters[group.id]) {
+                        mData.links.push({
+                            source: mapping.dimention,
+                            target: mData.clusters[group.id].id,
+                            value: 1
+                        })
+                    }
+                })
+            });
+        } else if (mMode == MODE_DIMENTION) {
+            let dimention = mModel.getDimention(mEditingDimetion);
+            if (dimention.continuous) {
+                console.error("impliment me!")
+            } else {
+                dimention.levels.forEach(level => {
+                    let { x, y } = getNodePosition(level.id, oldData.nodes);
+                    let node = {
+                        id: level.id,
+                        clusters: [],
+                        radius: DIMENTION_NODE_SIZE,
+                        x, y,
+                    }
+                    mData.nodes.push(node);
+                })
             }
-            mData.nodes.push(node);
-        });
 
-        mModel.getGroups().forEach(group => {
-            DataUtil.getMappings(group).forEach(mapping => {
-                if (mData.clusters[group.id]) {
-                    mData.links.push({
-                        source: mapping.dimention,
-                        target: mData.clusters[group.id].id,
-                        value: 1
-                    })
-                }
+            mModel.getGroups().forEach(group => {
+                DataUtil.getMappings(group).filter(mapping => mapping.dimention == mEditingDimetion).forEach(mapping => {
+                    if (mapping.type == MappingTypes.CONT_DISC || mapping.type == MappingTypes.DISC_DISC) {
+                        group.elements.forEach(element => {
+                            let cluster = "group" + mapping.groups.findIndex(g => g.includes(element.id));
+                            let { x, y } = getNodePosition(element.id, oldData.nodes);
+                            let node = {
+                                id: element.id,
+                                clusters: [cluster],
+                                radius: ELEMENT_NODE_SIZE,
+                                x, y,
+                            }
+                            mData.nodes.push(node);
+
+                            if (!mData.clusters[cluster]) mData.clusters[cluster] = node;
+                        });
+                    }
+
+                    if (mapping.type == MappingTypes.DISC_DISC) {
+                        mapping.groups.forEach((g, index) => {
+                            mData.links.push({
+                                source: g[0],
+                                target: mapping.levels[index],
+                                value: 1
+                            })
+                        })
+                    }
+                });
             })
-        });
+        }
 
         mColorMap = mColorMap.domain(Object.keys(mData.clusters));
 
@@ -238,17 +287,30 @@ function FdlViewController() {
     function onDblClick(screenCoords, toolState) {
         // tool state doesn't really matter atm
         let target = getInteractionTarget(screenCoords);
-        if (target && target.type == TARGET_NODE && IdUtil.isType(target.id, Data.Element)) {
+        if (target && target.type == TARGET_BUBBLE && IdUtil.isType(target.id, Data.Element)) {
+            // unexplode the element
+            mExplodedElements.splice(mExplodedElements.indexOf(target.id), 1);
+            setupSimulation()
+            triggerDraw(0.1);
+        } else if (target && target.type == TARGET_NODE && IdUtil.isType(target.id, Data.Element)) {
+            // explode the element
             mExplodedElements.push(target.id);
             setupSimulation()
             triggerDraw(0.1);
         } else if (target && target.type == TARGET_NODE && IdUtil.isType(target.id, Data.Stroke)) {
+            // unexplode the element
             let element = mModel.getElementForStroke(target.id);
             mExplodedElements.splice(mExplodedElements.indexOf(element.id), 1);
             setupSimulation()
             triggerDraw(0.1);
-        } else if (target && target.type == TARGET_BUBBLE) {
-            mExplodedElements.splice(mExplodedElements.indexOf(target.id), 1);
+        } else if (target && target.type == TARGET_NODE && IdUtil.isType(target.id, Data.Dimention)) {
+            mMode = MODE_DIMENTION;
+            mEditingDimetion = target.id;
+            setupSimulation()
+            triggerDraw(0.1);
+        } else if (target && target.type == TARGET_NODE && IdUtil.isType(target.id, Data.Level)) {
+            mMode = MODE_STRUCTURE;
+            mEditingDimetion = null;
             setupSimulation()
             triggerDraw(0.1);
         }
@@ -411,7 +473,8 @@ function FdlViewController() {
 
         if (mShowGroups) {
             getOrderedClusters().forEach((c) => {
-                let clusterNodes = mData.nodes.filter((n) => n.clusters.includes(c));
+                let clusterNodes = mData.nodes.filter(n => n.clusters.includes(c));
+                if (clusterNodes.length == 0) { console.error("Invalid cluster, no nodes", c); return; }
                 let hull = d3.polygonHull(hullPoints(clusterNodes)).map(p => { return { x: p[0], y: p[1] } });
                 mDrawingUtil.drawBubble(hull, mColorMap(cluster), 0.4, getCode(c, TARGET_BUBBLE));
             })
@@ -466,23 +529,14 @@ function FdlViewController() {
     function drawInterface() {
         mDrawingUtil.resetInterface(mCanvas.attr("width"), mCanvas.attr("height"), mZoomTransform);
         mHighlightObjects.forEach(id => {
-            if (IdUtil.isType(id, Data.Stroke)) {
-                let node = mData.nodes.find(n => n.id == id);
-                if (!node) {
-                    let element = mModel.getElementForStroke(id);
-                    if (!element) { console.error("Bad state! Highlighting non-existant node", id); return; }
-                    node = mData.nodes.find(n => n.id == element.id);
-                    if (!node) { console.error("Bad state! Highlighting non-existant node", element.id); return; }
-                }
-                mDrawingUtil.highlightCircle(node.x, node.y, node.radius, "#FF0000");
-            } else if (mExplodedElements.includes(id)) {
+            let node = mData.nodes.find(n => n.id == id);
+            if (!node) {
                 let clusterNodes = mData.nodes.filter((n) => n.clusters.includes(id));
-                let hull = d3.polygonHull(hullPoints(clusterNodes)).map(p => { return { x: p[0], y: p[1] } });
-                mDrawingUtil.highlightBubble(hull, "red");
+                if (clusterNodes.length >= 1) {
+                    let hull = d3.polygonHull(hullPoints(clusterNodes)).map(p => { return { x: p[0], y: p[1] } });
+                    mDrawingUtil.highlightBubble(hull, "red");
+                }
             } else {
-                if (mInteraction && mInteraction.type == DRAG_NODE && mInteraction.id == id) { return; }
-                let node = mData.nodes.find(n => n.id == id);
-                if (!node) { console.error("Bad state! Highlighting non-existant node", id); return; }
                 mDrawingUtil.highlightCircle(node.x, node.y, node.radius, "#FF0000");
             }
         })
@@ -513,12 +567,48 @@ function FdlViewController() {
 
     function getOrderedClusters() {
         return Object.keys(mData.clusters).sort((a, b) => {
-            if (IdUtil.isType(a, Data.Element) && IdUtil.isType(b, Data.Group)) {
-                return -1;
-            } else if (IdUtil.isType(b, Data.Element) && IdUtil.isType(a, Data.Group)) {
-                return 1
-            } else return 0;
+            a = IdUtil.isType(a, Data.Element) ? 1 : 0;
+            b = IdUtil.isType(b, Data.Element) ? 1 : 0;
+            return a - b;
         })
+    }
+
+    function getNodePosition(id, oldNodes) {
+        let oldNode = oldNodes.find(n => n.id == id);
+        if (oldNode) return { x: oldNode.x, y: oldNode.y };
+
+        let parent;
+        if (IdUtil.isType(id, Data.Stroke)) {
+            parent = mModel.getElementForStroke(id);
+        } else if (IdUtil.isType(id, Data.Level)) {
+            parent = mModel.getDimentionForLevel(id);
+        }
+        if (parent) oldNode = oldNodes.find(n => n.id == parent.id);
+        if (oldNode) return { x: oldNode.x, y: oldNode.y };
+
+        let childIds = [];
+        if (IdUtil.isType(id, Data.Element)) {
+            let element = mModel.getElement(id);
+            childIds = element.strokes.map(s => s.id);
+        } else if (IdUtil.isType(id, Data.Dimention)) {
+            let dimention = mModel.getDimention(id);
+            childIds = dimention.levels.map(l => l.id);
+        }
+        if (childIds.length > 0) {
+            oldNode = oldNodes.filter(n => childIds.includes(n.id));
+            if (oldNode.length > 0) {
+                return {
+                    x: oldNode.map(n => n.x).reduce((a, b) => a + b, 0) / oldNode.length,
+                    y: oldNode.map(n => n.y).reduce((a, b) => a + b, 0) / oldNode.length
+                }
+            }
+        };
+
+        return {
+            x: mWidth / 2,
+            y: mHeight / 2
+        }
+
     }
 
     function screenToModelCoords(screenCoords) {

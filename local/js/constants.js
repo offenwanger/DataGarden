@@ -21,7 +21,7 @@ const MappingTypes = {
 
 const ContextButtons = {
     CENTER: 'center',
-    ADD_DIMENTION: 'addDimention',
+    ADD_DIMENTION: 'add-dimention',
 }
 
 const EventResponse = {

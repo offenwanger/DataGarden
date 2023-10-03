@@ -101,17 +101,14 @@ function DataModel() {
         mDimentions = dimentions;
     }
 
+    function getDimentionForLevel(levelId) {
+        if (!IdUtil.isType(levelId, Data.Level)) { console.error("Not an level id! " + levelId); return null; };
+        return getDimentions().find(d => d.levels.some(l => l.id == levelId));
+    }
+
     function getMapping(mappingId) {
-        if (!IdUtil.isType(mappingId, Data.Mapping)) { console.error("Not an mapping id! " + mappingId); return null; };
-        return getMappings().find(d => d.id == mappingId)
-    }
-
-    function getMappings() {
-        return mMappings;
-    }
-
-    function setMappings(mappings) {
-        mMappings = mappings;
+        console.error("impliment me!")
+        return;
     }
 
     function getTables() {
@@ -147,6 +144,7 @@ function DataModel() {
 
     // recursive function
     function getRows(element, allElements) {
+        console.error("impliment me!"); return;
         let rows = allElements.filter(e => e.parentId == element.id).map(e => getRows(e, allElements)).flat();
         let group = getGroupForElement(element.id);
         let mappings = mMappings.filter(m => m.groupId == group.id);
@@ -181,9 +179,8 @@ function DataModel() {
     this.getDimention = getDimention;
     this.getDimentions = getDimentions;
     this.setDimentions = setDimentions;
+    this.getDimentionForLevel = getDimentionForLevel;
     this.getMapping = getMapping;
-    this.getMappings = getMappings;
-    this.setMappings = setMappings;
     this.getTables = getTables;
 }
 

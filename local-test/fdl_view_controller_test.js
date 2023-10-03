@@ -199,4 +199,34 @@ describe('FDL View Controller Test', function () {
             expect(model().getElements().map(e => e.strokes.length)).to.eql([1, 1, 1]);
         })
     })
+
+    describe('dimention editing tests', function () {
+        it('should open the dimention edit view wihtout crashing', function () {
+            utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 10, y: 80 }])
+            utility.drawStroke(integrationEnv, [{ x: 40, y: 20 }, { x: 40, y: 40 }, { x: 40, y: 60 }, { x: 30, y: 80 }])
+
+            d3.tick();
+
+            // dbl click
+            let elements = model().getElements();
+            let inBetweenNodes = MathUtil.average([
+                d3.getPosition(elements[0].id),
+                d3.getPosition(elements[1].id)
+            ])
+            utility.click(integrationEnv, "#fdl-view", inBetweenNodes);
+
+            utility.clickContextMenuButton(integrationEnv, "#group-context-menu", "#" + ContextButtons.ADD_DIMENTION);
+
+            d3.tick();
+
+            assert.equal(model().getDimentions().length, 1)
+
+
+            let dimention = model().getDimentions()[0];
+            utility.click(integrationEnv, "#fdl-view", d3.getPosition(dimention.id));
+            d3.tick(); // needed so that the interaction targets redraw
+            utility.click(integrationEnv, "#fdl-view", d3.getPosition(dimention.id));
+            d3.tick();
+        })
+    })
 });

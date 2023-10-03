@@ -1,11 +1,12 @@
-function RadialContextMenu(svg, items, buttonSize) {
+function RadialContextMenu(svg, id, items, buttonSize) {
     const BUTTON_PADDING = 10;
     const MIN_BUTTONS = 5;
 
     let mX = 0;
     let mY = 0;
 
-    let mMenuContainer = svg.append("g");
+    let mMenuContainer = svg.append("g")
+        .attr("id", id);
     let mClickCallback = () => { };
 
     let mTooltip = new ToolTip(svg);
@@ -55,6 +56,7 @@ function RadialContextMenu(svg, items, buttonSize) {
         d += "A" + Math.round(innerRadius) + "," + Math.round(innerRadius) + ",0,0,0," + p4.x + "," + p4.y + " ";
         d += "Z";
         let tile = mMenuContainer.append("g")
+            .attr("id", items[i].id)
             .on('pointerover', function (e) {
                 d3.select(this)
                     .raise()
@@ -72,7 +74,6 @@ function RadialContextMenu(svg, items, buttonSize) {
                 d3.select(this).attr("filter", FiltersUtil.DROP_SHADOW);
             });
         tile.append("path")
-            .attr("id", items[i].id)
             .attr("d", d)
             .attr("stroke", "black")
             .attr("stroke-width", 3)

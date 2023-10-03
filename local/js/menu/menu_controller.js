@@ -59,7 +59,7 @@ function MenuController(svg) {
             d3.select("#color-selector-color").style("fill", color.hex)
         };
 
-        mGroupContextMenu = new RadialContextMenu(svg, [{
+        mGroupContextMenu = new RadialContextMenu(svg, "group-context-menu", [{
             id: ContextButtons.ADD_DIMENTION,
             img: "img/add_dimention.svg",
             tooltip: "Add a new dimention"
