@@ -12,17 +12,11 @@ const Size = {
     NODE_TINY: 16,
 }
 
-const ChannelTypes = {
-    POSITION: "position",
-    ORIENTATION: "orientation",
-    FORM: "form",
-    NUMBER: "number",
-}
-
-const DimentionTypes = {
-    CATEGORICAL: "categorical",
-    ORDINAL: "ordinal",
-    CONTINUOUS: "continuous",
+const MappingTypes = {
+    CONT_CONT: "continuousDimetion-continuousChannel",
+    CONT_DISC: "continuousDimetion-discreteChannel",
+    DISC_CONT: "discreteDimetion-continuousChannel",
+    DISC_DISC: "discreteDimetion-discreteChannel",
 }
 
 const ContextButtons = {

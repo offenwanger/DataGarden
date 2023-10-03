@@ -64,6 +64,21 @@ let DataUtil = function () {
             overlap1D(bb1.y, bb1.y + bb1.height, bb2.y, bb2.y + bb2.height);
     }
 
+    function getElementSize(element) {
+        console.error("impliment me!")
+        return 1;
+    }
+
+    function getMappings(group) {
+        return [
+            group.colorMapping,
+            group.formMapping,
+            group.sizeMapping,
+            group.positionMapping,
+            group.oritentationMapping
+        ].filter(m => m);
+    }
+
     function getElementLevel(element, model) {
         if (!ValUtil.isType(element, Data.Element)) { console.error("invalid element", element); return -1; }
 
@@ -189,6 +204,8 @@ let DataUtil = function () {
         imageDataToHex,
         getBoundingBox,
         overlap,
+        getElementSize,
+        getMappings,
         getElementLevel,
         getGroupLevel,
         isDecendant,

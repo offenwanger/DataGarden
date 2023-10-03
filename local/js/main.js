@@ -198,7 +198,50 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     mEventManager.setNewDimentionCallback((groupId) => {
         if (!IdUtil.isType(groupId, Data.Group)) { console.error("Bad state, not a group", groupId); return; }
-        console.log(groupId);
+        let group = mModelController.getModel().getGroup(groupId);
+        if (!group) { console.error("Bad state, group not found", groupId); return; }
+
+        let newDimention = new Data.Dimention();
+        newDimention.levels.push(new Data.Level());
+        newDimention.levels[0].name = "Level";
+
+        let newMapping = new Data.Mapping();
+        newMapping.dimention = newDimention.id;
+        newMapping.levels.push(newDimention.levels[0].id);
+        if (!group.formMapping) {
+            newMapping.type = MappingTypes.DISC_DISC;
+            newMapping.groups.push(group.elements.map(e => e.id));
+            group.formMapping = newMapping;
+        } else if (!group.colorMapping) {
+            newMapping.type = MappingTypes.DISC_DISC;
+            newMapping.groups.push(group.elements.map(e => e.id));
+            group.colorMapping = newMapping;
+        } else if (!group.positionMapping) {
+            newMapping.type = MappingTypes.DISC_CONT;
+            newMapping.ranges.push([0, 1]);
+            group.positionMapping = newMapping;
+        } else if (!group.oritentationMapping) {
+            newMapping.type = MappingTypes.DISC_CONT;
+            newMapping.ranges.push([-Math.PI, Math.PI]);
+            group.oritentationMapping = newMapping;
+        } else if (!group.sizeMapping) {
+            newMapping.type = MappingTypes.DISC_CONT;
+            let sizes = group.elements.map(e => DataUtil.getElementSize(e));
+            newMapping.ranges.push([Math.min(...sizes), Math.max(...sizes)]);
+            if (newMapping.ranges[0][0] == newMapping.ranges[0][1]) {
+                newMapping.ranges[0][1]++;
+            }
+            group.sizeMapping = newMapping;
+        } else {
+            // no free dimentions
+            return;
+        }
+
+        mModelController.addDimention(newDimention);
+        mModelController.updateGroup(group);
+
+        console.log(mModelController.getModel().toObject())
+        modelUpdate();
     })
 
     function modelUpdate() {

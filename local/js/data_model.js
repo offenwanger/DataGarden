@@ -1,20 +1,19 @@
 function DataModel() {
     let mGroups = [];
     let mDimentions = [];
-    let mMappings = [];
 
     function clone() {
         let clone = new DataModel();
         clone.setGroups(getGroups().map(e => e.clone()));
         clone.setDimentions(getDimentions().map(e => e.clone()));
-        clone.setMappings(getMappings().map(e => e.clone()));
         return clone;
     }
 
     function toObject() {
         let model = this.clone();
         return {
-            groups: model.getGroups()
+            groups: model.getGroups(),
+            dimentions: model.getDimentions()
         }
     }
 
@@ -190,7 +189,11 @@ function DataModel() {
 
 DataModel.fromObject = function (obj) {
     let model = new DataModel();
-    if (!obj.groups) { console.error("Invalid data model object", obj); return; }
+    if (!Array.isArray(obj.groups) || !Array.isArray(obj.dimentions)) {
+        console.error("Invalid data model object", obj);
+        return;
+    }
     model.setGroups(obj.groups.map(g => Data.Group.fromObject(g)));
+    model.setDimentions(obj.dimentions.map(d => Data.Dimention.fromObject(d)));
     return model;
 }
