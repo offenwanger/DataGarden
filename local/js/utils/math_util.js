@@ -28,7 +28,7 @@ let MathUtil = function () {
 
     function average(vs) {
         let total = vs.reduce((prev, cur) => add(prev, cur));
-        return scale(total, vs.length);
+        return scale(total, 1 / vs.length);
     }
 
     function length(v) {
