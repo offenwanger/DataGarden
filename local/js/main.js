@@ -240,7 +240,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mModelController.addDimention(newDimention);
         mModelController.updateGroup(group);
 
-        console.log(mModelController.getModel().toObject())
         modelUpdate();
     })
 
