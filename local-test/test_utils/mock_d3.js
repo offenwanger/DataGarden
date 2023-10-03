@@ -24,6 +24,7 @@ function MockElement(type) {
         }
     }
     this.select = function (selector) {
+        if (selector instanceof MockElement) return selector;
         return mChildren.find(child => child.matches(selector)) || { node: () => null }
     }
     // this is only ever used to remove the tables
@@ -125,6 +126,7 @@ function MockElement(type) {
 }
 
 function polygonHull(points) {
+    if (points.length == 0) return null;
     let yMax = Math.max(...points.map(p => p[1]));
     let yMin = Math.min(...points.map(p => p[1]));
     let xMax = Math.max(...points.map(p => p[0]));
