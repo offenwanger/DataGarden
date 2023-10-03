@@ -3,6 +3,10 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
     let intCtx = interactionContext;
     let intfCtx = interfaceContext;
 
+    // scale agnostic values
+    const TARGET_INCREASE = 5;
+    let mScale = 1;
+
     function reset(width, height, zoomTransform) {
         ctx.reset();
         ctx.clearRect(0, 0, width, height);
@@ -14,6 +18,8 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         intCtx.translate(zoomTransform.x, zoomTransform.y)
         intCtx.scale(zoomTransform.k, zoomTransform.k)
         intCtx.imageSmoothingEnabled = false;
+
+        mScale = zoomTransform.k;
     }
 
     function resetInterface(width, height, zoomTransform) {
@@ -278,25 +284,54 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         ]
     }
 
-    function drawStroke(path, x, y, scale, color, size, clipBox, code = null) {
+    function drawStroke(path, color, strokeWidth, code = null) {
         ctx.save();
         ctx.beginPath();
-        ctx.rect(clipBox.x, clipBox.y, clipBox.width, clipBox.height);
-        ctx.clip();
 
-        ctx.translate(x, y)
-        ctx.scale(scale, scale);
+        // ctx.rect(clipBox.x, clipBox.y, clipBox.width, clipBox.height);
+        // ctx.clip();
+        // ctx.translate(x, y)
+        // ctx.scale(scale, scale);
 
         ctx.strokeStyle = color;
-        ctx.lineWidth = size;
-        ctx.moveTo(path[0].x, path[0].y);
+        ctx.lineWidth = strokeWidth;
         ctx.beginPath();
+        ctx.moveTo(path[0].x, path[0].y);
         path.forEach(p => {
             ctx.lineTo(p.x, p.y);
         });
         ctx.stroke();
         ctx.restore();
+
+        if (code) {
+            intCtx.save();
+            intCtx.strokeStyle = code;
+            intCtx.lineWidth = strokeWidth + TARGET_INCREASE / mScale;
+            intCtx.beginPath();
+            intCtx.moveTo(path[0].x - 1, path[0].y - 1);
+            path.forEach(p => {
+                intCtx.lineTo(p.x, p.y)
+            });
+            intCtx.stroke();
+            intCtx.restore();
+        }
     }
+
+    function drawInterfaceStroke(path, color, strokeWidth) {
+        intfCtx.save();
+        intfCtx.beginPath();
+
+        intfCtx.strokeStyle = color;
+        intfCtx.lineWidth = strokeWidth;
+        intfCtx.beginPath();
+        intfCtx.moveTo(path[0].x, path[0].y);
+        path.forEach(p => {
+            intfCtx.lineTo(p.x, p.y);
+        });
+        intfCtx.stroke();
+        intfCtx.restore();
+    }
+
 
     function drawConnector(top, bottom, left, right) {
         let pathStart = [];
@@ -344,6 +379,33 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         return midpoint;
     }
 
+    function highlightBoundingBox(box) {
+        intfCtx.save();
+        intfCtx.lineWidth = 2 / mScale;
+        intfCtx.setLineDash([5 / mScale, 10 / mScale]);
+        intfCtx.strokeStyle = "grey";
+        intfCtx.beginPath();
+        intfCtx.rect(box.x, box.y, box.width, box.height);
+        intfCtx.stroke();
+        intfCtx.restore();
+    }
+
+    function drawSpine(spine) {
+        intfCtx.save();
+        intfCtx.setLineDash([5 / mScale, 10 / mScale]);
+        intfCtx.beginPath();
+        spine.forEach(p => {
+            intfCtx.lineTo(p.x, p.y)
+        });
+        intfCtx.strokeStyle = "white";
+        intfCtx.lineWidth = 4 / mScale;
+        intfCtx.stroke();
+        intfCtx.strokeStyle = "blue";
+        intfCtx.lineWidth = 2 / mScale;
+        intfCtx.stroke();
+        intfCtx.restore();
+    }
+
     return {
         reset,
         resetInterface,
@@ -356,11 +418,14 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         drawColorCircle,
         drawLines,
         drawStroke,
+        drawInterfaceStroke,
         drawConnector,
         drawLink,
         drawBubble,
         highlightBubble,
         highlightLink,
         getTrianglePointer,
+        highlightBoundingBox,
+        drawSpine,
     }
 }

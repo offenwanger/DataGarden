@@ -1,5 +1,11 @@
 
 function StrokeViewController() {
+    const DRAWING = 'drawing';
+    const SELECTING = 'selecting';
+    const PANNING = 'panning';
+    const ZOOMING = 'zooming';
+    const DRAGGING = 'dragging';
+
     let mCanvas = d3.select('#stroke-view').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
     let mInterfaceCanvas = d3.select("#stroke-view").select('.canvas-container').append('canvas')
@@ -8,13 +14,19 @@ function StrokeViewController() {
         .style("opacity", 0)
         .classed('interaction-canvas', true);
 
+    let mDrawingUtil = new DrawingUtil(
+        mCanvas.node().getContext("2d"),
+        mInteractionCanvas.node().getContext("2d"),
+        mInterfaceCanvas.node().getContext("2d"),
+    );
+
     let mNewStrokeCallback = () => { };
     let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
 
     let mZoomTransform = d3.zoomIdentity;
     let mBrushActive = false;
-    let mHighlightBoundingBoxes = null;
+    let mHighlightIds = [];
     let mShowSpines = null;
 
     let mBrushOptions = {
@@ -22,6 +34,9 @@ function StrokeViewController() {
         color: "#000000FF",
         currentStroke: [{ x: 0, y: 0 }]
     }
+
+    let mSelectionLine = [];
+    let mSelection = [];
 
     let mInteractionLookup = {};
     let mReverseInteractionLookup = {};
@@ -34,6 +49,7 @@ function StrokeViewController() {
 
     function onModelUpdate(model) {
         mModel = model;
+        mHighlightIds = []
         draw();
     }
 
@@ -48,14 +64,10 @@ function StrokeViewController() {
                 scale: mZoomTransform.k,
                 screenCoords,
             }
-
-            mInteracting = true;
+            mInteracting = PANNING;
             return true;
         } else if (toolState == Buttons.ZOOM_BUTTON) {
-            mInteracting = true;
-
             let zoomCenter = screenToModelCoords(screenCoords)
-
             mStartPos = {
                 pointerX: zoomCenter.x,
                 pointerY: zoomCenter.y,
@@ -64,32 +76,35 @@ function StrokeViewController() {
                 scale: mZoomTransform.k,
                 screenCoords,
             }
-
-            mInteracting = true;
+            mInteracting = ZOOMING;
             return true;
         } else if (toolState == Buttons.BRUSH_BUTTON) {
-            mInteracting = true;
+            mInteracting = DRAWING;
             mBrushOptions.currentStroke = [screenToModelCoords(screenCoords)];
             return true;
         } else if (toolState == Buttons.SELECTION_BUTTON) {
-            // are we clicking outside our selection
-            //      clear the selection
-            //      start select interaction
-            // are we clicking our selection
-            //      start drag interaction
+            let target = getInteractionTarget(screenCoords);
+            if (mSelection.includes(target)) {
+                mInteracting = DRAGGING;
+                console.error("impliment me!")
+            } else {
+                mInteracting = SELECTING;
+                mSelection = [];
+            }
+            return true;
         } else if (toolState == Buttons.SHIFT_SELECTION_BUTTON) {
             // start select interaction
         }
     }
 
     function onPointerMove(screenCoords, toolState) {
-        if (toolState == Buttons.PANNING_BUTTON && mInteracting) {
+        if (mInteracting == PANNING) {
             let mouseDist = MathUtil.subtract(screenCoords, mStartPos.screenCoords);
             let translate = MathUtil.add(mStartPos, mouseDist);
             mZoomTransform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mStartPos.scale);
             draw();
             drawInterface();
-        } else if (toolState == Buttons.ZOOM_BUTTON && mInteracting) {
+        } else if (mInteracting == ZOOMING) {
             let mouseDist = screenCoords.y - mStartPos.screenCoords.y;
             let scale = mStartPos.scale * (1 + (mouseDist / mInterfaceCanvas.attr('height')));
             let zoomChange = scale - mStartPos.scale;
@@ -98,38 +113,36 @@ function StrokeViewController() {
             mZoomTransform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
             draw();
             drawInterface();
+        } else if (mInteracting == DRAWING) {
+            mBrushOptions.currentStroke.push(screenToModelCoords(screenCoords));
+            drawInterface();
+        } else if (mInteracting == SELECTING) {
+            mSelectionLine.push(screenToModelCoords(screenCoords));
+            drawInterface();
+        } else if (mInteracting == DRAGGING) {
+            console.error("impliment me!")
+        } else if (mInteracting) {
+            console.error("Not Handled!", mInteracting);
         } else if (toolState == Buttons.BRUSH_BUTTON) {
             mBrushActive = true;
-            if (mInteracting) {
-                mBrushOptions.currentStroke.push(screenToModelCoords(screenCoords));
-                drawInterface();
-            } else {
-                mBrushOptions.currentStroke = [screenToModelCoords(screenCoords)];
-                drawInterface();
-            }
+            mBrushOptions.currentStroke = [screenToModelCoords(screenCoords)];
+            drawInterface();
         } else if (toolState == Buttons.SELECTION_BUTTON) {
-            if (mInteracting) {
-                //  if we are select dragging
-                //      look up all things which fall in the box (we require complete coverage)
-                //      draw boxes around them
-                //  if we are dragging a selection
-                //      draw the stashed background
-                //      update the offset on all the strokes, draw them. 
-            } else {
-                if (!ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
-                    let targetId = getInteractionTarget(screenCoords);
-                    if (targetId) {
-                        let element = mModel.getElementForStroke(targetId);
-                        let elements = mModel.getElementDecendants(element.id);
-                        mHighlightBoundingBoxes = [DataUtil.getBoundingBox(elements)];
-                        mHighlightCallback(elements.map(e => e.id));
-                    } else {
-                        mHighlightBoundingBoxes = null;
-                        mHighlightCallback(null);
-                    }
+            if (!ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
+                let targetId = getInteractionTarget(screenCoords);
+                if (targetId) {
+                    let element = mModel.getElementForStroke(targetId);
+                    let elements = mModel.getElementDecendants(element.id);
+                    mHighlightIds.push(element.id);
+                    mHighlightIds = DataUtil.unique(mHighlightIds.concat(elements.map(e => e.id)));
+                    mHighlightCallback(mHighlightIds);
+                } else {
+                    mHighlightIds = [];
+                    mHighlightCallback(null);
                 }
-                drawInterface();
             }
+            drawInterface();
+
         } else if (toolState == Buttons.VIEW_BUTTON) {
             let targetId = getInteractionTarget(screenCoords);
             if (targetId) {
@@ -148,8 +161,8 @@ function StrokeViewController() {
             drawInterface();
         }
 
-        if (mHighlightBoundingBoxes && toolState != Buttons.SELECTION_BUTTON) {
-            mHighlightBoundingBoxes = null;
+        if (mHighlightIds && toolState != Buttons.SELECTION_BUTTON) {
+            mHighlightIds = [];
             drawInterface();
         }
 
@@ -203,32 +216,9 @@ function StrokeViewController() {
 
     function highlight(ids) {
         if (!ids || (Array.isArray(ids) && ids.length == 0)) {
-            mHighlightBoundingBoxes = null;
+            mHighlightIds = [];
         } else {
-            mHighlightBoundingBoxes = [];
-
-            let groupIds = ids.filter(id => IdUtil.isType(id, Data.Group));
-            let elementsIds = ids.filter(id => IdUtil.isType(id, Data.Element));
-            let strokeIds = ids.filter(id => IdUtil.isType(id, Data.Stroke));
-
-            groupIds.forEach(gId => {
-                let group = mModel.getGroup(gId);
-                if (!group) { console.error("Invalid State, group not found", gId); return; }
-                elementsIds.push(...group.elements.map(e => e.id));
-            });
-            elementsIds = DataUtil.unique(elementsIds);
-
-            elementsIds.forEach(eId => {
-                let element = mModel.getElement(eId);
-                if (!element) { console.error("Invalid State, element not found", eId); return; }
-                mHighlightBoundingBoxes.push(DataUtil.getBoundingBox(element));
-            });
-
-            strokeIds.forEach(sId => {
-                let stroke = mModel.getStroke(sId);
-                if (!stroke) { console.error("Invalid State, element not found", sId); return; }
-                mHighlightBoundingBoxes.push(DataUtil.getBoundingBox(stroke));
-            });
+            mHighlightIds = ids;
         }
         drawInterface();
     }
@@ -238,125 +228,40 @@ function StrokeViewController() {
     }
 
     function draw() {
-        let ctx = mCanvas.node().getContext('2d');
-        ctx.clearRect(0, 0, mCanvas.attr("width"), mCanvas.attr("height"));
-
-        ctx.save();
-
-        ctx.translate(mZoomTransform.x, mZoomTransform.y)
-        ctx.scale(mZoomTransform.k, mZoomTransform.k)
-
+        mDrawingUtil.reset(mCanvas.attr("width"), mCanvas.attr("height"), mZoomTransform);
         mModel.getElements().forEach(elem => {
             elem.strokes.forEach(stroke => {
-                ctx.save();
-
-                ctx.strokeStyle = stroke.color;
-                ctx.lineWidth = stroke.size;
-
-                ctx.beginPath();
-                ctx.moveTo(stroke.path[0].x - 1, stroke.path[0].y - 1);
-                stroke.path.forEach(p => ctx.lineTo(p.x, p.y));
-
-                ctx.stroke();
-
-                ctx.restore();
+                mDrawingUtil.drawStroke(stroke.path, stroke.color, stroke.size, getCode(stroke.id))
             })
         })
-
-        ctx.restore();
-
-        drawInteraction();
-    }
-
-    function drawInteraction() {
-        let ctx = mInteractionCanvas.node().getContext('2d');
-        ctx.clearRect(0, 0, mCanvas.attr("width"), mCanvas.attr("height"));
-
-        ctx.save();
-
-        ctx.translate(mZoomTransform.x, mZoomTransform.y)
-        ctx.scale(mZoomTransform.k, mZoomTransform.k)
-
-        mModel.getElements().forEach(elem => {
-            elem.strokes.forEach(stroke => {
-                let code = getCode(stroke.id);
-
-                ctx.save();
-
-                ctx.translate(elem.x, elem.y);
-                ctx.strokeStyle = code;
-                ctx.lineWidth = stroke.size + mTargetIncrease / mZoomTransform.k;
-
-                ctx.beginPath();
-                ctx.moveTo(stroke.path[0].x - 1, stroke.path[0].y - 1);
-                stroke.path.forEach(p => ctx.lineTo(p.x, p.y));
-
-                ctx.stroke();
-                ctx.restore();
-            })
-        })
-
-        ctx.restore();
+        drawInterface();
     }
 
     function drawInterface() {
-        let ctx = mInterfaceCanvas.node().getContext("2d");
-        ctx.clearRect(0, 0, mInterfaceCanvas.attr("width"), mInterfaceCanvas.attr("height"));
+        mDrawingUtil.resetInterface(mCanvas.attr("width"), mCanvas.attr("height"), mZoomTransform);
 
         if (mBrushActive) {
-            ctx.save();
+            mDrawingUtil.drawInterfaceStroke(mBrushOptions.currentStroke, mBrushOptions.color, mBrushOptions.size)
+        }
 
-            ctx.translate(mZoomTransform.x, mZoomTransform.y)
-            ctx.scale(mZoomTransform.k, mZoomTransform.k)
-
-            if (mBrushActive) {
-                ctx.strokeStyle = mBrushOptions.color;
-                ctx.lineWidth = mBrushOptions.size;
-
-                ctx.beginPath();
-                ctx.moveTo(mBrushOptions.currentStroke[0].x - 1, mBrushOptions.currentStroke[0].y - 1);
-                mBrushOptions.currentStroke.forEach(p => ctx.lineTo(p.x, p.y));
-
-                ctx.stroke();
+        mHighlightIds.forEach(id => {
+            if (IdUtil.isType(id, Data.Element)) {
+                let element = mModel.getElement(id);
+                if (!element) { console.error("Invalid element id", id); return; }
+                mDrawingUtil.highlightBoundingBox(DataUtil.getBoundingBox(element))
+            } else if (IdUtil.isType(id, Data.Stroke)) {
+                let stroke = mModel.getStroke(id);
+                if (!stroke) { console.error("Invalid stroke id", id); return; }
+                mDrawingUtil.highlightBoundingBox(DataUtil.getBoundingBox(stroke));
+            } else if (IdUtil.isType(id, Data.Group)) {
+                console.error("impliment me!")
             }
-
-            ctx.restore();
-        }
-
-        if (mHighlightBoundingBoxes) {
-            ctx.save();
-            ctx.translate(mZoomTransform.x, mZoomTransform.y)
-            ctx.scale(mZoomTransform.k, mZoomTransform.k)
-            ctx.lineWidth = 2 / mZoomTransform.k;
-            ctx.setLineDash([5 / mZoomTransform.k, 10 / mZoomTransform.k]);
-            ctx.strokeStyle = "grey";
-            mHighlightBoundingBoxes.forEach(boundingBox => {
-                ctx.beginPath();
-                ctx.rect(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
-                ctx.stroke();
-            })
-            ctx.restore();
-        }
+        })
 
         if (mShowSpines) {
-            ctx.save();
-            ctx.translate(mZoomTransform.x, mZoomTransform.y)
-            ctx.scale(mZoomTransform.k, mZoomTransform.k)
-            ctx.setLineDash([5 / mZoomTransform.k, 10 / mZoomTransform.k]);
             mShowSpines.forEach(element => {
-                ctx.beginPath();
-                element.spine.forEach(p => {
-                    p = MathUtil.add(p, element);
-                    ctx.lineTo(p.x, p.y)
-                });
-                ctx.strokeStyle = "white";
-                ctx.lineWidth = 4 / mZoomTransform.k;
-                ctx.stroke();
-                ctx.strokeStyle = "blue";
-                ctx.lineWidth = 2 / mZoomTransform.k;
-                ctx.stroke();
-            })
-            ctx.restore();
+                mDrawingUtil.drawSpine(element.spine)
+            });
         }
     }
 
@@ -372,7 +277,7 @@ function StrokeViewController() {
     function getCode(strokeId) {
         if (mReverseInteractionLookup[strokeId]) return mReverseInteractionLookup[strokeId];
         else {
-            let code = DataUtil.numToColor(mColorIndex++);
+            let code = DataUtil.numToColor(mColorIndex += 100);
             mInteractionLookup[code] = strokeId;
             mReverseInteractionLookup[strokeId] = code;
             return code;
