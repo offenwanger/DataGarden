@@ -147,8 +147,8 @@ function clickMenuButton(integrationEnv, id) {
     integrationEnv.d3.select('#interface-container').select('#interface-svg').select(id).select('.button-overlay').getCallbacks()['pointerup']()
 }
 
-function clickContextMenuButton(integrationEnv, menuId, buttonId) {
-    let button = integrationEnv.d3.select('#interface-container').select('#interface-svg').select(menuId).select(buttonId);
+function clickContextMenuButton(integrationEnv, buttonId) {
+    let button = integrationEnv.d3.select('#interface-container').select('#interface-svg').select("#context-menu").select(buttonId);
     let pointerdown = button.getCallbacks()['pointerdown'];
     let pointerup = button.getCallbacks()['pointerup'];
     pointerdown.call(button, { stopPropagation: () => { } });

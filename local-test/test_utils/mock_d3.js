@@ -25,7 +25,13 @@ function MockElement(type) {
     }
     this.select = function (selector) {
         if (selector instanceof MockElement) return selector;
-        return mChildren.find(child => child.matches(selector)) || { node: () => null }
+        let stack = [...mChildren]
+        while (stack.length > 0) {
+            let found = stack.find(child => child.matches(selector));
+            if (found) return found;
+            stack = (stack.map(item => item.getChildren())).flat();
+        }
+        return { node: () => null, remove: () => null };
     }
     // this is only ever used to remove the tables
     this.selectAll = function (selector) {
@@ -123,6 +129,10 @@ function MockElement(type) {
             out.on('finish', () => { /** keeping this in case need it for debugging */ })
         }
     }
+    this.remove = function () {
+        delete this;
+    }
+    this.getChildren = () => mChildren;
 }
 
 function polygonHull(points) {

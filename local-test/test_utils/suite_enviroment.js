@@ -88,6 +88,7 @@ function getIntegrationEnviroment() {
         Picker: mockPicker,
         EventManager: rewireJs('event_manager.js').__get__("EventManager"),
         MenuController: rewireJs('menu/menu_controller.js').__get__("MenuController"),
+        ContextMenuController: rewireJs('menu/context_menu_controller.js').__get__("ContextMenuController"),
         RadialContextMenu: rewireJs('menu/radial_context_menu.js').__get__("RadialContextMenu"),
         MenuButton: rewireJs('menu/menu_button.js').__get__("MenuButton"),
         ToolTip: rewireJs('menu/tooltip.js').__get__("ToolTip"),

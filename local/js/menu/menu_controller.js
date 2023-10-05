@@ -14,8 +14,6 @@ function MenuController(svg) {
     let mPlayButton;
     let mPauseButton;
 
-    let mGroupContextMenu;
-
     let mColorChangeCallback = () => { };
     let mPauseCallback = () => { };
 
@@ -58,18 +56,6 @@ function MenuController(svg) {
             mColorChangeCallback(color.hex);
             d3.select("#color-selector-color").style("fill", color.hex)
         };
-
-        mGroupContextMenu = new RadialContextMenu(svg, "group-context-menu", [{
-            id: ContextButtons.ADD_DIMENTION,
-            img: "img/add_dimention.svg",
-            tooltip: "Add a new dimention"
-        }], 40);
-        mGroupContextMenu.onClick((id) => {
-            if (id == ContextButtons.ADD_DIMENTION) {
-                mNewDimentionCallback();
-            }
-        })
-        mGroupContextMenu.hide();
 
         layout(svg.attr('width'), svg.attr('height'));
     }
@@ -170,24 +156,12 @@ function MenuController(svg) {
         mPauseButton.setPosition(buttonSpacing * 0.5 + width / 2, buttonSpacing * 0.5);
     }
 
-    function showGroupContextMenu(pos) {
-        mGroupContextMenu.setPosition(pos.x, pos.y);
-        mGroupContextMenu.show();
-    }
-
-    function hideContextMenus() {
-        mGroupContextMenu.hide();
-    }
-
     createInterface(svg);
 
     return {
         onResize: layout,
         stateTransition,
-        showGroupContextMenu,
-        hideContextMenus,
         setColorChangeCallback: (func) => mColorChangeCallback = func,
         setPauseCallback: (func) => mPauseCallback = func,
-        setNewDimentionCallback: (func) => mNewDimentionCallback = func,
     }
 }

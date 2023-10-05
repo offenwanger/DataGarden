@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         // Delete everything in the selection
     })
 
-    mEventManager.setNewDimentionCallback((groupId) => {
+    mEventManager.setNewDimentionCallback((groupId, channelType) => {
         if (!IdUtil.isType(groupId, Data.Group)) { console.error("Bad state, not a group", groupId); return; }
         let group = mModelController.getModel().getGroup(groupId);
         if (!group) { console.error("Bad state, group not found", groupId); return; }
@@ -208,23 +208,23 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let newMapping = new Data.Mapping();
         newMapping.dimention = newDimention.id;
         newMapping.levels.push(newDimention.levels[0].id);
-        if (!group.formMapping) {
+        if (channelType == ChannelType.FORM) {
             newMapping.type = MappingTypes.DISC_DISC;
             newMapping.groups.push(group.elements.map(e => e.id));
             group.formMapping = newMapping;
-        } else if (!group.colorMapping) {
+        } else if (channelType == ChannelType.COLOR) {
             newMapping.type = MappingTypes.DISC_DISC;
             newMapping.groups.push(group.elements.map(e => e.id));
             group.colorMapping = newMapping;
-        } else if (!group.positionMapping) {
+        } else if (channelType == ChannelType.POSITION) {
             newMapping.type = MappingTypes.DISC_CONT;
             newMapping.ranges.push([0, 1]);
             group.positionMapping = newMapping;
-        } else if (!group.oritentationMapping) {
+        } else if (channelType == ChannelType.ORIENTATION) {
             newMapping.type = MappingTypes.DISC_CONT;
             newMapping.ranges.push([-Math.PI, Math.PI]);
-            group.oritentationMapping = newMapping;
-        } else if (!group.sizeMapping) {
+            group.orientationMapping = newMapping;
+        } else if (channelType == ChannelType.SIZE) {
             newMapping.type = MappingTypes.DISC_CONT;
             let sizes = group.elements.map(e => DataUtil.getElementSize(e));
             newMapping.ranges.push([Math.min(...sizes), Math.max(...sizes)]);
@@ -232,10 +232,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 newMapping.ranges[0][1]++;
             }
             group.sizeMapping = newMapping;
-        } else {
-            // no free dimentions
-            return;
-        }
+        } else { console.error("Invalid channel type", channelType); return; }
 
         mModelController.addDimention(newDimention);
         mModelController.updateGroup(group);

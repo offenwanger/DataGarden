@@ -75,7 +75,7 @@ let DataUtil = function () {
             group.formMapping,
             group.sizeMapping,
             group.positionMapping,
-            group.oritentationMapping
+            group.orientationMapping
         ].filter(m => m);
     }
 

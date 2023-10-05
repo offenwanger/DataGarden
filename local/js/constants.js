@@ -21,8 +21,27 @@ const MappingTypes = {
 
 const ContextButtons = {
     CENTER: 'center',
-    ADD_DIMENTION: 'add-dimention',
+    ADD_DIMENTION_FOR_FORM: 'add-dimention-for-form',
+    ADD_DIMENTION_FOR_COLOR: 'add-dimention-for-color',
+    ADD_DIMENTION_FOR_SIZE: 'add-dimention-for-size',
+    ADD_DIMENTION_FOR_ORIENTATION: 'add-dimention-for-orientation',
+    ADD_DIMENTION_FOR_POSITION: 'add-dimention-for-position',
 }
+
+const ChannelType = {
+    FORM: "form",
+    COLOR: "color",
+    SIZE: "size",
+    ORIENTATION: "orientation",
+    POSITION: "position",
+}
+
+const ContextButtonToChannelType = {};
+ContextButtonToChannelType[ContextButtons.ADD_DIMENTION_FOR_FORM] = ChannelType.FORM;
+ContextButtonToChannelType[ContextButtons.ADD_DIMENTION_FOR_COLOR] = ChannelType.COLOR;
+ContextButtonToChannelType[ContextButtons.ADD_DIMENTION_FOR_SIZE] = ChannelType.SIZE;
+ContextButtonToChannelType[ContextButtons.ADD_DIMENTION_FOR_ORIENTATION] = ChannelType.ORIENTATION;
+ContextButtonToChannelType[ContextButtons.ADD_DIMENTION_FOR_POSITION] = ChannelType.POSITION;
 
 const EventResponse = {
     HOLD: 'hold',

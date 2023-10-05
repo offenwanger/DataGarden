@@ -12,8 +12,6 @@ function EventManager(strokeController, fdlController) {
     let mHorizontalBarPercent = 0.5;
     let mVerticalBarPercent = 0.5;
 
-    let mContextItem;
-
     // these functions are asyncronous because they have to call file access. 
     let mUndoCallback = async () => { };
     let mRedoCallback = async () => { };
@@ -30,6 +28,7 @@ function EventManager(strokeController, fdlController) {
         .attr('height', window.innerHeight)
 
     let mMenuController = new MenuController(mInterface);
+    let mContextMenuController = new ContextMenuController(mInterface);
     let mCurrentToolState = Buttons.SELECTION_BUTTON;
 
     let mCurrentMousePosistion;
@@ -49,6 +48,7 @@ function EventManager(strokeController, fdlController) {
         mFdlViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight);
         mInterface.attr('width', window.innerWidth).attr('height', window.innerHeight);
         mMenuController.onResize(window.innerWidth, window.innerHeight);
+        mContextMenuController.hideContextMenu();
     });
 
     d3.select(document).on('keydown', function (e) {
@@ -77,7 +77,7 @@ function EventManager(strokeController, fdlController) {
 
     mInterface.on("pointerdown", (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY, };
-        mMenuController.hideContextMenus();
+        mContextMenuController.hideContextMenu();
 
         mStartPos = screenCoords;
         mCurrentMousePosistion = mStartPos;
@@ -115,8 +115,19 @@ function EventManager(strokeController, fdlController) {
         responses.push(mFdlViewController.onPointerUp(screenCoords, mCurrentToolState));
         responses.filter(r => r).forEach(response => {
             if (response.type == EventResponse.CONTEXT_MENU_GROUP) {
-                mMenuController.showGroupContextMenu(screenCoords);
-                mContextItem = response.id;
+                let buttons = [
+                    response.group.colorMapping ? null : ContextButtons.ADD_DIMENTION_FOR_COLOR,
+                    response.group.formMapping ? null : ContextButtons.ADD_DIMENTION_FOR_FORM,
+                    response.group.sizeMapping ? null : ContextButtons.ADD_DIMENTION_FOR_SIZE,
+                    response.group.positionMapping ? null : ContextButtons.ADD_DIMENTION_FOR_POSITION,
+                    response.group.orientationMapping ? null : ContextButtons.ADD_DIMENTION_FOR_ORIENTATION,
+                ].filter(b => b);
+                if (buttons.length > 0) {
+                    mContextMenuController.showContextMenu(screenCoords, buttons, (buttonId) => {
+                        mNewDimentionCallback(response.group.id, ContextButtonToChannelType[buttonId]);
+                        mContextMenuController.hideContextMenu();
+                    });
+                }
             }
         })
         releaseState();
@@ -130,10 +141,6 @@ function EventManager(strokeController, fdlController) {
     mMenuController.setPauseCallback((pause) => {
         pause ? mFdlViewController.pauseSimulation() : mFdlViewController.runSimulation();
     })
-    mMenuController.setNewDimentionCallback(() => {
-        mNewDimentionCallback(mContextItem);
-        mMenuController.hideContextMenus();
-    });
 
     let mLockedState = false;
     function holdState() { mLockedState = true; }

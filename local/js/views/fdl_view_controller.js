@@ -410,7 +410,9 @@ function FdlViewController() {
             let motion = MathUtil.length(MathUtil.subtract(interaction.start, screenCoords))
             if (motion < 5 && IdUtil.isType(interaction.id, Data.Group)) {
                 mContextItem = interaction.id;
-                return { type: EventResponse.CONTEXT_MENU_GROUP, id: interaction.id }
+                let group = mModel.getGroup(interaction.id);
+                if (!group) { console.error("Invalid group id!", interaction.id); return; };
+                return { type: EventResponse.CONTEXT_MENU_GROUP, group }
             }
         }
 

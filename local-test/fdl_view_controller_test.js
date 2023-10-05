@@ -215,18 +215,21 @@ describe('FDL View Controller Test', function () {
             ])
             utility.click(integrationEnv, "#fdl-view", inBetweenNodes);
 
-            utility.clickContextMenuButton(integrationEnv, "#group-context-menu", "#" + ContextButtons.ADD_DIMENTION);
+            utility.clickContextMenuButton(integrationEnv, "#" + ContextButtons.ADD_DIMENTION_FOR_COLOR);
 
             d3.tick();
 
             assert.equal(model().getDimentions().length, 1)
-
 
             let dimention = model().getDimentions()[0];
             utility.click(integrationEnv, "#fdl-view", d3.getPosition(dimention.id));
             d3.tick(); // needed so that the interaction targets redraw
             utility.click(integrationEnv, "#fdl-view", d3.getPosition(dimention.id));
             d3.tick();
+
+            assert.equal(model().getGroups().length, 1)
+            assert.notEqual(model().getGroups()[0].colorMapping, null)
+            assert.isTrue(IdUtil.isType(model().getGroups()[0].colorMapping.id, Data.Mapping))
         })
     })
 });

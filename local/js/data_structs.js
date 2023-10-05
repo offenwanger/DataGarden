@@ -66,7 +66,7 @@ let Data = function () {
         // continuous channels
         this.sizeMapping = null;
         this.positionMapping = null;
-        this.oritentationMapping = null;
+        this.orientationMapping = null;
 
         this.clone = function () {
             let clone = new Group();
@@ -77,7 +77,7 @@ let Data = function () {
             clone.formMapping = this.formMapping ? this.formMapping.clone() : null;
             clone.colorMapping = this.colorMapping ? this.colorMapping.clone() : null;
             clone.positionMapping = this.positionMapping ? this.positionMapping.clone() : null;
-            clone.oritentationMapping = this.oritentationMapping ? this.oritentationMapping.clone() : null;
+            clone.orientationMapping = this.orientationMapping ? this.orientationMapping.clone() : null;
             clone.sizeMapping = this.sizeMapping ? this.sizeMapping.clone() : null;
             return clone;
         };
@@ -89,7 +89,7 @@ let Data = function () {
             this.formMapping = dimention.formMapping ? dimention.formMapping.clone() : null;
             this.colorMapping = dimention.colorMapping ? dimention.colorMapping.clone() : null;
             this.positionMapping = dimention.positionMapping ? dimention.positionMapping.clone() : null;
-            this.oritentationMapping = dimention.oritentationMapping ? dimention.oritentationMapping.clone() : null;
+            this.orientationMapping = dimention.orientationMapping ? dimention.orientationMapping.clone() : null;
             this.sizeMapping = dimention.sizeMapping ? dimention.sizeMapping.clone() : null;
         };
     }
@@ -101,7 +101,7 @@ let Data = function () {
         group.formMapping = obj.formMapping ? Mapping.fromObject(obj.formMapping) : null;
         group.colorMapping = obj.colorMapping ? Mapping.fromObject(obj.colorMapping) : null;
         group.positionMapping = obj.positionMapping ? Mapping.fromObject(obj.positionMapping) : null;
-        group.oritentationMapping = obj.oritentationMapping ? Mapping.fromObject(obj.oritentationMapping) : null;
+        group.orientationMapping = obj.orientationMapping ? Mapping.fromObject(obj.orientationMapping) : null;
         group.sizeMapping = obj.sizeMapping ? Mapping.fromObject(obj.sizeMapping) : null;
         return group;
     }
