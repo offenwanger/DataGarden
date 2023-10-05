@@ -114,14 +114,15 @@ function EventManager(strokeController, fdlController) {
         responses.push(mStrokeViewController.onPointerUp(screenCoords, mCurrentToolState));
         responses.push(mFdlViewController.onPointerUp(screenCoords, mCurrentToolState));
         responses.filter(r => r).forEach(response => {
+
+            let buttons = []
             if (response.type == EventResponse.CONTEXT_MENU_GROUP) {
-                let buttons = [
-                    response.group.colorMapping ? null : ContextButtons.ADD_DIMENTION_FOR_COLOR,
-                    response.group.formMapping ? null : ContextButtons.ADD_DIMENTION_FOR_FORM,
-                    response.group.sizeMapping ? null : ContextButtons.ADD_DIMENTION_FOR_SIZE,
-                    response.group.positionMapping ? null : ContextButtons.ADD_DIMENTION_FOR_POSITION,
-                    response.group.orientationMapping ? null : ContextButtons.ADD_DIMENTION_FOR_ORIENTATION,
-                ].filter(b => b);
+                Object.values(ChannelType).forEach(channelType => {
+                    if (!response.group.mappings.find(m => m.channelType == channelType)) {
+                        let button = Object.entries(ContextButtonToChannelType).find(e => e[1] == channelType)[0];
+                        buttons.push(button);
+                    }
+                });
                 if (buttons.length > 0) {
                     mContextMenuController.showContextMenu(screenCoords, buttons, (buttonId) => {
                         mNewDimentionCallback(response.group.id, ContextButtonToChannelType[buttonId]);

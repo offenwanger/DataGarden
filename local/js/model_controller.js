@@ -36,23 +36,6 @@ function ModelController() {
         currDimention.update(dimention);
     }
 
-    function addMapping(mapping) {
-        if (!ValUtil.isType(mapping, Data.Mapping)) { console.error("Invalid mapping", mapping); return; }
-        mDataModel.getMappings().push(mapping);
-    }
-
-    function removeMapping(mappingId) {
-        if (!IdUtil.isType(mappingId, Data.Mapping)) { console.error("Invalid mapping id", mappingId); return; }
-        mDataModel.setMappings(mDataModel.getMappings().filter(d => d.id != mappingId));
-    }
-
-    function updateMapping(mapping) {
-        if (!ValUtil.isType(mapping, Data.Mapping)) { console.error("Invalid mapping", mapping); return; }
-        let currMapping = mDataModel.getMapping(mapping.id);
-        if (!currMapping) { console.error("Mapping not found for id", mapping.id); return; }
-        currMapping.update(mapping);
-    }
-
     function addElement(groupId, elem) {
         if (!ValUtil.isType(elem, Data.Element)) { console.error("Invalid element", element); return; }
         if (!IdUtil.isType(groupId, Data.Group)) { console.error("Invalid group id", groupId); return; }
@@ -124,9 +107,6 @@ function ModelController() {
         addDimention,
         removeDimention,
         updateDimention,
-        addMapping,
-        removeMapping,
-        updateMapping,
         addElement,
         removeElement,
         updateElement,

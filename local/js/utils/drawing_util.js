@@ -1,3 +1,24 @@
+let ImageDrawingUtil = function () {
+    let formChannelImage = new Image();
+    formChannelImage.src = 'img/form_channel.svg'
+    let colorChannelImage = new Image();
+    colorChannelImage.src = 'img/color_channel.svg'
+    let sizeChannelImage = new Image();
+    sizeChannelImage.src = 'img/size_channel.svg'
+    let orientationChannelImage = new Image();
+    orientationChannelImage.src = 'img/orientation_channel.svg'
+    let positionChannelImage = new Image();
+    positionChannelImage.src = 'img/position_channel.svg'
+
+    return {
+        formChannelImage,
+        colorChannelImage,
+        sizeChannelImage,
+        orientationChannelImage,
+        positionChannelImage,
+    }
+}();
+
 function DrawingUtil(context, interactionContext, interfaceContext) {
     let ctx = context;
     let intCtx = interactionContext;
@@ -155,6 +176,59 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
             intCtx.restore();
         }
 
+        ctx.restore();
+    }
+
+    function drawChannelIconCircle(channelType, cx, cy, r, code = null) {
+        const PADDING_SCALE = 0.9;
+
+        ctx.save();
+        ctx.strokeStyle = 'black';
+        ctx.fillStyle = 'white';
+        ctx.lineWidth = 1;
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+
+        // Interaction //
+        if (code) {
+            intCtx.save();
+            intCtx.fillStyle = code;
+            intCtx.beginPath();
+            intCtx.arc(cx, cy, r, 0, 2 * Math.PI);
+            intCtx.fill();
+            intCtx.restore();
+        }
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.clip();
+
+        let img;
+        if (channelType == ChannelType.FORM) {
+            img = ImageDrawingUtil.formChannelImage;
+        } else if (channelType == ChannelType.COLOR) {
+            img = ImageDrawingUtil.colorChannelImage;
+        } else if (channelType == ChannelType.SIZE) {
+            img = ImageDrawingUtil.sizeChannelImage;
+        } else if (channelType == ChannelType.ORIENTATION) {
+            img = ImageDrawingUtil.orientationChannelImage;
+        } else if (channelType == ChannelType.POSITION) {
+            img = ImageDrawingUtil.positionChannelImage;
+        } else { console.error("Channel type not supported"); return; }
+
+
+        let width = img.width; // these images should be square
+        if (width == 0) {/* we haven't loaded yet, don't draw */ return; }
+        let scale = (2 * (r * PADDING_SCALE)) / width;
+        let offsetX = cx - r * PADDING_SCALE + (2 * (r * PADDING_SCALE) - scale * width) / 2;
+        let offsetY = cy - r * PADDING_SCALE + (2 * (r * PADDING_SCALE) - scale * width) / 2;
+        ctx.translate(offsetX, offsetY);
+        ctx.scale(scale, scale);
+
+        ctx.drawImage(img, 0, 0);
         ctx.restore();
     }
 
@@ -462,6 +536,7 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         drawContainerRectSplitInteraction,
         drawLetterCircle,
         drawColorCircle,
+        drawChannelIconCircle,
         drawThumbnailCircle,
         drawLines,
         drawStroke,

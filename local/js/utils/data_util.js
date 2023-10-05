@@ -69,16 +69,6 @@ let DataUtil = function () {
         return 1;
     }
 
-    function getMappings(group) {
-        return [
-            group.colorMapping,
-            group.formMapping,
-            group.sizeMapping,
-            group.positionMapping,
-            group.orientationMapping
-        ].filter(m => m);
-    }
-
     function getElementLevel(element, model) {
         if (!ValUtil.isType(element, Data.Element)) { console.error("invalid element", element); return -1; }
 
@@ -197,6 +187,10 @@ let DataUtil = function () {
         return returnable;
     }
 
+    function channelIsDiscrete(channelType) {
+        return channelType == ChannelType.FORM || channelType == ChannelType.COLOR;
+    }
+
 
     return {
         numToColor,
@@ -205,7 +199,6 @@ let DataUtil = function () {
         getBoundingBox,
         overlap,
         getElementSize,
-        getMappings,
         getElementLevel,
         getGroupLevel,
         isDecendant,
@@ -213,5 +206,6 @@ let DataUtil = function () {
         findEmptyPlace,
         getValue,
         getStrokesInLocalCoords,
+        channelIsDiscrete,
     }
 }();

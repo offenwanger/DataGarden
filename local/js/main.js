@@ -207,32 +207,22 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         let newMapping = new Data.Mapping();
         newMapping.dimention = newDimention.id;
+        newMapping.channelType = channelType;
         newMapping.levels.push(newDimention.levels[0].id);
-        if (channelType == ChannelType.FORM) {
-            newMapping.type = MappingTypes.DISC_DISC;
+        if (channelType == ChannelType.FORM || channelType == ChannelType.COLOR) {
             newMapping.groups.push(group.elements.map(e => e.id));
-            group.formMapping = newMapping;
-        } else if (channelType == ChannelType.COLOR) {
-            newMapping.type = MappingTypes.DISC_DISC;
-            newMapping.groups.push(group.elements.map(e => e.id));
-            group.colorMapping = newMapping;
         } else if (channelType == ChannelType.POSITION) {
-            newMapping.type = MappingTypes.DISC_CONT;
             newMapping.ranges.push([0, 1]);
-            group.positionMapping = newMapping;
         } else if (channelType == ChannelType.ORIENTATION) {
-            newMapping.type = MappingTypes.DISC_CONT;
             newMapping.ranges.push([-Math.PI, Math.PI]);
-            group.orientationMapping = newMapping;
         } else if (channelType == ChannelType.SIZE) {
-            newMapping.type = MappingTypes.DISC_CONT;
             let sizes = group.elements.map(e => DataUtil.getElementSize(e));
             newMapping.ranges.push([Math.min(...sizes), Math.max(...sizes)]);
             if (newMapping.ranges[0][0] == newMapping.ranges[0][1]) {
                 newMapping.ranges[0][1]++;
             }
-            group.sizeMapping = newMapping;
         } else { console.error("Invalid channel type", channelType); return; }
+        group.mappings.push(newMapping);
 
         mModelController.addDimention(newDimention);
         mModelController.updateGroup(group);

@@ -59,38 +59,22 @@ let Data = function () {
         this.id = IdUtil.getUniqueId(Group);
         this.creationTime = Date.now();
         this.elements = []
-        this.forms = [];
-        // discrete channels
-        this.colorMapping = null;
-        this.formMapping = null;
-        // continuous channels
-        this.sizeMapping = null;
-        this.positionMapping = null;
-        this.orientationMapping = null;
+        this.mappings = [];
 
         this.clone = function () {
             let clone = new Group();
             clone.id = this.id;
             clone.creationTime = this.creationTime;
             clone.elements = this.elements.map(s => s.clone());
-
-            clone.formMapping = this.formMapping ? this.formMapping.clone() : null;
-            clone.colorMapping = this.colorMapping ? this.colorMapping.clone() : null;
-            clone.positionMapping = this.positionMapping ? this.positionMapping.clone() : null;
-            clone.orientationMapping = this.orientationMapping ? this.orientationMapping.clone() : null;
-            clone.sizeMapping = this.sizeMapping ? this.sizeMapping.clone() : null;
+            clone.mappings = this.mappings.map(c => c.clone());
             return clone;
         };
 
-        this.update = function (dimention) {
-            this.id = dimention.id;
-            this.creationTime = dimention.creationTime;
-            this.elements = dimention.elements.map(s => s.clone());
-            this.formMapping = dimention.formMapping ? dimention.formMapping.clone() : null;
-            this.colorMapping = dimention.colorMapping ? dimention.colorMapping.clone() : null;
-            this.positionMapping = dimention.positionMapping ? dimention.positionMapping.clone() : null;
-            this.orientationMapping = dimention.orientationMapping ? dimention.orientationMapping.clone() : null;
-            this.sizeMapping = dimention.sizeMapping ? dimention.sizeMapping.clone() : null;
+        this.update = function (group) {
+            this.id = group.id;
+            this.creationTime = group.creationTime;
+            this.elements = group.elements.map(s => s.clone());
+            this.mappings = group.mappings ? group.mappings.map(c => c.clone()) : [];
         };
     }
     Group.fromObject = function (obj) {
@@ -98,18 +82,14 @@ let Data = function () {
         group.id = obj.id;
         group.creationTime = obj.creationTime;
         group.elements = obj.elements.map(e => Element.fromObject(e));
-        group.formMapping = obj.formMapping ? Mapping.fromObject(obj.formMapping) : null;
-        group.colorMapping = obj.colorMapping ? Mapping.fromObject(obj.colorMapping) : null;
-        group.positionMapping = obj.positionMapping ? Mapping.fromObject(obj.positionMapping) : null;
-        group.orientationMapping = obj.orientationMapping ? Mapping.fromObject(obj.orientationMapping) : null;
-        group.sizeMapping = obj.sizeMapping ? Mapping.fromObject(obj.sizeMapping) : null;
+        group.mappings = obj.mappings ? obj.mappings.map(c => Mapping.fromObject(c)) : [];
         return group;
     }
 
     function Mapping() {
         this.id = IdUtil.getUniqueId(Mapping);
         this.creationTime = Date.now();
-        this.type = null;
+        this.channelType = null;
         this.dimention = null;
 
         // The following ordered lists must align between channel and dimetion. 
@@ -127,7 +107,7 @@ let Data = function () {
             let clone = new Mapping();
             clone.id = this.id;
             clone.creationTime = this.creationTime;
-            clone.type = this.type;
+            clone.channelType = this.channelType;
             clone.dimention = this.dimention;
             clone.ranges = this.ranges.map(r => [...r]);
             clone.groups = this.groups.map(g => [...g]);
@@ -139,7 +119,7 @@ let Data = function () {
         this.update = function (mapping) {
             this.id = mapping.id;
             this.creationTime = mapping.creationTime;
-            this.type = mapping.type;
+            this.channelType = mapping.channelType;
             this.dimention = mapping.dimention;
             this.ranges = mapping.ranges.map(r => [...r]);
             this.groups = mapping.groups.map(g => [...g]);
@@ -151,7 +131,7 @@ let Data = function () {
         let mapping = new Mapping();
         mapping.id = obj.id;
         mapping.creationTime = obj.creationTime;
-        mapping.type = obj.type;
+        mapping.channelType = obj.channelType;
         mapping.dimention = obj.dimention;
         mapping.ranges = obj.ranges ? obj.ranges.map(r => [...r]) : [];
         mapping.groups = obj.groups ? obj.groups.map(g => [...g]) : [];

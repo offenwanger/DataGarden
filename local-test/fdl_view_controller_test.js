@@ -79,8 +79,6 @@ describe('FDL View Controller Test', function () {
             let elements = integrationEnv.instances.ModelController.getModel().getElements();
             utility.drag(integrationEnv, "#fdl-view", [d3.getLinkPosition(elements[0].id), d3.getPosition(elements[1].id)])
 
-            utility.getCanvas('fdl', 'view').console.log();
-
             assert.equal(model().getElements().length, 2);
             expect(model().getElements().map(e => e.parentId ? true : false)).to.eql([false, true]);
         });
@@ -230,8 +228,8 @@ describe('FDL View Controller Test', function () {
             d3.tick();
 
             assert.equal(model().getGroups().length, 1)
-            assert.notEqual(model().getGroups()[0].colorMapping, null)
-            assert.isTrue(IdUtil.isType(model().getGroups()[0].colorMapping.id, Data.Mapping))
+            assert.equal(model().getGroups()[0].mappings.length, 1)
+            assert.equal(model().getGroups()[0].mappings[0].channelType, ChannelType.COLOR)
         })
     })
 });

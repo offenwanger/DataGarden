@@ -5,27 +5,27 @@ function ContextMenuController(svg) {
 
     mButtonData[ContextButtons.ADD_DIMENTION_FOR_FORM] = {
         id: ContextButtons.ADD_DIMENTION_FOR_FORM,
-        img: "img/add_dimention.svg",
+        img: "img/bind_form_button.svg",
         tooltip: "Bind a new dimention to the form channel",
     }
     mButtonData[ContextButtons.ADD_DIMENTION_FOR_COLOR] = {
         id: ContextButtons.ADD_DIMENTION_FOR_COLOR,
-        img: "img/add_dimention.svg",
+        img: "img/bind_color_button.svg",
         tooltip: "Bind a new dimention to the color channel",
     }
     mButtonData[ContextButtons.ADD_DIMENTION_FOR_SIZE] = {
         id: ContextButtons.ADD_DIMENTION_FOR_SIZE,
-        img: "img/add_dimention.svg",
+        img: "img/bind_size_button.svg",
         tooltip: "Bind a new dimention to the size channel",
     }
     mButtonData[ContextButtons.ADD_DIMENTION_FOR_ORIENTATION] = {
         id: ContextButtons.ADD_DIMENTION_FOR_ORIENTATION,
-        img: "img/add_dimention.svg",
+        img: "img/bind_orientation_button.svg",
         tooltip: "Bind a new dimention to the orientation channel",
     }
     mButtonData[ContextButtons.ADD_DIMENTION_FOR_POSITION] = {
         id: ContextButtons.ADD_DIMENTION_FOR_POSITION,
-        img: "img/add_dimention.svg",
+        img: "img/bind_position_button.svg",
         tooltip: "Bind a new dimention to the position channel",
     }
 

@@ -7,6 +7,7 @@ let vm = require('vm');
 let rewire = require('rewire');
 let rewireJs = function (name) { return rewire("../../local/js/" + name) }
 let chai = require('chai')
+const { createCanvas } = require('canvas');
 
 let assert = chai.assert;
 
@@ -56,6 +57,8 @@ function init() {
     global.clearTimeout = function (index = null) {
         if (index || index == 0) global.timeouts[index] = null;
     }
+
+    global.Image = function () { return createCanvas(10, 10) };
 }
 
 

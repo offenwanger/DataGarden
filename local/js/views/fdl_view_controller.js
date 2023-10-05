@@ -135,12 +135,13 @@ function FdlViewController() {
                     radius: Size.DIMENTION_NODE_SIZE,
                     clusters: [],
                     x, y,
+                    channelType: mModel.getMappingsForDimention(dimention.id)[0].channelType,
                 }
                 mData.nodes.push(node);
             });
 
             mModel.getGroups().forEach(group => {
-                DataUtil.getMappings(group).forEach(mapping => {
+                group.mappings.forEach(mapping => {
                     if (mData.clusters[group.id]) {
                         mData.links.push({
                             source: mapping.dimention,
@@ -154,22 +155,11 @@ function FdlViewController() {
             let dimention = mModel.getDimention(mEditingDimetion);
             if (dimention.continuous) {
                 console.error("impliment me!")
-            } else {
-                dimention.levels.forEach(level => {
-                    let { x, y } = getNodePosition(level.id, oldData.nodes);
-                    let node = {
-                        id: level.id,
-                        clusters: [],
-                        radius: Size.DIMENTION_NODE_SIZE,
-                        x, y,
-                    }
-                    mData.nodes.push(node);
-                })
             }
 
             mModel.getGroups().forEach(group => {
-                DataUtil.getMappings(group).filter(mapping => mapping.dimention == mEditingDimetion).forEach(mapping => {
-                    if (mapping.type == MappingTypes.CONT_DISC || mapping.type == MappingTypes.DISC_DISC) {
+                group.mappings.filter(mapping => mapping.dimention == mEditingDimetion).forEach(mapping => {
+                    if (DataUtil.channelIsDiscrete(mapping.channelType)) {
                         group.elements.forEach(element => {
                             let cluster = "group" + mapping.groups.findIndex(g => g.includes(element.id));
                             let { x, y } = getNodePosition(element.id, oldData.nodes);
@@ -183,16 +173,8 @@ function FdlViewController() {
 
                             if (!mData.clusters[cluster]) mData.clusters[cluster] = node;
                         });
-                    }
-
-                    if (mapping.type == MappingTypes.DISC_DISC) {
-                        mapping.groups.forEach((g, index) => {
-                            mData.links.push({
-                                source: g[0],
-                                target: mapping.levels[index],
-                                value: 1
-                            })
-                        })
+                    } else {
+                        console.error("impliment me!")
                     }
                 });
             })
@@ -523,6 +505,8 @@ function FdlViewController() {
             } else if (IdUtil.isType(node.id, Data.Stroke)) {
                 let stroke = mModel.getStroke(node.id);
                 mDrawingUtil.drawThumbnailCircle([stroke], x, y, node.radius, code);
+            } else if (IdUtil.isType(node.id, Data.Dimention)) {
+                mDrawingUtil.drawChannelIconCircle(node.channelType, x, y, node.radius, code);
             } else {
                 mDrawingUtil.drawColorCircle(x, y, node.radius, mColorMap(node.cluster), code);
             }
