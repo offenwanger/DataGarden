@@ -79,6 +79,8 @@ describe('FDL View Controller Test', function () {
             let elements = integrationEnv.instances.ModelController.getModel().getElements();
             utility.drag(integrationEnv, "#fdl-view", [d3.getLinkPosition(elements[0].id), d3.getPosition(elements[1].id)])
 
+            utility.getCanvas('fdl', 'view').console.log();
+
             assert.equal(model().getElements().length, 2);
             expect(model().getElements().map(e => e.parentId ? true : false)).to.eql([false, true]);
         });

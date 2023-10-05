@@ -12,10 +12,7 @@ function FdlViewController() {
     const TARGET_NODE = 'nodeTarget';
     const TARGET_BUBBLE = 'bubbleTarget';
 
-    const ELEMENT_NODE_SIZE = 8;
-    const STROKE_NODE_SIZE = 6;
-    const DIMENTION_NODE_SIZE = 15;
-    const MAX_RADIUS = DIMENTION_NODE_SIZE;
+    const MAX_RADIUS = Math.max(Size.ELEMENT_NODE_SIZE, Size.STROKE_NODE_SIZE, Size.DIMENTION_NODE_SIZE);
 
     const CLUSTER_PADDING = 20
     const NODE_PADDING = 5
@@ -102,7 +99,7 @@ function FdlViewController() {
                             id: stroke.id,
                             isStroke: true,
                             clusters: [group, element.id],
-                            radius: STROKE_NODE_SIZE,
+                            radius: Size.STROKE_NODE_SIZE,
                             x, y,
                         }
                         mData.nodes.push(node);
@@ -116,7 +113,7 @@ function FdlViewController() {
                         id: element.id,
                         hasParent: element.parentId ? true : false,
                         clusters: [mModel.getGroupForElement(element.id).id],
-                        radius: ELEMENT_NODE_SIZE,
+                        radius: Size.ELEMENT_NODE_SIZE,
                         x, y,
                     }
                     mData.nodes.push(node);
@@ -135,7 +132,7 @@ function FdlViewController() {
                 let { x, y } = getNodePosition(dimention.id, oldData.nodes);
                 let node = {
                     id: dimention.id,
-                    radius: DIMENTION_NODE_SIZE,
+                    radius: Size.DIMENTION_NODE_SIZE,
                     clusters: [],
                     x, y,
                 }
@@ -163,7 +160,7 @@ function FdlViewController() {
                     let node = {
                         id: level.id,
                         clusters: [],
-                        radius: DIMENTION_NODE_SIZE,
+                        radius: Size.DIMENTION_NODE_SIZE,
                         x, y,
                     }
                     mData.nodes.push(node);
@@ -179,7 +176,7 @@ function FdlViewController() {
                             let node = {
                                 id: element.id,
                                 clusters: [cluster],
-                                radius: ELEMENT_NODE_SIZE,
+                                radius: Size.ELEMENT_NODE_SIZE,
                                 x, y,
                             }
                             mData.nodes.push(node);
@@ -501,7 +498,7 @@ function FdlViewController() {
 
             mDrawingUtil.drawLines(links.map(link => [link.source, link.target]), "#999", 0.6);
             links.filter(l => IdUtil.isType(l.source.id, Data.Element)).forEach(link => {
-                mDrawingUtil.drawLink(link.source, link.target, 5, "#999", 0.6, getCode(link.target.id, TARGET_LINK));
+                mDrawingUtil.drawLink(link.source, link.target, link.target.radius, "#999", 0.6, getCode(link.target.id, TARGET_LINK));
             })
         }
 
@@ -510,7 +507,7 @@ function FdlViewController() {
             let linkIsDragged = mInteraction && mInteraction.type == DRAG_LINK && mInteraction.id == node.id;
             let nodeIsDragged = mInteraction && mInteraction.type == DRAG_NODE && mInteraction.id == node.id;
             if (IdUtil.isType(node.id, Data.Element) && !node.isStroke && !nodeIsDragged && !node.hasParent && mShowLinks && !linkIsDragged) {
-                mDrawingUtil.drawLink(null, node, 5, "#999", 0.6, getCode(node.id, TARGET_LINK));
+                mDrawingUtil.drawLink(null, node, node.radius, "#999", 0.6, getCode(node.id, TARGET_LINK));
             }
             // if we are dragging don't draw the interaction target
             let code = (mInteraction && mInteraction.type == DRAG_NODE && mInteraction.node.id == node.id) ? null : getCode(node.id, TARGET_NODE);
@@ -520,7 +517,15 @@ function FdlViewController() {
                 y = node.fy;
             }
 
-            mDrawingUtil.drawColorCircle(x, y, node.radius, mColorMap(node.cluster), code);
+            if (IdUtil.isType(node.id, Data.Element)) {
+                let element = mModel.getElement(node.id);
+                mDrawingUtil.drawThumbnailCircle(element.strokes, x, y, node.radius, code);
+            } else if (IdUtil.isType(node.id, Data.Stroke)) {
+                let stroke = mModel.getStroke(node.id);
+                mDrawingUtil.drawThumbnailCircle([stroke], x, y, node.radius, code);
+            } else {
+                mDrawingUtil.drawColorCircle(x, y, node.radius, mColorMap(node.cluster), code);
+            }
         });
 
         drawInterface();

@@ -7,9 +7,9 @@ const Buttons = {
 }
 
 const Size = {
-    ICON_LARGE: 128,
-    ICON_MEDIUM: 64,
-    NODE_TINY: 16,
+    ELEMENT_NODE_SIZE: 20,
+    STROKE_NODE_SIZE: 15,
+    DIMENTION_NODE_SIZE: 15,
 }
 
 const MappingTypes = {

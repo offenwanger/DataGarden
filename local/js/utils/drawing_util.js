@@ -158,6 +158,60 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         ctx.restore();
     }
 
+    function drawThumbnailCircle(strokes, cx, cy, r, code = null) {
+        const PADDING_SCALE = 0.7;
+        const MIN_PIXELS = 1;
+
+        ctx.save();
+        ctx.strokeStyle = 'black';
+        ctx.fillStyle = 'white';
+        ctx.lineWidth = 1;
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+
+        // Interaction //
+        if (code) {
+            intCtx.save();
+            intCtx.fillStyle = code;
+            intCtx.beginPath();
+            intCtx.arc(cx, cy, r, 0, 2 * Math.PI);
+            intCtx.fill();
+            intCtx.restore();
+        }
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.clip();
+
+        // now do the complicated shifting and scaling stuff
+        let bb = DataUtil.getBoundingBox(strokes);
+        let scale = (2 * (r * PADDING_SCALE)) / Math.max(bb.width, bb.height);
+        let minStroke = MIN_PIXELS / scale / mScale;
+        let offsetX = cx - r * PADDING_SCALE + (2 * (r * PADDING_SCALE) - scale * bb.width) / 2;
+        let offsetY = cy - r * PADDING_SCALE + (2 * (r * PADDING_SCALE) - scale * bb.height) / 2;
+
+        ctx.translate(offsetX, offsetY);
+        ctx.scale(scale, scale);
+
+        ctx.beginPath();
+        strokes.forEach(stroke => {
+            ctx.beginPath();
+            ctx.strokeStyle = stroke.color;
+            ctx.lineWidth = Math.max(stroke.size, minStroke);
+            ctx.beginPath();
+            ctx.moveTo(stroke.path[0].x - bb.x, stroke.path[0].y - bb.y);
+            stroke.path.forEach(p => {
+                ctx.lineTo(p.x - bb.x, p.y - bb.y);
+            });
+            ctx.stroke();
+        })
+
+        ctx.restore();
+    }
+
     function drawLines(lines, color, alpha) {
         ctx.save();
 
@@ -287,12 +341,6 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
     function drawStroke(path, color, strokeWidth, code = null) {
         ctx.save();
         ctx.beginPath();
-
-        // ctx.rect(clipBox.x, clipBox.y, clipBox.width, clipBox.height);
-        // ctx.clip();
-        // ctx.translate(x, y)
-        // ctx.scale(scale, scale);
-
         ctx.strokeStyle = color;
         ctx.lineWidth = strokeWidth;
         ctx.beginPath();
@@ -319,8 +367,6 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
 
     function drawInterfaceStroke(path, color, strokeWidth) {
         intfCtx.save();
-        intfCtx.beginPath();
-
         intfCtx.strokeStyle = color;
         intfCtx.lineWidth = strokeWidth;
         intfCtx.beginPath();
@@ -416,6 +462,7 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         drawContainerRectSplitInteraction,
         drawLetterCircle,
         drawColorCircle,
+        drawThumbnailCircle,
         drawLines,
         drawStroke,
         drawInterfaceStroke,

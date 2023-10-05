@@ -166,16 +166,16 @@ function mockForceSim() {
         nodes.forEach((node, index) => {
             let y = Math.round(index / 10);
             let x = index % 10;
-            node.x = x * 40 + 40;
-            node.y = y * 40 + 40;
+            node.x = x * Size.ELEMENT_NODE_SIZE * 4 + Size.ELEMENT_NODE_SIZE * 2;
+            node.y = y * Size.ELEMENT_NODE_SIZE * 4 + Size.ELEMENT_NODE_SIZE * 2;
         })
 
         links.forEach((link) => {
             if (typeof link.source == "string") {
-                link.source = { id: link.source };
+                link.source = nodes.find(node => node.id == link.source);
             }
             if (typeof link.target == "string") {
-                link.target = { id: link.target };
+                link.target = nodes.find(node => node.id == link.target);
             }
 
             link.source.x = nodes.find(n => n.id == link.source.id).x;
@@ -197,7 +197,7 @@ function mockForceSim() {
         let node = nodes.find(n => n.id == nodeId);
         let link = links.find(l => l.target.id == nodeId);
         let parent = link ? link.source : null;
-        return MathUtil.scale(new DrawingUtil().getTrianglePointer(parent, node, 5, 10)
+        return MathUtil.scale(new DrawingUtil().getTrianglePointer(parent, node, Size.ELEMENT_NODE_SIZE, 10)
             .reduce((prev, curr) => MathUtil.add(prev, curr)), 1 / 3);
     }
 
