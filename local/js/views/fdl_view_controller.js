@@ -61,14 +61,12 @@ function FdlViewController() {
         .force("center", d3.forceCenter().x(mWidth / 2).y(mHeight / 2))
         .force("collide", d3.forceCollide((d) => d.radius + NODE_PADDING))
         .force("link", d3.forceLink().id(d => d.id))
+        .force("cluster", () => { if (mShowGroups) mData.nodes.filter(n => n.clusters).forEach(d => cluster(d)); })
+        .force("drift", () => { if (mShowLinks) mData.nodes.filter(n => n.treeLevel || n.treeLevel == 0).forEach(d => drift(d)); })
+        .force("tree-collide", () => { mData.nodes.forEach(collide(mSimulation.alpha())); })
         .nodes(mData.nodes, (d) => d.id)
         .alpha(0.3)
-        .on("tick", () => {
-            if (mShowGroups) mData.nodes.filter(n => n.clusters).forEach(cluster(0.2));
-            if (mShowLinks) mData.nodes.filter(n => n.treeLevel || n.treeLevel == 0).forEach(drift(0.2));
-            mData.nodes.forEach(collide(0.2));
-            draw();
-        })
+        .on("tick", () => { draw(); })
         .restart();
 
     let mDrawingUtil = new DrawingUtil(
@@ -638,42 +636,38 @@ function FdlViewController() {
         }
     }
 
-    function drift(alpha) {
-        return function (d) {
-            let divisionSize = Size.ELEMENT_NODE_SIZE * 10;
-            let yTarget = (d.treeLevel + 0.5) * divisionSize;
+    function drift(d) {
+        let divisionSize = Size.ELEMENT_NODE_SIZE * 10;
+        let yTarget = (d.treeLevel + 0.5) * divisionSize;
 
-            let y = d.y - yTarget;
-            let l = y;
-            let r = d.radius + divisionSize / 3;
-            if (l != r) {
-                l = (l - r) / l * alpha;
-                d.y -= y *= l;
-            }
-        };
+        let y = d.y - yTarget;
+        let l = y;
+        let r = d.radius + divisionSize / 3;
+        if (l != r) {
+            l = (l - r) / l * mSimulation.alpha();
+            d.y -= y *= l;
+        }
     }
 
-    function cluster(alpha) {
+    function cluster(d) {
         // https://bl.ocks.org/mbostock/7881887
-        return function (d) {
-            d.clusters.forEach(c => {
-                const clusterHeart = mData.clusters[c];
-                if (clusterHeart === d || c == 0) return;
-                let x = d.x - clusterHeart.x;
-                let y = d.y - clusterHeart.y;
-                let l = Math.sqrt(x * x + y * y);
-                let r = d.radius + clusterHeart.radius + 3;
-                // if they aren't at min dist
-                if (l != r) {
-                    l = (l - r) / l * alpha;
-                    d.x -= x *= l;
-                    d.y -= y *= l;
-                    clusterHeart.x += x;
-                    clusterHeart.y += y;
-                }
+        d.clusters.forEach(c => {
+            const clusterHeart = mData.clusters[c];
+            if (clusterHeart === d || c == 0) return;
+            let x = d.x - clusterHeart.x;
+            let y = d.y - clusterHeart.y;
+            let l = Math.sqrt(x * x + y * y);
+            let r = d.radius + clusterHeart.radius + 3;
+            // if they aren't at min dist
+            if (l != r) {
+                l = (l - r) / l * mSimulation.alpha();
+                d.x -= x *= l;
+                d.y -= y *= l;
+                clusterHeart.x += x;
+                clusterHeart.y += y;
+            }
 
-            })
-        };
+        })
     }
 
     function collide(alpha) {
