@@ -65,6 +65,7 @@ function FdlViewController() {
         .alpha(0.3)
         .on("tick", () => {
             if (mShowGroups) mData.nodes.filter(n => n.clusters).forEach(cluster(0.2));
+            if (mShowLinks) mData.nodes.filter(n => n.treeLevel || n.treeLevel == 0).forEach(drift(0.2));
             mData.nodes.forEach(collide(0.2));
             draw();
         })
@@ -114,6 +115,7 @@ function FdlViewController() {
                         hasParent: element.parentId ? true : false,
                         clusters: [mModel.getGroupForElement(element.id).id],
                         radius: Size.ELEMENT_NODE_SIZE,
+                        treeLevel: DataUtil.getTreeLevel(mModel, element.id),
                         x, y,
                     }
                     mData.nodes.push(node);
@@ -634,6 +636,21 @@ function FdlViewController() {
             mReverseInteractionLookup[itemId + "_" + type] = code;
             return code;
         }
+    }
+
+    function drift(alpha) {
+        return function (d) {
+            let divisionSize = Size.ELEMENT_NODE_SIZE * 10;
+            let yTarget = (d.treeLevel + 0.5) * divisionSize;
+
+            let y = d.y - yTarget;
+            let l = y;
+            let r = d.radius + divisionSize / 3;
+            if (l != r) {
+                l = (l - r) / l * alpha;
+                d.y -= y *= l;
+            }
+        };
     }
 
     function cluster(alpha) {

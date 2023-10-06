@@ -191,6 +191,18 @@ let DataUtil = function () {
         return channelType == ChannelType.FORM || channelType == ChannelType.COLOR;
     }
 
+    function getTreeLevel(model, elementId) {
+        let level = -1;
+        if (!IdUtil.isType(elementId, Data.Element)) { console.error("Invalid element id", elementId); return 0; }
+        do {
+            level++;
+            let element = model.getElement(elementId);
+            if (!element) { console.error("Bad model state! Element id not found", elementId); return 0; }
+            elementId = element.parentId;
+        } while (elementId);
+        return level;
+    }
+
 
     return {
         numToColor,
@@ -207,5 +219,6 @@ let DataUtil = function () {
         getValue,
         getStrokesInLocalCoords,
         channelIsDiscrete,
+        getTreeLevel,
     }
 }();
