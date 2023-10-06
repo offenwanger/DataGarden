@@ -28,6 +28,11 @@ function ContextMenuController(svg) {
         img: "img/bind_position_button.svg",
         tooltip: "Bind a new dimention to the position channel",
     }
+    mButtonData[ContextButtons.MERGE_TO_ELEMENT] = {
+        id: ContextButtons.MERGE_TO_ELEMENT,
+        img: "img/merge_elements.svg",
+        tooltip: "Merge these strokes into a new element",
+    }
 
     function showContextMenu(pos, buttons, callback) {
         hideContextMenu();

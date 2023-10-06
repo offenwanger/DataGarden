@@ -10,6 +10,14 @@ let DataUtil = function () {
             b.toString(16).padStart(2, "0");
     }
 
+    function rgbaToHex(r, g, b, a) {
+        return "#" +
+            r.toString(16).padStart(2, "0") +
+            g.toString(16).padStart(2, "0") +
+            b.toString(16).padStart(2, "0") +
+            a.toString(16).padStart(2, "0");
+    }
+
     function imageDataToHex(imgData) {
         return "#" +
             imgData.data[0].toString(16).padStart(2, "0") +
@@ -207,6 +215,7 @@ let DataUtil = function () {
     return {
         numToColor,
         rgbToHex,
+        rgbaToHex,
         imageDataToHex,
         getBoundingBox,
         overlap,

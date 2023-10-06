@@ -6,6 +6,8 @@ function StrokeViewController() {
     const ZOOMING = 'zooming';
     const DRAGGING = 'dragging';
 
+    const SELECTION_BUBBLE_COLOR = "#55555555";
+
     let mCanvas = d3.select('#stroke-view').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
     let mInterfaceCanvas = d3.select("#stroke-view").select('.canvas-container').append('canvas')
@@ -35,8 +37,7 @@ function StrokeViewController() {
         currentStroke: [{ x: 0, y: 0 }]
     }
 
-    let mSelectionLine = [];
-    let mSelection = [];
+    let mSelectionIds = [];
 
     let mInteractionLookup = {};
     let mReverseInteractionLookup = {};
@@ -44,8 +45,7 @@ function StrokeViewController() {
     let mTargetIncrease = 5;
 
     let mModel = new DataModel();
-    let mInteracting = false;
-    let mStartPos;
+    let mInteraction = null;
 
     function onModelUpdate(model) {
         mModel = model;
@@ -58,38 +58,40 @@ function StrokeViewController() {
             return false;
 
         if (toolState == Buttons.PANNING_BUTTON) {
-            mStartPos = {
+            mInteraction = {
+                type: PANNING,
                 x: mZoomTransform.x,
                 y: mZoomTransform.y,
                 scale: mZoomTransform.k,
-                screenCoords,
-            }
-            mInteracting = PANNING;
+                start: screenCoords,
+            };
             return true;
         } else if (toolState == Buttons.ZOOM_BUTTON) {
-            let zoomCenter = screenToModelCoords(screenCoords)
-            mStartPos = {
+            let zoomCenter = screenToModelCoords(screenCoords);
+            mInteraction = {
+                type: ZOOMING,
                 pointerX: zoomCenter.x,
                 pointerY: zoomCenter.y,
                 transformX: mZoomTransform.x,
                 transformY: mZoomTransform.y,
                 scale: mZoomTransform.k,
-                screenCoords,
-            }
-            mInteracting = ZOOMING;
+                start: screenCoords,
+            };
             return true;
         } else if (toolState == Buttons.BRUSH_BUTTON) {
-            mInteracting = DRAWING;
+            mInteraction = { type: DRAWING };
             mBrushOptions.currentStroke = [screenToModelCoords(screenCoords)];
             return true;
         } else if (toolState == Buttons.SELECTION_BUTTON) {
             let target = getInteractionTarget(screenCoords);
-            if (mSelection.includes(target)) {
-                mInteracting = DRAGGING;
-                console.error("impliment me!")
+            if (mSelectionIds.includes(target)) {
+                mInteraction = {
+                    type: DRAGGING,
+                    start: screenCoords
+                };
             } else {
-                mInteracting = SELECTING;
-                mSelection = [];
+                mSelectionIds = [];
+                mInteraction = { type: SELECTING, line: [screenToModelCoords(screenCoords)] };
             }
             return true;
         } else if (toolState == Buttons.SHIFT_SELECTION_BUTTON) {
@@ -98,31 +100,31 @@ function StrokeViewController() {
     }
 
     function onPointerMove(screenCoords, toolState) {
-        if (mInteracting == PANNING) {
-            let mouseDist = MathUtil.subtract(screenCoords, mStartPos.screenCoords);
-            let translate = MathUtil.add(mStartPos, mouseDist);
-            mZoomTransform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mStartPos.scale);
+        if (mInteraction && mInteraction.type == PANNING) {
+            let mouseDist = MathUtil.subtract(screenCoords, mInteraction.start);
+            let translate = MathUtil.add(mInteraction, mouseDist);
+            mZoomTransform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mInteraction.scale);
             draw();
             drawInterface();
-        } else if (mInteracting == ZOOMING) {
-            let mouseDist = screenCoords.y - mStartPos.screenCoords.y;
-            let scale = mStartPos.scale * (1 + (mouseDist / mInterfaceCanvas.attr('height')));
-            let zoomChange = scale - mStartPos.scale;
-            let transformX = -(mStartPos.pointerX * zoomChange) + mStartPos.transformX;
-            let transformY = -(mStartPos.pointerY * zoomChange) + mStartPos.transformY;
+        } else if (mInteraction && mInteraction.type == ZOOMING) {
+            let mouseDist = screenCoords.y - mInteraction.start.y;
+            let scale = mInteraction.scale * (1 + (mouseDist / mInterfaceCanvas.attr('height')));
+            let zoomChange = scale - mInteraction.scale;
+            let transformX = -(mInteraction.pointerX * zoomChange) + mInteraction.transformX;
+            let transformY = -(mInteraction.pointerY * zoomChange) + mInteraction.transformY;
             mZoomTransform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
             draw();
             drawInterface();
-        } else if (mInteracting == DRAWING) {
+        } else if (mInteraction && mInteraction.type == DRAWING) {
             mBrushOptions.currentStroke.push(screenToModelCoords(screenCoords));
             drawInterface();
-        } else if (mInteracting == SELECTING) {
-            mSelectionLine.push(screenToModelCoords(screenCoords));
+        } else if (mInteraction && mInteraction.type == SELECTING) {
+            mInteraction.line.push(screenToModelCoords(screenCoords));
             drawInterface();
-        } else if (mInteracting == DRAGGING) {
+        } else if (mInteraction && mInteraction.type == DRAGGING) {
             console.error("impliment me!")
-        } else if (mInteracting) {
-            console.error("Not Handled!", mInteracting);
+        } else if (mInteraction) {
+            console.error("Not Handled!", mInteraction);
         } else if (toolState == Buttons.BRUSH_BUTTON) {
             mBrushActive = true;
             mBrushOptions.currentStroke = [screenToModelCoords(screenCoords)];
@@ -173,25 +175,35 @@ function StrokeViewController() {
     }
 
     function onPointerUp(screenCoords, toolState) {
-        mInteracting = false;
-        mStartPos = null;
+        let interaction = mInteraction;
+        mInteraction = null;
 
         if (toolState == Buttons.BRUSH_BUTTON && mBrushOptions.currentStroke.length > 1) {
             mNewStrokeCallback(new Data.Stroke(mBrushOptions.currentStroke, mBrushOptions.size, mBrushOptions.color))
             mBrushOptions.currentStroke = [screenToModelCoords(screenCoords)];
             drawInterface();
         } else if (toolState == Buttons.SELECTION_BUTTON) {
-            // are we in a selection interaction
-            //      did we move (more than say 5 px)
-            //           update the selection, show one big box if anything is selected
-            //      did we mouse up on a thing? 
-            //           select the thing
-            // are we in a moving interaction
-            //      did we move more than 5 px?
-            //          move the thing
-            //      else
-            //          did we mouse up on a subthing (child element, etc)
-            //              narrow the selection to the subelement
+            if (interaction && interaction.type == SELECTING) {
+                let moveDist = MathUtil.length(MathUtil.subtract(interaction.line[0], screenToModelCoords(screenCoords)));
+                if (moveDist > 5 || interaction.line.length > 5) {
+                    mModel.getStrokes().forEach(stroke => {
+                        let coveredPoints = stroke.path.reduce((count, p) => {
+                            if (interfaceIsCovered(modelToScreenCoords(p))) { count++; }
+                            return count;
+                        }, 0)
+                        if (coveredPoints / stroke.path.length > 0.7) {
+                            mSelectionIds.push(stroke.id);
+                        }
+                    })
+                }
+            } else if (interaction && interaction.type == DRAGGING) {
+                let moveDist = MathUtil.length(MathUtil.subtract(interaction.start, screenCoords));
+                if (moveDist < 5) {
+                    return { type: EventResponse.CONTEXT_MENU_STROKES, strokes: mSelectionIds };
+                } else {
+                    console.error("Moved selection, impliment!");
+                }
+            }
         } else if (toolState == Buttons.SHIFT_SELECTION_BUTTON) {
             // update the selection
         }
@@ -242,7 +254,15 @@ function StrokeViewController() {
 
         if (mBrushActive) {
             mDrawingUtil.drawInterfaceStroke(mBrushOptions.currentStroke, mBrushOptions.color, mBrushOptions.size)
+        } else if (mInteraction && mInteraction.type == SELECTING) {
+            mDrawingUtil.drawSelectionBubble(mInteraction.line, SELECTION_BUBBLE_COLOR);
         }
+
+        mSelectionIds.forEach(id => {
+            let stroke = mModel.getStroke(id);
+            if (!stroke) { console.error("Invalid stroke id", id); return; }
+            mDrawingUtil.highlightBoundingBox(DataUtil.getBoundingBox(stroke));
+        })
 
         mHighlightIds.forEach(id => {
             if (IdUtil.isType(id, Data.Element)) {
@@ -274,6 +294,21 @@ function StrokeViewController() {
         else return null;
     }
 
+    function interfaceIsCovered(screenCoords) {
+        let boundingBox = mInteractionCanvas.node().getBoundingClientRect();
+        if (screenCoords.x < boundingBox.x || screenCoords.x > boundingBox.x + boundingBox.width) {
+            return false;
+        } else if (screenCoords.y < boundingBox.y || screenCoords.y > boundingBox.y + boundingBox.height) {
+            return false;
+        }
+
+        let ctx = mInterfaceCanvas.node().getContext('2d');
+        let p = ctx.getImageData(screenCoords.x - boundingBox.x, screenCoords.y - boundingBox.y, 1, 1).data;
+        let hex = DataUtil.rgbaToHex(p[0], p[1], p[2], p[3]);
+        if (hex != "#00000000") return true;
+        else return false;
+    }
+
     function getCode(strokeId) {
         if (mReverseInteractionLookup[strokeId]) return mReverseInteractionLookup[strokeId];
         else {
@@ -294,6 +329,15 @@ function StrokeViewController() {
         } else {
             return { x: 0, y: 0 };
         }
+    }
+
+    function modelToScreenCoords(modelCoords) {
+        let boundingBox = mInterfaceCanvas.node().getBoundingClientRect();
+        return {
+            x: modelCoords.x * mZoomTransform.k + mZoomTransform.x + boundingBox.x,
+            y: modelCoords.y * mZoomTransform.k + mZoomTransform.y + boundingBox.y
+        };
+
     }
 
     return {

@@ -198,6 +198,16 @@ let ModelUtil = function () {
         });
     }
 
+    function clearEmptyElements(modelController) {
+        let elements = modelController.getModel().getElements();
+        let removeElementIds = elements.filter(e => e.strokes.length == 0).map(e => e.id);
+        removeElementIds.forEach(id => modelController.removeElement(id));
+        elements.filter(e => removeElementIds.includes(e.parentId) && !removeElementIds.includes(e.id)).forEach(e => {
+            e.parentId = null;
+            modelController.updateElement(e);
+        });
+    }
+
     return {
         getStupidSpine,
         updateParent,
@@ -206,5 +216,6 @@ let ModelUtil = function () {
         mergeElements,
         updateDimentionValues,
         clearEmptyGroups,
+        clearEmptyElements,
     }
 }();

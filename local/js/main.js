@@ -113,11 +113,15 @@ document.addEventListener('DOMContentLoaded', function (e) {
     mFdlViewController.setParentElementCallback((elementId, parentElementId) => {
         ModelUtil.updateParent(parentElementId, elementId, mModelController)
         ModelUtil.clearEmptyGroups(mModelController);
+
+        mVersionController.stack(mModelController.getModel());
         modelUpdate();
     })
 
     mFdlViewController.setMergeElementCallback((selection, mergeElementId) => {
         ModelUtil.mergeElements(mModelController, selection, mergeElementId);
+
+        mVersionController.stack(mModelController.getModel());
         modelUpdate();
     })
 
@@ -129,6 +133,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mModelController.removeStroke(childStrokeId);
         mModelController.addElement(groupId, element);
 
+        mVersionController.stack(mModelController.getModel());
         modelUpdate();
     })
 
@@ -136,6 +141,8 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let element = mModelController.getModel().getElement(elementId);
         mModelController.removeElement(elementId);
         mModelController.addElement(groupId, element);
+
+        mVersionController.stack(mModelController.getModel());
         modelUpdate();
     })
 
@@ -143,6 +150,8 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let stroke = mModelController.getModel().getStroke(strokeId);
         mModelController.removeStroke(stroke);
         mModelController.addStroke(elementId, stroke);
+
+        mVersionController.stack(mModelController.getModel());
         modelUpdate();
     })
 
@@ -165,6 +174,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         group.elements.push(element);
         mModelController.addGroup(group);
 
+        mVersionController.stack(mModelController.getModel());
         modelUpdate();
     })
 
@@ -227,8 +237,49 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mModelController.addDimention(newDimention);
         mModelController.updateGroup(group);
 
+        mVersionController.stack(mModelController.getModel());
         modelUpdate();
     })
+
+    mEventManager.setMergeStrokesCallback((strokeIds) => {
+        let model = mModelController.getModel();
+        let strokes = strokeIds.map(s => model.getStroke(s));
+
+        let newElement = new Data.Element();
+        newElement.strokes.push(...strokes);
+        newElement.spine = ModelUtil.getStupidSpine(newElement);
+
+        // count the elements, if most of the strokes belong to one, make the new element
+        // a sibling of that element
+        let elements = strokeIds.map(s => model.getElementForStroke(s));
+        let elementCounts = elements.reduce((count, element) => {
+            count[element.id] ? ++count[element.id] : count[element.id] = 1;
+            return count;
+        }, {});
+        let topElement = Object.entries(elementCounts).sort((a, b) => a[1] - b[1])[0];
+        if (topElement[1] / strokes.length > 0.5) {
+            newElement.parentId = elements.find(e => e.id == topElement[0]).parentId;
+        }
+
+        let groups = elements.map(e => model.getGroupForElement(e.id));
+        let groupCounts = groups.reduce((count, group) => {
+            count[group.id] ? ++count[group.id] : count[group.id] = 1;
+            return count;
+        }, {});
+        let topGroup = Object.entries(groupCounts).sort((a, b) => a[1] - b[1])[0];
+
+        strokeIds.forEach(s => mModelController.removeStroke(s));
+        ModelUtil.clearEmptyElements(mModelController);
+
+        let group = mModelController.getModel().getGroup(topGroup[0]);
+        group.elements.push(newElement);
+        mModelController.updateGroup(group);
+
+        ModelUtil.clearEmptyGroups(mModelController);
+
+        mVersionController.stack(mModelController.getModel());
+        modelUpdate();
+    });
 
     function modelUpdate() {
         let model = mModelController.getModel();

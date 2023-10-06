@@ -69,6 +69,12 @@ function drawStroke(integrationEnv, path) {
     integrationEnv.d3.getCallbacks()['keyup']({ key: "d" });
 }
 
+function drawSelection(integrationEnv, path) {
+    integrationEnv.d3.getCallbacks()['keydown']({ key: "s" });
+    drag(integrationEnv, "#stroke-view", path);
+    integrationEnv.d3.getCallbacks()['keyup']({ key: "s" });
+}
+
 function drag(integrationEnv, id, path) {
     let offset = { x: 0, y: 0 }
     if (id == "#fdl-view") offset.x += window.innerWidth / 2;
@@ -175,6 +181,7 @@ module.exports = {
     makeModel,
     deepEquals,
     drawStroke,
+    drawSelection,
     drag,
     click,
     mouseOver,

@@ -19,6 +19,8 @@ function EventManager(strokeController, fdlController) {
     let mDeleteCallback = async () => { };
 
     let mNewDimentionCallback = () => { };
+    let mMergeStrokesCallback = () => { };
+
 
     let mLastClick = { x: -10, y: -10, time: Date.now() };
 
@@ -114,9 +116,8 @@ function EventManager(strokeController, fdlController) {
         responses.push(mStrokeViewController.onPointerUp(screenCoords, mCurrentToolState));
         responses.push(mFdlViewController.onPointerUp(screenCoords, mCurrentToolState));
         responses.filter(r => r).forEach(response => {
-
-            let buttons = []
             if (response.type == EventResponse.CONTEXT_MENU_GROUP) {
+                let buttons = []
                 Object.values(ChannelType).forEach(channelType => {
                     if (!response.group.mappings.find(m => m.channelType == channelType)) {
                         let button = Object.entries(ContextButtonToChannelType).find(e => e[1] == channelType)[0];
@@ -129,6 +130,14 @@ function EventManager(strokeController, fdlController) {
                         mContextMenuController.hideContextMenu();
                     });
                 }
+            } else if (response.type == EventResponse.CONTEXT_MENU_STROKES) {
+                let buttons = [ContextButtons.MERGE_TO_ELEMENT]
+                mContextMenuController.showContextMenu(screenCoords, buttons, (buttonId) => {
+                    if (buttonId == ContextButtons.MERGE_TO_ELEMENT) {
+                        mMergeStrokesCallback(response.strokes);
+                    }
+                });
+
             }
         })
         releaseState();
@@ -189,6 +198,7 @@ function EventManager(strokeController, fdlController) {
         setRedoCallback: func => mRedoCallback = func,
         setDeleteCallback: func => mDeleteCallback = func,
         setNewDimentionCallback: func => mNewDimentionCallback = func,
+        setMergeStrokesCallback: func => mMergeStrokesCallback = func,
     }
 }
 

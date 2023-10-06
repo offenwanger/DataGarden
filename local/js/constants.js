@@ -26,6 +26,7 @@ const ContextButtons = {
     ADD_DIMENTION_FOR_SIZE: 'add-dimention-for-size',
     ADD_DIMENTION_FOR_ORIENTATION: 'add-dimention-for-orientation',
     ADD_DIMENTION_FOR_POSITION: 'add-dimention-for-position',
+    MERGE_TO_ELEMENT: 'merge-to-element',
 }
 
 const ChannelType = {
@@ -45,5 +46,6 @@ ContextButtonToChannelType[ContextButtons.ADD_DIMENTION_FOR_POSITION] = ChannelT
 
 const EventResponse = {
     HOLD: 'hold',
-    CONTEXT_MENU_GROUP: 'contextMenuGroup'
+    CONTEXT_MENU_GROUP: 'contextMenuGroup',
+    CONTEXT_MENU_STROKES: 'contextMenuStrokeSelection'
 }

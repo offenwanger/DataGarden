@@ -526,6 +526,22 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         intfCtx.restore();
     }
 
+    function drawSelectionBubble(path, color) {
+        intfCtx.save();
+        intfCtx.setLineDash([5 / mScale, 10 / mScale]);
+        intfCtx.lineWidth = 2 / mScale;
+        intfCtx.globalCompositeOperation = "destination-over"
+        intfCtx.fillStyle = color;
+        intfCtx.beginPath();
+        path.forEach(p => {
+            intfCtx.lineTo(p.x, p.y)
+        });
+        intfCtx.lineTo(path[0].x, path[0].y)
+        intfCtx.stroke();
+        intfCtx.fill();
+        intfCtx.restore();
+    }
+
     return {
         reset,
         resetInterface,
@@ -549,5 +565,6 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         getTrianglePointer,
         highlightBoundingBox,
         drawSpine,
+        drawSelectionBubble,
     }
 }
