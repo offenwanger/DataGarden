@@ -28,32 +28,32 @@ app.use('/', express.static(__dirname + '/local'));
  *  Fairy module requests  *
  ************************/
 app.post('/getspine', function (req, res) {
-    res.status(200).send(null);
-    return;
-
     let element = req.body;
     if (!element.strokes) {
         res.status(400).send("Error! Invalid element provided!");
         return;
     }
 
-    let scap = utility.elementToScap(element, mIdMap);
+    let scap = utility.elementToSpineScap(element);
     let filename = element.id + ".scap";
-    let outFilename = element.id + "_out.scap"
+    let outFoldername = element.id;
+    let outFile = outFoldername + "/" + element.id + "_fit.svg";
+
     fileHandler.writeScap(filename, scap)
-        .then(() => cppConnector.runStrokeStrip(filename))
-        .then(() => {
-            // try to read the result, see if it's any good. 
-            return fileHandler.readScap(outFilename);
-        }).then(outScap => {
-            let path = utility.scapToPath(outScap)
+        .then(() => fileHandler.createScapOutFolder(outFoldername))
+        .then(() => cppConnector.runStrokeStrip(filename, outFoldername))
+        .then(() => fileHandler.readOutput(outFile))
+        .then(outSvg => {
+            let path = utility.svgToPath(outSvg)
+            path = utility.alignSVGPath(path, element);
             res.status(200).send(path);
         }).catch(error => {
+            console.error(error);
             res.status(500).send();
         }).then(() => {
             if (!config.DEBUG) {
                 fileHandler.deleteScap(filename);
-                fileHandler.deleteScap(outFilename);
+                fileHandler.deleteScapOutFolder(outFoldername);
             }
         });
 });
@@ -73,7 +73,7 @@ app.post('/suggestgrouping', function (req, res) {
         .then(() => cppConnector.runStripMaker(filename))
         .then(() => {
             // try to read the result, see if it's any good. 
-            return fileHandler.readScap(outFilename);
+            return fileHandler.readOutput(outFilename);
         }).then(outScap => {
             let result = utility.scapToGrouping(outScap, mIdMap);
             res.status(200).json(result);

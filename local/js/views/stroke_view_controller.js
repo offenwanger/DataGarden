@@ -195,6 +195,13 @@ function StrokeViewController() {
                             mSelectionIds.push(stroke.id);
                         }
                     })
+                } else {
+                    // we tapped not on a selection
+                    let target = getInteractionTarget(screenCoords);
+                    if (target) {
+                        let element = mModel.getElementForStroke(target);
+                        return { type: EventResponse.CONTEXT_MENU_ELEMENT, elementId: element.id };
+                    }
                 }
             } else if (interaction && interaction.type == DRAGGING) {
                 let moveDist = MathUtil.length(MathUtil.subtract(interaction.start, screenCoords));

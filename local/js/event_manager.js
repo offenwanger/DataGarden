@@ -20,6 +20,8 @@ function EventManager(strokeController, fdlController) {
 
     let mNewDimentionCallback = () => { };
     let mMergeStrokesCallback = () => { };
+    let mAutoMergeElements = () => { };
+    let mCalculateSpineCallback = () => { };
 
 
     let mLastClick = { x: -10, y: -10, time: Date.now() };
@@ -131,13 +133,25 @@ function EventManager(strokeController, fdlController) {
                     });
                 }
             } else if (response.type == EventResponse.CONTEXT_MENU_STROKES) {
-                let buttons = [ContextButtons.MERGE_TO_ELEMENT]
+                let buttons = [ContextButtons.MERGE_TO_ELEMENT, ContextButtons.AUTO_MERGE_ELEMENTS]
                 mContextMenuController.showContextMenu(screenCoords, buttons, (buttonId) => {
                     if (buttonId == ContextButtons.MERGE_TO_ELEMENT) {
                         mMergeStrokesCallback(response.strokes);
+                    } else if (buttonId == ContextButtons.AUTO_MERGE_ELEMENTS) {
+                        mAutoMergeElements(response.strokes);
                     }
                 });
-
+            } else if (response.type == EventResponse.CONTEXT_MENU_ELEMENT) {
+                let buttons = [ContextButtons.SPINE, ContextButtons.STYLE_STRIP, ContextButtons.STYLE_STROKES]
+                mContextMenuController.showContextMenu(screenCoords, buttons, (buttonId) => {
+                    if (buttonId == ContextButtons.SPINE) {
+                        mCalculateSpineCallback(response.elementId);
+                    } else if (buttonId == ContextButtons.STYLE_STRIP) {
+                        console.error("Impliment me!")
+                    } else if (buttonId == ContextButtons.STYLE_STROKES) {
+                        console.error("Impliment me!")
+                    }
+                });
             }
         })
         releaseState();
@@ -199,6 +213,8 @@ function EventManager(strokeController, fdlController) {
         setDeleteCallback: func => mDeleteCallback = func,
         setNewDimentionCallback: func => mNewDimentionCallback = func,
         setMergeStrokesCallback: func => mMergeStrokesCallback = func,
+        setAutoMergeElements: func => mAutoMergeElements = func,
+        setCalculateSpineCallback: func => mCalculateSpineCallback = func,
     }
 }
 

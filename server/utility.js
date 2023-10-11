@@ -1,10 +1,17 @@
 const os = require('os');
 
-function elementToScap(element, idMap) {
+function elementToSpineScap(element) {
     let scap = "";
+    let ids = 0;
 
-    let width = Math.max(...element.strokes.map(s => s.path.map(p => p.x)).flat());
-    let height = Math.max(...element.strokes.map(s => s.path.map(p => p.y)).flat());
+    let topCorner = element.strokes.map(s => s.path).flat().reduce((curr, point) => {
+        if (point.x < curr.x) curr.x = point.x;
+        if (point.y < curr.y) curr.y = point.y;
+        return curr;
+    }, { x: Infinity, y: Infinity });
+
+    let width = Math.max(...element.strokes.map(s => s.path.map(p => p.x)).flat()) - topCorner.x;
+    let height = Math.max(...element.strokes.map(s => s.path.map(p => p.y)).flat()) - topCorner.y;
     let size = element.strokes.map(s => s.size).reduce((a, b) => a + b, 0) / element.strokes.length;
 
     scap += "#" + Math.round(width) + "\t" + Math.round(height) + os.EOL;
@@ -12,9 +19,10 @@ function elementToScap(element, idMap) {
 
     element.strokes.forEach(stroke => {
         scap += "{" + os.EOL;
-        scap += "\t#" + idMap.getMapping(stroke.id) + "\t" + idMap.getMapping(element.id) + os.EOL;
+        scap += "\t#" + (++ids)
+            + "\t" + "0" + os.EOL; // The group id has to start at 0 otherwise stroke strip doesn't work.
         stroke.path.forEach(p => {
-            scap += "\t" + p.x + "\t" + p.y + "\t0" + os.EOL;
+            scap += "\t" + (p.x - topCorner.x) + "\t" + (p.y - topCorner.y) + "\t0" + os.EOL;
         })
         scap += "}" + os.EOL;
     })
@@ -68,6 +76,45 @@ function scapToPath(scap) {
     }).filter(p => !isNaN(p.x) && !isNaN(p.y));
 }
 
+function svgToPath(svg) {
+    let values = svg.split("d=")[1].split("/>")[0].split(" ");
+    let path = [];
+    for (let i = 0; i < values.length; i += 3) {
+        let x = parseFloat(values[i + 1]);
+        let y = parseFloat(values[i + 2]);
+        if (!isNaN(x) && !isNaN(y)) {
+            path.push({ x, y })
+        }
+    }
+    return path;
+}
+
+function alignSVGPath(path, element) {
+    let elementPoints = element.strokes.map(s => s.path).flat();
+    let elementTopCorner = elementPoints.reduce((curr, point) => {
+        if (point.x < curr.x) curr.x = point.x;
+        if (point.y < curr.y) curr.y = point.y;
+        return curr;
+    }, { x: Infinity, y: Infinity });
+    let elementBottomCorner = elementPoints.reduce((curr, point) => {
+        if (point.x > curr.x) curr.x = point.x;
+        if (point.y > curr.y) curr.y = point.y;
+        return curr;
+    }, { x: -Infinity, y: -Infinity });
+
+    let elementCenter = {
+        x: (elementTopCorner.x + elementBottomCorner.x) / 2,
+        y: (elementTopCorner.y + elementBottomCorner.y) / 2,
+    }
+
+    return path.map(p => {
+        return {
+            x: p.x + elementCenter.x,
+            y: p.y + elementCenter.y,
+        };
+    })
+}
+
 function scapToGrouping(scap, idMap) {
     let tags = scap.split("{" + os.EOL).slice(1).map(stroke => {
         return stroke.split(os.EOL)[0].split("\t").slice(1);
@@ -102,10 +149,12 @@ function IdMap() {
 }
 
 module.exports = {
-    elementToScap,
+    elementToSpineScap,
     elementsToScap,
     scapToPath,
     scapToGrouping,
+    svgToPath,
+    alignSVGPath,
     IdMap,
     log,
 }

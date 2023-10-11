@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
     mFdlViewController.onResize(window.innerWidth * 0.5, window.innerHeight);
 
     let mEventManager = new EventManager(mStrokeViewController, mFdlViewController);
-    let mCallingDelay = 0;
     let mVersionController = new VersionController();
     let mLastStrokeStacked = Date.now();
     mVersionController.setStash(new MemoryStash());
@@ -37,63 +36,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
         } else {
             mVersionController.replace(mModelController.getModel());
         }
-
-        clearTimeout(mCallingDelay);
-        mCallingDelay = setTimeout(() => {
-            ServerRequestUtil.suggestGrouping(mModelController.getModel().getElements()).then(grouping => {
-                let elements = mModelController.getModel().getElements();
-
-                // reconcile the algorithm results with the curdrent state. 
-                let elementStrips = elements.map(element => {
-                    return {
-                        id: element.id,
-                        strips: DataUtil.unique(element.strokes
-                            .map(s => grouping.findIndex(g => g.includes(s.id)))
-                            .filter(index => index != -1))
-                    }
-                }).filter(elementData => elementData.strips.length > 0);
-
-                let hasChanged = false;
-                let singletons = elementStrips.filter(s => s.strips.length == 1);
-                let nonSingletons = elementStrips.filter(s => s.strips.length > 1)
-
-                nonSingletons.forEach(elementData => {
-                    elementData.strips.forEach(sId => {
-                        let mergies = singletons.filter(s => s.strips[0] == sId).map(ed => ed.id);
-                        singletons = singletons.filter(s => s.strips[0] != sId);
-                        ModelUtil.mergeElements(mModelController, mergies, elementData.id);
-                        hasChanged = true;
-                    })
-                })
-
-                let mergeGroups = {};
-                singletons.forEach(elementData => {
-                    if (!mergeGroups[elementData.strips[0]]) mergeGroups[elementData.strips[0]] = [];
-                    mergeGroups[elementData.strips[0]].push(elementData.id);
-                });
-                Object.values(mergeGroups).forEach(group => {
-                    if (group.length > 1) {
-                        let groupElements = elements.filter(e => group.includes(e.id));
-                        let oldestElement = groupElements.reduce((prev, cur) => (cur.creationTime < prev.creationTime) ? cur : prev);
-                        ModelUtil.mergeElements(mModelController, groupElements.map(e => e.id).filter(id => id != oldestElement.id), oldestElement.id);
-                        hasChanged = true;
-                    }
-                });
-                if (hasChanged) {
-                    modelUpdate();
-                    mVersionController.stack(mModelController.getModel());
-                }
-            });
-        }, 2000);
-
-        ServerRequestUtil.getSpine(element).then(result => {
-            if (result) {
-                element = mModelController.getModel().getElement(element.id);
-                element.spine = result;
-                mModelController.updateElement(element);
-                mVersionController.stack(mModelController.getModel());
-            }
-        })
     })
 
     mStrokeViewController.setHighlightCallback((selection) => {
@@ -279,6 +221,69 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         mVersionController.stack(mModelController.getModel());
         modelUpdate();
+    });
+
+    mEventManager.setAutoMergeElements((strokeIds) => {
+        let elements = DataUtil.unique(strokeIds.map(s => mModelController.getModel().getElementForStroke(s)));
+        ServerRequestUtil.suggestGrouping(elements).then(grouping => {
+            let elements = mModelController.getModel().getElements();
+
+            // reconcile the algorithm results with the curdrent state. 
+            let elementStrips = elements.map(element => {
+                return {
+                    id: element.id,
+                    strips: DataUtil.unique(element.strokes
+                        .map(s => grouping.findIndex(g => g.includes(s.id)))
+                        .filter(index => index != -1))
+                }
+            }).filter(elementData => elementData.strips.length > 0);
+
+            let hasChanged = false;
+            let singletons = elementStrips.filter(s => s.strips.length == 1);
+            let nonSingletons = elementStrips.filter(s => s.strips.length > 1)
+
+            nonSingletons.forEach(elementData => {
+                elementData.strips.forEach(sId => {
+                    let mergies = singletons.filter(s => s.strips[0] == sId).map(ed => ed.id);
+                    singletons = singletons.filter(s => s.strips[0] != sId);
+                    ModelUtil.mergeElements(mModelController, mergies, elementData.id);
+                    hasChanged = true;
+                })
+            })
+
+            let mergeGroups = {};
+            singletons.forEach(elementData => {
+                if (!mergeGroups[elementData.strips[0]]) mergeGroups[elementData.strips[0]] = [];
+                mergeGroups[elementData.strips[0]].push(elementData.id);
+            });
+            Object.values(mergeGroups).forEach(group => {
+                if (group.length > 1) {
+                    let groupElements = elements.filter(e => group.includes(e.id));
+                    let oldestElement = groupElements.reduce((prev, cur) => (cur.creationTime < prev.creationTime) ? cur : prev);
+                    ModelUtil.mergeElements(mModelController, groupElements.map(e => e.id).filter(id => id != oldestElement.id), oldestElement.id);
+                    hasChanged = true;
+                }
+            });
+            if (hasChanged) {
+                modelUpdate();
+                mVersionController.stack(mModelController.getModel());
+            }
+        });
+    });
+
+    mEventManager.setCalculateSpineCallback((elementId) => {
+        let element = mModelController.getModel().getElement(elementId);
+        if (!element) { console.error("Invalid element id", elementId); return; }
+        ServerRequestUtil.getSpine(element).then(result => {
+            console.log("here", result);
+            if (result) {
+                element = mModelController.getModel().getElement(elementId);
+                element.spine = result;
+                mModelController.updateElement(element);
+                mVersionController.stack(mModelController.getModel());
+                modelUpdate();
+            }
+        });
     });
 
     function modelUpdate() {

@@ -33,6 +33,26 @@ function ContextMenuController(svg) {
         img: "img/merge_elements.svg",
         tooltip: "Merge these strokes into a new element",
     }
+    mButtonData[ContextButtons.AUTO_MERGE_ELEMENTS] = {
+        id: ContextButtons.AUTO_MERGE_ELEMENTS,
+        img: "img/designme.svg",
+        tooltip: "Automatically detect elements and merge strokes",
+    }
+    mButtonData[ContextButtons.SPINE] = {
+        id: ContextButtons.SPINE,
+        img: "img/designme.svg",
+        tooltip: "Recalculate element spine and strip",
+    }
+    mButtonData[ContextButtons.STYLE_STRIP] = {
+        id: ContextButtons.STYLE_STRIP,
+        img: "img/designme.svg",
+        tooltip: "Style element using calculated strip",
+    }
+    mButtonData[ContextButtons.STYLE_STROKES] = {
+        id: ContextButtons.STYLE_STROKES,
+        img: "img/designme.svg",
+        tooltip: "Style element using it's strokes",
+    }
 
     function showContextMenu(pos, buttons, callback) {
         hideContextMenu();

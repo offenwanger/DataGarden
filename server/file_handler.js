@@ -10,7 +10,7 @@ async function writeScap(filename, contents) {
     }
 }
 
-async function readScap(filename) {
+async function readOutput(filename) {
     try {
         return fs.readFileSync(SCAP_FOLDER + filename, 'utf8');
     } catch (e) {
@@ -21,15 +21,34 @@ async function readScap(filename) {
 
 async function deleteScap(filename) {
     try {
-        return fs.unlinkSync(SCAP_FOLDER + filename, 'utf8');
+        fs.unlinkSync(SCAP_FOLDER + filename, 'utf8');
     } catch (e) {
         console.error(e);
-        return null;
+    }
+}
+
+async function createScapOutFolder(folderName) {
+    try {
+        if (!fs.existsSync(SCAP_FOLDER + folderName)) {
+            fs.mkdirSync(SCAP_FOLDER + folderName);
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function deleteScapOutFolder(folderName) {
+    try {
+        fs.rmSync(SCAP_FOLDER + folderName, { recursive: true, force: true });
+    } catch (e) {
+        console.error(e);
     }
 }
 
 module.exports = {
     writeScap,
-    readScap,
+    readOutput,
     deleteScap,
+    createScapOutFolder,
+    deleteScapOutFolder,
 }

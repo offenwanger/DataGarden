@@ -10,8 +10,7 @@ let ServerRequestUtil = function () {
                 body: JSON.stringify(element)
             });
             if (result.ok) {
-                // TODO: Return the actual path. 
-                return [];
+                return await result.json();
             } else {
                 return null;
             }

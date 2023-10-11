@@ -2,11 +2,11 @@ const { spawn } = require('child_process');
 const utility = require("./utility.js");
 const config = require("../app_config.js");
 
-function runStrokeStrip(scapFilename) {
-    return new Promise(resolve => {
+function runStrokeStrip(scapFilename, outFolder) {
+    return new Promise((resolve) => {
         utility.log("Spinning up StrokeStrip");
         try {
-            const cpp = spawn(config.STRIP_MAKER_EXE, ["-i", __dirname + "/scaps/" + scapFilename, "-o", __dirname + "/scaps"]);
+            const cpp = spawn(config.STROKE_STRIP_EXE, ["-i", __dirname + "/scaps/" + scapFilename, "-o", __dirname + "/scaps/" + outFolder + "/"]);
 
             // collect output from console
             cpp.stdout.on('data', function (data) {
@@ -34,8 +34,8 @@ function runStrokeStrip(scapFilename) {
             })
 
             cpp.on("exit", function () {
+                utility.log("Strokestrip finished.")
                 resolve();
-                utility.log("StripMaker finished.")
             })
         } catch (e) {
             console.error(e);
@@ -67,7 +67,7 @@ function runStripMaker(scapFilename) {
 
             // all done, return value. 
             cpp.on('close', (code) => {
-                utility.log("Strokestrip script completed with exit code " + code);
+                utility.log("StripMaker script completed with exit code " + code);
                 resolve();
             });
 
