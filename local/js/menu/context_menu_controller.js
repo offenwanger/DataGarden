@@ -40,7 +40,7 @@ function ContextMenuController(svg) {
     }
     mButtonData[ContextButtons.SPINE] = {
         id: ContextButtons.SPINE,
-        img: "img/designme.svg",
+        img: "img/fit_spine.svg",
         tooltip: "Recalculate element spine and strip",
     }
     mButtonData[ContextButtons.STYLE_STRIP] = {
