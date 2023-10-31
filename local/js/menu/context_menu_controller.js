@@ -35,7 +35,7 @@ function ContextMenuController(svg) {
     }
     mButtonData[ContextButtons.AUTO_MERGE_ELEMENTS] = {
         id: ContextButtons.AUTO_MERGE_ELEMENTS,
-        img: "img/designme.svg",
+        img: "img/smart_group.svg",
         tooltip: "Automatically detect elements and merge strokes",
     }
     mButtonData[ContextButtons.SPINE] = {
@@ -45,12 +45,12 @@ function ContextMenuController(svg) {
     }
     mButtonData[ContextButtons.STYLE_STRIP] = {
         id: ContextButtons.STYLE_STRIP,
-        img: "img/designme.svg",
+        img: "img/style_strip.svg",
         tooltip: "Style element using calculated strip",
     }
     mButtonData[ContextButtons.STYLE_STROKES] = {
         id: ContextButtons.STYLE_STROKES,
-        img: "img/designme.svg",
+        img: "img/style_strokes.svg",
         tooltip: "Style element using it's strokes",
     }
 
