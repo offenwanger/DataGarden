@@ -4,11 +4,7 @@ function elementToSpineScap(element) {
     let scap = "";
     let ids = 0;
 
-    let topCorner = element.strokes.map(s => s.path).flat().reduce((curr, point) => {
-        if (point.x < curr.x) curr.x = point.x;
-        if (point.y < curr.y) curr.y = point.y;
-        return curr;
-    }, { x: Infinity, y: Infinity });
+    let topCorner = elementTopCorner(element);
 
     let width = Math.max(...element.strokes.map(s => s.path.map(p => p.x)).flat()) - topCorner.x;
     let height = Math.max(...element.strokes.map(s => s.path.map(p => p.y)).flat()) - topCorner.y;
@@ -58,6 +54,15 @@ function elementsToScap(elements, idMap) {
     return scap;
 }
 
+function elementTopCorner(element) {
+    return element.strokes.map(s => s.path).flat().reduce((curr, point) => {
+        if (point.x < curr.x) curr.x = point.x;
+        if (point.y < curr.y) curr.y = point.y;
+        return curr;
+    }, { x: Infinity, y: Infinity });
+}
+
+
 function samplePath(path, sampleRate) {
     let result = []
     for (let i = 0; i < path.length - 1; i += sampleRate) {
@@ -67,12 +72,12 @@ function samplePath(path, sampleRate) {
     return result;
 }
 
-function scapToPath(scap) {
+function scapToPath(scap, topCorner) {
     let lines = scap.split("{")[1].split("}")[0].split(os.EOL);
     return lines.slice(1, lines.length).map(line => {
         let x = line.split("\t")[1];
         let y = line.split("\t")[2];
-        return { x: parseFloat(x), y: parseFloat(y) };
+        return { x: parseFloat(x) + topCorner.x, y: parseFloat(y) + topCorner.y };
     }).filter(p => !isNaN(p.x) && !isNaN(p.y));
 }
 
@@ -151,6 +156,7 @@ function IdMap() {
 module.exports = {
     elementToSpineScap,
     elementsToScap,
+    elementTopCorner,
     scapToPath,
     scapToGrouping,
     svgToPath,

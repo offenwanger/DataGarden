@@ -37,15 +37,14 @@ app.post('/getspine', function (req, res) {
     let scap = utility.elementToSpineScap(element);
     let filename = element.id + ".scap";
     let outFoldername = element.id;
-    let outFile = outFoldername + "/" + element.id + "_fit.svg";
+    let outFile = outFoldername + "/" + element.id + "_fit.scap";
 
     fileHandler.writeScap(filename, scap)
         .then(() => fileHandler.createScapOutFolder(outFoldername))
         .then(() => cppConnector.runStrokeStrip(filename, outFoldername))
         .then(() => fileHandler.readOutput(outFile))
-        .then(outSvg => {
-            let path = utility.svgToPath(outSvg)
-            path = utility.alignSVGPath(path, element);
+        .then(outScap => {
+            let path = utility.scapToPath(outScap, utility.elementTopCorner(element));
             res.status(200).send(path);
         }).catch(error => {
             console.error(error);

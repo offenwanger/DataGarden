@@ -168,7 +168,7 @@ describe('Test Fairy Connector', function () {
                 ["}"],
                 [""]
             ].map(l => l.join("\t")).join(os.EOL);
-            expect(utility.scapToPath(scap)).to.eql([
+            expect(utility.scapToPath(scap, { x: 0, y: 0 })).to.eql([
                 { "x": 5, "y": 32 },
                 { "x": 6, "y": 31 },
                 { "x": 14, "y": 29 },
