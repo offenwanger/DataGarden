@@ -1,18 +1,18 @@
 document.addEventListener('DOMContentLoaded', function (e) {
     let mModelController = new ModelController();
 
-    let mStrokeViewController = new StrokeViewController();
+    let mCanvasController = new CanvasController();
     let mFdlViewController = new FdlViewController();
 
-    mStrokeViewController.onResize(window.innerWidth * 0.5, window.innerHeight);
+    mCanvasController.onResize(window.innerWidth * 0.5, window.innerHeight);
     mFdlViewController.onResize(window.innerWidth * 0.5, window.innerHeight);
 
-    let mEventManager = new EventManager(mStrokeViewController, mFdlViewController);
+    let mEventManager = new EventManager(mCanvasController, mFdlViewController);
     let mVersionController = new VersionController();
     let mLastStrokeStacked = Date.now();
     mVersionController.setStash(new MemoryStash());
 
-    mStrokeViewController.setNewStrokeCallback((stroke) => {
+    mCanvasController.setNewStrokeCallback((stroke) => {
         let model = mModelController.getModel();
 
         let element = new Data.Element();
@@ -38,18 +38,18 @@ document.addEventListener('DOMContentLoaded', function (e) {
         }
     })
 
-    mStrokeViewController.setHighlightCallback((selection) => {
+    mCanvasController.setHighlightCallback((selection) => {
         mFdlViewController.highlight(selection);
     })
 
-    mStrokeViewController.setSelectionCallback((selection) => {
+    mCanvasController.setSelectionCallback((selection) => {
         // selection could be strokes or elements
         // might select an entire element tree
         mVersionController.stack(selection);
     })
 
     mFdlViewController.setHighlightCallback((selection) => {
-        mStrokeViewController.highlight(selection);
+        mCanvasController.highlight(selection);
     })
 
     mFdlViewController.setParentElementCallback((elementId, parentElementId) => {
@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     function modelUpdate() {
         let model = mModelController.getModel();
-        mStrokeViewController.onModelUpdate(model);
+        mCanvasController.onModelUpdate(model);
         mFdlViewController.onModelUpdate(model);
     }
 });

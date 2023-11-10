@@ -109,7 +109,7 @@ function getIntegrationEnviroment() {
         DrawingUtil: rewireJs('utils/drawing_util.js').__get__("DrawingUtil"),
         FiltersUtil: rewireJs('utils/filters_util.js').__get__("FiltersUtil"),
         ServerRequestUtil: rewireJs('utils/server_request_util.js').__get__("ServerRequestUtil"),
-        StrokeViewController: rewireJs('views/stroke_view_controller.js').__get__("StrokeViewController"),
+        CanvasController: rewireJs('views/canvas_controller.js').__get__("CanvasController"),
         FdlViewController: rewireJs('views/fdl_view_controller.js').__get__("FdlViewController"),
     };
 

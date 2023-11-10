@@ -1,5 +1,5 @@
 
-function StrokeViewController() {
+function CanvasController() {
     const DRAWING = 'drawing';
     const SELECTING = 'selecting';
     const PANNING = 'panning';

@@ -2,11 +2,11 @@
  * Listens to all events including buttons, maintains state, and passes commands back to main 
  */
 
-function EventManager(strokeController, fdlController) {
+function EventManager(canvasController, fdlController) {
     const DBL_CLICK_SPEED = 500;
     const DBL_CLICK_DIST = 10;
 
-    let mStrokeViewController = strokeController;
+    let mCanvasController = canvasController;
     let mFdlViewController = fdlController;
 
     let mHorizontalBarPercent = 0.5;
@@ -48,7 +48,7 @@ function EventManager(strokeController, fdlController) {
     ]
 
     d3.select(window).on('resize', () => {
-        mStrokeViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight);
+        mCanvasController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight);
         mFdlViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight);
         mInterface.attr('width', window.innerWidth).attr('height', window.innerHeight);
         mMenuController.onResize(window.innerWidth, window.innerHeight);
@@ -94,7 +94,7 @@ function EventManager(strokeController, fdlController) {
         }, 800);
 
         let hold;
-        hold = mStrokeViewController.onPointerDown(screenCoords, mCurrentToolState);
+        hold = mCanvasController.onPointerDown(screenCoords, mCurrentToolState);
         if (Date.now() - mLastClick.time < DBL_CLICK_SPEED && MathUtil.length(MathUtil.subtract(screenCoords, mLastClick)) < DBL_CLICK_DIST) {
             hold = hold || mFdlViewController.onDblClick(screenCoords, mCurrentToolState);
         } else {
@@ -108,14 +108,14 @@ function EventManager(strokeController, fdlController) {
         let screenCoords = { x: e.clientX, y: e.clientY };
         mCurrentMousePosistion = screenCoords;
 
-        mStrokeViewController.onPointerMove(screenCoords, mCurrentToolState);
+        mCanvasController.onPointerMove(screenCoords, mCurrentToolState);
         mFdlViewController.onPointerMove(screenCoords, mCurrentToolState);
     });
 
     d3.select(document).on('pointerup', (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY };
         let responses = [];
-        responses.push(mStrokeViewController.onPointerUp(screenCoords, mCurrentToolState));
+        responses.push(mCanvasController.onPointerUp(screenCoords, mCurrentToolState));
         responses.push(mFdlViewController.onPointerUp(screenCoords, mCurrentToolState));
         responses.filter(r => r).forEach(response => {
             if (response.type == EventResponse.CONTEXT_MENU_GROUP) {
@@ -159,7 +159,7 @@ function EventManager(strokeController, fdlController) {
     });
 
     mMenuController.setColorChangeCallback((color) => {
-        mStrokeViewController.setColor(color);
+        mCanvasController.setColor(color);
     })
 
     mMenuController.setPauseCallback((pause) => {
