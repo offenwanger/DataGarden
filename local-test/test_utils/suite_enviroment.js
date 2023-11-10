@@ -91,7 +91,7 @@ function getIntegrationEnviroment() {
         Picker: mockPicker,
         EventManager: rewireJs('event_manager.js').__get__("EventManager"),
         MenuController: rewireJs('menu/menu_controller.js').__get__("MenuController"),
-        ContextMenuController: rewireJs('menu/context_menu_controller.js').__get__("ContextMenuController"),
+        ContextMenu: rewireJs('menu/context_menu_controller.js').__get__("ContextMenu"),
         RadialContextMenu: rewireJs('menu/radial_context_menu.js').__get__("RadialContextMenu"),
         MenuButton: rewireJs('menu/menu_button.js').__get__("MenuButton"),
         ToolTip: rewireJs('menu/tooltip.js').__get__("ToolTip"),
@@ -108,7 +108,7 @@ function getIntegrationEnviroment() {
         IdUtil: rewireJs('utils/id_util.js').__get__("IdUtil"),
         DrawingUtil: rewireJs('utils/drawing_util.js').__get__("DrawingUtil"),
         FiltersUtil: rewireJs('utils/filters_util.js').__get__("FiltersUtil"),
-        ServerRequestUtil: rewireJs('utils/server_request_util.js').__get__("ServerRequestUtil"),
+        ServerController: rewireJs('utils/server_request_util.js').__get__("ServerController"),
         CanvasController: rewireJs('views/canvas_controller.js').__get__("CanvasController"),
         FdlViewController: rewireJs('views/fdl_view_controller.js').__get__("FdlViewController"),
     };

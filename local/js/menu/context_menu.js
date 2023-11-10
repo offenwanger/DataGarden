@@ -1,4 +1,4 @@
-function ContextMenuController(svg) {
+function ContextMenu(svg) {
     let mContextMenuId = "context-menu";
     let mButtonData = {}
     let mSvg = svg;

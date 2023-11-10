@@ -2,15 +2,14 @@
  * Listens to all events including buttons, maintains state, and passes commands back to main 
  */
 
-function EventManager(canvasController, fdlController) {
+function EventManager(dashboard) {
     const DBL_CLICK_SPEED = 500;
     const DBL_CLICK_DIST = 10;
 
-    let mCanvasController = canvasController;
-    let mFdlViewController = fdlController;
-
-    let mHorizontalBarPercent = 0.5;
-    let mVerticalBarPercent = 0.5;
+    let mDashboard = dashboard;
+    mDashboard.setAddClickListener((button, callback) => {
+        
+    })
 
     // these functions are asyncronous because they have to call file access. 
     let mUndoCallback = async () => { };
@@ -32,7 +31,7 @@ function EventManager(canvasController, fdlController) {
         .attr('height', window.innerHeight)
 
     let mMenuController = new MenuController(mInterface);
-    let mContextMenuController = new ContextMenuController(mInterface);
+    let mContextMenu = new ContextMenu(mInterface);
     let mCurrentToolState = Buttons.SELECTION_BUTTON;
 
     let mCurrentMousePosistion;
@@ -52,7 +51,7 @@ function EventManager(canvasController, fdlController) {
         mFdlViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight);
         mInterface.attr('width', window.innerWidth).attr('height', window.innerHeight);
         mMenuController.onResize(window.innerWidth, window.innerHeight);
-        mContextMenuController.hideContextMenu();
+        mContextMenu.hideContextMenu();
     });
 
     d3.select(document).on('keydown', function (e) {
@@ -81,7 +80,7 @@ function EventManager(canvasController, fdlController) {
 
     mInterface.on("pointerdown", (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY, };
-        mContextMenuController.hideContextMenu();
+        mContextMenu.hideContextMenu();
 
         mStartPos = screenCoords;
         mCurrentMousePosistion = mStartPos;
@@ -127,14 +126,14 @@ function EventManager(canvasController, fdlController) {
                     }
                 });
                 if (buttons.length > 0) {
-                    mContextMenuController.showContextMenu(screenCoords, buttons, (buttonId) => {
+                    mContextMenu.showContextMenu(screenCoords, buttons, (buttonId) => {
                         mNewDimentionCallback(response.group.id, ContextButtonToChannelType[buttonId]);
-                        mContextMenuController.hideContextMenu();
+                        mContextMenu.hideContextMenu();
                     });
                 }
             } else if (response.type == EventResponse.CONTEXT_MENU_STROKES) {
                 let buttons = [ContextButtons.MERGE_TO_ELEMENT, ContextButtons.AUTO_MERGE_ELEMENTS]
-                mContextMenuController.showContextMenu(screenCoords, buttons, (buttonId) => {
+                mContextMenu.showContextMenu(screenCoords, buttons, (buttonId) => {
                     if (buttonId == ContextButtons.MERGE_TO_ELEMENT) {
                         mMergeStrokesCallback(response.strokes);
                     } else if (buttonId == ContextButtons.AUTO_MERGE_ELEMENTS) {
@@ -143,7 +142,7 @@ function EventManager(canvasController, fdlController) {
                 });
             } else if (response.type == EventResponse.CONTEXT_MENU_ELEMENT) {
                 let buttons = [ContextButtons.SPINE, ContextButtons.STYLE_STRIP, ContextButtons.STYLE_STROKES]
-                mContextMenuController.showContextMenu(screenCoords, buttons, (buttonId) => {
+                mContextMenu.showContextMenu(screenCoords, buttons, (buttonId) => {
                     if (buttonId == ContextButtons.SPINE) {
                         mCalculateSpineCallback(response.elementId);
                     } else if (buttonId == ContextButtons.STYLE_STRIP) {
