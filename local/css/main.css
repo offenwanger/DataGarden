@@ -18,14 +18,17 @@ body {
     -ms-user-select: none;
 }
 
-#quad {
-    display: grid;
-    grid-template-columns: auto auto;
+#dashboard-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: row;
     height: 100%;
     width: 100%;
 }
 
-#quad>div {
+#dashboard-container>div {
     position: relative;
     border: 1px;
     border-color: black;

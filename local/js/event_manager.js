@@ -1,5 +1,5 @@
 /**
- * Listens to all events including buttons, maintains state, and passes commands back to main 
+ * Listens to global browser events 
  */
 
 function EventManager(dashboard) {
@@ -7,51 +7,20 @@ function EventManager(dashboard) {
     const DBL_CLICK_DIST = 10;
 
     let mDashboard = dashboard;
-    mDashboard.setAddClickListener((button, callback) => {
-        
-    })
-
-    // these functions are asyncronous because they have to call file access. 
-    let mUndoCallback = async () => { };
-    let mRedoCallback = async () => { };
-
-    let mDeleteCallback = async () => { };
-
-    let mNewDimentionCallback = () => { };
-    let mMergeStrokesCallback = () => { };
-    let mAutoMergeElements = () => { };
-    let mCalculateSpineCallback = () => { };
 
 
     let mLastClick = { x: -10, y: -10, time: Date.now() };
-
-    let mInterface = d3.select('#interface-container').append('svg')
-        .attr('id', 'interface-svg')
-        .attr('width', window.innerWidth)
-        .attr('height', window.innerHeight)
-
-    let mMenuController = new MenuController(mInterface);
-    let mContextMenu = new ContextMenu(mInterface);
     let mCurrentToolState = Buttons.SELECTION_BUTTON;
 
     let mCurrentMousePosistion;
     let mLongPressTimeout;
 
     let mKeysDown = [];
-    let mKeyBindingArray = [
-        [Buttons.BRUSH_BUTTON, "d"],
-        [Buttons.SELECTION_BUTTON, "s"],
-        [Buttons.PANNING_BUTTON, "a"],
-        [Buttons.ZOOM_BUTTON, "a", "s"],
-        [Buttons.VIEW_BUTTON, "f"],
-    ]
+
+    mDashboard.onResize(window.innerWidth, window.innerHeight);
 
     d3.select(window).on('resize', () => {
-        mCanvasController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight);
-        mFdlViewController.onResize(window.innerWidth * mVerticalBarPercent, window.innerHeight);
-        mInterface.attr('width', window.innerWidth).attr('height', window.innerHeight);
-        mMenuController.onResize(window.innerWidth, window.innerHeight);
-        mContextMenu.hideContextMenu();
+        mDashboard.onResize(window.innerWidth, window.innerHeight);
     });
 
     d3.select(document).on('keydown', function (e) {
@@ -60,160 +29,59 @@ function EventManager(dashboard) {
         if (mKeysDown.includes(e.key)) return;
         mKeysDown.push(e.key)
 
-        updateState();
+        mDashboard.onKeyStateChange(mKeysDown);
 
         if ((e.ctrlKey || e.metaKey) && e.key == 'z') {
             // return the promise for syncronization control and testing purposes.
-            return mUndoCallback();
+            return mDashboard.onUndo();
         } else if (((e.ctrlKey || e.metaKey) && e.key == 'y') || ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key == 'z')) {
             // return the promise for syncronization control and testing purposes.
-            return mRedoCallback();
+            return mDashboard.onRedo();
         } else if (/* delete */ e.which == 46) {
-            mDeleteCallback();
+            mDashboard.onDelete();
         }
     });
 
     d3.select(document).on('keyup', function (e) {
         mKeysDown = mKeysDown.filter(i => i !== e.key);
-        updateState();
+        mDashboard.onKeyStateChange(mKeysDown);
     });
 
-    mInterface.on("pointerdown", (e) => {
+    d3.select("#interface-svg").on("pointerdown", (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY, };
-        mContextMenu.hideContextMenu();
-
         mStartPos = screenCoords;
         mCurrentMousePosistion = mStartPos;
         clearTimeout(mLongPressTimeout);
         mLongPressTimeout = setTimeout(() => {
             let motion = MathUtil.length(MathUtil.subtract(mStartPos, mCurrentMousePosistion));
             if (motion < 5) {
-                // on long press
+                mDashboard.onLongPress(screenCoords, mCurrentToolState);
             }
         }, 800);
 
-        let hold;
-        hold = mCanvasController.onPointerDown(screenCoords, mCurrentToolState);
         if (Date.now() - mLastClick.time < DBL_CLICK_SPEED && MathUtil.length(MathUtil.subtract(screenCoords, mLastClick)) < DBL_CLICK_DIST) {
-            hold = hold || mFdlViewController.onDblClick(screenCoords, mCurrentToolState);
+            mDashboard.onDblClick(screenCoords, mCurrentToolState);
         } else {
-            hold = hold || mFdlViewController.onPointerDown(screenCoords, mCurrentToolState);
+            mDashboard.onPointerDown(screenCoords, mCurrentToolState);
         }
-
-        if (hold) { holdState(); }
         mLastClick = { x: screenCoords.x, y: screenCoords.y, time: Date.now() };
     });
+
     d3.select(document).on('pointermove', (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY };
         mCurrentMousePosistion = screenCoords;
-
-        mCanvasController.onPointerMove(screenCoords, mCurrentToolState);
-        mFdlViewController.onPointerMove(screenCoords, mCurrentToolState);
+        mDashboard.onPointerMove(screenCoords, mCurrentToolState);
     });
 
     d3.select(document).on('pointerup', (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY };
-        let responses = [];
-        responses.push(mCanvasController.onPointerUp(screenCoords, mCurrentToolState));
-        responses.push(mFdlViewController.onPointerUp(screenCoords, mCurrentToolState));
-        responses.filter(r => r).forEach(response => {
-            if (response.type == EventResponse.CONTEXT_MENU_GROUP) {
-                let buttons = []
-                Object.values(ChannelType).forEach(channelType => {
-                    if (!response.group.mappings.find(m => m.channelType == channelType)) {
-                        let button = Object.entries(ContextButtonToChannelType).find(e => e[1] == channelType)[0];
-                        buttons.push(button);
-                    }
-                });
-                if (buttons.length > 0) {
-                    mContextMenu.showContextMenu(screenCoords, buttons, (buttonId) => {
-                        mNewDimentionCallback(response.group.id, ContextButtonToChannelType[buttonId]);
-                        mContextMenu.hideContextMenu();
-                    });
-                }
-            } else if (response.type == EventResponse.CONTEXT_MENU_STROKES) {
-                let buttons = [ContextButtons.MERGE_TO_ELEMENT, ContextButtons.AUTO_MERGE_ELEMENTS]
-                mContextMenu.showContextMenu(screenCoords, buttons, (buttonId) => {
-                    if (buttonId == ContextButtons.MERGE_TO_ELEMENT) {
-                        mMergeStrokesCallback(response.strokes);
-                    } else if (buttonId == ContextButtons.AUTO_MERGE_ELEMENTS) {
-                        mAutoMergeElements(response.strokes);
-                    }
-                });
-            } else if (response.type == EventResponse.CONTEXT_MENU_ELEMENT) {
-                let buttons = [ContextButtons.SPINE, ContextButtons.STYLE_STRIP, ContextButtons.STYLE_STROKES]
-                mContextMenu.showContextMenu(screenCoords, buttons, (buttonId) => {
-                    if (buttonId == ContextButtons.SPINE) {
-                        mCalculateSpineCallback(response.elementId);
-                    } else if (buttonId == ContextButtons.STYLE_STRIP) {
-                        console.error("Impliment me!")
-                    } else if (buttonId == ContextButtons.STYLE_STROKES) {
-                        console.error("Impliment me!")
-                    }
-                });
-            }
-        })
-        releaseState();
+        mDashboard.onPointerUp(screenCoords, mCurrentToolState)
         clearTimeout(mLongPressTimeout);
     });
-
-    mMenuController.setColorChangeCallback((color) => {
-        mCanvasController.setColor(color);
-    })
-
-    mMenuController.setPauseCallback((pause) => {
-        pause ? mFdlViewController.pauseSimulation() : mFdlViewController.runSimulation();
-    })
-
-    let mLockedState = false;
-    function holdState() { mLockedState = true; }
-    function releaseState() {
-        mLockedState = false;
-        updateState();
-    }
-
-    function updateState() {
-        if (mLockedState) return;
-        let keyState = getStateFromInput(mKeysDown);
-        if (keyState != mCurrentToolState) {
-            mMenuController.stateTransition(mCurrentToolState, keyState);
-            mCurrentToolState = keyState;
-        }
-    }
-
-    function getStateFromInput() {
-        let keys = [...mKeysDown];
-        let validStates = mKeyBindingArray;
-        let checkIndex = 1;
-        let found = false;
-        while (keys.length > 0) {
-            if (mKeyBindingArray.filter(i => i[checkIndex] == keys[0]).length > 0) {
-                found = true;
-                validStates = mKeyBindingArray.filter(i => i[checkIndex] == keys[0]);
-                checkIndex++
-            }
-            keys.shift();
-        }
-        if (found) {
-            return validStates.reduce(function (p, c) { return p.length > c.length ? c : p; }, { length: Infinity })[0];
-        } else {
-            return Buttons.SELECTION_BUTTON;
-        }
-    }
 
     /** useful test and development function: */
     // d3.select(document).on('pointerover pointerenter pointerdown pointermove pointerup pointercancel pointerout pointerleave gotpointercapture lostpointercapture abort afterprint animationend animationiteration animationstart beforeprint beforeunload blur canplay canplaythrough change click contextmenu copy cut dblclick drag dragend dragenter dragleave dragover dragstart drop durationchange ended error focus focusin focusout fullscreenchange fullscreenerror hashchange input invalid keydown keypress keyup load loadeddata loadedmetadata loadstart message mousedown mouseenter mouseleave mousemove mouseover mouseout mouseup mousewheel offline online open pagehide pageshow paste pause play playing popstate progress ratechange resize reset scroll search seeked seeking select show stalled storage submit suspend timeupdate toggle touchcancel touchend touchmove touchstart transitionend unload volumechange waiting wheel', function (e) {
     //     console.log(e.type, e, { x: e.clientX, y: e.clientY }, screenToModelCoords({ x: e.clientX, y: e.clientY }))
     // });
-
-    return {
-        setUndoCallback: func => mUndoCallback = func,
-        setRedoCallback: func => mRedoCallback = func,
-        setDeleteCallback: func => mDeleteCallback = func,
-        setNewDimentionCallback: func => mNewDimentionCallback = func,
-        setMergeStrokesCallback: func => mMergeStrokesCallback = func,
-        setAutoMergeElements: func => mAutoMergeElements = func,
-        setCalculateSpineCallback: func => mCalculateSpineCallback = func,
-    }
 }
 

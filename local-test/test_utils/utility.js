@@ -65,19 +65,19 @@ function makeModel(version = 0) {
 
 function drawStroke(integrationEnv, path) {
     integrationEnv.d3.getCallbacks()['keydown']({ key: "d" });
-    drag(integrationEnv, "#stroke-view", path);
+    drag(integrationEnv, "#canvas-view-container", path);
     integrationEnv.d3.getCallbacks()['keyup']({ key: "d" });
 }
 
 function drawSelection(integrationEnv, path) {
     integrationEnv.d3.getCallbacks()['keydown']({ key: "s" });
-    drag(integrationEnv, "#stroke-view", path);
+    drag(integrationEnv, "#canvas-view-container", path);
     integrationEnv.d3.getCallbacks()['keyup']({ key: "s" });
 }
 
 function drag(integrationEnv, id, path) {
     let offset = { x: 0, y: 0 }
-    if (id == "#fdl-view") offset.x += window.innerWidth / 2;
+    if (id == "#fdl-view-container") offset.x += window.innerWidth / 2;
 
     let start = { clientX: path[0].x + offset.x, clientY: path[0].y + offset.y };
     let end = { clientX: path[path.length - 1].x + offset.x, clientY: path[path.length - 1].y + offset.y };
@@ -93,7 +93,7 @@ function drag(integrationEnv, id, path) {
 
 function click(integrationEnv, id, pos) {
     let offset = { x: 0, y: 0 }
-    if (id == "#fdl-view") offset.x += window.innerWidth / 2;
+    if (id == "#fdl-view-container") offset.x += window.innerWidth / 2;
 
     integrationEnv.d3.select('#interface-container').select('#interface-svg').getCallbacks()['pointerdown']({ clientX: pos.x + offset.x, clientY: pos.y + offset.y });
     integrationEnv.d3.getCallbacks()['pointerup']({ clientX: pos.x + offset.x, clientY: pos.y + offset.y });
@@ -101,7 +101,7 @@ function click(integrationEnv, id, pos) {
 
 function mouseOver(integrationEnv, id, point) {
     let offset = { x: 0, y: 0 }
-    if (id == "#fdl-view") offset.x += window.innerWidth / 2;
+    if (id == "#fdl-view-container") offset.x += window.innerWidth / 2;
 
     integrationEnv.d3.getCallbacks()['pointermove']({ clientX: point.x + offset.x, clientY: point.y + offset.y });
 }

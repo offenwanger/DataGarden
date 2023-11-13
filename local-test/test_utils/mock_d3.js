@@ -102,12 +102,12 @@ function MockElement(type) {
     }
     this.getBoundingClientRect = function () {
         let x = 0, y = 0;
-        if (d3.getRoot().select("#stroke-view").select('.canvas-container').select('.interaction-canvas') == this ||
-            d3.getRoot().select("#stroke-view").select('.canvas-container').select('.interface-canvas') == this) {
+        if (d3.getRoot().select("#canvas-view-container").select('.canvas-container').select('.interaction-canvas') == this ||
+            d3.getRoot().select("#canvas-view-container").select('.canvas-container').select('.interface-canvas') == this) {
             // x and y are 0, that's fine
-        } else if (d3.getRoot().select("#fdl-view").select('.canvas-container').select('.interaction-canvas') == this ||
-            d3.getRoot().select("#fdl-view").select('.canvas-container').select('.interface-canvas') == this) {
-            x = d3.getRoot().select("#fdl-view").select('.canvas-container').select('.interface-canvas').attr('width')
+        } else if (d3.getRoot().select("#fdl-view-container").select('.canvas-container').select('.interaction-canvas') == this ||
+            d3.getRoot().select("#fdl-view-container").select('.canvas-container').select('.interface-canvas') == this) {
+            x = d3.getRoot().select("#fdl-view-container").select('.canvas-container').select('.interface-canvas').attr('width')
         } else {
             console.error("Unexpected!")
         }
@@ -252,8 +252,8 @@ module.exports = function (jspreadsheet) {
     mJspreadsheet = jspreadsheet;
     let rootNode = new MockElement();
     let forceSim = new mockForceSim();
-    rootNode.append('div').attr("id", "stroke-view").append(new MockElement().classed("canvas-container", true));
-    rootNode.append('div').attr("id", "fdl-view").append(new MockElement().classed("canvas-container", true));
+    rootNode.append('div').attr("id", "canvas-view-container").append(new MockElement().classed("canvas-container", true));
+    rootNode.append('div').attr("id", "fdl-view-container").append(new MockElement().classed("canvas-container", true));
     rootNode.append('div').attr("id", "color-container");
     rootNode.append('div').attr("id", "interface-container");
 

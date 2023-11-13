@@ -54,3 +54,9 @@ const EventResponse = {
     CONTEXT_MENU_STROKES: 'contextMenuStrokeSelection',
     CONTEXT_MENU_ELEMENT: 'contextMenuElement'
 }
+
+const Tab = {
+    PARENT: "parent",
+    LEGEND: "legend",
+    TABLE: "table",
+}

@@ -34,7 +34,7 @@ describe('FDL View Controller Test', function () {
             assert.equal(elements.length, 2);
 
             utility.clickMenuButton(integrationEnv, "#pause-button");
-            utility.drag(integrationEnv, "#fdl-view", [d3.getPosition(elements[0].id), d3.getPosition(elements[1].id)])
+            utility.drag(integrationEnv, "#fdl-view-container", [d3.getPosition(elements[0].id), d3.getPosition(elements[1].id)])
 
             assert.equal(model().getElements().length, 1);
             assert.equal(model().getElements()[0].strokes.length, 2);
@@ -49,8 +49,8 @@ describe('FDL View Controller Test', function () {
 
             utility.clickMenuButton(integrationEnv, "#pause-button");
             let elements = model().getElements();
-            utility.drag(integrationEnv, "#fdl-view", [d3.getPosition(elements[1].id), d3.getPosition(elements[0].id)])
-            utility.drag(integrationEnv, "#fdl-view", [d3.getPosition(elements[2].id), d3.getPosition(elements[0].id)])
+            utility.drag(integrationEnv, "#fdl-view-container", [d3.getPosition(elements[1].id), d3.getPosition(elements[0].id)])
+            utility.drag(integrationEnv, "#fdl-view-container", [d3.getPosition(elements[2].id), d3.getPosition(elements[0].id)])
 
             d3.tick();
 
@@ -58,8 +58,8 @@ describe('FDL View Controller Test', function () {
             assert.equal(model().getElements()[0].strokes.length, 3);
 
             // dbl click
-            utility.click(integrationEnv, "#fdl-view", d3.getPosition(elements[0].id));
-            utility.click(integrationEnv, "#fdl-view", d3.getPosition(elements[0].id));
+            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(elements[0].id));
+            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(elements[0].id));
 
             d3.tick();
 
@@ -77,7 +77,7 @@ describe('FDL View Controller Test', function () {
             d3.tick();
 
             let elements = integrationEnv.instances.ModelController.getModel().getElements();
-            utility.drag(integrationEnv, "#fdl-view", [d3.getLinkPosition(elements[0].id), d3.getPosition(elements[1].id)])
+            utility.drag(integrationEnv, "#fdl-view-container", [d3.getLinkPosition(elements[0].id), d3.getPosition(elements[1].id)])
 
             assert.equal(model().getElements().length, 2);
             expect(model().getElements().map(e => e.parentId ? true : false)).to.eql([false, true]);
@@ -95,25 +95,25 @@ describe('FDL View Controller Test', function () {
 
             utility.clickMenuButton(integrationEnv, "#pause-button");
             let elements = model().getElements();
-            utility.drag(integrationEnv, "#fdl-view", [d3.getPosition(elements[1].id), d3.getPosition(elements[0].id)])
+            utility.drag(integrationEnv, "#fdl-view-container", [d3.getPosition(elements[1].id), d3.getPosition(elements[0].id)])
 
             d3.tick();
 
             let pos = d3.getPosition(model().getElements()[0].id);
             for (i = 20; i >= 0; i--) {
-                utility.mouseOver(integrationEnv, "#fdl-view", { x: pos.x, y: pos.y - i });
+                utility.mouseOver(integrationEnv, "#fdl-view-container", { x: pos.x, y: pos.y - i });
             }
 
             // dbl click
-            utility.click(integrationEnv, "#fdl-view", d3.getPosition(elements[0].id));
-            utility.click(integrationEnv, "#fdl-view", d3.getPosition(elements[0].id));
+            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(elements[0].id));
+            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(elements[0].id));
 
             d3.tick();
 
 
             pos = d3.getPosition(model().getElements()[0].strokes[0].id);
             for (i = 20; i >= 0; i--) {
-                utility.mouseOver(integrationEnv, "#fdl-view", { x: pos.x, y: pos.y - i });
+                utility.mouseOver(integrationEnv, "#fdl-view-container", { x: pos.x, y: pos.y - i });
             }
 
             let pixels = utility.getCanvas("stroke", 'interface').getContext("2d").getImageData(0, 0, 100, 100).data;
@@ -127,7 +127,7 @@ describe('FDL View Controller Test', function () {
             d3.tick();
 
             let elements = integrationEnv.instances.ModelController.getModel().getElements();
-            utility.drag(integrationEnv, "#fdl-view", [d3.getLinkPosition(elements[0].id), d3.getPosition(elements[1].id)])
+            utility.drag(integrationEnv, "#fdl-view-container", [d3.getLinkPosition(elements[0].id), d3.getPosition(elements[1].id)])
 
             d3.tick();
 
@@ -135,7 +135,7 @@ describe('FDL View Controller Test', function () {
             expect(model().getElements().map(e => e.parentId ? true : false)).to.eql([false, true]);
 
             // move the mouse away and check that there is no interface
-            utility.mouseOver(integrationEnv, "#fdl-view", { x: 100, y: 100 });
+            utility.mouseOver(integrationEnv, "#fdl-view-container", { x: 100, y: 100 });
             d3.tick();
             let pixels = utility.getCanvas("fdl", 'interface').getContext("2d").getImageData(0, 0, 100, 100).data;
             assert.equal(pixels.every(v => v == 0), true);
@@ -143,7 +143,7 @@ describe('FDL View Controller Test', function () {
             // move the mouse over the parent triangle and check that it higlights
             let pos = d3.getLinkPosition(model().getElements().find(e => !e.parentId).id);
             for (i = 20; i >= 0; i--) {
-                utility.mouseOver(integrationEnv, "#fdl-view", { x: pos.x, y: pos.y - i });
+                utility.mouseOver(integrationEnv, "#fdl-view-container", { x: pos.x, y: pos.y - i });
                 d3.tick();
             }
             pixels = utility.getCanvas("fdl", 'interface').getContext("2d").getImageData(pos.x, pos.y, 1, 1).data;
@@ -152,7 +152,7 @@ describe('FDL View Controller Test', function () {
             // move the mouse over the child triangle and check that it higlights
             pos = d3.getLinkPosition(model().getElements().find(e => e.parentId).id);
             for (i = 20; i >= 0; i--) {
-                utility.mouseOver(integrationEnv, "#fdl-view", { x: pos.x, y: pos.y - i });
+                utility.mouseOver(integrationEnv, "#fdl-view-container", { x: pos.x, y: pos.y - i });
                 d3.tick();
             }
 
@@ -172,7 +172,7 @@ describe('FDL View Controller Test', function () {
 
             utility.clickMenuButton(integrationEnv, "#pause-button");
             let elements = model().getElements();
-            utility.drag(integrationEnv, "#fdl-view", [d3.getPosition(elements[1].id), d3.getPosition(elements[0].id)])
+            utility.drag(integrationEnv, "#fdl-view-container", [d3.getPosition(elements[1].id), d3.getPosition(elements[0].id)])
 
             utility.clickMenuButton(integrationEnv, "#pause-button");
             d3.tick();
@@ -181,14 +181,14 @@ describe('FDL View Controller Test', function () {
             assert.equal(model().getElements().length, 2);
 
             // dbl click
-            utility.click(integrationEnv, "#fdl-view", d3.getPosition(elements[0].id));
-            utility.click(integrationEnv, "#fdl-view", d3.getPosition(elements[0].id));
+            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(elements[0].id));
+            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(elements[0].id));
 
             utility.clickMenuButton(integrationEnv, "#pause-button");
             d3.tick();
             utility.clickMenuButton(integrationEnv, "#pause-button");
 
-            utility.drag(integrationEnv, "#fdl-view", [d3.getPosition(model().getElements()[0].strokes[1].id), { x: 20, y: 20 }, { x: 100, y: 100 }])
+            utility.drag(integrationEnv, "#fdl-view-container", [d3.getPosition(model().getElements()[0].strokes[1].id), { x: 20, y: 20 }, { x: 100, y: 100 }])
 
             utility.clickMenuButton(integrationEnv, "#pause-button");
             d3.tick();
@@ -213,7 +213,7 @@ describe('FDL View Controller Test', function () {
                 d3.getPosition(elements[0].id),
                 d3.getPosition(elements[1].id)
             ])
-            utility.click(integrationEnv, "#fdl-view", inBetweenNodes);
+            utility.click(integrationEnv, "#fdl-view-container", inBetweenNodes);
 
             utility.clickContextMenuButton(integrationEnv, "#" + ContextButtons.ADD_DIMENTION_FOR_COLOR);
 
@@ -222,9 +222,9 @@ describe('FDL View Controller Test', function () {
             assert.equal(model().getDimentions().length, 1)
 
             let dimention = model().getDimentions()[0];
-            utility.click(integrationEnv, "#fdl-view", d3.getPosition(dimention.id));
+            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(dimention.id));
             d3.tick(); // needed so that the interaction targets redraw
-            utility.click(integrationEnv, "#fdl-view", d3.getPosition(dimention.id));
+            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(dimention.id));
             d3.tick();
 
             assert.equal(model().getGroups().length, 1)

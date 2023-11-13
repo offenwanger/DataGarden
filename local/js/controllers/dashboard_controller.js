@@ -1,16 +1,95 @@
 
 function DashboardController() {
+    const TAB_HEIGHT = 60;
+
     let mCanvasController = new CanvasController();
+    let mTabController = new TabController();
     let mFdlViewController = new FdlViewController();
 
-    mCanvasController.onResize(window.innerWidth * 0.5, window.innerHeight);
-    mFdlViewController.onResize(window.innerWidth * 0.5, window.innerHeight);
+    let mMenuController = new MenuController();
+    let mContextMenu = new ContextMenu(d3.select('#interface-svg'));
+    let mKeyBinding = new KeyBinding();
 
-    function modelUpdate() {
-        let model = mModelController.getModel();
+    let mModel = new DataModel();
+
+    let mCanvasPercent = 0.5;
+    let mWidth = 0;
+
+    let mToolState = Buttons.SELECTION_BUTTON;
+    let mFdlActive = true;
+
+    let mNewStrokeCallback = () => { };
+    let mParentUpdateCallback = () => { };
+    let mMergeElementCallback = () => { };
+    let mNewElementCallback = () => { };
+    let mMoveElementCallback = () => { };
+    let mMoveStrokeCallback = () => { };
+    let mNewGroupCallback = () => { };
+    let mDeleteCallback = () => { };
+    let mNewDimentionCallback = () => { };
+    let mMergeStrokesCallback = () => { };
+    let mAutoMergeElements = () => { };
+    let mCalculateSpineCallback = () => { };
+    let mUndoCallback = () => { };
+    let mRedoCallback = () => { };
+
+    function modelUpdate(model) {
+        mModel = model;
         mCanvasController.onModelUpdate(model);
         mFdlViewController.onModelUpdate(model);
     }
+
+    function onResize(width, height) {
+        mCanvasController.onResize(mCanvasPercent * width, height);
+        mTabController.onResize((1 - mCanvasPercent) * width, TAB_HEIGHT);
+        mFdlViewController.onResize((1 - mCanvasPercent) * width, height - TAB_HEIGHT);
+        mMenuController.onResize(width, height);
+        mWidth = width;
+    }
+
+    function onPointerDown(screenCoords) {
+        mContextMenu.hideContextMenu();
+        if (screenCoords.x < mWidth * mCanvasPercent) {
+            mCanvasController.onPointerDown(screenCoords, mToolState);
+        } else if (screenCoords.y < TAB_HEIGHT) {
+            mTabController.onPointerDown(screenCoords, mToolState)
+        } else if (mFdlActive) {
+            mFdlViewController.onPointerDown(screenCoords, mToolState)
+        } else {
+            // The table is active and will handle it's own mouse events. I hope.
+        }
+    }
+
+    function onPointerMove(screenCoords) {
+        mCanvasController.onPointerMove(screenCoords, mToolState);
+        mTabController.onPointerMove(screenCoords, mToolState);
+        mFdlViewController.onPointerMove(screenCoords, mToolState);
+    }
+
+    function onPointerUp(screenCoords) {
+        mCanvasController.onPointerUp(screenCoords, mToolState);
+        mTabController.onPointerUp(screenCoords, mToolState);
+        mFdlViewController.onPointerUp(screenCoords, mToolState);
+    }
+
+    function onDblClick(screenCoords) {
+
+    }
+
+    function onLongPress(screenCoords) {
+
+    }
+
+    function onKeyStateChange(keysDown) {
+        let state = mKeyBinding.getState(keysDown);
+        mMenuController.stateTransition(mToolState, state);
+        mToolState = state;
+    }
+
+    mTabController.setClickCallback(tabId => {
+        mTabController.setActiveTab(tabId);
+        console.error("Switch the tab!")
+    })
 
     mCanvasController.setHighlightCallback((selection) => {
         mFdlViewController.highlight(selection);
@@ -22,11 +101,83 @@ function DashboardController() {
         mVersionController.stack(selection);
     })
 
+    function contextMenuCallback(screenCoords, selection) {
+        if (!selection) { console.error("No selection provided!"); return; }
+        if (Array.isArray(selection) && IdUtil.isType(selection[0], Data.Stroke)) {
+            let buttons = [ContextButtons.MERGE_TO_ELEMENT, ContextButtons.AUTO_MERGE_ELEMENTS]
+            mContextMenu.showContextMenu(screenCoords, buttons, (buttonId) => {
+                if (buttonId == ContextButtons.MERGE_TO_ELEMENT) {
+                    mMergeStrokesCallback(selection);
+                } else if (buttonId == ContextButtons.AUTO_MERGE_ELEMENTS) {
+                    mAutoMergeElements(selection);
+                }
+            });
+        } else if (IdUtil.isType(selection, Data.Group)) {
+            let group = mModel.getGroup(selection);
+            if (!group) { console.error("Invalid selection", selection); return; }
+            let buttons = []
+            Object.values(ChannelType).forEach(channelType => {
+                if (!group.mappings.find(m => m.channelType == channelType)) {
+                    let button = Object.entries(ContextButtonToChannelType).find(e => e[1] == channelType)[0];
+                    buttons.push(button);
+                }
+            });
+            if (buttons.length > 0) {
+                mContextMenu.showContextMenu(screenCoords, buttons, (buttonId) => {
+                    mNewDimentionCallback(selection, ContextButtonToChannelType[buttonId]);
+                    mContextMenu.hideContextMenu();
+                });
+            }
+        } else if (IdUtil.isType(selection, Data.Element)) {
+            let buttons = [ContextButtons.SPINE, ContextButtons.STYLE_STRIP, ContextButtons.STYLE_STROKES]
+            mContextMenu.showContextMenu(screenCoords, buttons, (buttonId) => {
+                if (buttonId == ContextButtons.SPINE) {
+                    mCalculateSpineCallback(selection);
+                } else if (buttonId == ContextButtons.STYLE_STRIP) {
+                    console.error("Impliment me!")
+                } else if (buttonId == ContextButtons.STYLE_STROKES) {
+                    console.error("Impliment me!")
+                }
+            });
+        }
+    }
+    mCanvasController.setContextMenuCallback(contextMenuCallback);
+    mFdlViewController.setContextMenuCallback(contextMenuCallback);
+
     mFdlViewController.setHighlightCallback((selection) => {
         mCanvasController.highlight(selection);
     })
 
+    mMenuController.setColorChangeCallback((color) => {
+        mCanvasController.setColor(color);
+    })
+
+    mMenuController.setPauseCallback((pause) => {
+        pause ? mFdlViewController.pauseSimulation() : mFdlViewController.runSimulation();
+    })
+
     return {
         modelUpdate,
+        onResize,
+        onPointerDown,
+        onPointerMove,
+        onPointerUp,
+        onDblClick,
+        onLongPress,
+        onKeyStateChange,
+        setNewStrokeCallback: (func) => mCanvasController.setNewStrokeCallback(func),
+        setParentUpdateCallback: (func) => mParentUpdateCallback = func,
+        setMergeElementCallback: (func) => mMergeElementCallback = func,
+        setNewElementCallback: (func) => mNewElementCallback = func,
+        setMoveElementCallback: (func) => mMoveElementCallback = func,
+        setMoveStrokeCallback: (func) => mMoveStrokeCallback = func,
+        setNewGroupCallback: (func) => mNewGroupCallback = func,
+        setDeleteCallback: (func) => mDeleteCallback = func,
+        setNewDimentionCallback: (func) => mNewDimentionCallback = func,
+        setMergeStrokesCallback: (func) => mMergeStrokesCallback = func,
+        setAutoMergeElements: (func) => mAutoMergeElements = func,
+        setCalculateSpineCallback: (func) => mCalculateSpineCallback = func,
+        setUndoCallback: (func) => mUndoCallback = func,
+        setRedoCallback: (func) => mRedoCallback = func,
     }
 }

@@ -28,14 +28,12 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
     const TARGET_INCREASE = 5;
     let mScale = 1;
 
-    function reset(width, height, zoomTransform) {
+    function reset(zoomTransform) {
         ctx.reset();
-        ctx.clearRect(0, 0, width, height);
         ctx.translate(zoomTransform.x, zoomTransform.y)
         ctx.scale(zoomTransform.k, zoomTransform.k)
 
         intCtx.reset();
-        intCtx.clearRect(0, 0, width, height);
         intCtx.translate(zoomTransform.x, zoomTransform.y)
         intCtx.scale(zoomTransform.k, zoomTransform.k)
         intCtx.imageSmoothingEnabled = false;
@@ -43,9 +41,8 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         mScale = zoomTransform.k;
     }
 
-    function resetInterface(width, height, zoomTransform) {
+    function resetInterface(zoomTransform) {
         intfCtx.reset();
-        intfCtx.clearRect(0, 0, width, height);
         intfCtx.translate(zoomTransform.x, zoomTransform.y)
         intfCtx.scale(zoomTransform.k, zoomTransform.k)
     }

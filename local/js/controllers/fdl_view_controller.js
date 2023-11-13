@@ -36,6 +36,7 @@ function FdlViewController() {
     let mMoveElementCallback = () => { }
     let mMoveStrokeCallback = () => { }
     let mNewGroupCallback = () => { }
+    let mContextMenuCallback = () => { }
 
     let mModel = new DataModel();
 
@@ -50,11 +51,11 @@ function FdlViewController() {
     let mData = { nodes: [], links: [], clusters: {} };
     let mColorMap = d3.scaleOrdinal(d3.schemeCategory10);
 
-    let mCanvas = d3.select('#fdl-view').select('.canvas-container').append('canvas')
+    let mCanvas = d3.select('#fdl-view-container').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
-    let mInterfaceCanvas = d3.select("#fdl-view").select('.canvas-container').append('canvas')
+    let mInterfaceCanvas = d3.select("#fdl-view-container").select('.canvas-container').append('canvas')
         .classed('interface-canvas', true);
-    let mInteractionCanvas = d3.select("#fdl-view").select('.canvas-container').append('canvas')
+    let mInteractionCanvas = d3.select("#fdl-view-container").select('.canvas-container').append('canvas')
         .style("opacity", 0)
         .classed('interaction-canvas', true);
     let mSimulation = d3.forceSimulation()
@@ -391,7 +392,7 @@ function FdlViewController() {
                 mContextItem = interaction.id;
                 let group = mModel.getGroup(interaction.id);
                 if (!group) { console.error("Invalid group id!", interaction.id); return; };
-                return { type: EventResponse.CONTEXT_MENU_GROUP, group }
+                mContextMenuCallback(screenCoords, group.id)
             }
         }
 
@@ -401,7 +402,7 @@ function FdlViewController() {
     }
 
     function onResize(width, height) {
-        d3.select("#fdl-view")
+        d3.select("#fdl-view-container")
             .style('width', width + "px")
             .style('height', height + "px");
         mCanvas
@@ -450,7 +451,7 @@ function FdlViewController() {
     }
 
     function draw() {
-        mDrawingUtil.reset(mCanvas.attr("width"), mCanvas.attr("height"), mZoomTransform);
+        mDrawingUtil.reset(mZoomTransform);
 
         if (mShowGroups) {
             getOrderedClusters().forEach((c) => {
@@ -518,7 +519,7 @@ function FdlViewController() {
 
     // interface is separate so we can redraw highlights without redrawing everything
     function drawInterface() {
-        mDrawingUtil.resetInterface(mCanvas.attr("width"), mCanvas.attr("height"), mZoomTransform);
+        mDrawingUtil.resetInterface(mZoomTransform);
         mHighlightObjects.forEach(id => {
             let node = mData.nodes.find(n => n.id == id);
             if (!node) {
@@ -734,5 +735,6 @@ function FdlViewController() {
         setMoveElementCallback: (func) => mMoveElementCallback = func,
         setMoveStrokeCallback: (func) => mMoveStrokeCallback = func,
         setNewGroupCallback: (func) => mNewGroupCallback = func,
+        setContextMenuCallback: (func) => mContextMenuCallback = func,
     }
 }

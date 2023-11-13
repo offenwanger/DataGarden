@@ -1,9 +1,10 @@
 document.addEventListener('DOMContentLoaded', function (e) {
     let mModelController = new ModelController();
-    let mEventManager = new EventManager(mCanvasController, mFdlViewController);
-    let mVersionController = new VersionController();
-
     let mDashboardController = new DashboardController();
+
+    new EventManager(mDashboardController);
+
+    let mVersionController = new VersionController();
 
     let mLastStrokeStacked = Date.now();
     mVersionController.setStash(new MemoryStash());
@@ -24,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             mModelController.addElement(model.getGroups().find(g => !g.parentId).id, element);
         }
 
-        mDashboardContoller.modelUpdate(mModelController.getModel());
+        mDashboardController.modelUpdate(mModelController.getModel());
 
         if (Date.now() - mLastStrokeStacked > 5000) {
             mVersionController.stack(mModelController.getModel());
@@ -34,22 +35,22 @@ document.addEventListener('DOMContentLoaded', function (e) {
         }
     })
 
-    mDashboardContoller.setParentUpdateCallback((elementId, parentElementId) => {
+    mDashboardController.setParentUpdateCallback((elementId, parentElementId) => {
         ModelUtil.updateParent(parentElementId, elementId, mModelController)
         ModelUtil.clearEmptyGroups(mModelController);
 
         mVersionController.stack(mModelController.getModel());
-        mDashboardContoller.modelUpdate(mModelController.getModel());
+        mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mDashboardContoller.setMergeElementCallback((selection, mergeElementId) => {
+    mDashboardController.setMergeElementCallback((selection, mergeElementId) => {
         ModelUtil.mergeElements(mModelController, selection, mergeElementId);
 
         mVersionController.stack(mModelController.getModel());
-        mDashboardContoller.modelUpdate(mModelController.getModel());
+        mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mDashboardContoller.setNewElementCallback((groupId, childStrokeId) => {
+    mDashboardController.setNewElementCallback((groupId, childStrokeId) => {
         let stroke = mModelController.getModel().getStroke(childId);
         let element = new Data.Element();
         element.strokes.push(stroke);
@@ -58,28 +59,28 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mModelController.addElement(groupId, element);
 
         mVersionController.stack(mModelController.getModel());
-        mDashboardContoller.modelUpdate(mModelController.getModel());
+        mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mDashboardContoller.setMoveElementCallback((groupId, elementId) => {
+    mDashboardController.setMoveElementCallback((groupId, elementId) => {
         let element = mModelController.getModel().getElement(elementId);
         mModelController.removeElement(elementId);
         mModelController.addElement(groupId, element);
 
         mVersionController.stack(mModelController.getModel());
-        mDashboardContoller.modelUpdate(mModelController.getModel());
+        mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mDashboardContoller.setMoveStrokeCallback((elementId, strokeId) => {
+    mDashboardController.setMoveStrokeCallback((elementId, strokeId) => {
         let stroke = mModelController.getModel().getStroke(strokeId);
         mModelController.removeStroke(stroke);
         mModelController.addStroke(elementId, stroke);
 
         mVersionController.stack(mModelController.getModel());
-        mDashboardContoller.modelUpdate(mModelController.getModel());
+        mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mDashboardContoller.setNewGroupCallback((childId) => {
+    mDashboardController.setNewGroupCallback((childId) => {
         let element;
         if (IdUtil.isType(childId, Data.Stroke)) {
             let stroke = mModelController.getModel().getStroke(childId);
@@ -99,38 +100,38 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mModelController.addGroup(group);
 
         mVersionController.stack(mModelController.getModel());
-        mDashboardContoller.modelUpdate(mModelController.getModel());
+        mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mEventManager.setUndoCallback(async () => {
+    mDashboardController.setUndoCallback(async () => {
         let obj = await mVersionController.reverse();
         if (obj) {
             if (Array.isArray(obj)) {
                 // update the selection
             } else {
                 mModelController.setModel(DataModel.fromObject(obj));
-                mDashboardContoller.modelUpdate(mModelController.getModel());
+                mDashboardController.modelUpdate(mModelController.getModel());
             }
         }
     })
 
-    mEventManager.setRedoCallback(async () => {
+    mDashboardController.setRedoCallback(async () => {
         let obj = await mVersionController.advance();
         if (obj) {
             if (Array.isArray(obj)) {
                 // update the selection
             } else {
                 mModelController.setModel(DataModel.fromObject(obj));
-                mDashboardContoller.modelUpdate(mModelController.getModel());
+                mDashboardController.modelUpdate(mModelController.getModel());
             }
         }
     })
 
-    mDashboardContoller.setDeleteCallback(() => {
+    mDashboardController.setDeleteCallback((selection) => {
         // Delete everything in the selection
     })
 
-    mDashboardContoller.setNewDimentionCallback((groupId, channelType) => {
+    mDashboardController.setNewDimentionCallback((groupId, channelType) => {
         if (!IdUtil.isType(groupId, Data.Group)) { console.error("Bad state, not a group", groupId); return; }
         let group = mModelController.getModel().getGroup(groupId);
         if (!group) { console.error("Bad state, group not found", groupId); return; }
@@ -162,10 +163,10 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mModelController.updateGroup(group);
 
         mVersionController.stack(mModelController.getModel());
-        mDashboardContoller.modelUpdate(mModelController.getModel());
+        mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mDashboardContoller.setMergeStrokesCallback((strokeIds) => {
+    mDashboardController.setMergeStrokesCallback((strokeIds) => {
         let model = mModelController.getModel();
         let strokes = strokeIds.map(s => model.getStroke(s));
 
@@ -202,10 +203,10 @@ document.addEventListener('DOMContentLoaded', function (e) {
         ModelUtil.clearEmptyGroups(mModelController);
 
         mVersionController.stack(mModelController.getModel());
-        mDashboardContoller.modelUpdate(mModelController.getModel());
+        mDashboardController.modelUpdate(mModelController.getModel());
     });
 
-    mEventManager.setAutoMergeElements((strokeIds) => {
+    mDashboardController.setAutoMergeElements((strokeIds) => {
         let elements = DataUtil.unique(strokeIds.map(s => mModelController.getModel().getElementForStroke(s)));
         ServerController.suggestGrouping(elements).then(grouping => {
             let elements = mModelController.getModel().getElements();
@@ -247,13 +248,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 }
             });
             if (hasChanged) {
-                mDashboardContoller.modelUpdate(mModelController.getModel());
+                mDashboardController.modelUpdate(mModelController.getModel());
                 mVersionController.stack(mModelController.getModel());
             }
         });
     });
 
-    mEventManager.setCalculateSpineCallback((elementId) => {
+    mDashboardController.setCalculateSpineCallback((elementId) => {
         let element = mModelController.getModel().getElement(elementId);
         if (!element) { console.error("Invalid element id", elementId); return; }
         ServerController.getSpine(element).then(result => {
@@ -263,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 element.spine = result;
                 mModelController.updateElement(element);
                 mVersionController.stack(mModelController.getModel());
-                mDashboardContoller.modelUpdate(mModelController.getModel());
+                mDashboardController.modelUpdate(mModelController.getModel());
             }
         });
     });

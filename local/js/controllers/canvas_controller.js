@@ -8,11 +8,11 @@ function CanvasController() {
 
     const SELECTION_BUBBLE_COLOR = "#55555555";
 
-    let mCanvas = d3.select('#stroke-view').select('.canvas-container').append('canvas')
+    let mCanvas = d3.select('#canvas-view-container').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
-    let mInterfaceCanvas = d3.select("#stroke-view").select('.canvas-container').append('canvas')
+    let mInterfaceCanvas = d3.select("#canvas-view-container").select('.canvas-container').append('canvas')
         .classed('interface-canvas', true);
-    let mInteractionCanvas = d3.select("#stroke-view").select('.canvas-container').append('canvas')
+    let mInteractionCanvas = d3.select("#canvas-view-container").select('.canvas-container').append('canvas')
         .style("opacity", 0)
         .classed('interaction-canvas', true);
 
@@ -25,6 +25,7 @@ function CanvasController() {
     let mNewStrokeCallback = () => { };
     let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
+    let mContextMenuCallback = () => { };
 
     let mZoomTransform = d3.zoomIdentity;
     let mBrushActive = false;
@@ -200,13 +201,13 @@ function CanvasController() {
                     let target = getInteractionTarget(screenCoords);
                     if (target) {
                         let element = mModel.getElementForStroke(target);
-                        return { type: EventResponse.CONTEXT_MENU_ELEMENT, elementId: element.id };
+                        mContextMenuCallback(screenCoords, element.id)
                     }
                 }
             } else if (interaction && interaction.type == DRAGGING) {
                 let moveDist = MathUtil.length(MathUtil.subtract(interaction.start, screenCoords));
                 if (moveDist < 5) {
-                    return { type: EventResponse.CONTEXT_MENU_STROKES, strokes: mSelectionIds };
+                    mContextMenuCallback(screenCoords, mSelectionIds);
                 } else {
                     console.error("Moved selection, impliment!");
                 }
@@ -216,19 +217,19 @@ function CanvasController() {
         }
     }
 
-    function onResize(height, width) {
-        d3.select("#stroke-view")
-            .style('width', height + "px")
-            .style('height', width + "px");
+    function onResize(width, height) {
+        d3.select("#canvas-view-container")
+            .style('width', width + "px")
+            .style('height', height + "px");
         mCanvas
-            .attr('width', height)
-            .attr('height', width);
+            .attr('width', width)
+            .attr('height', height);
         mInterfaceCanvas
-            .attr('width', height)
-            .attr('height', width);
+            .attr('width', width)
+            .attr('height', height);
         mInteractionCanvas
-            .attr('width', height)
-            .attr('height', width);
+            .attr('width', width)
+            .attr('height', height);
         draw();
         drawInterface();
     }
@@ -247,7 +248,7 @@ function CanvasController() {
     }
 
     function draw() {
-        mDrawingUtil.reset(mCanvas.attr("width"), mCanvas.attr("height"), mZoomTransform);
+        mDrawingUtil.reset(mZoomTransform);
         mModel.getElements().forEach(elem => {
             elem.strokes.forEach(stroke => {
                 mDrawingUtil.drawStroke(stroke.path, stroke.color, stroke.size, getCode(stroke.id))
@@ -257,7 +258,7 @@ function CanvasController() {
     }
 
     function drawInterface() {
-        mDrawingUtil.resetInterface(mCanvas.attr("width"), mCanvas.attr("height"), mZoomTransform);
+        mDrawingUtil.resetInterface(mZoomTransform);
 
         if (mBrushActive) {
             mDrawingUtil.drawInterfaceStroke(mBrushOptions.currentStroke, mBrushOptions.color, mBrushOptions.size)
@@ -358,5 +359,6 @@ function CanvasController() {
         setNewStrokeCallback: (func) => mNewStrokeCallback = func,
         setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,
+        setContextMenuCallback: (func) => mContextMenuCallback = func,
     }
 }

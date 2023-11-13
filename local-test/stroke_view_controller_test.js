@@ -44,7 +44,7 @@ describe('Stroke View Controller Test', function () {
 
             utility.drawSelection(integrationEnv, [{ x: 10, y: 10 }, { x: 10, y: 90 }, { x: 40, y: 90 }, { x: 40, y: 10 }]);
 
-            utility.click(integrationEnv, "#stroke-view", { x: 20, y: 40 });
+            utility.click(integrationEnv, "#canvas-view-container", { x: 20, y: 40 });
             utility.clickContextMenuButton(integrationEnv, "#" + ContextButtons.MERGE_TO_ELEMENT);
 
             assert.equal(model().getGroups().length, 1);
