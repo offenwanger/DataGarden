@@ -1,8 +1,5 @@
 
 function FdlViewController() {
-    const MODE_STRUCTURE = 'editingStructure';
-    const MODE_DIMENTION = 'editingDimention';
-
     const DRAG_NODE = "draggingNode";
     const DRAG_LINK = "draggingLink";
     const DRAG_BUBBLE = 'draggingBubble'
@@ -11,11 +8,6 @@ function FdlViewController() {
     const TARGET_LINK = 'linkTarget';
     const TARGET_NODE = 'nodeTarget';
     const TARGET_BUBBLE = 'bubbleTarget';
-
-    const MAX_RADIUS = Math.max(Size.ELEMENT_NODE_SIZE, Size.STROKE_NODE_SIZE, Size.DIMENTION_NODE_SIZE);
-
-    const CLUSTER_PADDING = 20
-    const NODE_PADDING = 5
 
     let mShowGroups = true;
     let mShowLinks = true;
@@ -27,7 +19,8 @@ function FdlViewController() {
 
     let mInteraction = null;
 
-    let mMode = MODE_STRUCTURE;
+    let mMode = FdlMode.PARENT;
+    let mActiveDimention = null;
 
     let mHighlightCallback = () => { };
     let mParentElementCallback = () => { };
@@ -60,11 +53,11 @@ function FdlViewController() {
         .classed('interaction-canvas', true);
     let mSimulation = d3.forceSimulation()
         .force("center", d3.forceCenter().x(mWidth / 2).y(mHeight / 2))
-        .force("collide", d3.forceCollide((d) => d.radius + NODE_PADDING))
+        .force("collide", d3.forceCollide((d) => d.radius + Padding.NODE))
         .force("link", d3.forceLink().id(d => d.id))
-        .force("cluster", () => { if (mShowGroups) mData.nodes.filter(n => n.clusters).forEach(d => cluster(d)); })
-        .force("drift", () => { if (mShowLinks) mData.nodes.filter(n => n.treeLevel || n.treeLevel == 0).forEach(d => drift(d)); })
-        .force("tree-collide", () => { mData.nodes.forEach(collide(mSimulation.alpha())); })
+        .force("cluster", () => { if (mShowGroups) mData.nodes.filter(n => n.clusters).forEach(d => SimulationUtil.cluster(d, mSimulation.alpha(), mData)); })
+        .force("drift", () => { if (mShowLinks) mData.nodes.filter(n => n.treeLevel || n.treeLevel == 0).forEach(d => SimulationUtil.drift(d, mSimulation.alpha())); })
+        .force("tree-collide", () => { mData.nodes.forEach(SimulationUtil.collide(mSimulation.alpha(), mData, mWidth, mHeight)); })
         .nodes(mData.nodes, (d) => d.id)
         .alpha(0.3)
         .on("tick", () => { draw(); })
@@ -86,10 +79,16 @@ function FdlViewController() {
         triggerDraw(0.3);
     }
 
+    function setMode(mode, dimenId = null) {
+        mMode = mode;
+        mActiveDimention = dimenId;
+        draw();
+    }
+
     function setupSimulation() {
         let oldData = mData;
         mData = { nodes: [], links: [], clusters: {} };
-        if (mMode == MODE_STRUCTURE) {
+        if (true) {
             mModel.getElements().forEach(element => {
                 if (mExplodedElements.includes(element.id)) {
                     let group = mModel.getGroupForElement(element.id).id;
@@ -457,8 +456,8 @@ function FdlViewController() {
             getOrderedClusters().forEach((c) => {
                 let clusterNodes = mData.nodes.filter(n => n.clusters.includes(c));
                 if (clusterNodes.length == 0) { console.error("Invalid cluster, no nodes", c); return; }
-                let hull = d3.polygonHull(hullPoints(clusterNodes)).map(p => { return { x: p[0], y: p[1] } });
-                mDrawingUtil.drawBubble(hull, mColorMap(cluster), 0.4, getCode(c, TARGET_BUBBLE));
+                let hull = d3.polygonHull(DataUtil.getPaddedPoints(clusterNodes, Padding.NODE)).map(p => { return { x: p[0], y: p[1] } });
+                mDrawingUtil.drawBubble(hull, mColorMap(c.id), 0.4, getCode(c, TARGET_BUBBLE));
             })
         }
 
@@ -525,7 +524,7 @@ function FdlViewController() {
             if (!node) {
                 let clusterNodes = mData.nodes.filter((n) => n.clusters.includes(id));
                 if (clusterNodes.length >= 1) {
-                    let hull = d3.polygonHull(hullPoints(clusterNodes)).map(p => { return { x: p[0], y: p[1] } });
+                    let hull = d3.polygonHull(DataUtil.getPaddedPoints(clusterNodes, Padding.NODE)).map(p => { return { x: p[0], y: p[1] } });
                     mDrawingUtil.highlightBubble(hull, "red");
                 }
             } else {
@@ -637,89 +636,9 @@ function FdlViewController() {
         }
     }
 
-    function drift(d) {
-        let divisionSize = Size.ELEMENT_NODE_SIZE * 10;
-        let yTarget = (d.treeLevel + 0.5) * divisionSize;
-
-        let y = d.y - yTarget;
-        let l = y;
-        let r = d.radius + divisionSize / 3;
-        if (l != r) {
-            l = (l - r) / l * mSimulation.alpha();
-            d.y -= y *= l;
-        }
-    }
-
-    function cluster(d) {
-        // https://bl.ocks.org/mbostock/7881887
-        d.clusters.forEach(c => {
-            const clusterHeart = mData.clusters[c];
-            if (clusterHeart === d || c == 0) return;
-            let x = d.x - clusterHeart.x;
-            let y = d.y - clusterHeart.y;
-            let l = Math.sqrt(x * x + y * y);
-            let r = d.radius + clusterHeart.radius + 3;
-            // if they aren't at min dist
-            if (l != r) {
-                l = (l - r) / l * mSimulation.alpha();
-                d.x -= x *= l;
-                d.y -= y *= l;
-                clusterHeart.x += x;
-                clusterHeart.y += y;
-            }
-
-        })
-    }
-
-    function collide(alpha) {
-        // https://bl.ocks.org/mbostock/7882658
-        const quadtree = d3.quadtree()
-            .x(function (d) { return d.x; })
-            .y(function (d) { return d.y; })
-            .extent([[0, 0], [mWidth, mHeight]])
-            .addAll(mData.nodes);
-        return function (d) {
-            let r = d.radius + (MAX_RADIUS * 8) + Math.max(NODE_PADDING, CLUSTER_PADDING),
-                nx1 = d.x - r,
-                nx2 = d.x + r,
-                ny1 = d.y - r,
-                ny2 = d.y + r;
-            quadtree.visit(function (quad, x1, y1, x2, y2) {
-                let data = quad.data;
-                if (data && data !== d) {
-                    let x = d.x - data.x,
-                        y = d.y - data.y,
-                        l = Math.sqrt(x * x + y * y),
-                        r = d.radius + data.radius + (d.clusters.some(c => { data.clusters.includes(c) }) ? NODE_PADDING : CLUSTER_PADDING);
-                    if (l < r) {
-                        l = (l - r) / l * alpha;
-                        d.x -= x *= l;
-                        d.y -= y *= l;
-                        data.x += x;
-                        data.y += y;
-                    }
-                }
-                return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
-            });
-        };
-    }
-
-    function hullPoints(data) {
-        let pointArr = [];
-        data.forEach(d => {
-            const pad = d.radius + NODE_PADDING;
-            pointArr = pointArr.concat([
-                [d.x - pad, d.y - pad],
-                [d.x - pad, d.y + pad],
-                [d.x + pad, d.y - pad],
-                [d.x + pad, d.y + pad]
-            ]);
-        });
-        return pointArr;
-    }
-
     return {
         onModelUpdate,
+        setMode,
         onPointerDown,
         onDblClick,
         onPointerMove,

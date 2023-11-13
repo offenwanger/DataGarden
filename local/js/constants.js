@@ -12,6 +12,11 @@ const Size = {
     DIMENTION_NODE_SIZE: 15,
 }
 
+const Padding = {
+    NODE: 5,
+    CLUSTER: 20,
+}
+
 const MappingTypes = {
     CONT_CONT: "continuousDimetion-continuousChannel",
     CONT_DISC: "continuousDimetion-discreteChannel",
@@ -48,15 +53,14 @@ ContextButtonToChannelType[ContextButtons.ADD_DIMENTION_FOR_SIZE] = ChannelType.
 ContextButtonToChannelType[ContextButtons.ADD_DIMENTION_FOR_ORIENTATION] = ChannelType.ORIENTATION;
 ContextButtonToChannelType[ContextButtons.ADD_DIMENTION_FOR_POSITION] = ChannelType.POSITION;
 
-const EventResponse = {
-    HOLD: 'hold',
-    CONTEXT_MENU_GROUP: 'contextMenuGroup',
-    CONTEXT_MENU_STROKES: 'contextMenuStrokeSelection',
-    CONTEXT_MENU_ELEMENT: 'contextMenuElement'
-}
-
 const Tab = {
     PARENT: "parent",
     LEGEND: "legend",
-    TABLE: "table",
+    TABLE: "table"
+}
+
+const FdlMode = {
+    DIMENTION: "dimention",
+    PARENT: "parent",
+    LEGEND: "legend",
 }

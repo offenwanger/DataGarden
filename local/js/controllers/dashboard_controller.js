@@ -3,8 +3,9 @@ function DashboardController() {
     const TAB_HEIGHT = 60;
 
     let mCanvasController = new CanvasController();
-    let mTabController = new TabController();
     let mFdlViewController = new FdlViewController();
+    let mTabController = new TabController();
+    d3.select("#table-view-container").style("visibility", "hidden");
 
     let mMenuController = new MenuController();
     let mContextMenu = new ContextMenu(d3.select('#interface-svg'));
@@ -88,7 +89,21 @@ function DashboardController() {
 
     mTabController.setClickCallback(tabId => {
         mTabController.setActiveTab(tabId);
-        console.error("Switch the tab!")
+        if (tabId == Tab.TABLE) {
+            d3.select("#fdl-view-container").style("display", "none");
+            d3.select("#table-view-container").style("display", "");
+        } else {
+            d3.select("#fdl-view-container").style("display", "");
+            d3.select("#table-view-container").style("display", "none");
+        }
+
+        if (tabId == Tab.PARENT) {
+            mFdlViewController.setMode(FdlMode.PARENT);
+        } else if (tabId = Tab.LEGEND) {
+            mFdlViewController.setMode(FdlMode.LEGEND);
+        } else if (IdUtil.isType(tabId, Data.Dimention)) {
+            mFdlViewController.setMode(FdlMode.DIMENTION, tabId);
+        }
     })
 
     mCanvasController.setHighlightCallback((selection) => {

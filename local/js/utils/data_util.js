@@ -211,6 +211,19 @@ let DataUtil = function () {
         return level;
     }
 
+    function getPaddedPoints(nodes, padding) {
+        let pointArr = [];
+        nodes.forEach(d => {
+            const pad = d.radius + padding;
+            pointArr = pointArr.concat([
+                [d.x - pad, d.y - pad],
+                [d.x - pad, d.y + pad],
+                [d.x + pad, d.y - pad],
+                [d.x + pad, d.y + pad]
+            ]);
+        });
+        return pointArr;
+    }
 
     return {
         numToColor,
@@ -229,5 +242,6 @@ let DataUtil = function () {
         getStrokesInLocalCoords,
         channelIsDiscrete,
         getTreeLevel,
+        getPaddedPoints,
     }
 }();
