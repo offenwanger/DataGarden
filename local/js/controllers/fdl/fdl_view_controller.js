@@ -167,7 +167,7 @@ function FdlViewController() {
                 type: ZOOMING,
                 start: screenCoords,
                 startTransform: mActiveViewController.getTranslate(),
-                scale: mActiveViewController.getTranslate(),
+                scale: mActiveViewController.getScale(),
             }
         } else if (toolState == Buttons.SELECTION_BUTTON) {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
