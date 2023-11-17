@@ -28,6 +28,12 @@ body {
     width: 100%;
 }
 
+#tab-view-container,
+#tabs-container,
+#fdl-view-container {
+    position: relative
+}
+
 #dashboard-container>div {
     position: relative;
     border: 1px;
