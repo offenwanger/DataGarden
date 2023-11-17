@@ -1,5 +1,5 @@
 let SimulationUtil = function () {
-    const MAX_RADIUS = Math.max(Size.ELEMENT_NODE_SIZE, Size.STROKE_NODE_SIZE, Size.DIMENTION_NODE_SIZE);
+    const MAX_RADIUS = Math.max(Size.ELEMENT_NODE_SIZE);
 
     function drift(d, alpha) {
         let divisionSize = Size.ELEMENT_NODE_SIZE * 10;

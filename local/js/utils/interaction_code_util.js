@@ -3,7 +3,7 @@ let CodeUtil = function () {
 
     let mInteractionLookup = {};
     let mReverseInteractionLookup = {};
-    let mColorIndex = 0;
+    let mColorIndex = 100;
 
     function getId(hex) {
         if (mInteractionLookup[hex]) {
@@ -39,7 +39,7 @@ let CodeUtil = function () {
     function clear() {
         mInteractionLookup = {};
         mReverseInteractionLookup = {};
-        mColorIndex = 0;
+        mColorIndex = 100;
     }
 
     return {

@@ -5,7 +5,10 @@ function TabController() {
         .style("opacity", 0)
         .classed('interaction-canvas', true);
 
-    let mClickCallback = () => { };
+    const TAB_TARGET = "tab";
+    const CLOSE_TARGET = "close";
+
+    let mSetTabCallback = () => { };
 
     let mCodeUtil = new CodeUtil();
 
@@ -55,7 +58,7 @@ function TabController() {
         if (!mInteraction) {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target) {
-                mMousedOver = target;
+                mMousedOver = target.id;
                 draw();
             } else {
                 let wasMousedOver = mMousedOver;
@@ -69,8 +72,15 @@ function TabController() {
 
     function onPointerUp(screenCoords, toolState) {
         let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
-        if (target && target == mInteraction) {
-            mClickCallback(target);
+        if (target && target.id == mInteraction.id) {
+            if (target.type == TAB_TARGET) {
+                mSetTabCallback(target.id);
+            } else if (target.type == CLOSE_TARGET) {
+                removeTab(target.id);
+                draw();
+            } else {
+                console.error("Not supported");
+            }
         }
         mInteraction = null;
     }
@@ -84,21 +94,35 @@ function TabController() {
         let tabHeight = Math.round(canvasHeight * 0.8);
         let topPadding = canvasHeight - tabHeight - 1;
 
-        let tabs = mDefaultTabs.concat(mDimentionTabs)
+        let tabs = mDefaultTabs.concat(mDimentionTabs);
         let tabWidth = canvasWidth / tabs.length;
 
-        let activeTab = tabs.splice(tabs.findIndex(t => t.id == mActiveTab), 1);
         tabs.forEach((tab, index) => {
             if (tab.id != mActiveTab) {
-                mTabDrawingUtil.drawTab((index + 1) * tabWidth, topPadding, tabWidth + 10, tabHeight, tab.title, tab.id == mMousedOver, mCodeUtil.getCode(tab.id));
+                mTabDrawingUtil.drawTab(
+                    index * tabWidth,
+                    topPadding,
+                    tabWidth + 10,
+                    tabHeight,
+                    tab.title,
+                    tab.id == mMousedOver,
+                    mCodeUtil.getCode(tab.id, TAB_TARGET),
+                    IdUtil.isType(tab.id, Data.Dimention) ? mCodeUtil.getCode(tab.id, CLOSE_TARGET) : null);
             }
         })
-
         mTabDrawingUtil.drawHorizontalLine(canvasHeight - 2, canvasWidth, 2);
 
-        if (!activeTab) { console.error("Invalid active tab!"); return; }
-        activeTab = activeTab[0];
-        mTabDrawingUtil.drawTab(0, topPadding, tabWidth + 10, tabHeight, activeTab.title, true, mCodeUtil.getCode(activeTab.id));
+        let tab = tabs.find(t => t.id == mActiveTab);
+        let index = tabs.findIndex(t => t.id == mActiveTab);
+        mTabDrawingUtil.drawTab(
+            index * tabWidth,
+            topPadding,
+            tabWidth + 10,
+            tabHeight,
+            tab.title,
+            true,
+            mCodeUtil.getCode(tab.id, TAB_TARGET),
+            IdUtil.isType(tab.id, Data.Dimention) ? mCodeUtil.getCode(tab.id, CLOSE_TARGET) : null);
     }
 
     function setActiveTab(tabId) {
@@ -106,13 +130,19 @@ function TabController() {
         draw();
     }
 
-    function addTab(id, title) {
-        mDimentionTabs.push({ id, title });
+    function setTab(id, title) {
+        let tab = mDimentionTabs.find(t => t.id == id);
+        if (!tab) {
+            tab = { id };
+            mDimentionTabs.push(tab);
+        }
+        tab.title = title;
         draw();
     }
 
     function removeTab(id) {
         mDimentionTabs.splice(mDimentionTabs.find(t => t.id == id), 1);
+        if (mActiveTab == id) { mSetTabCallback(Tab.LEGEND); }
         draw();
     }
 
@@ -122,8 +152,8 @@ function TabController() {
         onPointerMove,
         onPointerUp,
         setActiveTab,
-        addTab,
+        setTab,
         removeTab,
-        setClickCallback: (func) => mClickCallback = func,
+        setSetTabCallback: (func) => mSetTabCallback = func,
     }
 }

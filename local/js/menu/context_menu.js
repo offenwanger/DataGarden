@@ -18,10 +18,10 @@ function ContextMenu(svg) {
         img: "img/bind_size_button.svg",
         tooltip: "Bind a new dimention to the size channel",
     }
-    mButtonData[ContextButtons.ADD_DIMENTION_FOR_ORIENTATION] = {
-        id: ContextButtons.ADD_DIMENTION_FOR_ORIENTATION,
-        img: "img/bind_orientation_button.svg",
-        tooltip: "Bind a new dimention to the orientation channel",
+    mButtonData[ContextButtons.ADD_DIMENTION_FOR_ANGLE] = {
+        id: ContextButtons.ADD_DIMENTION_FOR_ANGLE,
+        img: "img/bind_angle_button.svg",
+        tooltip: "Bind a new dimention to the angle channel",
     }
     mButtonData[ContextButtons.ADD_DIMENTION_FOR_POSITION] = {
         id: ContextButtons.ADD_DIMENTION_FOR_POSITION,

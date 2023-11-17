@@ -141,16 +141,16 @@ let ModelUtil = function () {
                     newMapping.links.push(link);
                 });
             }
-        } else if (channelType == ChannelTypes.ORIENTATION || channelType == ChannelTypes.POSITION) {
+        } else if (channelType == ChannelTypes.ANGLE || channelType == ChannelTypes.POSITION) {
             console.error("Need to ensure element has a spine and the elements are mapped to it")
             if (dimention.type == DimentionTypes.CATEGORICAL || dimention.type == DimentionTypes.ORDINAL) {
                 let buckets;
-                if (dimention.levels.length == 0 && channelType == ChannelTypes.ORIENTATION) {
-                    buckets = orientationBucketFairy(group, 0, modelController);
+                if (dimention.levels.length == 0 && channelType == ChannelTypes.ANGLE) {
+                    buckets = angleBucketFairy(group, 0, modelController);
                 } else if (dimention.levels.length == 0 && channelType == ChannelTypes.POSITION) {
                     buckets = positionBucketFairy(group, 0, modelController);
-                } else if (channelType == ChannelTypes.ORIENTATION) {
-                    buckets = orientationBucketFairy(group, dimention.levels.length, modelController);
+                } else if (channelType == ChannelTypes.ANGLE) {
+                    buckets = angleBucketFairy(group, dimention.levels.length, modelController);
                 } else if (channelType == ChannelTypes.POSITION) {
                     buckets = positionBucketFairy(group, dimention.levels.length, modelController);
                 }

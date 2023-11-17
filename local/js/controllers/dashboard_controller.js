@@ -19,6 +19,7 @@ function DashboardController() {
     let mToolState = Buttons.SELECTION_BUTTON;
     let mFdlActive = true;
 
+    let mAddDimentionCallback = () => { };
     let mNewStrokeCallback = () => { };
     let mParentUpdateCallback = () => { };
     let mMergeElementCallback = () => { };
@@ -87,7 +88,7 @@ function DashboardController() {
         mToolState = state;
     }
 
-    mTabController.setClickCallback(tabId => {
+    mTabController.setSetTabCallback(tabId => {
         mTabController.setActiveTab(tabId);
         if (tabId == Tab.TABLE) {
             d3.select("#fdl-view-container").style("display", "none");
@@ -99,7 +100,7 @@ function DashboardController() {
 
         if (tabId == Tab.PARENT) {
             mFdlViewController.setMode(FdlMode.PARENT);
-        } else if (tabId = Tab.LEGEND) {
+        } else if (tabId == Tab.LEGEND) {
             mFdlViewController.setMode(FdlMode.LEGEND);
         } else if (IdUtil.isType(tabId, Data.Dimention)) {
             mFdlViewController.setMode(FdlMode.DIMENTION, tabId);
@@ -163,6 +164,20 @@ function DashboardController() {
         mCanvasController.highlight(selection);
     })
 
+    mFdlViewController.setAddDimentionCallback(() => {
+        let newDimention = mAddDimentionCallback();
+        mTabController.setTab(newDimention.id, newDimention.name);
+        mTabController.setActiveTab(newDimention.id);
+        mFdlViewController.setMode(FdlMode.DIMENTION, newDimention.id);
+    });
+
+    mFdlViewController.setClickDimentionCallback((dimenId) => {
+        let dimention = mModel.getDimention(dimenId);
+        mTabController.setTab(dimenId, dimention.name);
+        mTabController.setActiveTab(dimenId);
+        mFdlViewController.setMode(FdlMode.DIMENTION, dimenId);
+    });
+
     mMenuController.setColorChangeCallback((color) => {
         mCanvasController.setColor(color);
     })
@@ -190,5 +205,6 @@ function DashboardController() {
         setCalculateSpineCallback: (func) => mCalculateSpineCallback = func,
         setUndoCallback: (func) => mUndoCallback = func,
         setRedoCallback: (func) => mRedoCallback = func,
+        setAddDimentionCallback: (func) => mAddDimentionCallback = func,
     }
 }

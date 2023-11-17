@@ -143,7 +143,10 @@ let Data = function () {
     function Dimention() {
         this.id = IdUtil.getUniqueId(Dimention);
         this.creationTime = Date.now();
-        this.continuous = false;
+        this.name = "Dimention";
+        this.type = DimentionType.DISCRETE;
+        this.channel = ChannelType.FORM;
+        this.tier = 0;
         // discrete dimentions
         this.levels = [];
         // continuous dimentions
@@ -153,25 +156,34 @@ let Data = function () {
             let clone = new Dimention();
             clone.id = this.id;
             clone.creationTime = this.creationTime;
-            clone.continuous = this.continuous;
+            clone.name = this.name;
+            clone.type = this.type;
+            clone.channel = this.channel;
+            clone.tier = this.tier;
             clone.levels = this.levels.map(l => l.clone());
-            clone.domain = [...this.domain]
+            clone.domain = [...this.domain];
             return clone;
         };
 
         this.update = function (dimention) {
             this.id = dimention.id;
             this.creationTime = dimention.creationTime;
-            this.continuous = dimention.continuous;
+            this.name = dimention.name;
+            this.type = dimention.type;
+            this.channel = dimention.channel;
+            this.tier = dimention.tier;
             this.levels = dimention.levels.map(l => l.clone());
-            this.domain = [...dimention.domain]
+            this.domain = [...dimention.domain];
         };
     }
     Dimention.fromObject = function (obj) {
         let dimention = new Dimention();
         dimention.id = obj.id;
-        dimention.creationTime = obj.creationTime ? obj.creationTime : [];
-        dimention.continuous = obj.continuous;
+        dimention.creationTime = obj.creationTime;
+        dimention.name = obj.name;
+        dimention.type = obj.type;
+        dimention.channel = obj.channel;
+        dimention.tier = obj.tier;
         dimention.levels = obj.levels ? obj.levels.map(l => Level.fromObject(l)) : [];
         dimention.domain = obj.domain ? [...obj.domain] : [0, 1];
         return dimention;

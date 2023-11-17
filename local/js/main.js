@@ -44,6 +44,21 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
+    mDashboardController.setAddDimentionCallback(() => {
+        let newDimention = new Data.Dimention();
+        newDimention.name = "Dimention";
+        newDimention.type = DimentionType.DISCRETE;
+        newDimention.channel = ChannelType.FORM;
+        newDimention.tier = 0;
+
+        mModelController.addDimention(newDimention);
+
+        mVersionController.stack(mModelController.getModel());
+        mDashboardController.modelUpdate(mModelController.getModel());
+
+        return newDimention;
+    })
+
     mDashboardController.setMergeElementCallback((selection, mergeElementId) => {
         ModelUtil.mergeElements(mModelController, selection, mergeElementId);
 
@@ -130,41 +145,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     mDashboardController.setDeleteCallback((selection) => {
         // Delete everything in the selection
-    })
-
-    mDashboardController.setNewDimentionCallback((groupId, channelType) => {
-        if (!IdUtil.isType(groupId, Data.Group)) { console.error("Bad state, not a group", groupId); return; }
-        let group = mModelController.getModel().getGroup(groupId);
-        if (!group) { console.error("Bad state, group not found", groupId); return; }
-
-        let newDimention = new Data.Dimention();
-        newDimention.levels.push(new Data.Level());
-        newDimention.levels[0].name = "Level";
-
-        let newMapping = new Data.Mapping();
-        newMapping.dimention = newDimention.id;
-        newMapping.channelType = channelType;
-        newMapping.levels.push(newDimention.levels[0].id);
-        if (channelType == ChannelType.FORM || channelType == ChannelType.COLOR) {
-            newMapping.groups.push(group.elements.map(e => e.id));
-        } else if (channelType == ChannelType.POSITION) {
-            newMapping.ranges.push([0, 1]);
-        } else if (channelType == ChannelType.ORIENTATION) {
-            newMapping.ranges.push([-Math.PI, Math.PI]);
-        } else if (channelType == ChannelType.SIZE) {
-            let sizes = group.elements.map(e => DataUtil.getElementSize(e));
-            newMapping.ranges.push([Math.min(...sizes), Math.max(...sizes)]);
-            if (newMapping.ranges[0][0] == newMapping.ranges[0][1]) {
-                newMapping.ranges[0][1]++;
-            }
-        } else { console.error("Invalid channel type", channelType); return; }
-        group.mappings.push(newMapping);
-
-        mModelController.addDimention(newDimention);
-        mModelController.updateGroup(group);
-
-        mVersionController.stack(mModelController.getModel());
-        mDashboardController.modelUpdate(mModelController.getModel());
     })
 
     mDashboardController.setMergeStrokesCallback((strokeIds) => {

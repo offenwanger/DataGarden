@@ -38,6 +38,8 @@ function FdlViewController() {
     );
 
     let mFdlParentViewController = new FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap);
+    let mFdlLegendViewController = new FdlLegendViewController(mDrawingUtil, mCodeUtil);
+    let mFdlDimentionViewController = new FdlDimentionViewController(mDrawingUtil, mCodeUtil);
 
     let mMode = FdlMode.PARENT;
     let mActiveViewController = mFdlParentViewController;
@@ -74,20 +76,62 @@ function FdlViewController() {
             mSimulationData.push(nodeData);
         });
 
+        mModel.getDimentions().forEach(dimention => {
+            let dimentionData = {
+                id: dimention.id,
+                name: dimention.name,
+                type: dimention.type,
+                channel: dimention.channel,
+                tier: dimention.tier,
+            }
+            let oldData = oldSimulationData.find(item => item.id == dimention.id);
+            if (!oldData) {
+                dimentionData.x = 0;
+                dimentionData.y = 0;
+            } else {
+                dimentionData.x = oldData.x;
+                dimentionData.y = oldData.y;
+            }
+
+            mSimulationData.push(dimentionData);
+
+            if (dimention.type == DimentionType.DISCRETE) {
+                dimention.levels.forEach(level => {
+                    let levelData = {
+                        id: level.id,
+                        name: level.name,
+                        dimention: dimention.id,
+                    }
+                    let oldData = oldSimulationData.find(item => item.id == dimention.id);
+                    if (!oldData) {
+                        levelData.x = 0;
+                        levelData.y = 0;
+                    } else {
+                        levelData.x = levelData.x;
+                        levelData.y = levelData.y;
+                    }
+                    mSimulationData.push(levelData);
+                })
+            } else {
+                console.error("Impliment me!")
+            }
+
+        });
+
         mActiveViewController.updateSimulationData(mSimulationData, mModel);
     }
 
     function setMode(mode, dimenId = null) {
-        mMode = mode;
+        mActiveViewController.stop();
         if (mode == FdlMode.PARENT) {
             mActiveViewController = mFdlParentViewController;
         } else if (mode == FdlMode.LEGEND) {
-            console.error("set to legend controller")
+            mActiveViewController = mFdlLegendViewController;
         } else if (mode == FdlMode.DIMENTION) {
-            console.error("set to dimention and set the id to", dimenId)
+            mActiveViewController = mFdlDimentionViewController;
+            mFdlDimentionViewController.setDimention(dimenId);
         }
-        mActiveViewController.updateSimulationData(mSimulationData);
-        console.error("draw or start or something the active view");
+        mActiveViewController.updateSimulationData(mSimulationData, mModel);
     }
 
     function onResize(width, height) {
@@ -123,7 +167,7 @@ function FdlViewController() {
                 type: ZOOMING,
                 start: screenCoords,
                 startTransform: mActiveViewController.getTranslate(),
-                scale: mActiveViewController.getScale(),
+                scale: mActiveViewController.getTranslate(),
             }
         } else if (toolState == Buttons.SELECTION_BUTTON) {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
@@ -133,7 +177,7 @@ function FdlViewController() {
                 mInteraction = {
                     type: SELECTION,
                     start: modelCoords,
-                    target: target.id,
+                    target,
                 }
 
                 mActiveViewController.interactionStart(mInteraction, modelCoords);
@@ -169,7 +213,9 @@ function FdlViewController() {
         } else {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target) {
-                console.error("highlight probably")
+                mActiveViewController.highlight(target.id ? target.id : target);
+            } else {
+                mActiveViewController.highlight(null);
             }
         }
     }
@@ -180,7 +226,7 @@ function FdlViewController() {
 
         if (interaction && interaction.type == SELECTION) {
             interaction.endTarget = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
-            if (interaction.endTarget) interaction.endTarget = interaction.endTarget.id;
+            if (interaction.endTarget && interaction.endTarget.id) interaction.endTarget = interaction.endTarget.id;
             let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
             mActiveViewController.interactionEnd(interaction, modelCoords);
         }
@@ -202,6 +248,13 @@ function FdlViewController() {
         }
     }
 
+    //////////// TESTING FUNCTION ////////////
+    d3.select(document).on('wheel', function (e) {
+        if (e.deltaY > 0) mActiveViewController.stop();
+        if (e.deltaY < 0) updateSimulationData();
+    })
+
+
     return {
         onModelUpdate,
         setMode,
@@ -213,6 +266,8 @@ function FdlViewController() {
         highlight,
         setHighlightCallback: (func) => mHighlightCallback = func,
         setParentUpdateCallback: (func) => mFdlParentViewController.setParentUpdateCallback(func),
+        setAddDimentionCallback: (func) => mFdlLegendViewController.setAddDimentionCallback(func),
+        setClickDimentionCallback: (func) => mFdlLegendViewController.setClickDimentionCallback(func),
         setMergeElementCallback: (func) => mMergeElementCallback = func,
         setNewElementCallback: (func) => mNewElementCallback = func,
         setMoveElementCallback: (func) => mMoveElementCallback = func,

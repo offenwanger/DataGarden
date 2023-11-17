@@ -5,8 +5,8 @@ let ImageDrawingUtil = function () {
     colorChannelImage.src = 'img/color_channel.svg'
     let sizeChannelImage = new Image();
     sizeChannelImage.src = 'img/size_channel.svg'
-    let orientationChannelImage = new Image();
-    orientationChannelImage.src = 'img/orientation_channel.svg'
+    let angleChannelImage = new Image();
+    angleChannelImage.src = 'img/orientation_channel.svg'
     let positionChannelImage = new Image();
     positionChannelImage.src = 'img/position_channel.svg'
 
@@ -14,7 +14,7 @@ let ImageDrawingUtil = function () {
         formChannelImage,
         colorChannelImage,
         sizeChannelImage,
-        orientationChannelImage,
+        angleChannelImage,
         positionChannelImage,
     }
 }();
@@ -212,8 +212,8 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
             img = ImageDrawingUtil.colorChannelImage;
         } else if (channelType == ChannelType.SIZE) {
             img = ImageDrawingUtil.sizeChannelImage;
-        } else if (channelType == ChannelType.ORIENTATION) {
-            img = ImageDrawingUtil.orientationChannelImage;
+        } else if (channelType == ChannelType.ANGLE) {
+            img = ImageDrawingUtil.angleChannelImage;
         } else if (channelType == ChannelType.POSITION) {
             img = ImageDrawingUtil.positionChannelImage;
         } else { console.error("Channel type not supported"); return; }
@@ -565,6 +565,45 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         ctx.restore();
     }
 
+    function drawStringNode(x, y, label, height, shadow, code) {
+        ctx.save();
+        const padding = 10;
+
+        ctx.font = Math.round(height * 0.8) + "px Segoe Print";
+        let width = ctx.measureText(label).width + padding * 2;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, y, width, height);
+        ctx.strokeStyle = 'black';
+        ctx.stroke();
+        if (shadow) {
+            ctx.shadowColor = "black";
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+            ctx.shadowBlur = 3;
+        }
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        ctx.restore();
+
+        ctx.fillStyle = 'black';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left'
+        ctx.fillText(label, x + padding, y + height / 2);
+
+        ctx.restore();
+
+        if (code) {
+            intCtx.save();
+            intCtx.fillStyle = code;
+            intCtx.beginPath();
+            intCtx.rect(x, y, width, height);
+            intCtx.fill();
+            intCtx.restore();
+        }
+    }
+
     return {
         reset,
         resetInterface,
@@ -590,5 +629,6 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         drawSpine,
         drawSelectionBubble,
         drawBand,
+        drawStringNode,
     }
 }

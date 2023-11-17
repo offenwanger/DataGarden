@@ -1,5 +1,4 @@
 function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
-    const TARGET_BUBBLE = 'bubbleTarget';
     const TARGET_ELEMENT = 'elementTarget';
 
     let mHighlightElements = [];
@@ -22,7 +21,7 @@ function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
         .force("drift", () => mSimulation.nodes().forEach(d => SimulationUtil.drift(d, mSimulation.alpha())))
         .alpha(0.3)
         .on("tick", () => { draw(); })
-        .restart();
+        .stop();
 
     function draw() {
         mDrawingUtil.reset(mZoomTransform);
@@ -120,7 +119,8 @@ function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
     }
 
     function interactionStart(interaction, modelCoords) {
-        let target = Array.isArray(interaction.target) ? interaction.target : [interaction.target];
+        let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
+            .map(target => target.id ? target.id : target);
         let targetNodes = mNodes.filter(n => target.includes(n.id));
         let remainingNodes = mNodes.filter(n => !target.includes(n.id));
         targetNodes.forEach(node => {
@@ -133,7 +133,8 @@ function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
     }
 
     function interactionDrag(interaction, modelCoords) {
-        let target = Array.isArray(interaction.target) ? interaction.target : [interaction.target];
+        let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
+            .map(target => target.id ? target.id : target);
         let targetNodes = mNodes.filter(n => target.includes(n.id));
         let dist = MathUtil.subtract(modelCoords, interaction.start);
         targetNodes.forEach(node => {
@@ -144,7 +145,8 @@ function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
     }
 
     function interactionEnd(interaction, modelCoords) {
-        let target = Array.isArray(interaction.target) ? interaction.target : [interaction.target];
+        let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
+            .map(target => target.id ? target.id : target);
         let targetNodes = mNodes.filter(n => target.includes(n.id));
         let dist = MathUtil.subtract(modelCoords, interaction.start);
         targetNodes.forEach(node => {
@@ -184,6 +186,10 @@ function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
         return { x: mZoomTransform.x, y: mZoomTransform.y };
     }
 
+    function stop() {
+        mSimulation.stop();
+    }
+
     return {
         updateSimulationData,
         onResize,
@@ -196,6 +202,7 @@ function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
         getScale,
         getTranslate,
         setParentUpdateCallback: (func) => mParentUpdateCallback = func,
+        stop,
     }
 
 }
