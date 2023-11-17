@@ -22,6 +22,8 @@ function CanvasController() {
         mInterfaceCanvas.node().getContext("2d"),
     );
 
+    let mCodeUtil = new CodeUtil();
+
     let mNewStrokeCallback = () => { };
     let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
@@ -84,7 +86,7 @@ function CanvasController() {
             mBrushOptions.currentStroke = [screenToModelCoords(screenCoords)];
             return true;
         } else if (toolState == Buttons.SELECTION_BUTTON) {
-            let target = getInteractionTarget(screenCoords);
+            let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (mSelectionIds.includes(target)) {
                 mInteraction = {
                     type: DRAGGING,
@@ -132,7 +134,7 @@ function CanvasController() {
             drawInterface();
         } else if (toolState == Buttons.SELECTION_BUTTON) {
             if (!ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
-                let targetId = getInteractionTarget(screenCoords);
+                let targetId = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
                 if (targetId) {
                     let element = mModel.getElementForStroke(targetId);
                     let elements = mModel.getElementDecendants(element.id);
@@ -147,7 +149,7 @@ function CanvasController() {
             drawInterface();
 
         } else if (toolState == Buttons.VIEW_BUTTON) {
-            let targetId = getInteractionTarget(screenCoords);
+            let targetId = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (targetId) {
                 let element = mModel.getElementForStroke(targetId);
                 let elements = mModel.getElementDecendants(element.id);
@@ -198,7 +200,7 @@ function CanvasController() {
                     })
                 } else {
                     // we tapped not on a selection
-                    let target = getInteractionTarget(screenCoords);
+                    let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
                     if (target) {
                         let element = mModel.getElementForStroke(target);
                         mContextMenuCallback(screenCoords, element.id)
@@ -251,7 +253,7 @@ function CanvasController() {
         mDrawingUtil.reset(mZoomTransform);
         mModel.getElements().forEach(elem => {
             elem.strokes.forEach(stroke => {
-                mDrawingUtil.drawStroke(stroke.path, stroke.color, stroke.size, getCode(stroke.id))
+                mDrawingUtil.drawStroke(stroke.path, stroke.color, stroke.size, mCodeUtil.getCode(stroke.id))
             })
         })
         drawInterface();
@@ -293,15 +295,6 @@ function CanvasController() {
         }
     }
 
-    function getInteractionTarget(screenCoords) {
-        let boundingBox = mInteractionCanvas.node().getBoundingClientRect();
-        let ctx = mInteractionCanvas.node().getContext('2d');
-        let p = ctx.getImageData(screenCoords.x - boundingBox.x, screenCoords.y - boundingBox.y, 1, 1).data;
-        let hex = DataUtil.rgbToHex(p[0], p[1], p[2]);
-        if (mInteractionLookup[hex]) return mInteractionLookup[hex];
-        else return null;
-    }
-
     function interfaceIsCovered(screenCoords) {
         let boundingBox = mInteractionCanvas.node().getBoundingClientRect();
         if (screenCoords.x < boundingBox.x || screenCoords.x > boundingBox.x + boundingBox.width) {
@@ -315,16 +308,6 @@ function CanvasController() {
         let hex = DataUtil.rgbaToHex(p[0], p[1], p[2], p[3]);
         if (hex != "#00000000") return true;
         else return false;
-    }
-
-    function getCode(strokeId) {
-        if (mReverseInteractionLookup[strokeId]) return mReverseInteractionLookup[strokeId];
-        else {
-            let code = DataUtil.numToColor(mColorIndex += 100);
-            mInteractionLookup[code] = strokeId;
-            mReverseInteractionLookup[strokeId] = code;
-            return code;
-        }
     }
 
     function screenToModelCoords(screenCoords) {

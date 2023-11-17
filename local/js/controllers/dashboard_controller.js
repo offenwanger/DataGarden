@@ -167,10 +167,6 @@ function DashboardController() {
         mCanvasController.setColor(color);
     })
 
-    mMenuController.setPauseCallback((pause) => {
-        pause ? mFdlViewController.pauseSimulation() : mFdlViewController.runSimulation();
-    })
-
     return {
         modelUpdate,
         onResize,
@@ -181,7 +177,7 @@ function DashboardController() {
         onLongPress,
         onKeyStateChange,
         setNewStrokeCallback: (func) => mCanvasController.setNewStrokeCallback(func),
-        setParentUpdateCallback: (func) => mParentUpdateCallback = func,
+        setParentUpdateCallback: (func) => mFdlViewController.setParentUpdateCallback(func),
         setMergeElementCallback: (func) => mMergeElementCallback = func,
         setNewElementCallback: (func) => mNewElementCallback = func,
         setMoveElementCallback: (func) => mMoveElementCallback = func,

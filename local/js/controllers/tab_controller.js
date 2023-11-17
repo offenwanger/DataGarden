@@ -45,7 +45,7 @@ function TabController() {
     }
 
     function onPointerDown(screenCoords, toolState) {
-        let target = getInteractionTarget(screenCoords);
+        let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
         if (target) {
             mInteraction = target;
         }
@@ -53,7 +53,7 @@ function TabController() {
 
     function onPointerMove(screenCoords, toolState) {
         if (!mInteraction) {
-            let target = getInteractionTarget(screenCoords);
+            let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target) {
                 mMousedOver = target;
                 draw();
@@ -68,7 +68,7 @@ function TabController() {
     }
 
     function onPointerUp(screenCoords, toolState) {
-        let target = getInteractionTarget(screenCoords);
+        let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
         if (target && target == mInteraction) {
             mClickCallback(target);
         }
@@ -99,14 +99,6 @@ function TabController() {
         if (!activeTab) { console.error("Invalid active tab!"); return; }
         activeTab = activeTab[0];
         mTabDrawingUtil.drawTab(0, topPadding, tabWidth + 10, tabHeight, activeTab.title, true, mCodeUtil.getCode(activeTab.id));
-    }
-
-    function getInteractionTarget(screenCoords) {
-        let boundingBox = mInteractionCanvas.node().getBoundingClientRect();
-        let ctx = mInteractionCanvas.node().getContext('2d');
-        let p = ctx.getImageData(screenCoords.x - boundingBox.x, screenCoords.y - boundingBox.y, 1, 1).data;
-        let hex = DataUtil.rgbToHex(p[0], p[1], p[2]);
-        return mCodeUtil.getId(hex);
     }
 
     function setActiveTab(tabId) {

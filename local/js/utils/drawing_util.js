@@ -27,6 +27,7 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
     // scale agnostic values
     const TARGET_INCREASE = 5;
     let mScale = 1;
+    let mXTranslate = 0;
 
     function reset(zoomTransform) {
         ctx.reset();
@@ -38,6 +39,7 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         intCtx.scale(zoomTransform.k, zoomTransform.k)
         intCtx.imageSmoothingEnabled = false;
 
+        mXTranslate = zoomTransform.x;
         mScale = zoomTransform.k;
     }
 
@@ -325,7 +327,7 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         }
     }
 
-    function drawBubble(outline, color, alpha, code) {
+    function drawBubble(outline, pointer, color, alpha, code) {
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.fillStyle = color;
@@ -341,7 +343,17 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
             ctx.quadraticCurveTo(extendedOutline[i].x, extendedOutline[i].y, xc, yc);
         }
 
-        ctx.fill();
+        if (pointer) {
+            let max = outline.reduce((max, next) => (next.x > max.x) ? next : max, outline[0]);
+            let min = outline.reduce((max, next) => (next.x < max.x) ? next : max, outline[0]);
+            let middle = MathUtil.average([max, min]);
+            let midpoint = { x: middle.x * 0.9 + pointer.x * 0.1, y: middle.y * 0.9 + pointer.y * 0.1 };
+            ctx.moveTo(middle.x, middle.y);
+            ctx.bezierCurveTo(max.x, max.y, midpoint.x, midpoint.y, pointer.x, pointer.y);
+            ctx.bezierCurveTo(midpoint.x, midpoint.y, min.x, min.y, middle.x, middle.y);
+        }
+
+        ctx.fill('nonzero');
         ctx.restore();
 
         // Interaction //
@@ -539,6 +551,20 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         intfCtx.restore();
     }
 
+    function drawBand(color, y1, y2) {
+        ctx.save();
+
+        ctx.scale(1 / mScale, 1);
+        ctx.translate(-mXTranslate, 0)
+
+        ctx.fillStyle = color;
+        ctx.rect(0, y1, 3000, y2 - y1);
+
+        ctx.fill();
+
+        ctx.restore();
+    }
+
     return {
         reset,
         resetInterface,
@@ -563,5 +589,6 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         highlightBoundingBox,
         drawSpine,
         drawSelectionBubble,
+        drawBand,
     }
 }

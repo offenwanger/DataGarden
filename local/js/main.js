@@ -35,9 +35,10 @@ document.addEventListener('DOMContentLoaded', function (e) {
         }
     })
 
-    mDashboardController.setParentUpdateCallback((elementId, parentElementId) => {
-        ModelUtil.updateParent(parentElementId, elementId, mModelController)
-        ModelUtil.clearEmptyGroups(mModelController);
+    mDashboardController.setParentUpdateCallback((elementIds, parentElementId) => {
+        elementIds.forEach(elementId => {
+            ModelUtil.updateParent(parentElementId, elementId, mModelController)
+        })
 
         mVersionController.stack(mModelController.getModel());
         mDashboardController.modelUpdate(mModelController.getModel());
@@ -258,7 +259,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let element = mModelController.getModel().getElement(elementId);
         if (!element) { console.error("Invalid element id", elementId); return; }
         ServerController.getSpine(element).then(result => {
-            console.log("here", result);
             if (result) {
                 element = mModelController.getModel().getElement(elementId);
                 element.spine = result;

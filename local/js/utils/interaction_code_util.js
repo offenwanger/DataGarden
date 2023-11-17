@@ -28,6 +28,14 @@ let CodeUtil = function () {
         }
     }
 
+    function getTarget(screenCoords, interactionCanvas) {
+        let boundingBox = interactionCanvas.node().getBoundingClientRect();
+        let ctx = interactionCanvas.node().getContext('2d');
+        let p = ctx.getImageData(screenCoords.x - boundingBox.x, screenCoords.y - boundingBox.y, 1, 1).data;
+        let hex = DataUtil.rgbToHex(p[0], p[1], p[2]);
+        return getId(hex);
+    }
+
     function clear() {
         mInteractionLookup = {};
         mReverseInteractionLookup = {};
@@ -37,6 +45,7 @@ let CodeUtil = function () {
     return {
         getId,
         getCode,
+        getTarget,
         clear,
     }
 }

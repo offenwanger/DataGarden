@@ -14,10 +14,10 @@ let SimulationUtil = function () {
         }
     }
 
-    function cluster(d, alpha, data) {
+    function cluster(d, alpha, clusters) {
         // https://bl.ocks.org/mbostock/7881887
         d.clusters.forEach(c => {
-            const clusterHeart = data.clusters[c];
+            const clusterHeart = clusters[c];
             if (clusterHeart === d || c == 0) return;
             let x = d.x - clusterHeart.x;
             let y = d.y - clusterHeart.y;
@@ -35,13 +35,13 @@ let SimulationUtil = function () {
         })
     }
 
-    function collide(alpha, dataSet, height, width) {
+    function collide(alpha, nodes, height, width) {
         // https://bl.ocks.org/mbostock/7882658
         const quadtree = d3.quadtree()
             .x(function (d) { return d.x; })
             .y(function (d) { return d.y; })
             .extent([[0, 0], [width, height]])
-            .addAll(dataSet.nodes);
+            .addAll(nodes);
         return function (d) {
             let r = d.radius + (MAX_RADIUS * 8) + Math.max(Padding.NODE, Padding.CLUSTER),
                 nx1 = d.x - r,
@@ -54,7 +54,7 @@ let SimulationUtil = function () {
                     let x = d.x - data.x,
                         y = d.y - data.y,
                         l = Math.sqrt(x * x + y * y),
-                        r = d.radius + data.radius + (d.clusters.some(c => { data.clusters.includes(c) }) ? Padding.NODE : Padding.CLUSTER);
+                        r = d.radius + data.radius + (d.clusters && d.clusters.some(c => { data.clusters.includes(c) }) ? Padding.NODE : Padding.CLUSTER);
                     if (l < r) {
                         l = (l - r) / l * alpha;
                         d.x -= x *= l;

@@ -110,7 +110,7 @@ function getIntegrationEnviroment() {
         FiltersUtil: rewireJs('utils/filters_util.js').__get__("FiltersUtil"),
         ServerController: rewireJs('utils/server_request_util.js').__get__("ServerController"),
         CanvasController: rewireJs('views/canvas_controller.js').__get__("CanvasController"),
-        FdlViewController: rewireJs('views/fdl_view_controller.js').__get__("FdlViewController"),
+        FdlViewController: rewireJs('views/fdl/fdl_view_controller.js').__get__("FdlViewController"),
     };
 
     main.__set__(integrationEnv);
