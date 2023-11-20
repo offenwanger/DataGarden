@@ -1,6 +1,8 @@
 function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
     const TARGET_ELEMENT = 'elementTarget';
 
+    const DIVISION_SIZE = Size.ELEMENT_NODE_SIZE * 10;
+
     let mHighlightElements = [];
     let mSelectedObjects = [];
 
@@ -16,9 +18,9 @@ function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
     let mLinks = [];
     let mSimulation = d3.forceSimulation()
         .force("x", d3.forceX(0).strength(0.01))
-        .force("collide", d3.forceCollide((d) => d.radius + Padding.NODE))
+        .force("collide", d3.forceCollide((d) => d.radius + Padding.NODE * 2))
         .force("link", d3.forceLink().id(d => d.id))
-        .force("drift", () => mSimulation.nodes().forEach(d => SimulationUtil.drift(d, mSimulation.alpha())))
+        .force("tree-level", d3.forceY((d => (d.treeLevel + 0.5) * DIVISION_SIZE)).strength(0.7))
         .alpha(0.3)
         .on("tick", () => { draw(); })
         .stop();
@@ -150,13 +152,13 @@ function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
         let targetNodes = mNodes.filter(n => target.includes(n.id));
         let dist = MathUtil.subtract(modelCoords, interaction.start);
         targetNodes.forEach(node => {
-            node.startX = null;
-            node.startY = null;
-            node.interacting = null;
             if (!interaction.endTarget) {
                 node.x = node.startX + dist.x;
                 node.y = node.startY + dist.y;
             }
+            node.startX = null;
+            node.startY = null;
+            node.interacting = null;
         });
 
         if (interaction.endTarget && IdUtil.isType(interaction.endTarget, Data.Element)) {
