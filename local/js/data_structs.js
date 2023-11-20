@@ -86,60 +86,6 @@ let Data = function () {
         return group;
     }
 
-    function Mapping() {
-        this.id = IdUtil.getUniqueId(Mapping);
-        this.creationTime = Date.now();
-        this.channelType = null;
-        this.dimention = null;
-
-        // The following ordered lists must align between channel and dimetion. 
-        // continuous channel mapping, array of ranges [min, max]
-        this.ranges = [];
-        // discrete channel mapping, array of arrays of element ids
-        this.groups = [];
-
-        // continuous dimention mapping, array of domains [min, max]
-        this.domains = [];
-        // discreate dimention mapping, array of level ids
-        this.levels = [];
-
-        this.clone = function () {
-            let clone = new Mapping();
-            clone.id = this.id;
-            clone.creationTime = this.creationTime;
-            clone.channelType = this.channelType;
-            clone.dimention = this.dimention;
-            clone.ranges = this.ranges.map(r => [...r]);
-            clone.groups = this.groups.map(g => [...g]);
-            clone.domains = this.domains.map(g => [...g]);
-            clone.levels = [...this.levels];
-            return clone;
-        };
-
-        this.update = function (mapping) {
-            this.id = mapping.id;
-            this.creationTime = mapping.creationTime;
-            this.channelType = mapping.channelType;
-            this.dimention = mapping.dimention;
-            this.ranges = mapping.ranges.map(r => [...r]);
-            this.groups = mapping.groups.map(g => [...g]);
-            this.domains = mapping.domains.map(g => [...g]);
-            this.levels = [...mapping.levels];
-        };
-    }
-    Mapping.fromObject = function (obj) {
-        let mapping = new Mapping();
-        mapping.id = obj.id;
-        mapping.creationTime = obj.creationTime;
-        mapping.channelType = obj.channelType;
-        mapping.dimention = obj.dimention;
-        mapping.ranges = obj.ranges ? obj.ranges.map(r => [...r]) : [];
-        mapping.groups = obj.groups ? obj.groups.map(g => [...g]) : [];
-        mapping.domains = obj.domains ? obj.domains.map(g => [...g]) : [];
-        mapping.levels = obj.levels ? [...obj.levels] : [];
-        return mapping;
-    }
-
     function Dimention() {
         this.id = IdUtil.getUniqueId(Dimention);
         this.creationTime = Date.now();
@@ -194,12 +140,14 @@ let Data = function () {
         this.id = IdUtil.getUniqueId(Level);
         this.creationTime = Date.now();
         this.name;
+        this.elements = [];
 
         this.clone = function () {
             let clone = new Level();
             clone.id = this.id;
             clone.creationTime = this.creationTime;
             clone.name = this.name;
+            clone.elements = this.elements.map(e => e.clone());
             return clone;
         };
 
@@ -207,6 +155,7 @@ let Data = function () {
             this.id = level.id;
             this.creationTime = level.creationTime;
             this.name = level.name;
+            this.elements = level.elements.map(e => e.clone());
         };
     }
     Level.fromObject = function (obj) {
@@ -214,6 +163,7 @@ let Data = function () {
         level.id = obj.id;
         level.creationTime = obj.creationTime;
         level.name = obj.name;
+        level.elements = obj.elements.map(e => Element.fromObject(e));
         return level;
     }
 
@@ -223,6 +173,5 @@ let Data = function () {
         Group,
         Dimention,
         Level,
-        Mapping,
     }
 }();

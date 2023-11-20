@@ -604,6 +604,15 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         }
     }
 
+    function measureString(text, height) {
+        ctx.save();
+        ctx.font = Math.round(height * 0.8) + "px Segoe Print";
+        let width = ctx.measureText(text).width;
+        ctx.restore();
+
+        return width;
+    }
+
     return {
         reset,
         resetInterface,
@@ -630,5 +639,6 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         drawSelectionBubble,
         drawBand,
         drawStringNode,
+        measureString,
     }
 }

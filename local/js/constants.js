@@ -69,3 +69,19 @@ const FdlMode = {
     PARENT: "parent",
     LEGEND: "legend",
 }
+
+const AxisPositions = {
+    DIMENTION_X: 10,
+    LEVEL_X: 20,
+}
+
+const DimentionLabels = {};
+DimentionLabels[DimentionType.DISCRETE] = 'disc';
+DimentionLabels[DimentionType.CONTINUOUS] = 'cont';
+
+const ChannelLabels = {};
+ChannelLabels[ChannelType.FORM] = 'form';
+ChannelLabels[ChannelType.COLOR] = 'color';
+ChannelLabels[ChannelType.SIZE] = 'size';
+ChannelLabels[ChannelType.ANGLE] = 'angle';
+ChannelLabels[ChannelType.POSITION] = 'pos';

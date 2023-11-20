@@ -1,18 +1,5 @@
 function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
-    const DIMENTION_X = 10;
-    const LEVEL_X = 20;
     const ADD_BUTTON_ID = 'add_button';
-
-    const DimentionLabels = {};
-    DimentionLabels[DimentionType.DISCRETE] = 'disc';
-    DimentionLabels[DimentionType.CONTINUOUS] = 'cont';
-
-    const ChannelLabels = {};
-    ChannelLabels[ChannelType.FORM] = 'form';
-    ChannelLabels[ChannelType.COLOR] = 'color';
-    ChannelLabels[ChannelType.SIZE] = 'size';
-    ChannelLabels[ChannelType.ANGLE] = 'angle';
-    ChannelLabels[ChannelType.POSITION] = 'pos';
 
     let mAddDimentionCallback = () => { };
     let mClickDimentionCallback = () => { };
@@ -33,7 +20,7 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
         .force("collide", d3.forceCollide((d) => IdUtil.isType(d.id, Data.Dimention) ? Size.DIMENTION_SIZE : Size.LEVEL_SIZE))
         .alpha(0.3)
         .on("tick", () => {
-            mSimulation.nodes().forEach(n => n.x = IdUtil.isType(n.id, Data.Dimention) ? DIMENTION_X : LEVEL_X);
+            mSimulation.nodes().forEach(n => n.x = IdUtil.isType(n.id, Data.Dimention) ? AxisPositions.DIMENTION_X : AxisPositions.LEVEL_X);
             draw();
         })
         .stop();
@@ -60,7 +47,7 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
                 " [" + DimentionLabels[dimention.type] + "][" +
                 ChannelLabels[dimention.channel] + "][T" + dimention.tier + "]";
             mDrawingUtil.drawStringNode(
-                DIMENTION_X,
+                AxisPositions.DIMENTION_X,
                 dimention.y,
                 dimentionString,
                 Size.DIMENTION_SIZE,
@@ -69,11 +56,11 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
         })
 
         mLevels.forEach(level => {
-            mDrawingUtil.drawStringNode(DIMENTION_X, level.y, level.name, Size.LEVEL_SIZE)
+            mDrawingUtil.drawStringNode(AxisPositions.DIMENTION_X, level.y, level.name, Size.LEVEL_SIZE)
         })
 
         mDrawingUtil.drawStringNode(
-            DIMENTION_X,
+            AxisPositions.DIMENTION_X,
             mAddButton.y,
             "Add Dimention +",
             Size.DIMENTION_SIZE,

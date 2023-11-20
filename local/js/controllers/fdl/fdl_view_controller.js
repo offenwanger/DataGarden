@@ -123,6 +123,7 @@ function FdlViewController() {
 
     function setMode(mode, dimenId = null) {
         mActiveViewController.stop();
+        let oldActiveViewController = mActiveViewController;
         if (mode == FdlMode.PARENT) {
             mActiveViewController = mFdlParentViewController;
         } else if (mode == FdlMode.LEGEND) {
@@ -131,6 +132,9 @@ function FdlViewController() {
             mActiveViewController = mFdlDimentionViewController;
             mFdlDimentionViewController.setDimention(dimenId);
         }
+
+        convertCoordinateSystem(mSimulationData, oldActiveViewController, mActiveViewController);
+
         mActiveViewController.updateSimulationData(mSimulationData, mModel);
     }
 
@@ -246,6 +250,18 @@ function FdlViewController() {
         } else {
             return { x: 0, y: 0 };
         }
+    }
+
+    function convertCoordinateSystem(data, fromController, toController) {
+        let fromTranslate = fromController.getTranslate();
+        let toTranslate = toController.getTranslate();
+        let fromScale = fromController.getScale();
+        let toScale = toController.getScale();
+
+        data.forEach(item => {
+            item.x = ((item.x * fromScale) + fromTranslate.x - toTranslate.x) / toScale;
+            item.y = ((item.y * fromScale) + fromTranslate.y - toTranslate.y) / toScale;
+        })
     }
 
     //////////// TESTING FUNCTION ////////////
