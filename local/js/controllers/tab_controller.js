@@ -33,6 +33,18 @@ function TabController() {
         mInteractionCanvas.node().getContext("2d")
     );
 
+    function onModelUpdate(model) {
+        mDimentionTabs.forEach(dimentionTab => {
+            let dimention = model.getDimention(dimentionTab.id);
+            if (dimention) {
+                dimentionTab.title = dimention.name;
+            } else {
+                removeTab(dimentionTab.id);
+            }
+        })
+        draw();
+    }
+
     function onResize(width, height) {
         d3.select("#tabs-container")
             .style('width', width + "px")
@@ -147,6 +159,7 @@ function TabController() {
     }
 
     return {
+        onModelUpdate,
         onResize,
         onPointerDown,
         onPointerMove,

@@ -565,16 +565,13 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         ctx.restore();
     }
 
+    const TEXT_HORIZONTAL_PADDING = 10;
+    const TEXT_FONT_STRING = "px Segoe Print";
+    const TEXT_SHRINK = 0.8;
     function drawStringNode(x, y, label, height, shadow, code) {
         ctx.save();
-        const padding = 10;
-
-        ctx.font = Math.round(height * 0.8) + "px Segoe Print";
-        let width = ctx.measureText(label).width + padding * 2;
-
-        ctx.save();
         ctx.beginPath();
-        ctx.rect(x, y, width, height);
+        ctx.rect(x, y, measureStringNode(label, height), height);
         ctx.strokeStyle = 'black';
         ctx.stroke();
         if (shadow) {
@@ -587,10 +584,12 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         ctx.fill();
         ctx.restore();
 
+        ctx.save();
         ctx.fillStyle = 'black';
         ctx.textBaseline = 'middle';
         ctx.textAlign = 'left'
-        ctx.fillText(label, x + padding, y + height / 2);
+        ctx.font = Math.round(height * TEXT_SHRINK) + TEXT_FONT_STRING;
+        ctx.fillText(label, x + TEXT_HORIZONTAL_PADDING, y + height / 2);
 
         ctx.restore();
 
@@ -598,18 +597,17 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
             intCtx.save();
             intCtx.fillStyle = code;
             intCtx.beginPath();
-            intCtx.rect(x, y, width, height);
+            intCtx.rect(x, y, measureStringNode(label, height), height);
             intCtx.fill();
             intCtx.restore();
         }
     }
 
-    function measureString(text, height) {
+    function measureStringNode(text, height) {
         ctx.save();
-        ctx.font = Math.round(height * 0.8) + "px Segoe Print";
-        let width = ctx.measureText(text).width;
+        ctx.font = Math.round(height * TEXT_SHRINK) + TEXT_FONT_STRING;
+        let width = ctx.measureText(text).width + TEXT_HORIZONTAL_PADDING * 2;
         ctx.restore();
-
         return width;
     }
 
@@ -639,6 +637,6 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         drawSelectionBubble,
         drawBand,
         drawStringNode,
-        measureString,
+        measureStringNode,
     }
 }

@@ -39,6 +39,8 @@ function EventManager(dashboard) {
             return mDashboard.onRedo();
         } else if (/* delete */ e.which == 46) {
             mDashboard.onDelete();
+        } else if (/* enter */ e.which == 13) {
+            mDashboard.onEnter();
         }
     });
 

@@ -1,7 +1,14 @@
 function FdlDimentionViewController(mDrawingUtil, mCodeUtil) {
     const ADD_BUTTON_ID = 'add_button';
     const TARGET_ELEMENT = "element_target"
+    const TARGET_LABEL = "element_label"
+    const TARGET_TYPE = "element_type"
+    const TARGET_CHANNEL = "element_channel"
+    const TARGET_TIER = "element_tier"
     const NODE_COLUMN_WIDTH = 300
+
+    let mAddLevelCallback = () => { };
+    let mEditNameCallback = () => { };
 
     let mModel = new DataModel();
     let mDimentionId = null;
@@ -59,7 +66,7 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil) {
         mDimention = data.find(item => item.id == mDimentionId);
         mLevels = data.filter(item => levelIds.includes(item.id));
         // TODO: do this properly, i.e. measure all the stuff in that column
-        mDimentionWidth = mDrawingUtil.measureString(mDimention.name +
+        mDimentionWidth = mDrawingUtil.measureStringNode(mDimention.name +
             " [" + DimentionLabels[mDimention.type] + "][" +
             ChannelLabels[mDimention.channel] + "][T" + mDimention.tier + "]", Size.DIMENTION_SIZE);
 
@@ -89,7 +96,7 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil) {
 
         let dimention = mModel.getDimention(mDimentionId);
         dimention.levels.forEach(level => {
-            let clusterNodes = elements.filter(e => level.elements.includes(e)).map(e => mNodes.find(n => n.id == e.id));
+            let clusterNodes = mNodes.filter(n => level.elements.includes(n.id));
             if (clusterNodes.length > 0) {
                 let hull = d3.polygonHull(DataUtil.getPaddedPoints(clusterNodes, Padding.NODE)).map(p => { return { x: p[0], y: p[1] } });
                 let levelNode = mLevels.find(l => l.id == level.id);
@@ -97,19 +104,16 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil) {
             }
         })
 
-        let dimentionString = mDimention.name +
-            " [" + DimentionLabels[mDimention.type] + "][" +
-            ChannelLabels[mDimention.channel] + "][T" + mDimention.tier + "]";
-        mDrawingUtil.drawStringNode(
-            AxisPositions.DIMENTION_X,
-            mDimention.y,
-            dimentionString,
-            Size.DIMENTION_SIZE,
-            mHighlight.includes(mDimention.id),
-            mCodeUtil.getCode(mDimention.id))
+        drawDimention();
 
         mLevels.forEach(level => {
-            mDrawingUtil.drawStringNode(AxisPositions.LEVEL_X, level.y, level.name, Size.LEVEL_SIZE)
+            mDrawingUtil.drawStringNode(
+                AxisPositions.LEVEL_X,
+                level.y,
+                level.name,
+                Size.LEVEL_SIZE,
+                mHighlight.includes(level.id),
+                mCodeUtil.getCode(level.id, TARGET_LABEL));
         })
 
         let elements = mNodes.map(n => mModel.getElement(n.id));
@@ -135,6 +139,29 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil) {
             mCodeUtil.getCode(ADD_BUTTON_ID));
     }
 
+    function drawDimention() {
+        let strings = [
+            mDimention.name,
+            "[" + DimentionLabels[mDimention.type] + "]",
+            "[" + ChannelLabels[mDimention.channel] + "]",
+            "[T" + mDimention.tier + "]"
+        ];
+        let widths = [0];
+        for (let i = 0; i < strings.length; i++) {
+            widths.push(mDrawingUtil.measureStringNode(strings[i], Size.DIMENTION_SIZE) + widths[i] + 3);
+        }
+        let targets = [TARGET_LABEL, TARGET_TYPE, TARGET_CHANNEL, TARGET_TIER];
+        strings.forEach((string, index) => {
+            mDrawingUtil.drawStringNode(
+                AxisPositions.DIMENTION_X + widths[index],
+                mDimention.y,
+                string,
+                Size.DIMENTION_SIZE,
+                mHighlight.includes(mDimention.id),
+                mCodeUtil.getCode(mDimention.id, targets[index]));
+        })
+    }
+
     function stop() {
         mSimulation.stop();
     }
@@ -148,7 +175,34 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil) {
     }
 
     function interactionEnd(interaction, modelCoords) {
-
+        if (interaction.endTarget == interaction.target.id &&
+            interaction.target.id == mDimentionId &&
+            interaction.target.type == TARGET_LABEL) {
+            mEditNameCallback(interaction.target.id, mDimention.x, mDimention.y,
+                mDrawingUtil.measureStringNode(mDimention.name, Size.DIMENTION_SIZE), Size.DIMENTION_SIZE);
+        } else if (interaction.endTarget == interaction.target.id &&
+            interaction.target.id == mDimentionId &&
+            interaction.target.type == TARGET_TYPE) {
+            console.log("clicked TARGET_TYPE")
+        } else if (interaction.endTarget == interaction.target.id &&
+            interaction.target.id == mDimentionId &&
+            interaction.target.type == TARGET_CHANNEL) {
+            console.log("clicked TARGET_CHANNEL")
+        } else if (interaction.endTarget == interaction.target.id &&
+            interaction.target.id == mDimentionId &&
+            interaction.target.type == TARGET_TIER) {
+            console.log("clicked TARGET_TIER")
+        } else if (interaction.endTarget == interaction.target.id &&
+            IdUtil.isType(interaction.target.id, Data.Level) &&
+            interaction.target.type == TARGET_LABEL) {
+            let levelNode = mLevels.find(l => l.id == interaction.target.id);
+            if (!levelNode) { console.error("Invalid level id", interaction.target.id); return; }
+            mEditNameCallback(interaction.target.id, levelNode.x, levelNode.y,
+                mDrawingUtil.measureStringNode(levelNode.name, Size.LEVEL_SIZE), Size.LEVEL_SIZE);
+        } else if (interaction.endTarget == interaction.target &&
+            interaction.target == ADD_BUTTON_ID) {
+            mAddLevelCallback(mDimentionId);
+        }
     }
 
     function pan(x, y) {
@@ -185,5 +239,7 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil) {
         setDimention,
         getTranslate,
         getScale,
+        setAddLevelCallback: (func) => mAddLevelCallback = func,
+        setEditNameCallback: (func) => mEditNameCallback = func,
     }
 }

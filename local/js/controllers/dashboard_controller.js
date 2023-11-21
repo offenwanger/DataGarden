@@ -9,6 +9,7 @@ function DashboardController() {
 
     let mMenuController = new MenuController();
     let mContextMenu = new ContextMenu(d3.select('#interface-svg'));
+    let mTextInput = new TextInput();
     let mKeyBinding = new KeyBinding();
 
     let mModel = new DataModel();
@@ -34,11 +35,14 @@ function DashboardController() {
     let mCalculateSpineCallback = () => { };
     let mUndoCallback = () => { };
     let mRedoCallback = () => { };
+    let mUpdateLevelNameCallback = () => { };
+    let mUpdateDimentionNameCallback = () => { };
 
     function modelUpdate(model) {
         mModel = model;
         mCanvasController.onModelUpdate(model);
         mFdlViewController.onModelUpdate(model);
+        mTabController.onModelUpdate(model);
     }
 
     function onResize(width, height) {
@@ -87,6 +91,26 @@ function DashboardController() {
         mMenuController.stateTransition(mToolState, state);
         mToolState = state;
     }
+
+    function onEnter() {
+        if (mTextInput.isShowing()) {
+            mTextInput.returnText();
+        }
+    }
+
+    function onDelete() {
+
+    }
+
+    mTextInput.setTextChangedCallback((itemId, text) => {
+        if (IdUtil.isType(itemId, Data.Level)) {
+            mUpdateLevelNameCallback(itemId, text);
+        } else if (IdUtil.isType(itemId, Data.Dimention)) {
+            mUpdateDimentionNameCallback(itemId, text);
+        } else {
+            console.error("Invalid id", itemId);
+        }
+    })
 
     mTabController.setSetTabCallback(tabId => {
         mTabController.setActiveTab(tabId);
@@ -178,9 +202,19 @@ function DashboardController() {
         mFdlViewController.setMode(FdlMode.DIMENTION, dimenId);
     });
 
+    mFdlViewController.setEditNameCallback((itemId, x, y, width, height) => {
+        let item;
+        if (IdUtil.isType(itemId, Data.Level)) {
+            item = mModel.getLevel(itemId);
+        } else {
+            item = mModel.getDimention(itemId);
+        }
+        mTextInput.show(itemId, item.name, x, y, width, height);
+    });
+
     mMenuController.setColorChangeCallback((color) => {
         mCanvasController.setColor(color);
-    })
+    });
 
     return {
         modelUpdate,
@@ -191,6 +225,8 @@ function DashboardController() {
         onDblClick,
         onLongPress,
         onKeyStateChange,
+        onEnter,
+        onDelete,
         setNewStrokeCallback: (func) => mCanvasController.setNewStrokeCallback(func),
         setParentUpdateCallback: (func) => mFdlViewController.setParentUpdateCallback(func),
         setMergeElementCallback: (func) => mMergeElementCallback = func,
@@ -206,5 +242,8 @@ function DashboardController() {
         setUndoCallback: (func) => mUndoCallback = func,
         setRedoCallback: (func) => mRedoCallback = func,
         setAddDimentionCallback: (func) => mAddDimentionCallback = func,
+        setAddLevelCallback: (func) => mFdlViewController.setAddLevelCallback(func),
+        setUpdateLevelNameCallback: (func) => mUpdateLevelNameCallback = func,
+        setUpdateDimentionNameCallback: (func) => mUpdateDimentionNameCallback = func,
     }
 }

@@ -240,6 +240,16 @@ function FdlViewController() {
         mActiveViewController.highlight(selection);
     }
 
+    mFdlDimentionViewController.setEditNameCallback((itemId, x, y, width, height) => {
+        let translate = mActiveViewController.getTranslate();
+        let scale = mActiveViewController.getScale();
+        let screenCoords = modelToScreenCoords({ x, y }, translate, scale);
+        let screenCoords2 = modelToScreenCoords({ x: x + width, y: y + height }, translate, scale);
+
+        mEditNameCallback(itemId, screenCoords.x, screenCoords.y,
+            screenCoords2.x - screenCoords.x, screenCoords2.y - screenCoords.y);
+    })
+
     function screenToModelCoords(screenCoords, translate, scale) {
         let boundingBox = mInterfaceCanvas.node().getBoundingClientRect();
         if (ValUtil.checkConvertionState(screenCoords, boundingBox, { x: translate.x, y: translate.y, k: scale })) {
@@ -250,6 +260,14 @@ function FdlViewController() {
         } else {
             return { x: 0, y: 0 };
         }
+    }
+
+    function modelToScreenCoords(modelCoords, translate, scale) {
+        let boundingBox = mInterfaceCanvas.node().getBoundingClientRect();
+        return {
+            x: modelCoords.x * scale + boundingBox.x + translate.x,
+            y: modelCoords.y * scale + boundingBox.y + translate.y
+        };
     }
 
     function convertCoordinateSystem(data, fromController, toController) {
@@ -284,6 +302,8 @@ function FdlViewController() {
         setParentUpdateCallback: (func) => mFdlParentViewController.setParentUpdateCallback(func),
         setAddDimentionCallback: (func) => mFdlLegendViewController.setAddDimentionCallback(func),
         setClickDimentionCallback: (func) => mFdlLegendViewController.setClickDimentionCallback(func),
+        setAddLevelCallback: (func) => mFdlDimentionViewController.setAddLevelCallback(func),
+        setEditNameCallback: (func) => mEditNameCallback = func,
         setMergeElementCallback: (func) => mMergeElementCallback = func,
         setNewElementCallback: (func) => mNewElementCallback = func,
         setMoveElementCallback: (func) => mMoveElementCallback = func,

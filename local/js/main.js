@@ -59,6 +59,35 @@ document.addEventListener('DOMContentLoaded', function (e) {
         return newDimention;
     })
 
+    mDashboardController.setAddLevelCallback((dimenId) => {
+        let newLevel = new Data.Level();
+        newLevel.name = "Level";
+        mModelController.addLevel(dimenId, newLevel);
+
+        mVersionController.stack(mModelController.getModel());
+        mDashboardController.modelUpdate(mModelController.getModel());
+    });
+
+    mDashboardController.setUpdateLevelNameCallback((levelId, name) => {
+        let level = mModelController.getModel().getLevel(levelId);
+        if (!level) { console.error("Invalid level id: ", levelId); return; }
+        level.name = name;
+        mModelController.updateLevel(level);
+
+        mVersionController.stack(mModelController.getModel());
+        mDashboardController.modelUpdate(mModelController.getModel());
+    })
+
+    mDashboardController.setUpdateDimentionNameCallback((dimentionId, name) => {
+        let dimention = mModelController.getModel().getDimention(dimentionId);
+        if (!dimention) { console.error("Invalid dimention id: ", dimentionId); return; }
+        dimention.name = name;
+        mModelController.updateDimention(dimention);
+
+        mVersionController.stack(mModelController.getModel());
+        mDashboardController.modelUpdate(mModelController.getModel());
+    })
+
     mDashboardController.setMergeElementCallback((selection, mergeElementId) => {
         ModelUtil.mergeElements(mModelController, selection, mergeElementId);
 

@@ -139,7 +139,7 @@ let Data = function () {
     function Level() {
         this.id = IdUtil.getUniqueId(Level);
         this.creationTime = Date.now();
-        this.name;
+        this.name = "Level";
         this.elements = [];
 
         this.clone = function () {
