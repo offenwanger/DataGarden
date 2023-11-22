@@ -55,13 +55,14 @@ function EventManager(dashboard) {
         mCurrentMousePosistion = mStartPos;
         clearTimeout(mLongPressTimeout);
         mLongPressTimeout = setTimeout(() => {
-            let motion = MathUtil.length(MathUtil.subtract(mStartPos, mCurrentMousePosistion));
+            let motion = MathUtil.dist(mStartPos, mCurrentMousePosistion);
             if (motion < 5) {
                 mDashboard.onLongPress(screenCoords, mCurrentToolState);
             }
         }, 800);
 
-        if (Date.now() - mLastClick.time < DBL_CLICK_SPEED && MathUtil.length(MathUtil.subtract(screenCoords, mLastClick)) < DBL_CLICK_DIST) {
+        if (Date.now() - mLastClick.time < DBL_CLICK_SPEED &&
+            MathUtil.dist(screenCoords, mLastClick) < DBL_CLICK_DIST) {
             mDashboard.onDblClick(screenCoords, mCurrentToolState);
         } else {
             mDashboard.onPointerDown(screenCoords, mCurrentToolState);

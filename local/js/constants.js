@@ -85,3 +85,14 @@ ChannelLabels[ChannelType.COLOR] = 'color';
 ChannelLabels[ChannelType.SIZE] = 'size';
 ChannelLabels[ChannelType.ANGLE] = 'angle';
 ChannelLabels[ChannelType.POSITION] = 'pos';
+
+const Decay = {
+    ALPHA: .0005,
+    VELOCITY: 0.7,
+}
+
+const DropDown = {
+    TYPE: "type",
+    CHANNEL: "channel",
+    TIER: "tier",
+}

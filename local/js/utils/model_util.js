@@ -7,7 +7,7 @@ let ModelUtil = function () {
         let xMin = points.reduce((prev, current) => (prev.x < current.x) ? prev : current);
         points = [yMax, yMix, xMax, xMin];
         let pairs = points.flatMap((v, i) => points.slice(i + 1).map(w => [v, w]));
-        let dists = pairs.map(pair => MathUtil.length(MathUtil.subtract(pair[0], pair[1])));
+        let dists = pairs.map(pair => MathUtil.dist(pair[0], pair[1]));
         return pairs[dists.findIndex(i => i == Math.max(...dists))];
     }
 

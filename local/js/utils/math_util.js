@@ -35,6 +35,10 @@ let MathUtil = function () {
         return Math.sqrt(v.x * v.x + v.y * v.y);
     }
 
+    function dist(v1, v2) {
+        return length(subtract(v1, v2));
+    }
+
     // function angle(v1, v2) {
     //     return Math.atan2(v2.y - v1.y, v2.x - v1.x);
     // }
@@ -50,6 +54,7 @@ let MathUtil = function () {
         scale,
         average,
         length,
+        dist,
         normalize,
     }
 }();

@@ -10,6 +10,7 @@ function DashboardController() {
     let mMenuController = new MenuController();
     let mContextMenu = new ContextMenu(d3.select('#interface-svg'));
     let mTextInput = new TextInput();
+    let mDropdownInput = new DropdownInput();
     let mKeyBinding = new KeyBinding();
 
     let mModel = new DataModel();
@@ -37,12 +38,16 @@ function DashboardController() {
     let mRedoCallback = () => { };
     let mUpdateLevelNameCallback = () => { };
     let mUpdateDimentionNameCallback = () => { };
+    let mUpdateDimentionTypeCallback = () => { };
+    let mUpdateDimentionChannelCallback = () => { };
+    let mUpdateDimentionTierCallback = () => { };
 
     function modelUpdate(model) {
         mModel = model;
         mCanvasController.onModelUpdate(model);
         mFdlViewController.onModelUpdate(model);
         mTabController.onModelUpdate(model);
+        mDropdownInput.onModelUpdate(model);
     }
 
     function onResize(width, height) {
@@ -109,6 +114,18 @@ function DashboardController() {
             mUpdateDimentionNameCallback(itemId, text);
         } else {
             console.error("Invalid id", itemId);
+        }
+    })
+
+    mDropdownInput.setSelectedCallback((dropdownType, dimentionId, value) => {
+        if (dropdownType == DropDown.TYPE) {
+            mUpdateDimentionTypeCallback(dimentionId, value);
+        } else if (dropdownType == DropDown.CHANNEL) {
+            mUpdateDimentionChannelCallback(dimentionId, value);
+        } else if (dropdownType == DropDown.TIER) {
+            mUpdateDimentionTierCallback(dimentionId, value);
+        } else {
+            console.error("Invalid type");
         }
     })
 
@@ -212,6 +229,21 @@ function DashboardController() {
         mTextInput.show(itemId, item.name, x, y, width, height);
     });
 
+    mFdlViewController.setEditTypeCallback((dimentionId, x, y, width, height) => {
+        let dimention = mModel.getDimention(dimentionId);
+        mDropdownInput.show(DropDown.TYPE, dimentionId, dimention.type, x, y, width, height);
+    });
+
+    mFdlViewController.setEditChannelCallback((dimentionId, x, y, width, height) => {
+        let dimention = mModel.getDimention(dimentionId);
+        mDropdownInput.show(DropDown.CHANNEL, dimentionId, dimention.channel, x, y, width, height);
+    });
+
+    mFdlViewController.setEditTierCallback((dimentionId, x, y, width, height) => {
+        let dimention = mModel.getDimention(dimentionId);
+        mDropdownInput.show(DropDown.TIER, dimentionId, dimention.tier, x, y, width, height);
+    });
+
     mMenuController.setColorChangeCallback((color) => {
         mCanvasController.setColor(color);
     });
@@ -243,7 +275,11 @@ function DashboardController() {
         setRedoCallback: (func) => mRedoCallback = func,
         setAddDimentionCallback: (func) => mAddDimentionCallback = func,
         setAddLevelCallback: (func) => mFdlViewController.setAddLevelCallback(func),
+        setUpdateLevelCallback: (func) => mFdlViewController.setUpdateLevelCallback(func),
         setUpdateLevelNameCallback: (func) => mUpdateLevelNameCallback = func,
         setUpdateDimentionNameCallback: (func) => mUpdateDimentionNameCallback = func,
+        setUpdateDimentionTypeCallback: (func) => mUpdateDimentionTypeCallback = func,
+        setUpdateDimentionChannelCallback: (func) => mUpdateDimentionChannelCallback = func,
+        setUpdateDimentionTierCallback: (func) => mUpdateDimentionTierCallback = func,
     }
 }

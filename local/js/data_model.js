@@ -111,6 +111,12 @@ function DataModel() {
         return getDimentions().map(d => d.levels).flat().find(l => l.id == levelId);
     }
 
+    function getLevelForElement(dimentionId, elementId) {
+        let dimention = getDimention(dimentionId);
+        if (!dimention) return null;
+        return dimention.levels.find(l => l.elementIds.includes(elementId));
+    }
+
     function getTables() {
         // get the top level groups, there's one table for each
         return mGroups.filter(g => !g.parentId).map(group => {
@@ -181,6 +187,7 @@ function DataModel() {
     this.setDimentions = setDimentions;
     this.getDimentionForLevel = getDimentionForLevel;
     this.getLevel = getLevel;
+    this.getLevelForElement = getLevelForElement;
     this.getTables = getTables;
 }
 

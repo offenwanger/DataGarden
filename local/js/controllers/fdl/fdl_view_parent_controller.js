@@ -17,6 +17,8 @@ function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
     let mNodes = [];
     let mLinks = [];
     let mSimulation = d3.forceSimulation()
+        .alphaDecay(Decay.ALPHA)
+        .velocityDecay(Decay.VELOCITY)
         .force("x", d3.forceX(0).strength(0.01))
         .force("collide", d3.forceCollide((d) => d.radius + Padding.NODE * 2))
         .force("link", d3.forceLink().id(d => d.id))

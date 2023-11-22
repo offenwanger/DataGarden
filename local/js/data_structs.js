@@ -140,14 +140,14 @@ let Data = function () {
         this.id = IdUtil.getUniqueId(Level);
         this.creationTime = Date.now();
         this.name = "Level";
-        this.elements = [];
+        this.elementIds = [];
 
         this.clone = function () {
             let clone = new Level();
             clone.id = this.id;
             clone.creationTime = this.creationTime;
             clone.name = this.name;
-            clone.elements = this.elements.map(e => e.clone());
+            clone.elementIds = [...this.elementIds];
             return clone;
         };
 
@@ -155,7 +155,7 @@ let Data = function () {
             this.id = level.id;
             this.creationTime = level.creationTime;
             this.name = level.name;
-            this.elements = level.elements.map(e => e.clone());
+            this.elementIds = [...level.elementIds];
         };
     }
     Level.fromObject = function (obj) {
@@ -163,7 +163,7 @@ let Data = function () {
         level.id = obj.id;
         level.creationTime = obj.creationTime;
         level.name = obj.name;
-        level.elements = obj.elements.map(e => Element.fromObject(e));
+        level.elementIds = [...obj.elementIds];
         return level;
     }
 

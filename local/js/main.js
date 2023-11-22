@@ -68,6 +68,30 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mDashboardController.modelUpdate(mModelController.getModel());
     });
 
+    mDashboardController.setUpdateLevelCallback((dimenId, levelId, elementIds) => {
+        let model = mModelController.getModel();
+        let dimention = model.getDimention(dimenId);
+
+        // Validation
+        elementIds = elementIds.map(eId => {
+            let e = model.getElement(eId);
+            if (!e) { console.error("Invalid element id!", eId); return null; };
+            return e;
+        }).filter(e => e).map(e => e.id);
+
+        dimention.levels.forEach(level => {
+            if (level.id == levelId) {
+                level.elementIds = DataUtil.unique(level.elementIds.concat(elementIds));
+            } else {
+                level.elementIds = level.elementIds.filter(e => !elementIds.includes(e));
+            }
+            mModelController.updateLevel(level);
+        });
+
+        mVersionController.stack(mModelController.getModel());
+        mDashboardController.modelUpdate(mModelController.getModel());
+    });
+
     mDashboardController.setUpdateLevelNameCallback((levelId, name) => {
         let level = mModelController.getModel().getLevel(levelId);
         if (!level) { console.error("Invalid level id: ", levelId); return; }
@@ -82,6 +106,36 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let dimention = mModelController.getModel().getDimention(dimentionId);
         if (!dimention) { console.error("Invalid dimention id: ", dimentionId); return; }
         dimention.name = name;
+        mModelController.updateDimention(dimention);
+
+        mVersionController.stack(mModelController.getModel());
+        mDashboardController.modelUpdate(mModelController.getModel());
+    })
+
+    mDashboardController.setUpdateDimentionTypeCallback((dimentionId, type) => {
+        let dimention = mModelController.getModel().getDimention(dimentionId);
+        if (!dimention) { console.error("Invalid dimention id: ", dimentionId); return; }
+        dimention.type = type;
+        mModelController.updateDimention(dimention);
+
+        mVersionController.stack(mModelController.getModel());
+        mDashboardController.modelUpdate(mModelController.getModel());
+    })
+
+    mDashboardController.setUpdateDimentionChannelCallback((dimentionId, channel) => {
+        let dimention = mModelController.getModel().getDimention(dimentionId);
+        if (!dimention) { console.error("Invalid dimention id: ", dimentionId); return; }
+        dimention.channel = channel;
+        mModelController.updateDimention(dimention);
+
+        mVersionController.stack(mModelController.getModel());
+        mDashboardController.modelUpdate(mModelController.getModel());
+    })
+
+    mDashboardController.setUpdateDimentionTierCallback((dimentionId, tier) => {
+        let dimention = mModelController.getModel().getDimention(dimentionId);
+        if (!dimention) { console.error("Invalid dimention id: ", dimentionId); return; }
+        dimention.tier = tier;
         mModelController.updateDimention(dimention);
 
         mVersionController.stack(mModelController.getModel());

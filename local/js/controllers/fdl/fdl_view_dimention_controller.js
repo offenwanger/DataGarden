@@ -1,4 +1,4 @@
-function FdlDimentionViewController(mDrawingUtil, mCodeUtil) {
+function FdlDimentionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
     const ADD_BUTTON_ID = 'add_button';
     const TARGET_ELEMENT = "element_target"
     const TARGET_LABEL = "element_label"
@@ -9,6 +9,7 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil) {
 
     let mAddLevelCallback = () => { };
     let mEditNameCallback = () => { };
+    let mUpdateLevelCallback = () => { };
 
     let mModel = new DataModel();
     let mDimentionId = null;
@@ -23,10 +24,13 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil) {
     let mAddButton = { id: ADD_BUTTON_ID, x: 0, y: 0 };
 
     let mDimentionWidth = 0;
+    let mDimentionTileWidths = [];
 
     let mLinks = [];
 
     let mSimulation = d3.forceSimulation()
+        .alphaDecay(Decay.ALPHA)
+        .velocityDecay(Decay.VELOCITY)
         .force("x", d3.forceY(0).strength(0.01))
         .force("link", d3.forceLink().id(d => d.id))
         .force("axis", d3.forceX((d => IdUtil.isType(d.id, Data.Element) ? mDimentionWidth + NODE_COLUMN_WIDTH / 2 : 0)).strength(0.7))
@@ -75,13 +79,13 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil) {
 
         mLinks = [];
         dimention.levels.forEach(level => {
-            level.elements.forEach(element => {
-                mLinks.push({ source: element.id, target: level.id });
+            level.elementIds.forEach(elementId => {
+                mLinks.push({ source: elementId, target: level.id });
             })
         })
 
-        mSimulation.force('link').links(mLinks);
         mSimulation.nodes(mLevels.concat(mNodes).concat([mDimention, mAddButton]));
+        mSimulation.force('link').links(mLinks);
 
         mSimulation.alphaTarget(0.3).restart();
     }
@@ -96,7 +100,7 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil) {
 
         let dimention = mModel.getDimention(mDimentionId);
         dimention.levels.forEach(level => {
-            let clusterNodes = mNodes.filter(n => level.elements.includes(n.id));
+            let clusterNodes = mNodes.filter(n => level.elementIds.includes(n.id));
             if (clusterNodes.length > 0) {
                 let hull = d3.polygonHull(DataUtil.getPaddedPoints(clusterNodes, Padding.NODE)).map(p => { return { x: p[0], y: p[1] } });
                 let levelNode = mLevels.find(l => l.id == level.id);
@@ -146,14 +150,14 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil) {
             "[" + ChannelLabels[mDimention.channel] + "]",
             "[T" + mDimention.tier + "]"
         ];
-        let widths = [0];
+        mDimentionTileWidths = [0];
         for (let i = 0; i < strings.length; i++) {
-            widths.push(mDrawingUtil.measureStringNode(strings[i], Size.DIMENTION_SIZE) + widths[i] + 3);
+            mDimentionTileWidths.push(mDrawingUtil.measureStringNode(strings[i], Size.DIMENTION_SIZE) + mDimentionTileWidths[i] + 3);
         }
         let targets = [TARGET_LABEL, TARGET_TYPE, TARGET_CHANNEL, TARGET_TIER];
         strings.forEach((string, index) => {
             mDrawingUtil.drawStringNode(
-                AxisPositions.DIMENTION_X + widths[index],
+                AxisPositions.DIMENTION_X + mDimentionTileWidths[index],
                 mDimention.y,
                 string,
                 Size.DIMENTION_SIZE,
@@ -167,41 +171,84 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil) {
     }
 
     function interactionStart(interaction, modelCoords) {
+        let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
+            .map(target => target.id ? target.id : target);
+        let targetItems = mNodes.concat(mLevels).concat([mDimention, mAddButton]).filter(n => target.includes(n.id));
+        let remainingItems = mNodes.concat(mLevels).concat([mDimention, mAddButton]).filter(n => !target.includes(n.id));
+        targetItems.forEach(item => {
+            item.startX = item.x;
+            item.startY = item.y;
+            item.interacting = true;
+        });
 
+        mSimulation.nodes(remainingItems);
     }
 
     function interactionDrag(interaction, modelCoords) {
-
+        let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
+            .map(target => target.id ? target.id : target);
+        let targetItems = mNodes.concat(mLevels).concat([mDimention, mAddButton]).filter(n => target.includes(n.id));
+        let dist = MathUtil.subtract(modelCoords, interaction.start);
+        targetItems.forEach(item => {
+            if (IdUtil.isType(item.id, Data.Element)) {
+                item.x = item.startX + dist.x;
+            }
+            item.y = item.startY + dist.y;
+        });
     }
 
     function interactionEnd(interaction, modelCoords) {
-        if (interaction.endTarget == interaction.target.id &&
-            interaction.target.id == mDimentionId &&
-            interaction.target.type == TARGET_LABEL) {
-            mEditNameCallback(interaction.target.id, mDimention.x, mDimention.y,
-                mDrawingUtil.measureStringNode(mDimention.name, Size.DIMENTION_SIZE), Size.DIMENTION_SIZE);
-        } else if (interaction.endTarget == interaction.target.id &&
-            interaction.target.id == mDimentionId &&
-            interaction.target.type == TARGET_TYPE) {
-            console.log("clicked TARGET_TYPE")
-        } else if (interaction.endTarget == interaction.target.id &&
-            interaction.target.id == mDimentionId &&
-            interaction.target.type == TARGET_CHANNEL) {
-            console.log("clicked TARGET_CHANNEL")
-        } else if (interaction.endTarget == interaction.target.id &&
-            interaction.target.id == mDimentionId &&
-            interaction.target.type == TARGET_TIER) {
-            console.log("clicked TARGET_TIER")
-        } else if (interaction.endTarget == interaction.target.id &&
-            IdUtil.isType(interaction.target.id, Data.Level) &&
-            interaction.target.type == TARGET_LABEL) {
-            let levelNode = mLevels.find(l => l.id == interaction.target.id);
-            if (!levelNode) { console.error("Invalid level id", interaction.target.id); return; }
-            mEditNameCallback(interaction.target.id, levelNode.x, levelNode.y,
-                mDrawingUtil.measureStringNode(levelNode.name, Size.LEVEL_SIZE), Size.LEVEL_SIZE);
-        } else if (interaction.endTarget == interaction.target &&
-            interaction.target == ADD_BUTTON_ID) {
-            mAddLevelCallback(mDimentionId);
+        if (MathUtil.dist(interaction.start, modelCoords) < 5) {
+            // Handle Click
+            if (interaction.target.id == mDimentionId) {
+                if (interaction.target.type == TARGET_LABEL) {
+                    mEditNameCallback(interaction.target.id, mDimention.x, mDimention.y,
+                        mDimentionTileWidths[1] - mDimentionTileWidths[0], Size.DIMENTION_SIZE);
+                } else if (interaction.target.type == TARGET_TYPE) {
+                    mEditTypeCallback(interaction.target.id, mDimention.x + mDimentionTileWidths[1], mDimention.y,
+                        mDimentionTileWidths[2] - mDimentionTileWidths[1], Size.DIMENTION_SIZE);
+                } else if (interaction.target.type == TARGET_CHANNEL) {
+                    mEditChannelCallback(interaction.target.id, mDimention.x + mDimentionTileWidths[2], mDimention.y,
+                        mDimentionTileWidths[3] - mDimentionTileWidths[2], Size.DIMENTION_SIZE);
+                } else if (interaction.target.type == TARGET_TIER) {
+                    mEditTierCallback(interaction.target.id, mDimention.x + mDimentionTileWidths[3], mDimention.y,
+                        mDimentionTileWidths[4] - mDimentionTileWidths[3], Size.DIMENTION_SIZE);
+                } else {
+                    console.error("Unsupported Target Type", interaction.target.type);
+                }
+            } else if (IdUtil.isType(interaction.target.id, Data.Level)) {
+                let levelNode = mLevels.find(l => l.id == interaction.target.id);
+                if (!levelNode) { console.error("Invalid level id", interaction.target.id); return; }
+                mEditNameCallback(interaction.target.id, levelNode.x, levelNode.y,
+                    mDrawingUtil.measureStringNode(levelNode.name, Size.LEVEL_SIZE), Size.LEVEL_SIZE);
+            } else if (interaction.target == ADD_BUTTON_ID) {
+                mAddLevelCallback(mDimentionId);
+            }
+        } else {
+            // Handle Drag End
+            let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
+                .map(target => target.id ? target.id : target);
+
+            let targetItems = mNodes.concat(mLevels).concat([mDimention, mAddButton]).filter(n => target.includes(n.id));
+            targetItems.forEach(item => {
+                item.startX = null;
+                item.startY = null;
+                item.interacting = null;
+            });
+
+            let elementTargets = target.filter(id => IdUtil.isType(id, Data.Element));
+            if (elementTargets.length > 0) {
+                let levelTarget;
+                if (interaction.endTarget && IdUtil.isType(interaction.endTarget, Data.Level)) {
+                    levelTarget = interaction.endTarget;
+                } else if (interaction.endTarget && IdUtil.isType(interaction.endTarget, Data.Element)) {
+                    levelTarget = mModel.getLevelForElement(mDimentionId, interaction.endTarget);
+                } else if (modelCoords.y < Math.min(...mLevels.concat([mDimention]).map(n => n.y))) {
+                    levelTarget = null;
+                }
+                mUpdateLevelCallback(mDimentionId, levelTarget, elementTargets);
+            }
+            mSimulation.nodes(mNodes.concat(mLevels).concat([mDimention, mAddButton]));
         }
     }
 
@@ -241,5 +288,9 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil) {
         getScale,
         setAddLevelCallback: (func) => mAddLevelCallback = func,
         setEditNameCallback: (func) => mEditNameCallback = func,
+        setEditTypeCallback: (func) => mEditTypeCallback = func,
+        setEditChannelCallback: (func) => mEditChannelCallback = func,
+        setEditTierCallback: (func) => mEditTierCallback = func,
+        setUpdateLevelCallback: (func) => mUpdateLevelCallback = func,
     }
 }

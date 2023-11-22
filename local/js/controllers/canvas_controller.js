@@ -187,7 +187,7 @@ function CanvasController() {
             drawInterface();
         } else if (toolState == Buttons.SELECTION_BUTTON) {
             if (interaction && interaction.type == SELECTING) {
-                let moveDist = MathUtil.length(MathUtil.subtract(interaction.line[0], screenToModelCoords(screenCoords)));
+                let moveDist = MathUtil.dist(interaction.line[0], screenToModelCoords(screenCoords));
                 if (moveDist > 5 || interaction.line.length > 5) {
                     mModel.getStrokes().forEach(stroke => {
                         let coveredPoints = stroke.path.reduce((count, p) => {
@@ -207,7 +207,7 @@ function CanvasController() {
                     }
                 }
             } else if (interaction && interaction.type == DRAGGING) {
-                let moveDist = MathUtil.length(MathUtil.subtract(interaction.start, screenCoords));
+                let moveDist = MathUtil.dist(interaction.start, screenCoords);
                 if (moveDist < 5) {
                     mContextMenuCallback(screenCoords, mSelectionIds);
                 } else {

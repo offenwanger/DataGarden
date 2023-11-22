@@ -344,13 +344,15 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         }
 
         if (pointer) {
-            let max = outline.reduce((max, next) => (next.x > max.x) ? next : max, outline[0]);
-            let min = outline.reduce((max, next) => (next.x < max.x) ? next : max, outline[0]);
-            let middle = MathUtil.average([max, min]);
+            let middle = MathUtil.average([...outline]);
+            let radius = MathUtil.dist(middle, outline.reduce((max, next) => MathUtil.dist(middle, next) > MathUtil.dist(middle, max) ? next : max, outline[0]));
+            let pointerDirection = MathUtil.normalize(MathUtil.subtract(pointer, middle));
+            let p1 = MathUtil.add(MathUtil.scale({ x: -pointerDirection.y, y: pointerDirection.x }, radius), middle);
+            let p2 = MathUtil.add(MathUtil.scale({ x: pointerDirection.y, y: -pointerDirection.x }, radius), middle);
             let midpoint = { x: middle.x * 0.9 + pointer.x * 0.1, y: middle.y * 0.9 + pointer.y * 0.1 };
             ctx.moveTo(middle.x, middle.y);
-            ctx.bezierCurveTo(max.x, max.y, midpoint.x, midpoint.y, pointer.x, pointer.y);
-            ctx.bezierCurveTo(midpoint.x, midpoint.y, min.x, min.y, middle.x, middle.y);
+            ctx.bezierCurveTo(p1.x, p1.y, midpoint.x, midpoint.y, pointer.x, pointer.y);
+            ctx.bezierCurveTo(midpoint.x, midpoint.y, p2.x, p2.y, middle.x, middle.y);
         }
 
         ctx.fill('nonzero');

@@ -14,6 +14,10 @@ function FdlViewController() {
     let mMoveStrokeCallback = () => { }
     let mNewGroupCallback = () => { }
     let mContextMenuCallback = () => { }
+    let mEditNameCallback = () => { };
+    let mEditTypeCallback = () => { };
+    let mEditChannelCallback = () => { };
+    let mEditTierCallback = () => { };
 
     let mModel = new DataModel();
     let mSimulationData = [];
@@ -39,9 +43,8 @@ function FdlViewController() {
 
     let mFdlParentViewController = new FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap);
     let mFdlLegendViewController = new FdlLegendViewController(mDrawingUtil, mCodeUtil);
-    let mFdlDimentionViewController = new FdlDimentionViewController(mDrawingUtil, mCodeUtil);
+    let mFdlDimentionViewController = new FdlDimentionViewController(mDrawingUtil, mCodeUtil, mColorMap);
 
-    let mMode = FdlMode.PARENT;
     let mActiveViewController = mFdlParentViewController;
 
     function onModelUpdate(model) {
@@ -241,13 +244,39 @@ function FdlViewController() {
     }
 
     mFdlDimentionViewController.setEditNameCallback((itemId, x, y, width, height) => {
-        let translate = mActiveViewController.getTranslate();
-        let scale = mActiveViewController.getScale();
-        let screenCoords = modelToScreenCoords({ x, y }, translate, scale);
-        let screenCoords2 = modelToScreenCoords({ x: x + width, y: y + height }, translate, scale);
+        let bb = modelBoundingBoxToScreenBoundingBox(
+            { x, y, height, width },
+            mActiveViewController.getTranslate(),
+            mActiveViewController.getScale())
 
-        mEditNameCallback(itemId, screenCoords.x, screenCoords.y,
-            screenCoords2.x - screenCoords.x, screenCoords2.y - screenCoords.y);
+        mEditNameCallback(itemId, bb.x, bb.y, bb.width, bb.height);
+    })
+
+    mFdlDimentionViewController.setEditTypeCallback((dimentionId, x, y, width, height) => {
+        let bb = modelBoundingBoxToScreenBoundingBox(
+            { x, y, height, width },
+            mActiveViewController.getTranslate(),
+            mActiveViewController.getScale())
+
+        mEditTypeCallback(dimentionId, bb.x, bb.y, bb.width, bb.height);
+    })
+
+    mFdlDimentionViewController.setEditChannelCallback((dimentionId, x, y, width, height) => {
+        let bb = modelBoundingBoxToScreenBoundingBox(
+            { x, y, height, width },
+            mActiveViewController.getTranslate(),
+            mActiveViewController.getScale())
+
+        mEditChannelCallback(dimentionId, bb.x, bb.y, bb.width, bb.height);
+    })
+
+    mFdlDimentionViewController.setEditTierCallback((dimentionId, x, y, width, height) => {
+        let bb = modelBoundingBoxToScreenBoundingBox(
+            { x, y, height, width },
+            mActiveViewController.getTranslate(),
+            mActiveViewController.getScale())
+
+        mEditTierCallback(dimentionId, bb.x, bb.y, bb.width, bb.height);
     })
 
     function screenToModelCoords(screenCoords, translate, scale) {
@@ -268,6 +297,24 @@ function FdlViewController() {
             x: modelCoords.x * scale + boundingBox.x + translate.x,
             y: modelCoords.y * scale + boundingBox.y + translate.y
         };
+    }
+
+    function modelBoundingBoxToScreenBoundingBox(boundingBox, translate, scale) {
+        let screenCoords = modelToScreenCoords({
+            x: boundingBox.x,
+            y: boundingBox.y
+        }, translate, scale);
+        let screenCoords2 = modelToScreenCoords({
+            x: boundingBox.x + boundingBox.width,
+            y: boundingBox.y + boundingBox.height
+        }, translate, scale);
+
+        return {
+            x: screenCoords.x,
+            y: screenCoords.y,
+            width: screenCoords2.x - screenCoords.x,
+            height: screenCoords2.y - screenCoords.y
+        }
     }
 
     function convertCoordinateSystem(data, fromController, toController) {
@@ -303,7 +350,11 @@ function FdlViewController() {
         setAddDimentionCallback: (func) => mFdlLegendViewController.setAddDimentionCallback(func),
         setClickDimentionCallback: (func) => mFdlLegendViewController.setClickDimentionCallback(func),
         setAddLevelCallback: (func) => mFdlDimentionViewController.setAddLevelCallback(func),
+        setUpdateLevelCallback: (func) => mFdlDimentionViewController.setUpdateLevelCallback(func),
         setEditNameCallback: (func) => mEditNameCallback = func,
+        setEditTypeCallback: (func) => mEditTypeCallback = func,
+        setEditChannelCallback: (func) => mEditChannelCallback = func,
+        setEditTierCallback: (func) => mEditTierCallback = func,
         setMergeElementCallback: (func) => mMergeElementCallback = func,
         setNewElementCallback: (func) => mNewElementCallback = func,
         setMoveElementCallback: (func) => mMoveElementCallback = func,
