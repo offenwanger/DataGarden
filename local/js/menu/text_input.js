@@ -16,15 +16,12 @@ function TextInput() {
 
     function show(itemId, text, x, y, width, height) {
         mShowingItem = itemId;
-
-        mInputbox.style('top', Math.floor(y - 8) + 'px')
-            .style('left', Math.floor(x - 8) + 'px')
+        mInputbox.style('top', (y - 2) + 'px')
+            .style('left', (x + 8) + 'px')
             .style('height', height + 'px')
             .style('width', width + 'px');
         mInputbox.property("value", text);
-
         mInputbox.style("display", "");
-
         mInputbox.node().focus();
     }
 
