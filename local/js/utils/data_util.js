@@ -94,23 +94,6 @@ let DataUtil = function () {
         return level;
     }
 
-    function getGroupLevel(group, model) {
-        if (!ValUtil.isType(group, Data.Group)) { console.error("invalid group", group); return -1; }
-
-        let level = 0;
-        let touched = [group.id];
-        let curr = group;
-        while (curr.parentId) {
-            let parent = model.getGroup(curr.parentId)
-            if (!parent) { console.error("Invalid state, parent not found", curr.parentId); return -1; };
-            level++;
-            curr = parent;
-            if (touched.includes(curr.id)) { console.error("Invalid State, loop", touched); return -1; }
-            touched.push(curr.id);
-        }
-        return level;
-    }
-
     function isDecendant(acestorId, decendantId, model) {
         let parentId = decendantId;
         while (parentId) {
@@ -234,7 +217,6 @@ let DataUtil = function () {
         overlap,
         getElementSize,
         getElementLevel,
-        getGroupLevel,
         isDecendant,
         unique,
         findEmptyPlace,

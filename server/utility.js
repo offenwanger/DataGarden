@@ -120,7 +120,7 @@ function alignSVGPath(path, element) {
     })
 }
 
-function scapToGrouping(scap, idMap) {
+function scapToMerge(scap, idMap) {
     let tags = scap.split("{" + os.EOL).slice(1).map(stroke => {
         return stroke.split(os.EOL)[0].split("\t").slice(1);
     })
@@ -158,7 +158,7 @@ module.exports = {
     elementsToScap,
     elementTopCorner,
     scapToPath,
-    scapToGrouping,
+    scapToMerge,
     svgToPath,
     alignSVGPath,
     IdMap,

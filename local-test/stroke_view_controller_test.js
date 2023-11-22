@@ -33,7 +33,7 @@ describe('Stroke View Controller Test', function () {
         });
     })
 
-    describe('element grouping tests', function () {
+    describe('element merge tests', function () {
         it('should group two elements', function () {
             utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 20, y: 80 }])
             utility.drawStroke(integrationEnv, [{ x: 30, y: 20 }, { x: 30, y: 40 }, { x: 30, y: 60 }, { x: 30, y: 80 }])

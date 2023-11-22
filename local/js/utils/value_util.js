@@ -35,24 +35,6 @@ let ValUtil = function () {
         return obj instanceof type;
     }
 
-    function isGroupValid(element, model) {
-        if (!ValUtil.isType(element, Data.Element)) { console.error("invalid element", element); return; }
-        let group = model.getGroupForElement(element.id);
-        if (!group) {
-            return false;
-        } else {
-            if (DataUtil.getGroupLevel(group, model) != DataUtil.getElementLevel(element, model)) {
-                return false
-            } else if (element.parentId) {
-                let parentGroup = model.getGroupForElement(element.parentId)
-                if (!parentGroup) { console.error("Invalid state, can't get group for parent", element.parentId); return false; }
-                return group.parentId == parentGroup.id;
-            } else {
-                return true;
-            }
-        }
-    }
-
     function outOfBounds(point, box) {
         if (point.x <= box.x ||
             point.x >= box.x + box.width ||
@@ -69,7 +51,6 @@ let ValUtil = function () {
         isNum,
         isPath,
         isType,
-        isGroupValid,
         checkConvertionState,
         outOfBounds,
     }

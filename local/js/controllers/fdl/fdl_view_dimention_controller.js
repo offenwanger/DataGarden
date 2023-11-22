@@ -216,7 +216,7 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
                 } else {
                     console.error("Unsupported Target Type", interaction.target.type);
                 }
-            } else if (IdUtil.isType(interaction.target.id, Data.Level)) {
+            } else if (interaction.target.id && IdUtil.isType(interaction.target.id, Data.Level)) {
                 let levelNode = mLevels.find(l => l.id == interaction.target.id);
                 if (!levelNode) { console.error("Invalid level id", interaction.target.id); return; }
                 mEditNameCallback(interaction.target.id, levelNode.x, levelNode.y,

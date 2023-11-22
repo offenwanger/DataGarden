@@ -57,8 +57,8 @@ app.post('/getspine', function (req, res) {
         });
 });
 
-app.post('/suggestgrouping', function (req, res) {
-    utility.log("Grouping request recieved, starting processing.")
+app.post('/suggestMerge', function (req, res) {
+    utility.log("Merge request recieved, starting processing.")
     if (!req.body.elements) {
         res.status(400).send("Error! Elements not provided!");
         return;
@@ -74,7 +74,7 @@ app.post('/suggestgrouping', function (req, res) {
             // try to read the result, see if it's any good. 
             return fileHandler.readOutput(outFilename);
         }).then(outScap => {
-            let result = utility.scapToGrouping(outScap, mIdMap);
+            let result = utility.scapToMerge(outScap, mIdMap);
             res.status(200).json(result);
         }).catch(error => {
             console.error(error);

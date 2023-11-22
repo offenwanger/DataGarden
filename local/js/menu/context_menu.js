@@ -35,7 +35,7 @@ function ContextMenu(svg) {
     }
     mButtonData[ContextButtons.AUTO_MERGE_ELEMENTS] = {
         id: ContextButtons.AUTO_MERGE_ELEMENTS,
-        img: "img/smart_group.svg",
+        img: "img/smart_merge.svg",
         tooltip: "Automatically detect elements and merge strokes",
     }
     mButtonData[ContextButtons.SPINE] = {

@@ -27,8 +27,6 @@ function DashboardController() {
     let mMergeElementCallback = () => { };
     let mNewElementCallback = () => { };
     let mMoveElementCallback = () => { };
-    let mMoveStrokeCallback = () => { };
-    let mNewGroupCallback = () => { };
     let mDeleteCallback = () => { };
     let mNewDimentionCallback = () => { };
     let mMergeStrokesCallback = () => { };
@@ -169,22 +167,6 @@ function DashboardController() {
                     mAutoMergeElements(selection);
                 }
             });
-        } else if (IdUtil.isType(selection, Data.Group)) {
-            let group = mModel.getGroup(selection);
-            if (!group) { console.error("Invalid selection", selection); return; }
-            let buttons = []
-            Object.values(ChannelType).forEach(channelType => {
-                if (!group.mappings.find(m => m.channelType == channelType)) {
-                    let button = Object.entries(ContextButtonToChannelType).find(e => e[1] == channelType)[0];
-                    buttons.push(button);
-                }
-            });
-            if (buttons.length > 0) {
-                mContextMenu.showContextMenu(screenCoords, buttons, (buttonId) => {
-                    mNewDimentionCallback(selection, ContextButtonToChannelType[buttonId]);
-                    mContextMenu.hideContextMenu();
-                });
-            }
         } else if (IdUtil.isType(selection, Data.Element)) {
             let buttons = [ContextButtons.SPINE, ContextButtons.STYLE_STRIP, ContextButtons.STYLE_STROKES]
             mContextMenu.showContextMenu(screenCoords, buttons, (buttonId) => {
@@ -264,8 +246,6 @@ function DashboardController() {
         setMergeElementCallback: (func) => mMergeElementCallback = func,
         setNewElementCallback: (func) => mNewElementCallback = func,
         setMoveElementCallback: (func) => mMoveElementCallback = func,
-        setMoveStrokeCallback: (func) => mMoveStrokeCallback = func,
-        setNewGroupCallback: (func) => mNewGroupCallback = func,
         setDeleteCallback: (func) => mDeleteCallback = func,
         setNewDimentionCallback: (func) => mNewDimentionCallback = func,
         setMergeStrokesCallback: (func) => mMergeStrokesCallback = func,

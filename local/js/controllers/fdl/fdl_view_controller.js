@@ -7,12 +7,10 @@ function FdlViewController() {
     let mCodeUtil = new CodeUtil();
 
     let mHighlightCallback = () => { };
-    let mParentUpdateCallback = () => { };
     let mMergeElementCallback = () => { };
     let mNewElementCallback = () => { }
     let mMoveElementCallback = () => { }
     let mMoveStrokeCallback = () => { }
-    let mNewGroupCallback = () => { }
     let mContextMenuCallback = () => { }
     let mEditNameCallback = () => { };
     let mEditTypeCallback = () => { };
@@ -180,7 +178,7 @@ function FdlViewController() {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target) {
                 let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
-                // TODO check for group selection here
+                // TODO check for multi-item selection here
                 mInteraction = {
                     type: SELECTION,
                     start: modelCoords,
@@ -358,8 +356,6 @@ function FdlViewController() {
         setMergeElementCallback: (func) => mMergeElementCallback = func,
         setNewElementCallback: (func) => mNewElementCallback = func,
         setMoveElementCallback: (func) => mMoveElementCallback = func,
-        setMoveStrokeCallback: (func) => mMoveStrokeCallback = func,
-        setNewGroupCallback: (func) => mNewGroupCallback = func,
         setContextMenuCallback: (func) => mContextMenuCallback = func,
     }
 }

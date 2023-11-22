@@ -283,8 +283,6 @@ function CanvasController() {
                 let stroke = mModel.getStroke(id);
                 if (!stroke) { console.error("Invalid stroke id", id); return; }
                 mDrawingUtil.highlightBoundingBox(DataUtil.getBoundingBox(stroke));
-            } else if (IdUtil.isType(id, Data.Group)) {
-                console.error("impliment me!")
             }
         })
 

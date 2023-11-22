@@ -20,9 +20,9 @@ let ServerController = function () {
         }
     }
 
-    async function suggestGrouping(elements) {
+    async function suggestMerge(elements) {
         try {
-            let result = await fetch('/suggestgrouping', {
+            let result = await fetch('/suggestMerge', {
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
@@ -31,8 +31,8 @@ let ServerController = function () {
                 body: JSON.stringify({ elements })
             });
             if (result.ok) {
-                let grouping = await result.json();
-                return grouping;
+                let merge = await result.json();
+                return merge;
             } else {
                 return null;
             }
@@ -44,6 +44,6 @@ let ServerController = function () {
 
     return {
         getSpine,
-        suggestGrouping,
+        suggestMerge,
     }
 }();

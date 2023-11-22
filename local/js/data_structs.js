@@ -55,37 +55,6 @@ let Data = function () {
         return element;
     }
 
-    function Group() {
-        this.id = IdUtil.getUniqueId(Group);
-        this.creationTime = Date.now();
-        this.elements = []
-        this.mappings = [];
-
-        this.clone = function () {
-            let clone = new Group();
-            clone.id = this.id;
-            clone.creationTime = this.creationTime;
-            clone.elements = this.elements.map(s => s.clone());
-            clone.mappings = this.mappings.map(c => c.clone());
-            return clone;
-        };
-
-        this.update = function (group) {
-            this.id = group.id;
-            this.creationTime = group.creationTime;
-            this.elements = group.elements.map(s => s.clone());
-            this.mappings = group.mappings ? group.mappings.map(c => c.clone()) : [];
-        };
-    }
-    Group.fromObject = function (obj) {
-        let group = new Group();
-        group.id = obj.id;
-        group.creationTime = obj.creationTime;
-        group.elements = obj.elements.map(e => Element.fromObject(e));
-        group.mappings = obj.mappings ? obj.mappings.map(c => Mapping.fromObject(c)) : [];
-        return group;
-    }
-
     function Dimention() {
         this.id = IdUtil.getUniqueId(Dimention);
         this.creationTime = Date.now();
@@ -170,7 +139,6 @@ let Data = function () {
     return {
         Stroke,
         Element,
-        Group,
         Dimention,
         Level,
     }

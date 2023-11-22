@@ -15,15 +15,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let element = new Data.Element();
         element.strokes.push(stroke);
         element.spine = ModelUtil.getStupidSpine(element);
-
-        let group;
-        if (model.getGroups().length == 0) {
-            group = new Data.Group();
-            group.elements.push(element);
-            mModelController.addGroup(group);
-        } else {
-            mModelController.addElement(model.getGroups().find(g => !g.parentId).id, element);
-        }
+        mModelController.addElement(element);
 
         mDashboardController.modelUpdate(mModelController.getModel());
 
@@ -149,54 +141,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mDashboardController.setNewElementCallback((groupId, childStrokeId) => {
+    mDashboardController.setNewElementCallback((childStrokeId) => {
         let stroke = mModelController.getModel().getStroke(childId);
         let element = new Data.Element();
         element.strokes.push(stroke);
         element.spine = ModelUtil.getStupidSpine(element);
         mModelController.removeStroke(childStrokeId);
-        mModelController.addElement(groupId, element);
-
-        mVersionController.stack(mModelController.getModel());
-        mDashboardController.modelUpdate(mModelController.getModel());
-    })
-
-    mDashboardController.setMoveElementCallback((groupId, elementId) => {
-        let element = mModelController.getModel().getElement(elementId);
-        mModelController.removeElement(elementId);
-        mModelController.addElement(groupId, element);
-
-        mVersionController.stack(mModelController.getModel());
-        mDashboardController.modelUpdate(mModelController.getModel());
-    })
-
-    mDashboardController.setMoveStrokeCallback((elementId, strokeId) => {
-        let stroke = mModelController.getModel().getStroke(strokeId);
-        mModelController.removeStroke(stroke);
-        mModelController.addStroke(elementId, stroke);
-
-        mVersionController.stack(mModelController.getModel());
-        mDashboardController.modelUpdate(mModelController.getModel());
-    })
-
-    mDashboardController.setNewGroupCallback((childId) => {
-        let element;
-        if (IdUtil.isType(childId, Data.Stroke)) {
-            let stroke = mModelController.getModel().getStroke(childId);
-            element = new Data.Element();
-            element.strokes.push(stroke);
-            element.spine = ModelUtil.getStupidSpine(element);
-
-            mModelController.removeStroke(childId);
-        } else if (IdUtil.isType(childId, Data.Element)) {
-            element = mModelController.getModel().getElement(childId);
-
-            mModelController.removeElement(childId);
-        } else { console.error("invalid id", childId); return; }
-
-        let group = new Data.Group();
-        group.elements.push(element);
-        mModelController.addGroup(group);
+        mModelController.addElement(element);
 
         mVersionController.stack(mModelController.getModel());
         mDashboardController.modelUpdate(mModelController.getModel());
@@ -250,21 +201,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
             newElement.parentId = elements.find(e => e.id == topElement[0]).parentId;
         }
 
-        let groups = elements.map(e => model.getGroupForElement(e.id));
-        let groupCounts = groups.reduce((count, group) => {
-            count[group.id] ? ++count[group.id] : count[group.id] = 1;
-            return count;
-        }, {});
-        let topGroup = Object.entries(groupCounts).sort((a, b) => a[1] - b[1])[0];
-
         strokeIds.forEach(s => mModelController.removeStroke(s));
         ModelUtil.clearEmptyElements(mModelController);
-
-        let group = mModelController.getModel().getGroup(topGroup[0]);
-        group.elements.push(newElement);
-        mModelController.updateGroup(group);
-
-        ModelUtil.clearEmptyGroups(mModelController);
+        mModelController.addElement(newElement);
 
         mVersionController.stack(mModelController.getModel());
         mDashboardController.modelUpdate(mModelController.getModel());
@@ -272,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     mDashboardController.setAutoMergeElements((strokeIds) => {
         let elements = DataUtil.unique(strokeIds.map(s => mModelController.getModel().getElementForStroke(s)));
-        ServerController.suggestGrouping(elements).then(grouping => {
+        ServerController.suggestMerge(elements).then(merge => {
             let elements = mModelController.getModel().getElements();
 
             // reconcile the algorithm results with the curdrent state. 
@@ -280,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 return {
                     id: element.id,
                     strips: DataUtil.unique(element.strokes
-                        .map(s => grouping.findIndex(g => g.includes(s.id)))
+                        .map(s => merge.findIndex(g => g.includes(s.id)))
                         .filter(index => index != -1))
                 }
             }).filter(elementData => elementData.strips.length > 0);
@@ -298,16 +237,16 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 })
             })
 
-            let mergeGroups = {};
+            let merges = {};
             singletons.forEach(elementData => {
-                if (!mergeGroups[elementData.strips[0]]) mergeGroups[elementData.strips[0]] = [];
-                mergeGroups[elementData.strips[0]].push(elementData.id);
+                if (!merges[elementData.strips[0]]) merges[elementData.strips[0]] = [];
+                merges[elementData.strips[0]].push(elementData.id);
             });
-            Object.values(mergeGroups).forEach(group => {
-                if (group.length > 1) {
-                    let groupElements = elements.filter(e => group.includes(e.id));
-                    let oldestElement = groupElements.reduce((prev, cur) => (cur.creationTime < prev.creationTime) ? cur : prev);
-                    ModelUtil.mergeElements(mModelController, groupElements.map(e => e.id).filter(id => id != oldestElement.id), oldestElement.id);
+            Object.values(merges).forEach(merge => {
+                if (merge.length > 1) {
+                    let mergeElements = elements.filter(e => merge.includes(e.id));
+                    let oldestElement = mergeElements.reduce((prev, cur) => (cur.creationTime < prev.creationTime) ? cur : prev);
+                    ModelUtil.mergeElements(mModelController, mergeElements.map(e => e.id).filter(id => id != oldestElement.id), oldestElement.id);
                     hasChanged = true;
                 }
             });

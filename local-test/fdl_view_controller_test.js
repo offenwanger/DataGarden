@@ -162,7 +162,7 @@ describe('FDL View Controller Test', function () {
 
     })
 
-    describe('grouping tests', function () {
+    describe('merge tests', function () {
         it('should create a new group for a stroke', function () {
             utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 10, y: 80 }])
             utility.drawStroke(integrationEnv, [{ x: 40, y: 20 }, { x: 40, y: 40 }, { x: 40, y: 60 }, { x: 30, y: 80 }])
