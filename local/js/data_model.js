@@ -91,7 +91,60 @@ function DataModel() {
     }
 
     function getTables() {
+        if (mDimentions.length == 0) return [];
+        let parents = DataUtil.unique(mElements.map(e => e.parentId).filter(p => p));
+        let leafs = mElements.filter(e => !parents.includes(e.id));
+        let rows = []
+        leafs.forEach(leaf => {
+            let row = {};
+            let nextId = leaf.id;
+            let level = DataUtil.getTreeLevel(this, leaf.id);
+            while (nextId) {
+                let element = getElement(nextId);
+                mDimentions.filter(d => d.tier == level).forEach(dimention => {
+                    let value = DataUtil.getMappedValue(this, dimention.id, nextId);
+                    if (value) row[dimention.id] = { id: nextId, value };
+                })
 
+                level--;
+                nextId = element.parentId;
+            }
+            rows.push(row);
+        })
+
+        let colsQueue = [mDimentions[0].id];
+        let uncheckedCols = mDimentions.slice(1).map(d => d.id);
+        let rowsQueue = [];
+        let uncheckedRows = rows.map((r, i) => i);
+        let tables = [];
+        let curTable = { cols: [], rows: [] };
+        while (uncheckedCols.length > 0 || colsQueue.length > 0) {
+            while (colsQueue.length > 0) {
+                let col = colsQueue.pop();
+                curTable.cols.push(col);
+                let colRows = uncheckedRows.filter((index) => rows[index][col]);
+                rowsQueue.push(...colRows);
+                uncheckedRows = uncheckedRows.filter((index) => !rows[index][col]);
+            }
+
+            while (rowsQueue.length > 0) {
+                let row = rows[rowsQueue.pop()];
+                curTable.rows.push(row);
+                let rowCols = uncheckedCols.filter((col) => row[col]);
+                colsQueue.push(...rowCols);
+                uncheckedCols = uncheckedCols.filter((col) => !row[col]);
+            }
+
+            if (rowsQueue.length == 0 && colsQueue.length == 0 && uncheckedCols.length > 0 && curTable.rows.length > 0) {
+                tables.push(curTable);
+                curTable = { cols: [], rows: [] };
+                colsQueue.push(uncheckedCols.pop());
+            }
+        }
+
+        if (curTable.rows.length > 0) tables.push(curTable)
+
+        return tables;
     }
 
     return {

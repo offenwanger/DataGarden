@@ -4,8 +4,8 @@ function DashboardController() {
 
     let mCanvasController = new CanvasController();
     let mFdlViewController = new FdlViewController();
+    let mTableViewController = new TableViewController(); mTableViewController.hide();
     let mTabController = new TabController();
-    d3.select("#table-view-container").style("visibility", "hidden");
 
     let mMenuController = new MenuController();
     let mContextMenu = new ContextMenu(d3.select('#interface-svg'));
@@ -46,6 +46,7 @@ function DashboardController() {
         mFdlViewController.onModelUpdate(model);
         mTabController.onModelUpdate(model);
         mDropdownInput.onModelUpdate(model);
+        mTableViewController.onModelUpdate(model);
     }
 
     function onResize(width, height) {
@@ -53,6 +54,7 @@ function DashboardController() {
         mTabController.onResize((1 - mCanvasPercent) * width, TAB_HEIGHT);
         mFdlViewController.onResize((1 - mCanvasPercent) * width, height - TAB_HEIGHT);
         mMenuController.onResize(width, height);
+        mTableViewController.onResize((1 - mCanvasPercent) * width, TAB_HEIGHT, height);
         mWidth = width;
     }
 
@@ -130,11 +132,11 @@ function DashboardController() {
     mTabController.setSetTabCallback(tabId => {
         mTabController.setActiveTab(tabId);
         if (tabId == Tab.TABLE) {
-            d3.select("#fdl-view-container").style("display", "none");
-            d3.select("#table-view-container").style("display", "");
+            mFdlViewController.hide();
+            mTableViewController.show();
         } else {
-            d3.select("#fdl-view-container").style("display", "");
-            d3.select("#table-view-container").style("display", "none");
+            mFdlViewController.show();
+            mTableViewController.hide();
         }
 
         if (tabId == Tab.PARENT) {

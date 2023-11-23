@@ -3,7 +3,8 @@ let assert = chai.assert;
 let expect = chai.expect;
 
 let suite = require("./test_utils/suite_enviroment")
-let utility = require("./test_utils/utility.js")
+let utility = require("./test_utils/utility.js");
+const { data } = require('jquery');
 
 describe('Test Data Model', function () {
     let integrationEnv;
@@ -23,13 +24,13 @@ describe('Test Data Model', function () {
 
         it('should create a model', function () {
             let dataModel = new DataModel();
-            expect(dataModel.getGroups()).to.eql([]);
+            expect(dataModel.getElements()).to.eql([]);
         });
     })
 
     describe('clone test', function () {
         it('should clone and be the same but a different object', function () {
-            let dataModel = utility.makeModel(0);
+            let dataModel = utility.makeModel();
             assert.exists(dataModel);
 
             let clone = dataModel.clone();
@@ -41,35 +42,29 @@ describe('Test Data Model', function () {
 
     describe('get test', function () {
         it('should get element by id', function () {
-            let dataModel = utility.makeModel(0);
-            let elem = dataModel.getGroups()[0].elements[1];
+            let dataModel = utility.makeModel();
+            let elem = dataModel.getElements()[0];
             assert.equal(elem, dataModel.getElement(elem.id));
         });
 
         it('should get element by strokeId', function () {
-            let dataModel = utility.makeModel(0);
-            let elem = dataModel.getGroups()[0].elements[1];
+            let dataModel = utility.makeModel();
+            let elem = dataModel.getElements()[0];
             assert.equal(elem, dataModel.getElementForStroke(elem.strokes[0].id));
             assert.equal(elem, dataModel.getElementForStroke(elem.strokes[1].id));
-            let elem2 = dataModel.getGroups()[1].elements[0];
+            let elem2 = dataModel.getElements()[1];
             assert.equal(elem2, dataModel.getElementForStroke(elem2.strokes[0].id));
         });
 
-        it('should get group by id', function () {
-            let dataModel = utility.makeModel(0);
-            let group = dataModel.getGroups()[0];
-            assert.equal(group, dataModel.getGroup(group.id));
-        });
-
-        it('should get group by elementId', function () {
-            let dataModel = utility.makeModel(0);
-            let group = dataModel.getGroups()[0];
-            assert.equal(group, dataModel.getGroupForElement(group.elements[0].id));
+        it('should get element by id', function () {
+            let dataModel = utility.makeModel();
+            let element = dataModel.getElements()[0];
+            assert.equal(element, dataModel.getElement(element.id));
         });
 
         it('should return null for not found elements', function () {
-            let dataModel = utility.makeModel(0);
-            assert.equal(null, dataModel.getGroup(IdUtil.getUniqueId(Data.Group)));
+            let dataModel = utility.makeModel();
+            assert.equal(null, dataModel.getElement(IdUtil.getUniqueId(Data.Element)));
             assert.equal(null, dataModel.getElement(IdUtil.getUniqueId(Data.Element)));
             assert.equal(null, dataModel.getElementForStroke(IdUtil.getUniqueId(Data.Stroke)));
         });
@@ -78,10 +73,120 @@ describe('Test Data Model', function () {
 
     describe("get children tests", function () {
         it('should get all decdendants and the item', function () {
-            let dataModel = utility.makeModel(1);
-            assert.equal(dataModel.getElements().length, 9)
+            let dataModel = utility.makeModel();
+            assert.equal(dataModel.getElements().length, 11)
             expect(dataModel.getElements().map(e => dataModel.getElementDecendants(e.id)).map(arr => arr.length).sort())
-                .to.eql([1, 1, 1, 1, 1, 1, 2, 2, 7]);
+                .to.eql([1, 1, 1, 1, 1, 1, 1, 1, 1, 10, 4]);
         });
+    })
+
+    describe("get table tests", function () {
+        it('should a table from an empty model', function () {
+            let dataModel = new DataModel();
+            expect(dataModel.getTables()).to.eql([]);
+        });
+
+        it("should get a table one dimention and row", function () {
+            let dataModel = new DataModel();
+            for (let i = 0; i < 10; i++) {
+                dataModel.getElements().push(new Data.Element());
+                dataModel.getElements()[i].strokes.push(new Data.Stroke([{ x: 0, y: i * 10 }, { x: 10, y: i * 10 }], 3, "#000000"))
+            }
+            dataModel.getDimentions().push(new Data.Dimention());
+            dataModel.getDimentions()[0].type = DimentionType.DISCRETE;
+            dataModel.getDimentions()[0].channel = ChannelType.FORM;
+            dataModel.getDimentions()[0].levels.push(new Data.Level());
+            dataModel.getDimentions()[0].levels[0].elementIds
+                .push(dataModel.getElements()[0].id, dataModel.getElements()[1].id);
+
+            dataModel.getDimentions().push(new Data.Dimention());
+            dataModel.getDimentions()[1].type = DimentionType.DISCRETE;
+            dataModel.getDimentions()[1].channel = ChannelType.COLOR;
+            dataModel.getDimentions()[1].levels.push(new Data.Level());
+
+            assert.equal(dataModel.getTables().length, 1);
+            expect(dataModel.getTables()[0].cols).to.eql([dataModel.getDimentions()[0].id]);
+            expect(dataModel.getTables()[0].rows.map(r => r[dataModel.getDimentions()[0].id].id).sort())
+                .to.eql([dataModel.getElements()[0].id, dataModel.getElements()[1].id].sort());
+            expect(dataModel.getTables()[0].rows.map(r => r[dataModel.getDimentions()[0].id].value))
+                .to.eql([dataModel.getDimentions()[0].levels[0].name, dataModel.getDimentions()[0].levels[0].name]);
+        })
+
+        it("should get a table with multiple rows and dimentions", function () {
+            let dataModel = new DataModel();
+            for (let i = 0; i < 10; i++) {
+                dataModel.getElements().push(new Data.Element());
+                dataModel.getElements()[i].strokes.push(new Data.Stroke([{ x: 0, y: i * 10 }, { x: 10, y: i * 10 }], 3, "#000000"))
+            }
+            for (let i = 5; i < 10; i++) {
+                dataModel.getElements()[i].parentId = dataModel.getElements()[i - 5].id;
+            }
+
+            dataModel.getDimentions().push(new Data.Dimention());
+            dataModel.getDimentions()[0].type = DimentionType.DISCRETE;
+            dataModel.getDimentions()[0].channel = ChannelType.FORM;
+            dataModel.getDimentions()[0].tier = 0;
+            dataModel.getDimentions()[0].levels.push(new Data.Level());
+            dataModel.getDimentions()[0].levels[0].name = "Level1";
+            dataModel.getDimentions()[0].levels[0].elementIds
+                .push(dataModel.getElements()[0].id, dataModel.getElements()[1].id, dataModel.getElements()[3].id);
+            dataModel.getDimentions()[0].levels.push(new Data.Level());
+            dataModel.getDimentions()[0].levels[1].name = "Level2";
+            dataModel.getDimentions()[0].levels[1].elementIds
+                .push(dataModel.getElements()[2].id, dataModel.getElements()[4].id);
+
+            dataModel.getDimentions().push(new Data.Dimention());
+            dataModel.getDimentions()[1].type = DimentionType.DISCRETE;
+            dataModel.getDimentions()[1].channel = ChannelType.FORM;
+            dataModel.getDimentions()[1].tier = 1;
+            dataModel.getDimentions()[1].levels.push(new Data.Level());
+            dataModel.getDimentions()[1].levels[0].name = "Level3";
+            dataModel.getDimentions()[1].levels[0].elementIds
+                .push(dataModel.getElements()[5].id, dataModel.getElements()[6].id, dataModel.getElements()[7].id);
+            dataModel.getDimentions()[1].levels.push(new Data.Level());
+            dataModel.getDimentions()[1].levels[1].name = "Level4";
+            dataModel.getDimentions()[1].levels[1].elementIds
+                .push(dataModel.getElements()[8].id, dataModel.getElements()[9].id);
+
+            assert.equal(dataModel.getTables().length, 1);
+            assert.equal(dataModel.getTables()[0].cols.length, 2);
+            expect(dataModel.getTables()[0].rows.map(r => Object.values(r).map(i => i.value))).to.eql([
+                ["Level4", "Level2"],
+                ["Level4", "Level1"],
+                ["Level3", "Level2"],
+                ["Level3", "Level1"],
+                ["Level3", "Level1"]
+            ]);
+        })
+
+        it("should split separate tables", function () {
+            let dataModel = new DataModel();
+            for (let i = 0; i < 20; i++) {
+                dataModel.getElements().push(new Data.Element());
+                dataModel.getElements()[i].strokes.push(new Data.Stroke([{ x: 0, y: i * 10 }, { x: 10, y: i * 10 }], 3, "#000000"))
+            }
+            let elementsTiers = [[], []];
+            for (let i = 10; i < 20; i++) {
+                dataModel.getElements()[i].parentId = dataModel.getElements()[i - 10].id;
+                elementsTiers[0].push(dataModel.getElements()[i - 10].id);
+                elementsTiers[1].push(dataModel.getElements()[i].id);
+            }
+
+
+            for (let i = 0; i < 4; i++) {
+                dataModel.getDimentions().push(new Data.Dimention());
+                dataModel.getDimentions()[i].type = DimentionType.DISCRETE;
+                dataModel.getDimentions()[i].channel = ChannelType.FORM;
+                dataModel.getDimentions()[i].tier = i % 2;
+                for (let j = 0; j < 2; j++) {
+                    dataModel.getDimentions()[i].levels.push(new Data.Level());
+                    dataModel.getDimentions()[i].levels[j].name = "Level" + (i * 10 + j);
+                    for (let k = 0; k < 2; k++) {
+                        dataModel.getDimentions()[i].levels[j].elementIds.push(elementsTiers[i % 2].pop());
+                    }
+                }
+            }
+            assert.equal(dataModel.getTables().length, 2);
+        })
     })
 });

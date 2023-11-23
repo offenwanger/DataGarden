@@ -194,6 +194,23 @@ let DataUtil = function () {
         return level;
     }
 
+    function getMappedValue(model, dimentionId, elementId) {
+        let dimention = model.getDimention(dimentionId);
+        if (dimention.channel == ChannelType.FORM || dimention.type == ChannelType.COLOR) {
+            let level = dimention.levels.find(level => level.elementIds.includes(elementId));
+            return level ? level.name : null;
+        } else if (dimention.type == ChannelType.POSITION) {
+            console.error("Impliment me!")
+            return null;
+        } else if (dimention.type == ChannelType.ANGLE) {
+            console.error("Impliment me!")
+            return null;
+        } else if (dimention.type == ChannelType.SIZE) {
+            console.error("Impliment me!")
+            return null;
+        }
+    }
+
     function getPaddedPoints(nodes, padding) {
         let pointArr = [];
         nodes.forEach(d => {
@@ -224,6 +241,7 @@ let DataUtil = function () {
         getStrokesInLocalCoords,
         channelIsDiscrete,
         getTreeLevel,
+        getMappedValue,
         getPaddedPoints,
     }
 }();

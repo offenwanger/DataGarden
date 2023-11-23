@@ -327,11 +327,19 @@ function FdlViewController() {
         })
     }
 
-    //////////// TESTING FUNCTION ////////////
-    d3.select(document).on('wheel', function (e) {
-        if (e.deltaY > 0) mActiveViewController.stop();
-        if (e.deltaY < 0) updateSimulationData();
-    })
+    function hide() {
+        d3.select('#fdl-view-container').style("display", "none");
+    }
+
+    function show() {
+        d3.select('#fdl-view-container').style("display", "");
+    }
+
+    //////////// Useful TESTING FUNCTION ////////////
+    // d3.select(document).on('wheel', function (e) {
+    //     if (e.deltaY > 0) mActiveViewController.stop();
+    //     if (e.deltaY < 0) updateSimulationData();
+    // })
 
 
     return {
@@ -343,6 +351,8 @@ function FdlViewController() {
         onPointerUp,
         onResize,
         highlight,
+        hide,
+        show,
         setHighlightCallback: (func) => mHighlightCallback = func,
         setParentUpdateCallback: (func) => mFdlParentViewController.setParentUpdateCallback(func),
         setAddDimentionCallback: (func) => mFdlLegendViewController.setAddDimentionCallback(func),
