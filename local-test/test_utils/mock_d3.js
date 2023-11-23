@@ -49,6 +49,14 @@ function MockElement(type) {
         };
         return mAttrs[att];
     };
+    this.html = function (html) {
+        if (html) {
+            this.innerHtml = html;
+            return this;
+        } else {
+            return this.innerHtml;
+        }
+    }
     this.style = function (style, val = null) {
         if (val !== null) {
             mStyles[style] = val
@@ -204,6 +212,8 @@ function mockForceSim() {
     this.force = function () { return this };
     this.nodes = (n) => { nodes = n; return this };
     this.alpha = () => { return this };
+    this.alphaDecay = () => { return this };
+    this.velocityDecay = () => { return this };
     this.alphaTarget = () => { return this };
     this.restart = () => { return this };
     this.links = (l) => { links = l; return this };
@@ -215,7 +225,7 @@ function mockForceSim() {
         };
         return this;
     };
-    this.stop = () => { };
+    this.stop = () => { return this; };
     this.getNodes = () => nodes;
 }
 
@@ -223,6 +233,7 @@ function mockForce() {
     this.x = () => { return this };
     this.y = () => { return this };
     this.id = () => { return this };
+    this.strength = () => { return this };
 }
 
 function mockXMLPromise(img) {
@@ -254,8 +265,18 @@ module.exports = function (jspreadsheet) {
     let forceSim = new mockForceSim();
     rootNode.append('div').attr("id", "canvas-view-container").append(new MockElement().classed("canvas-container", true));
     rootNode.append('div').attr("id", "fdl-view-container").append(new MockElement().classed("canvas-container", true));
+    rootNode.append('div').attr("id", "tabs-container").append(new MockElement().classed("canvas-container", true));;
     rootNode.append('div').attr("id", "color-container");
     rootNode.append('div').attr("id", "interface-container");
+    rootNode.append('div').attr("id", "dashboard-container");
+    rootNode.append('div').attr("id", "canvas-container");
+    rootNode.append('div').attr("id", "tab-view-container");
+    rootNode.append('div').attr("id", "canvas-container");
+    rootNode.append('div').attr("id", "canvas-container");
+    rootNode.append('div').attr("id", "table-view-container");
+    rootNode.append('div').attr("id", "interface-svg");
+    rootNode.append('div').attr("id", "input-box");
+    rootNode.append('div').attr("id", "dropdown-container");
 
     let documentCallbacks = {};
 
@@ -278,6 +299,8 @@ module.exports = function (jspreadsheet) {
     this.quadtree = () => new mockQuadTree();
     this.forceCenter = () => new mockForce();
     this.forceCollide = () => new mockForce();
+    this.forceX = () => new mockForce();
+    this.forceY = () => new mockForce();
     this.forceLink = () => new mockForce();
     this.xml = (img) => new mockXMLPromise(img);
     this.tick = () => forceSim.tick();
