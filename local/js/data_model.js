@@ -135,11 +135,15 @@ function DataModel() {
                 uncheckedCols = uncheckedCols.filter((col) => !row[col]);
             }
 
-            if (rowsQueue.length == 0 && colsQueue.length == 0 && uncheckedCols.length > 0 && curTable.rows.length > 0) {
-                tables.push(curTable);
-                curTable = { cols: [], rows: [] };
+            if (rowsQueue.length == 0 && colsQueue.length == 0 && uncheckedCols.length > 0) {
+                if (curTable.rows.length > 0) {
+                    tables.push(curTable);
+                    curTable = { cols: [], rows: [] };
+                }
                 colsQueue.push(uncheckedCols.pop());
             }
+
+            console.log(uncheckedCols, uncheckedRows, colsQueue, rowsQueue)
         }
 
         if (curTable.rows.length > 0) tables.push(curTable)
