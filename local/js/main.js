@@ -108,6 +108,12 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let dimention = mModelController.getModel().getDimention(dimentionId);
         if (!dimention) { console.error("Invalid dimention id: ", dimentionId); return; }
         dimention.type = type;
+        // Continuous dimentions are restricted to continuous channels. 
+        if (dimention.type == DimentionType.CONTINUOUS &&
+            (dimention.channel == ChannelType.FORM || dimention.channel == ChannelType.COLOR)) {
+            dimention.channel = ChannelType.SIZE;
+        }
+
         mModelController.updateDimention(dimention);
 
         mVersionController.stack(mModelController.getModel());

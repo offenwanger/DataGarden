@@ -23,7 +23,9 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
         .on("tick", () => {
             mSimulation.nodes().forEach(n => {
                 n.x = IdUtil.isType(n.id, Data.Dimention) ? AxisPositions.DIMENTION_X : AxisPositions.LEVEL_X;
-                n.y += (mYPositions[n.id] - n.y) * mSimulation.alpha();
+                let id = n.id;
+                if (id == DimentionValueId.MIN || id == DimentionValueId.MAX) id = n.dimention + n.id;
+                n.y += (mYPositions[id] - n.y) * mSimulation.alpha();
             });
             draw();
         })
@@ -31,7 +33,9 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
 
     function updateSimulationData(data, model) {
         mDimentions = data.filter(d => IdUtil.isType(d.id, Data.Dimention));
-        mLevels = data.filter(d => IdUtil.isType(d.id, Data.Level));
+        mLevels = data.filter(d => IdUtil.isType(d.id, Data.Level) ||
+            d.id == DimentionValueId.MAX ||
+            d.id == DimentionValueId.MIN);
         mSimulation.nodes(mDimentions.concat(mLevels).concat([mAddButton]), (d) => d.id);
 
         mYPositions = [];
@@ -40,10 +44,17 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
         dimentions.forEach(dimention => {
             mYPositions[dimention.id] = curYPos;
             curYPos += Size.DIMENTION_SIZE + PADDING;
-            dimention.levels.forEach(level => {
-                mYPositions[level.id] = curYPos;
+            if (dimention.type == DimentionType.DISCRETE) {
+                dimention.levels.forEach(level => {
+                    mYPositions[level.id] = curYPos;
+                    curYPos += Size.LEVEL_SIZE + PADDING;
+                });
+            } else if (dimention.type == DimentionType.CONTINUOUS) {
+                mYPositions[dimention.id + DimentionValueId.MIN] = curYPos;
                 curYPos += Size.LEVEL_SIZE + PADDING;
-            });
+                mYPositions[dimention.id + DimentionValueId.MAX] = curYPos;
+                curYPos += Size.LEVEL_SIZE + PADDING;
+            }
         });
 
         mYPositions[ADD_BUTTON_ID] = curYPos;

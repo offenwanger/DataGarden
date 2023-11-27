@@ -120,7 +120,7 @@ function DashboardController() {
     mDropdownInput.setSelectedCallback((dropdownType, dimentionId, value) => {
         if (dropdownType == DropDown.TYPE) {
             mUpdateDimentionTypeCallback(dimentionId, value);
-        } else if (dropdownType == DropDown.CHANNEL) {
+        } else if (dropdownType == DropDown.CHANNEL || dropdownType == DropDown.CONTINUOUS_CHANNEL) {
             mUpdateDimentionChannelCallback(dimentionId, value);
         } else if (dropdownType == DropDown.TIER) {
             mUpdateDimentionTierCallback(dimentionId, value);
@@ -220,7 +220,9 @@ function DashboardController() {
 
     mFdlViewController.setEditChannelCallback((dimentionId, x, y, width, height) => {
         let dimention = mModel.getDimention(dimentionId);
-        mDropdownInput.show(DropDown.CHANNEL, dimentionId, dimention.channel, x, y, width, height);
+        mDropdownInput.show(
+            dimention.type == DimentionType.DISCRETE ? DropDown.CHANNEL : DropDown.CONTINUOUS_CHANNEL,
+            dimentionId, dimention.channel, x, y, width, height);
     });
 
     mFdlViewController.setEditTierCallback((dimentionId, x, y, width, height) => {

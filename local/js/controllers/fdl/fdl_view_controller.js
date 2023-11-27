@@ -103,20 +103,45 @@ function FdlViewController() {
                         name: level.name,
                         dimention: dimention.id,
                     }
-                    let oldData = oldSimulationData.find(item => item.id == dimention.id);
-                    if (!oldData) {
+                    let oldData = oldSimulationData.find(item => item.id == level.id);
+                    if (oldData) {
+                        levelData.x = oldData.x;
+                        levelData.y = oldData.y;
+                    } else {
                         levelData.x = 0;
                         levelData.y = 0;
-                    } else {
-                        levelData.x = levelData.x;
-                        levelData.y = levelData.y;
                     }
                     mSimulationData.push(levelData);
                 })
             } else {
-                console.error("Impliment me!")
+                let minData = {
+                    id: DimentionValueId.MIN,
+                    name: dimention.domain[0],
+                    dimention: dimention.id,
+                };
+                let oldMinData = oldSimulationData.find(item => item.dimention == dimention.id && item.id == DimentionValueId.MIN);
+                if (oldMinData) {
+                    minData.x = oldMinData.x;
+                    minData.y = oldMinData.y;
+                } else {
+                    minData.x = 0;
+                    minData.y = 0;
+                }
+                let maxData = {
+                    id: DimentionValueId.MAX,
+                    name: dimention.domain[1],
+                    dimention: dimention.id,
+                };
+                let oldMaxData = oldSimulationData.find(item => item.dimention == dimention.id && item.id == DimentionValueId.MAX);
+                if (oldMaxData) {
+                    maxData.x = oldMaxData.x;
+                    maxData.y = oldMaxData.y;
+                } else {
+                    maxData.x = 0;
+                    maxData.y = 0;
+                }
+                mSimulationData.push(minData, maxData);
             }
-
         });
 
         mActiveViewController.updateSimulationData(mSimulationData, mModel);

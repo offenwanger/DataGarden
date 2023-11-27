@@ -1,10 +1,12 @@
 function FdlDimentionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
     const ADD_BUTTON_ID = 'add_button';
-    const TARGET_ELEMENT = "element_target"
-    const TARGET_LABEL = "element_label"
-    const TARGET_TYPE = "element_type"
-    const TARGET_CHANNEL = "element_channel"
-    const TARGET_TIER = "element_tier"
+    const MAX_VALUE_ID = 'max_value';
+    const MIN_VALUE_ID = 'min_value';
+    const TARGET_ELEMENT = "element_target";
+    const TARGET_LABEL = "element_label";
+    const TARGET_TYPE = "element_type";
+    const TARGET_CHANNEL = "element_channel";
+    const TARGET_TIER = "element_tier";
     const NODE_COLUMN_WIDTH = 300
 
     let mAddLevelCallback = () => { };
@@ -24,6 +26,7 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
     let mAddButton = { id: ADD_BUTTON_ID, x: 0, y: 0 };
 
     let mDimentionWidth = 0;
+    let mDimentionType;
     let mDimentionTileWidths = [];
 
     let mLinks = [];
@@ -37,7 +40,7 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
         .force("collide", d3.forceCollide((d) => {
             if (IdUtil.isType(d.id, Data.Dimention)) {
                 return Size.DIMENTION_SIZE;
-            } else if (IdUtil.isType(d.id, Data.Level) || d.id == ADD_BUTTON_ID) {
+            } else if (IdUtil.isType(d.id, Data.Level) || d.id == ADD_BUTTON_ID || d.id == DimentionValueId.MIN || d.id == DimentionValueId.MAX) {
                 return Size.LEVEL_SIZE;
             } else if (IdUtil.isType(d.id, Data.Element)) {
                 return d.radius + Padding.NODE * 2;
@@ -58,6 +61,14 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
                     let yTarget = Math.max(Size.DIMENTION_SIZE, ...mNodes.map(n => n.y), ...mLevels.map(n => n.y)) + Size.LEVEL_SIZE + Size.ELEMENT_NODE_SIZE;
                     item.y = item.y += (yTarget - item.y) * mSimulation.alpha();
                     item.x = AxisPositions.LEVEL_X;
+                } else if (item.id == DimentionValueId.MIN) {
+                    let yTarget = Math.min(Size.DIMENTION_SIZE, ...mNodes.map(n => n.y));
+                    item.y = item.y += (yTarget - item.y) * mSimulation.alpha();
+                    item.x = AxisPositions.LEVEL_X;
+                } else if (item.id == DimentionValueId.MAX) {
+                    let yTarget = Math.max(Size.DIMENTION_SIZE * 2, ...mNodes.map(n => n.y));
+                    item.y = item.y += (yTarget - item.y) * mSimulation.alpha();
+                    item.x = AxisPositions.LEVEL_X;
                 }
             });
             draw();
@@ -69,15 +80,15 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
 
         let dimention = mModel.getDimention(mDimentionId);
         if (!dimention) { console.error("Bad State! Dimention not found!"); return; }
-        let levelIds = dimention.levels.map(l => l.id);
 
         mDimention = data.find(item => item.id == mDimentionId);
-        mLevels = data.filter(item => levelIds.includes(item.id));
         // TODO: do this properly, i.e. measure all the stuff in that column
         mDimentionWidth = mDrawingUtil.measureStringNode(mDimention.name +
             " [" + DimentionLabels[mDimention.type] + "][" +
             ChannelLabels[mDimention.channel] + "][T" + mDimention.tier + "]", Size.DIMENTION_SIZE);
+        mDimentionType = dimention.type;
 
+        mLevels = data.filter(item => item.dimention == mDimentionId);
 
         mNodes = data.filter(item => IdUtil.isType(item.id, Data.Element) && DataUtil.getTreeLevel(mModel, item.id) == dimention.tier);
 
@@ -138,13 +149,15 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
             }
         });
 
-        mDrawingUtil.drawStringNode(
-            AxisPositions.LEVEL_X,
-            mAddButton.y,
-            "Add Level +",
-            Size.LEVEL_SIZE,
-            mHighlight.includes(ADD_BUTTON_ID),
-            mCodeUtil.getCode(ADD_BUTTON_ID));
+        if (mDimentionType == DimentionType.DISCRETE) {
+            mDrawingUtil.drawStringNode(
+                AxisPositions.LEVEL_X,
+                mAddButton.y,
+                "Add Level +",
+                Size.LEVEL_SIZE,
+                mHighlight.includes(ADD_BUTTON_ID),
+                mCodeUtil.getCode(ADD_BUTTON_ID));
+        }
     }
 
     function drawDimention() {

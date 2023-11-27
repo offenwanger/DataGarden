@@ -13,10 +13,15 @@ function DropdownInput() {
     mChannelSelect.append("option").attr("value", ChannelType.SIZE).html("Size");
     mChannelSelect.append("option").attr("value", ChannelType.ANGLE).html("Angle");
     mChannelSelect.append("option").attr("value", ChannelType.POSITION).html("Position");
+    let mContinuousChannelSelect = mDropdownContainer.append("select");
+    mContinuousChannelSelect.append("option").attr("value", ChannelType.SIZE).html("Size");
+    mContinuousChannelSelect.append("option").attr("value", ChannelType.ANGLE).html("Angle");
+    mContinuousChannelSelect.append("option").attr("value", ChannelType.POSITION).html("Position");
     let mTierSelect = mDropdownContainer.append("select");
 
     mTypeSelect.on('change', onChange).on('blur', onBlur);
     mChannelSelect.on('change', onChange).on('blur', onBlur);
+    mContinuousChannelSelect.on('change', onChange).on('blur', onBlur);
     mTierSelect.on('change', onChange).on('blur', onBlur);
 
     function onChange() {
@@ -42,6 +47,7 @@ function DropdownInput() {
     function show(dropdownType, itemId, value, x, y, width, height) {
         mTypeSelect.style("display", "none");
         mChannelSelect.style("display", "none");
+        mContinuousChannelSelect.style("display", "none");
         mTierSelect.style("display", "none");
         mDropdownContainer.style('top', y + 'px')
             .style('left', (x + 10) + 'px')
@@ -52,6 +58,8 @@ function DropdownInput() {
             selectedDropdown = mTypeSelect;
         } else if (dropdownType == DropDown.CHANNEL) {
             selectedDropdown = mChannelSelect;
+        } else if (dropdownType == DropDown.CONTINUOUS_CHANNEL) {
+            selectedDropdown = mContinuousChannelSelect;
         } else if (dropdownType == DropDown.TIER) {
             selectedDropdown = mTierSelect
         }

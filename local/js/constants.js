@@ -51,6 +51,11 @@ const DimentionType = {
     CONTINUOUS: 'continuous',
 }
 
+const DimentionValueId = {
+    MIN: "dimention_min",
+    MAX: "dimention_max",
+}
+
 const ContextButtonToChannelType = {};
 ContextButtonToChannelType[ContextButtons.ADD_DIMENTION_FOR_FORM] = ChannelType.FORM;
 ContextButtonToChannelType[ContextButtons.ADD_DIMENTION_FOR_COLOR] = ChannelType.COLOR;
@@ -94,5 +99,6 @@ const Decay = {
 const DropDown = {
     TYPE: "type",
     CHANNEL: "channel",
+    CONTINUOUS_CHANNEL: "continuous_channel",
     TIER: "tier",
 }
