@@ -35,7 +35,7 @@ function MenuController() {
     })
 
     mColorPickerContainer = d3.select("#color-container");
-    mColorPicker = new Picker({ parent: mColorPickerContainer.node(), popup: "top" });
+    mColorPicker = new Picker({ parent: mColorPickerContainer.node(), popup: "right" });
     mColorPicker.onChange = function (color) {
         mColorChangeCallback(color.hex);
         d3.select("#color-selector-color").style("fill", color.hex)
@@ -135,7 +135,7 @@ function MenuController() {
         mZoomButton.setPosition(BUTTON_SIZE, buttonSpacing * 0.5);
         mViewButton.setPosition(BUTTON_SIZE, buttonSpacing * 3.5);
         mColorSelectorButton.setPosition(BUTTON_SIZE, buttonSpacing * 4.5);
-        mColorPickerContainer.style("left", (buttonSpacing * 4.5 - BUTTON_SIZE / 2) + "px").style("top", (height - BUTTON_SIZE * 1.5) + "px");
+        mColorPickerContainer.style("left", (BUTTON_SIZE * 1.5) + "px").style("top", (buttonSpacing * 4.5 - BUTTON_SIZE / 2) + "px");
 
     }
 
