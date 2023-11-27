@@ -11,6 +11,7 @@ function FdlDimensionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
 
     let mAddLevelCallback = () => { };
     let mEditNameCallback = () => { };
+    let mEditDomainCallback = () => { };
     let mUpdateLevelCallback = () => { };
 
     let mModel = new DataModel();
@@ -40,7 +41,7 @@ function FdlDimensionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
         .force("collide", d3.forceCollide((d) => {
             if (IdUtil.isType(d.id, Data.Dimension)) {
                 return Size.DIMENSION_SIZE;
-            } else if (IdUtil.isType(d.id, Data.Level) || d.id == ADD_BUTTON_ID || d.id == DimensionValueId.MIN || d.id == DimensionValueId.MAX) {
+            } else if (IdUtil.isType(d.id, Data.Level) || d.id == ADD_BUTTON_ID || d.id == DimensionValueId.V1 || d.id == DimensionValueId.V2) {
                 return Size.LEVEL_SIZE;
             } else if (IdUtil.isType(d.id, Data.Element)) {
                 return d.radius + Padding.NODE * 2;
@@ -61,11 +62,11 @@ function FdlDimensionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
                     let yTarget = Math.max(Size.DIMENSION_SIZE, ...mNodes.map(n => n.y), ...mLevels.map(n => n.y)) + Size.LEVEL_SIZE + Size.ELEMENT_NODE_SIZE;
                     item.y = item.y += (yTarget - item.y) * mSimulation.alpha();
                     item.x = AxisPositions.LEVEL_X;
-                } else if (item.id == DimensionValueId.MIN) {
+                } else if (item.id == DimensionValueId.V1) {
                     let yTarget = Math.min(Size.DIMENSION_SIZE, ...mNodes.map(n => n.y));
                     item.y = item.y += (yTarget - item.y) * mSimulation.alpha();
                     item.x = AxisPositions.LEVEL_X;
-                } else if (item.id == DimensionValueId.MAX) {
+                } else if (item.id == DimensionValueId.V2) {
                     let yTarget = Math.max(Size.DIMENSION_SIZE * 2, ...mNodes.map(n => n.y));
                     item.y = item.y += (yTarget - item.y) * mSimulation.alpha();
                     item.x = AxisPositions.LEVEL_X;
@@ -132,7 +133,9 @@ function FdlDimensionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
                 level.name,
                 Size.LEVEL_SIZE,
                 mHighlight.includes(level.id),
-                mCodeUtil.getCode(level.id, TARGET_LABEL));
+                mCodeUtil.getCode(level.id, TARGET_LABEL),
+                level.invalid ? "#FF6865" : "white"
+            );
         })
 
         let elements = mNodes.map(n => mModel.getElement(n.id));
@@ -240,6 +243,10 @@ function FdlDimensionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
                     mDrawingUtil.measureStringNode(levelNode.name, Size.LEVEL_SIZE), Size.LEVEL_SIZE);
             } else if (interaction.target == ADD_BUTTON_ID) {
                 mAddLevelCallback(mDimensionId);
+            } else if (interaction.target.id && (interaction.target.id == DimensionValueId.V2 || interaction.target.id == DimensionValueId.V1)) {
+                let node = mLevels.find(l => l.id == interaction.target.id);
+                mEditDomainCallback(mDimensionId, interaction.target.id, node.x, node.y,
+                    mDrawingUtil.measureStringNode(node.name, Size.LEVEL_SIZE), Size.LEVEL_SIZE)
             }
         } else {
             // Handle Drag End
@@ -305,6 +312,7 @@ function FdlDimensionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
         getScale,
         setAddLevelCallback: (func) => mAddLevelCallback = func,
         setEditNameCallback: (func) => mEditNameCallback = func,
+        setEditDomainCallback: (func) => mEditDomainCallback = func,
         setEditTypeCallback: (func) => mEditTypeCallback = func,
         setEditChannelCallback: (func) => mEditChannelCallback = func,
         setEditTierCallback: (func) => mEditTierCallback = func,

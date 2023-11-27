@@ -45,8 +45,8 @@ const DimensionType = {
 }
 
 const DimensionValueId = {
-    MIN: "dimension_min",
-    MAX: "dimension_max",
+    V1: "v1",
+    V2: "v2",
 }
 
 const ContextButtonToChannelType = {};
@@ -92,6 +92,5 @@ const Decay = {
 const DropDown = {
     TYPE: "type",
     CHANNEL: "channel",
-    CONTINUOUS_CHANNEL: "continuous_channel",
     TIER: "tier",
 }

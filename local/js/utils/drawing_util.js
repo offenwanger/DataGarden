@@ -570,7 +570,7 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
     const TEXT_HORIZONTAL_PADDING = 10;
     const TEXT_FONT_STRING = "px Segoe Print";
     const TEXT_SHRINK = 0.8;
-    function drawStringNode(x, y, label, height, shadow, code) {
+    function drawStringNode(x, y, label, height, shadow, code, background = 'white') {
         ctx.save();
         ctx.beginPath();
         ctx.rect(x, y, measureStringNode(label, height), height);
@@ -582,7 +582,7 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
             ctx.shadowOffsetY = 1;
             ctx.shadowBlur = 3;
         }
-        ctx.fillStyle = 'white';
+        ctx.fillStyle = background;
         ctx.fill();
         ctx.restore();
 

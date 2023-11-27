@@ -24,7 +24,7 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
             mSimulation.nodes().forEach(n => {
                 n.x = IdUtil.isType(n.id, Data.Dimension) ? AxisPositions.DIMENSION_X : AxisPositions.LEVEL_X;
                 let id = n.id;
-                if (id == DimensionValueId.MIN || id == DimensionValueId.MAX) id = n.dimension + n.id;
+                if (id == DimensionValueId.V1 || id == DimensionValueId.V2) id = n.dimension + n.id;
                 n.y += (mYPositions[id] - n.y) * mSimulation.alpha();
             });
             draw();
@@ -34,8 +34,8 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
     function updateSimulationData(data, model) {
         mDimensions = data.filter(d => IdUtil.isType(d.id, Data.Dimension));
         mLevels = data.filter(d => IdUtil.isType(d.id, Data.Level) ||
-            d.id == DimensionValueId.MAX ||
-            d.id == DimensionValueId.MIN);
+            d.id == DimensionValueId.V2 ||
+            d.id == DimensionValueId.V1);
         mSimulation.nodes(mDimensions.concat(mLevels).concat([mAddButton]), (d) => d.id);
 
         mYPositions = [];
@@ -50,9 +50,9 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
                     curYPos += Size.LEVEL_SIZE + PADDING;
                 });
             } else if (dimension.type == DimensionType.CONTINUOUS) {
-                mYPositions[dimension.id + DimensionValueId.MIN] = curYPos;
+                mYPositions[dimension.id + DimensionValueId.V1] = curYPos;
                 curYPos += Size.LEVEL_SIZE + PADDING;
-                mYPositions[dimension.id + DimensionValueId.MAX] = curYPos;
+                mYPositions[dimension.id + DimensionValueId.V2] = curYPos;
                 curYPos += Size.LEVEL_SIZE + PADDING;
             }
         });

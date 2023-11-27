@@ -13,6 +13,7 @@ function FdlViewController() {
     let mMoveStrokeCallback = () => { }
     let mContextMenuCallback = () => { }
     let mEditNameCallback = () => { };
+    let mEditDomainCallback = () => { };
     let mEditTypeCallback = () => { };
     let mEditChannelCallback = () => { };
     let mEditTierCallback = () => { };
@@ -114,33 +115,36 @@ function FdlViewController() {
                     mSimulationData.push(levelData);
                 })
             } else {
-                let minData = {
-                    id: DimensionValueId.MIN,
+                let v1Data = {
+                    id: DimensionValueId.V1,
                     name: dimension.domain[0],
                     dimension: dimension.id,
+                    invalid: !DataUtil.isNumeric(dimension.domain[0]),
                 };
-                let oldMinData = oldSimulationData.find(item => item.dimension == dimension.id && item.id == DimensionValueId.MIN);
-                if (oldMinData) {
-                    minData.x = oldMinData.x;
-                    minData.y = oldMinData.y;
+                let oldV1Data = oldSimulationData.find(item => item.dimension == dimension.id && item.id == DimensionValueId.V1);
+                if (oldV1Data) {
+                    v1Data.x = oldV1Data.x;
+                    v1Data.y = oldV1Data.y;
                 } else {
-                    minData.x = 0;
-                    minData.y = 0;
+                    v1Data.x = 0;
+                    v1Data.y = 0;
                 }
-                let maxData = {
-                    id: DimensionValueId.MAX,
+
+                let v2Data = {
+                    id: DimensionValueId.V2,
                     name: dimension.domain[1],
                     dimension: dimension.id,
+                    invalid: !DataUtil.isNumeric(dimension.domain[1]),
                 };
-                let oldMaxData = oldSimulationData.find(item => item.dimension == dimension.id && item.id == DimensionValueId.MAX);
-                if (oldMaxData) {
-                    maxData.x = oldMaxData.x;
-                    maxData.y = oldMaxData.y;
+                let oldV2Data = oldSimulationData.find(item => item.dimension == dimension.id && item.id == DimensionValueId.V2);
+                if (oldV2Data) {
+                    v2Data.x = oldV2Data.x;
+                    v2Data.y = oldV2Data.y;
                 } else {
-                    maxData.x = 0;
-                    maxData.y = 0;
+                    v2Data.x = 0;
+                    v2Data.y = 0;
                 }
-                mSimulationData.push(minData, maxData);
+                mSimulationData.push(v1Data, v2Data);
             }
         });
 
@@ -275,6 +279,15 @@ function FdlViewController() {
         mEditNameCallback(itemId, bb.x, bb.y, bb.width, bb.height);
     })
 
+    mFdlDimensionViewController.setEditDomainCallback((dimensionId, minMax, x, y, width, height) => {
+        let bb = modelBoundingBoxToScreenBoundingBox(
+            { x, y, height, width },
+            mActiveViewController.getTranslate(),
+            mActiveViewController.getScale())
+
+        mEditDomainCallback(dimensionId, minMax, bb.x, bb.y, bb.width, bb.height);
+    })
+
     mFdlDimensionViewController.setEditTypeCallback((dimensionId, x, y, width, height) => {
         let bb = modelBoundingBoxToScreenBoundingBox(
             { x, y, height, width },
@@ -385,6 +398,7 @@ function FdlViewController() {
         setAddLevelCallback: (func) => mFdlDimensionViewController.setAddLevelCallback(func),
         setUpdateLevelCallback: (func) => mFdlDimensionViewController.setUpdateLevelCallback(func),
         setEditNameCallback: (func) => mEditNameCallback = func,
+        setEditDomainCallback: (func) => mEditDomainCallback = func,
         setEditTypeCallback: (func) => mEditTypeCallback = func,
         setEditChannelCallback: (func) => mEditChannelCallback = func,
         setEditTierCallback: (func) => mEditTierCallback = func,

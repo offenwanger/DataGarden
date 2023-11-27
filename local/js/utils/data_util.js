@@ -225,6 +225,21 @@ let DataUtil = function () {
         return pointArr;
     }
 
+    function domainIsValid(domain) {
+        if (isNumeric(domain[0]) && isNumeric(domain[1])) return true;
+        if (isDateLike(domain[0]) && isDateLike(domain[1])) return true;
+    }
+
+    function isNumeric(str) {
+        if (typeof str == "number") return true;
+        if (typeof str != "string") return false;
+        return !isNaN(str) && !isNaN(parseFloat(str));
+    }
+
+    function isDateLike(dateStr) {
+        return !isNaN(new Date(dateStr));
+    }
+
     return {
         numToColor,
         rgbToHex,
@@ -243,5 +258,8 @@ let DataUtil = function () {
         getTreeLevel,
         getMappedValue,
         getPaddedPoints,
+        domainIsValid,
+        isNumeric,
+        isDateLike,
     }
 }();
