@@ -31,7 +31,7 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
     let mSimulation = d3.forceSimulation()
         .alphaDecay(Decay.ALPHA)
         .velocityDecay(Decay.VELOCITY)
-        .force("x", d3.forceY(0).strength(0.01))
+        .force("y", d3.forceY(0).strength(0.05))
         .force("link", d3.forceLink().id(d => d.id))
         .force("axis", d3.forceX((d => IdUtil.isType(d.id, Data.Element) ? mDimentionWidth + NODE_COLUMN_WIDTH / 2 : 0)).strength(0.7))
         .force("collide", d3.forceCollide((d) => {
@@ -48,16 +48,20 @@ function FdlDimentionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
         .alpha(0.3)
         .on("tick", () => {
             mSimulation.nodes().forEach(item => {
-                if (IdUtil.isType(item.id, Data.Dimention)) {
+                if (item.id == mDimentionId) {
+                    let yTarget = Math.min(0, ...mNodes.map(n => n.y), ...mLevels.map(n => n.y)) - Size.DIMENTION_SIZE - Size.ELEMENT_NODE_SIZE;
+                    item.y = item.y += (yTarget - item.y) * mSimulation.alpha();
                     item.x = AxisPositions.DIMENTION_X;
                 } else if (IdUtil.isType(item.id, Data.Level)) {
+                    item.x = AxisPositions.LEVEL_X;
+                } else if (item.id == ADD_BUTTON_ID) {
+                    let yTarget = Math.max(Size.DIMENTION_SIZE, ...mNodes.map(n => n.y), ...mLevels.map(n => n.y)) + Size.LEVEL_SIZE + Size.ELEMENT_NODE_SIZE;
+                    item.y = item.y += (yTarget - item.y) * mSimulation.alpha();
                     item.x = AxisPositions.LEVEL_X;
                 }
             });
             draw();
         })
-        .alpha(0.3)
-        .on("tick", () => { draw(); })
         .stop();
 
     function updateSimulationData(data, model) {

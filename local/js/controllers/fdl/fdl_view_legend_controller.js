@@ -1,4 +1,6 @@
 function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
+    const PADDING = 10;
+
     const ADD_BUTTON_ID = 'add_button';
 
     let mAddDimentionCallback = () => { };
@@ -17,12 +19,12 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
     let mSimulation = d3.forceSimulation()
         .alphaDecay(Decay.ALPHA)
         .velocityDecay(Decay.VELOCITY)
-        .force("link", d3.forceLink().id(d => d.id))
-        .force("y", d3.forceY(0).strength(0.01))
-        .force("collide", d3.forceCollide((d) => IdUtil.isType(d.id, Data.Dimention) ? Size.DIMENTION_SIZE : Size.LEVEL_SIZE))
         .alpha(0.3)
         .on("tick", () => {
-            mSimulation.nodes().forEach(n => n.x = IdUtil.isType(n.id, Data.Dimention) ? AxisPositions.DIMENTION_X : AxisPositions.LEVEL_X);
+            mSimulation.nodes().forEach(n => {
+                n.x = IdUtil.isType(n.id, Data.Dimention) ? AxisPositions.DIMENTION_X : AxisPositions.LEVEL_X;
+                n.y += (mYPositions[n.id] - n.y) * mSimulation.alpha();
+            });
             draw();
         })
         .stop();
@@ -32,21 +34,20 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
         mLevels = data.filter(d => IdUtil.isType(d.id, Data.Level));
         mSimulation.nodes(mDimentions.concat(mLevels).concat([mAddButton]), (d) => d.id);
 
-        mLinks = [];
+        mYPositions = [];
+        let curYPos = 0;
         let dimentions = model.getDimentions();
         dimentions.forEach(dimention => {
-            dimention.levels.forEach((level, index) => {
-                let data = { source: level.id }
-                if (index == 0) {
-                    data.target = dimention.id;
-                } else {
-                    data.target = dimention.levels[index - 1].id;
-                }
-                mLinks.push(data);
+            mYPositions[dimention.id] = curYPos;
+            curYPos += Size.DIMENTION_SIZE + PADDING;
+            dimention.levels.forEach(level => {
+                mYPositions[level.id] = curYPos;
+                curYPos += Size.LEVEL_SIZE + PADDING;
             });
         });
 
-        mSimulation.force('link').links(mLinks);
+        mYPositions[ADD_BUTTON_ID] = curYPos;
+
         mSimulation.alphaTarget(0.3).restart();
     }
 
@@ -58,7 +59,7 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
                 " [" + DimentionLabels[dimention.type] + "][" +
                 ChannelLabels[dimention.channel] + "][T" + dimention.tier + "]";
             mDrawingUtil.drawStringNode(
-                AxisPositions.DIMENTION_X,
+                dimention.x,
                 dimention.y,
                 dimentionString,
                 Size.DIMENTION_SIZE,
@@ -68,7 +69,7 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
 
         mLevels.forEach(level => {
             mDrawingUtil.drawStringNode(
-                AxisPositions.DIMENTION_X,
+                level.x,
                 level.y,
                 level.name,
                 Size.LEVEL_SIZE,
