@@ -142,8 +142,6 @@ function DataModel() {
                 }
                 colsQueue.push(uncheckedCols.pop());
             }
-
-            console.log(uncheckedCols, uncheckedRows, colsQueue, rowsQueue)
         }
 
         if (curTable.rows.length > 0) tables.push(curTable)
