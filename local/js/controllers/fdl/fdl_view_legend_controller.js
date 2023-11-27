@@ -3,14 +3,14 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
 
     const ADD_BUTTON_ID = 'add_button';
 
-    let mAddDimentionCallback = () => { };
-    let mClickDimentionCallback = () => { };
+    let mAddDimensionCallback = () => { };
+    let mClickDimensionCallback = () => { };
 
     let mZoomTransform = d3.zoomIdentity.translate(0, 300);
 
     let mHighlight = [];
 
-    let mDimentions = [];
+    let mDimensions = [];
     let mLevels = [];
     let mAddButton = { id: ADD_BUTTON_ID, x: 0, y: 0 };
 
@@ -22,9 +22,9 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
         .alpha(0.3)
         .on("tick", () => {
             mSimulation.nodes().forEach(n => {
-                n.x = IdUtil.isType(n.id, Data.Dimention) ? AxisPositions.DIMENTION_X : AxisPositions.LEVEL_X;
+                n.x = IdUtil.isType(n.id, Data.Dimension) ? AxisPositions.DIMENSION_X : AxisPositions.LEVEL_X;
                 let id = n.id;
-                if (id == DimentionValueId.MIN || id == DimentionValueId.MAX) id = n.dimention + n.id;
+                if (id == DimensionValueId.MIN || id == DimensionValueId.MAX) id = n.dimension + n.id;
                 n.y += (mYPositions[id] - n.y) * mSimulation.alpha();
             });
             draw();
@@ -32,27 +32,27 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
         .stop();
 
     function updateSimulationData(data, model) {
-        mDimentions = data.filter(d => IdUtil.isType(d.id, Data.Dimention));
+        mDimensions = data.filter(d => IdUtil.isType(d.id, Data.Dimension));
         mLevels = data.filter(d => IdUtil.isType(d.id, Data.Level) ||
-            d.id == DimentionValueId.MAX ||
-            d.id == DimentionValueId.MIN);
-        mSimulation.nodes(mDimentions.concat(mLevels).concat([mAddButton]), (d) => d.id);
+            d.id == DimensionValueId.MAX ||
+            d.id == DimensionValueId.MIN);
+        mSimulation.nodes(mDimensions.concat(mLevels).concat([mAddButton]), (d) => d.id);
 
         mYPositions = [];
         let curYPos = 0;
-        let dimentions = model.getDimentions();
-        dimentions.forEach(dimention => {
-            mYPositions[dimention.id] = curYPos;
-            curYPos += Size.DIMENTION_SIZE + PADDING;
-            if (dimention.type == DimentionType.DISCRETE) {
-                dimention.levels.forEach(level => {
+        let dimensions = model.getDimensions();
+        dimensions.forEach(dimension => {
+            mYPositions[dimension.id] = curYPos;
+            curYPos += Size.DIMENSION_SIZE + PADDING;
+            if (dimension.type == DimensionType.DISCRETE) {
+                dimension.levels.forEach(level => {
                     mYPositions[level.id] = curYPos;
                     curYPos += Size.LEVEL_SIZE + PADDING;
                 });
-            } else if (dimention.type == DimentionType.CONTINUOUS) {
-                mYPositions[dimention.id + DimentionValueId.MIN] = curYPos;
+            } else if (dimension.type == DimensionType.CONTINUOUS) {
+                mYPositions[dimension.id + DimensionValueId.MIN] = curYPos;
                 curYPos += Size.LEVEL_SIZE + PADDING;
-                mYPositions[dimention.id + DimentionValueId.MAX] = curYPos;
+                mYPositions[dimension.id + DimensionValueId.MAX] = curYPos;
                 curYPos += Size.LEVEL_SIZE + PADDING;
             }
         });
@@ -65,17 +65,17 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
     function draw() {
         mDrawingUtil.reset(mZoomTransform);
 
-        mDimentions.forEach(dimention => {
-            let dimentionString = dimention.name +
-                " [" + DimentionLabels[dimention.type] + "][" +
-                ChannelLabels[dimention.channel] + "][T" + dimention.tier + "]";
+        mDimensions.forEach(dimension => {
+            let dimensionString = dimension.name +
+                " [" + DimensionLabels[dimension.type] + "][" +
+                ChannelLabels[dimension.channel] + "][T" + dimension.tier + "]";
             mDrawingUtil.drawStringNode(
-                dimention.x,
-                dimention.y,
-                dimentionString,
-                Size.DIMENTION_SIZE,
-                mHighlight.includes(dimention.id),
-                mCodeUtil.getCode(dimention.id))
+                dimension.x,
+                dimension.y,
+                dimensionString,
+                Size.DIMENSION_SIZE,
+                mHighlight.includes(dimension.id),
+                mCodeUtil.getCode(dimension.id))
         })
 
         mLevels.forEach(level => {
@@ -89,10 +89,10 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
         })
 
         mDrawingUtil.drawStringNode(
-            AxisPositions.DIMENTION_X,
+            AxisPositions.DIMENSION_X,
             mAddButton.y,
-            "Add Dimention +",
-            Size.DIMENTION_SIZE,
+            "Add Dimension +",
+            Size.DIMENSION_SIZE,
             mHighlight.includes(ADD_BUTTON_ID),
             mCodeUtil.getCode(ADD_BUTTON_ID));
 
@@ -105,8 +105,8 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
     function interactionStart(interaction, modelCoords) {
         let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
             .map(target => target.id ? target.id : target);
-        let targetTiles = mDimentions.concat(mLevels).filter(n => target.includes(n.id));
-        let remainingTiles = mDimentions.concat(mLevels).filter(n => !target.includes(n.id));
+        let targetTiles = mDimensions.concat(mLevels).filter(n => target.includes(n.id));
+        let remainingTiles = mDimensions.concat(mLevels).filter(n => !target.includes(n.id));
         targetTiles.forEach(tile => {
             tile.startY = tile.y;
             tile.interacting = true;
@@ -119,7 +119,7 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
     function interactionDrag(interaction, modelCoords) {
         let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
             .map(target => target.id ? target.id : target);
-        let targetTiles = mDimentions.concat(mLevels).filter(n => target.includes(n.id));
+        let targetTiles = mDimensions.concat(mLevels).filter(n => target.includes(n.id));
         let dist = MathUtil.subtract(modelCoords, interaction.start);
         targetTiles.forEach(tile => {
             tile.y = tile.startY + dist.y;
@@ -130,20 +130,20 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
         if (MathUtil.dist(interaction.start, modelCoords) < 5) {
             // Handle Click
             if (interaction.target == ADD_BUTTON_ID) {
-                mAddDimentionCallback();
-            } else if (IdUtil.isType(interaction.target, Data.Dimention)) {
-                mClickDimentionCallback(interaction.target)
+                mAddDimensionCallback();
+            } else if (IdUtil.isType(interaction.target, Data.Dimension)) {
+                mClickDimensionCallback(interaction.target)
             }
         } else {
             let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
                 .map(target => target.id ? target.id : target);
-            let targetTiles = mDimentions.concat(mLevels).filter(n => target.includes(n.id));
+            let targetTiles = mDimensions.concat(mLevels).filter(n => target.includes(n.id));
             targetTiles.forEach(tile => {
                 tile.startY = null;
                 tile.interacting = null;
             });
 
-            mSimulation.nodes(mDimentions.concat(mLevels).concat([mAddButton]));
+            mSimulation.nodes(mDimensions.concat(mLevels).concat([mAddButton]));
         }
 
 
@@ -188,7 +188,7 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
         highlight,
         getTranslate,
         getScale,
-        setAddDimentionCallback: (func) => mAddDimentionCallback = func,
-        setClickDimentionCallback: (func) => mClickDimentionCallback = func,
+        setAddDimensionCallback: (func) => mAddDimensionCallback = func,
+        setClickDimensionCallback: (func) => mClickDimensionCallback = func,
     }
 }

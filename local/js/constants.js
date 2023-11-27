@@ -8,7 +8,7 @@ const Buttons = {
 
 const Size = {
     ELEMENT_NODE_SIZE: 20,
-    DIMENTION_SIZE: 40,
+    DIMENSION_SIZE: 40,
     LEVEL_SIZE: 30,
 }
 
@@ -17,20 +17,13 @@ const Padding = {
     CLUSTER: 20,
 }
 
-const MappingTypes = {
-    CONT_CONT: "continuousDimetion-continuousChannel",
-    CONT_DISC: "continuousDimetion-discreteChannel",
-    DISC_CONT: "discreteDimetion-continuousChannel",
-    DISC_DISC: "discreteDimetion-discreteChannel",
-}
-
 const ContextButtons = {
     CENTER: 'center',
-    ADD_DIMENTION_FOR_FORM: 'add-dimention-for-form',
-    ADD_DIMENTION_FOR_COLOR: 'add-dimention-for-color',
-    ADD_DIMENTION_FOR_SIZE: 'add-dimention-for-size',
-    ADD_DIMENTION_FOR_ANGLE: 'add-dimention-for-angle',
-    ADD_DIMENTION_FOR_POSITION: 'add-dimention-for-position',
+    ADD_DIMENSION_FOR_FORM: 'add-dimension-for-form',
+    ADD_DIMENSION_FOR_COLOR: 'add-dimension-for-color',
+    ADD_DIMENSION_FOR_SIZE: 'add-dimension-for-size',
+    ADD_DIMENSION_FOR_ANGLE: 'add-dimension-for-angle',
+    ADD_DIMENSION_FOR_POSITION: 'add-dimension-for-position',
     MERGE_TO_ELEMENT: 'merge-to-element',
     AUTO_MERGE_ELEMENTS: 'auto-merge-elements',
     SPINE: 'recalculate-spine',
@@ -46,22 +39,22 @@ const ChannelType = {
     POSITION: "position",
 }
 
-const DimentionType = {
+const DimensionType = {
     DISCRETE: 'discrete',
     CONTINUOUS: 'continuous',
 }
 
-const DimentionValueId = {
-    MIN: "dimention_min",
-    MAX: "dimention_max",
+const DimensionValueId = {
+    MIN: "dimension_min",
+    MAX: "dimension_max",
 }
 
 const ContextButtonToChannelType = {};
-ContextButtonToChannelType[ContextButtons.ADD_DIMENTION_FOR_FORM] = ChannelType.FORM;
-ContextButtonToChannelType[ContextButtons.ADD_DIMENTION_FOR_COLOR] = ChannelType.COLOR;
-ContextButtonToChannelType[ContextButtons.ADD_DIMENTION_FOR_SIZE] = ChannelType.SIZE;
-ContextButtonToChannelType[ContextButtons.ADD_DIMENTION_FOR_ANGLE] = ChannelType.ANGLE;
-ContextButtonToChannelType[ContextButtons.ADD_DIMENTION_FOR_POSITION] = ChannelType.POSITION;
+ContextButtonToChannelType[ContextButtons.ADD_DIMENSION_FOR_FORM] = ChannelType.FORM;
+ContextButtonToChannelType[ContextButtons.ADD_DIMENSION_FOR_COLOR] = ChannelType.COLOR;
+ContextButtonToChannelType[ContextButtons.ADD_DIMENSION_FOR_SIZE] = ChannelType.SIZE;
+ContextButtonToChannelType[ContextButtons.ADD_DIMENSION_FOR_ANGLE] = ChannelType.ANGLE;
+ContextButtonToChannelType[ContextButtons.ADD_DIMENSION_FOR_POSITION] = ChannelType.POSITION;
 
 const Tab = {
     PARENT: "parent",
@@ -70,19 +63,19 @@ const Tab = {
 }
 
 const FdlMode = {
-    DIMENTION: "dimention",
+    DIMENSION: "dimension",
     PARENT: "parent",
     LEGEND: "legend",
 }
 
 const AxisPositions = {
-    DIMENTION_X: 10,
+    DIMENSION_X: 10,
     LEVEL_X: 20,
 }
 
-const DimentionLabels = {};
-DimentionLabels[DimentionType.DISCRETE] = 'disc';
-DimentionLabels[DimentionType.CONTINUOUS] = 'cont';
+const DimensionLabels = {};
+DimensionLabels[DimensionType.DISCRETE] = 'disc';
+DimensionLabels[DimensionType.CONTINUOUS] = 'cont';
 
 const ChannelLabels = {};
 ChannelLabels[ChannelType.FORM] = 'form';

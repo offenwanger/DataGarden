@@ -10,7 +10,7 @@ function TableViewController() {
             mTableDiv.append("br");
 
             let header = table.cols.map(id => {
-                let dimen = model.getDimention(id);
+                let dimen = model.getDimension(id);
                 if (!dimen) { console.error("invalid dimen id", id); return ""; }
                 return dimen.name;
             });

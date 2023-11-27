@@ -3,30 +3,30 @@ function ContextMenu(svg) {
     let mButtonData = {}
     let mSvg = svg;
 
-    mButtonData[ContextButtons.ADD_DIMENTION_FOR_FORM] = {
-        id: ContextButtons.ADD_DIMENTION_FOR_FORM,
+    mButtonData[ContextButtons.ADD_DIMENSION_FOR_FORM] = {
+        id: ContextButtons.ADD_DIMENSION_FOR_FORM,
         img: "img/bind_form_button.svg",
-        tooltip: "Bind a new dimention to the form channel",
+        tooltip: "Bind a new dimension to the form channel",
     }
-    mButtonData[ContextButtons.ADD_DIMENTION_FOR_COLOR] = {
-        id: ContextButtons.ADD_DIMENTION_FOR_COLOR,
+    mButtonData[ContextButtons.ADD_DIMENSION_FOR_COLOR] = {
+        id: ContextButtons.ADD_DIMENSION_FOR_COLOR,
         img: "img/bind_color_button.svg",
-        tooltip: "Bind a new dimention to the color channel",
+        tooltip: "Bind a new dimension to the color channel",
     }
-    mButtonData[ContextButtons.ADD_DIMENTION_FOR_SIZE] = {
-        id: ContextButtons.ADD_DIMENTION_FOR_SIZE,
+    mButtonData[ContextButtons.ADD_DIMENSION_FOR_SIZE] = {
+        id: ContextButtons.ADD_DIMENSION_FOR_SIZE,
         img: "img/bind_size_button.svg",
-        tooltip: "Bind a new dimention to the size channel",
+        tooltip: "Bind a new dimension to the size channel",
     }
-    mButtonData[ContextButtons.ADD_DIMENTION_FOR_ANGLE] = {
-        id: ContextButtons.ADD_DIMENTION_FOR_ANGLE,
+    mButtonData[ContextButtons.ADD_DIMENSION_FOR_ANGLE] = {
+        id: ContextButtons.ADD_DIMENSION_FOR_ANGLE,
         img: "img/bind_angle_button.svg",
-        tooltip: "Bind a new dimention to the angle channel",
+        tooltip: "Bind a new dimension to the angle channel",
     }
-    mButtonData[ContextButtons.ADD_DIMENTION_FOR_POSITION] = {
-        id: ContextButtons.ADD_DIMENTION_FOR_POSITION,
+    mButtonData[ContextButtons.ADD_DIMENSION_FOR_POSITION] = {
+        id: ContextButtons.ADD_DIMENSION_FOR_POSITION,
         img: "img/bind_position_button.svg",
-        tooltip: "Bind a new dimention to the position channel",
+        tooltip: "Bind a new dimension to the position channel",
     }
     mButtonData[ContextButtons.MERGE_TO_ELEMENT] = {
         id: ContextButtons.MERGE_TO_ELEMENT,

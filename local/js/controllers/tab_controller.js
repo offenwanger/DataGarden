@@ -26,7 +26,7 @@ function TabController() {
         title: "Legend",
         id: Tab.LEGEND,
     }]
-    let mDimentionTabs = [];
+    let mDimensionTabs = [];
 
     let mTabDrawingUtil = new TabDrawingUtil(
         mCanvas.node().getContext("2d"),
@@ -34,12 +34,12 @@ function TabController() {
     );
 
     function onModelUpdate(model) {
-        mDimentionTabs.forEach(dimentionTab => {
-            let dimention = model.getDimention(dimentionTab.id);
-            if (dimention) {
-                dimentionTab.title = dimention.name;
+        mDimensionTabs.forEach(dimensionTab => {
+            let dimension = model.getDimension(dimensionTab.id);
+            if (dimension) {
+                dimensionTab.title = dimension.name;
             } else {
-                removeTab(dimentionTab.id);
+                removeTab(dimensionTab.id);
             }
         })
         draw();
@@ -106,7 +106,7 @@ function TabController() {
         let tabHeight = Math.round(canvasHeight * 0.8);
         let topPadding = canvasHeight - tabHeight - 1;
 
-        let tabs = mDefaultTabs.concat(mDimentionTabs);
+        let tabs = mDefaultTabs.concat(mDimensionTabs);
         let tabWidth = canvasWidth / tabs.length;
 
         tabs.forEach((tab, index) => {
@@ -119,7 +119,7 @@ function TabController() {
                     tab.title,
                     tab.id == mMousedOver,
                     mCodeUtil.getCode(tab.id, TAB_TARGET),
-                    IdUtil.isType(tab.id, Data.Dimention) ? mCodeUtil.getCode(tab.id, CLOSE_TARGET) : null);
+                    IdUtil.isType(tab.id, Data.Dimension) ? mCodeUtil.getCode(tab.id, CLOSE_TARGET) : null);
             }
         })
         mTabDrawingUtil.drawHorizontalLine(canvasHeight - 2, canvasWidth, 2);
@@ -134,7 +134,7 @@ function TabController() {
             tab.title,
             true,
             mCodeUtil.getCode(tab.id, TAB_TARGET),
-            IdUtil.isType(tab.id, Data.Dimention) ? mCodeUtil.getCode(tab.id, CLOSE_TARGET) : null);
+            IdUtil.isType(tab.id, Data.Dimension) ? mCodeUtil.getCode(tab.id, CLOSE_TARGET) : null);
     }
 
     function setActiveTab(tabId) {
@@ -143,17 +143,17 @@ function TabController() {
     }
 
     function setTab(id, title) {
-        let tab = mDimentionTabs.find(t => t.id == id);
+        let tab = mDimensionTabs.find(t => t.id == id);
         if (!tab) {
             tab = { id };
-            mDimentionTabs.push(tab);
+            mDimensionTabs.push(tab);
         }
         tab.title = title;
         draw();
     }
 
     function removeTab(id) {
-        mDimentionTabs.splice(mDimentionTabs.find(t => t.id == id), 1);
+        mDimensionTabs.splice(mDimensionTabs.find(t => t.id == id), 1);
         if (mActiveTab == id) { mSetTabCallback(Tab.LEGEND); }
         draw();
     }

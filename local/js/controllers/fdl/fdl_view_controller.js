@@ -41,7 +41,7 @@ function FdlViewController() {
 
     let mFdlParentViewController = new FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap);
     let mFdlLegendViewController = new FdlLegendViewController(mDrawingUtil, mCodeUtil);
-    let mFdlDimentionViewController = new FdlDimentionViewController(mDrawingUtil, mCodeUtil, mColorMap);
+    let mFdlDimensionViewController = new FdlDimensionViewController(mDrawingUtil, mCodeUtil, mColorMap);
 
     let mActiveViewController = mFdlParentViewController;
 
@@ -77,31 +77,31 @@ function FdlViewController() {
             mSimulationData.push(nodeData);
         });
 
-        mModel.getDimentions().forEach(dimention => {
-            let dimentionData = {
-                id: dimention.id,
-                name: dimention.name,
-                type: dimention.type,
-                channel: dimention.channel,
-                tier: dimention.tier,
+        mModel.getDimensions().forEach(dimension => {
+            let dimensionData = {
+                id: dimension.id,
+                name: dimension.name,
+                type: dimension.type,
+                channel: dimension.channel,
+                tier: dimension.tier,
             }
-            let oldData = oldSimulationData.find(item => item.id == dimention.id);
+            let oldData = oldSimulationData.find(item => item.id == dimension.id);
             if (!oldData) {
-                dimentionData.x = 0;
-                dimentionData.y = 0;
+                dimensionData.x = 0;
+                dimensionData.y = 0;
             } else {
-                dimentionData.x = oldData.x;
-                dimentionData.y = oldData.y;
+                dimensionData.x = oldData.x;
+                dimensionData.y = oldData.y;
             }
 
-            mSimulationData.push(dimentionData);
+            mSimulationData.push(dimensionData);
 
-            if (dimention.type == DimentionType.DISCRETE) {
-                dimention.levels.forEach(level => {
+            if (dimension.type == DimensionType.DISCRETE) {
+                dimension.levels.forEach(level => {
                     let levelData = {
                         id: level.id,
                         name: level.name,
-                        dimention: dimention.id,
+                        dimension: dimension.id,
                     }
                     let oldData = oldSimulationData.find(item => item.id == level.id);
                     if (oldData) {
@@ -115,11 +115,11 @@ function FdlViewController() {
                 })
             } else {
                 let minData = {
-                    id: DimentionValueId.MIN,
-                    name: dimention.domain[0],
-                    dimention: dimention.id,
+                    id: DimensionValueId.MIN,
+                    name: dimension.domain[0],
+                    dimension: dimension.id,
                 };
-                let oldMinData = oldSimulationData.find(item => item.dimention == dimention.id && item.id == DimentionValueId.MIN);
+                let oldMinData = oldSimulationData.find(item => item.dimension == dimension.id && item.id == DimensionValueId.MIN);
                 if (oldMinData) {
                     minData.x = oldMinData.x;
                     minData.y = oldMinData.y;
@@ -128,11 +128,11 @@ function FdlViewController() {
                     minData.y = 0;
                 }
                 let maxData = {
-                    id: DimentionValueId.MAX,
-                    name: dimention.domain[1],
-                    dimention: dimention.id,
+                    id: DimensionValueId.MAX,
+                    name: dimension.domain[1],
+                    dimension: dimension.id,
                 };
-                let oldMaxData = oldSimulationData.find(item => item.dimention == dimention.id && item.id == DimentionValueId.MAX);
+                let oldMaxData = oldSimulationData.find(item => item.dimension == dimension.id && item.id == DimensionValueId.MAX);
                 if (oldMaxData) {
                     maxData.x = oldMaxData.x;
                     maxData.y = oldMaxData.y;
@@ -154,9 +154,9 @@ function FdlViewController() {
             mActiveViewController = mFdlParentViewController;
         } else if (mode == FdlMode.LEGEND) {
             mActiveViewController = mFdlLegendViewController;
-        } else if (mode == FdlMode.DIMENTION) {
-            mActiveViewController = mFdlDimentionViewController;
-            mFdlDimentionViewController.setDimention(dimenId);
+        } else if (mode == FdlMode.DIMENSION) {
+            mActiveViewController = mFdlDimensionViewController;
+            mFdlDimensionViewController.setDimension(dimenId);
         }
 
         convertCoordinateSystem(mSimulationData, oldActiveViewController, mActiveViewController);
@@ -266,7 +266,7 @@ function FdlViewController() {
         mActiveViewController.highlight(selection);
     }
 
-    mFdlDimentionViewController.setEditNameCallback((itemId, x, y, width, height) => {
+    mFdlDimensionViewController.setEditNameCallback((itemId, x, y, width, height) => {
         let bb = modelBoundingBoxToScreenBoundingBox(
             { x, y, height, width },
             mActiveViewController.getTranslate(),
@@ -275,31 +275,31 @@ function FdlViewController() {
         mEditNameCallback(itemId, bb.x, bb.y, bb.width, bb.height);
     })
 
-    mFdlDimentionViewController.setEditTypeCallback((dimentionId, x, y, width, height) => {
+    mFdlDimensionViewController.setEditTypeCallback((dimensionId, x, y, width, height) => {
         let bb = modelBoundingBoxToScreenBoundingBox(
             { x, y, height, width },
             mActiveViewController.getTranslate(),
             mActiveViewController.getScale())
 
-        mEditTypeCallback(dimentionId, bb.x, bb.y, bb.width, bb.height);
+        mEditTypeCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
     })
 
-    mFdlDimentionViewController.setEditChannelCallback((dimentionId, x, y, width, height) => {
+    mFdlDimensionViewController.setEditChannelCallback((dimensionId, x, y, width, height) => {
         let bb = modelBoundingBoxToScreenBoundingBox(
             { x, y, height, width },
             mActiveViewController.getTranslate(),
             mActiveViewController.getScale())
 
-        mEditChannelCallback(dimentionId, bb.x, bb.y, bb.width, bb.height);
+        mEditChannelCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
     })
 
-    mFdlDimentionViewController.setEditTierCallback((dimentionId, x, y, width, height) => {
+    mFdlDimensionViewController.setEditTierCallback((dimensionId, x, y, width, height) => {
         let bb = modelBoundingBoxToScreenBoundingBox(
             { x, y, height, width },
             mActiveViewController.getTranslate(),
             mActiveViewController.getScale())
 
-        mEditTierCallback(dimentionId, bb.x, bb.y, bb.width, bb.height);
+        mEditTierCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
     })
 
     function screenToModelCoords(screenCoords, translate, scale) {
@@ -380,10 +380,10 @@ function FdlViewController() {
         show,
         setHighlightCallback: (func) => mHighlightCallback = func,
         setParentUpdateCallback: (func) => mFdlParentViewController.setParentUpdateCallback(func),
-        setAddDimentionCallback: (func) => mFdlLegendViewController.setAddDimentionCallback(func),
-        setClickDimentionCallback: (func) => mFdlLegendViewController.setClickDimentionCallback(func),
-        setAddLevelCallback: (func) => mFdlDimentionViewController.setAddLevelCallback(func),
-        setUpdateLevelCallback: (func) => mFdlDimentionViewController.setUpdateLevelCallback(func),
+        setAddDimensionCallback: (func) => mFdlLegendViewController.setAddDimensionCallback(func),
+        setClickDimensionCallback: (func) => mFdlLegendViewController.setClickDimensionCallback(func),
+        setAddLevelCallback: (func) => mFdlDimensionViewController.setAddLevelCallback(func),
+        setUpdateLevelCallback: (func) => mFdlDimensionViewController.setUpdateLevelCallback(func),
         setEditNameCallback: (func) => mEditNameCallback = func,
         setEditTypeCallback: (func) => mEditTypeCallback = func,
         setEditChannelCallback: (func) => mEditChannelCallback = func,

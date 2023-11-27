@@ -1,11 +1,11 @@
 function DataModel() {
     let mElements = [];
-    let mDimentions = [];
+    let mDimensions = [];
 
     function clone() {
         let clone = new DataModel();
         clone.setElements(getElements().map(e => e.clone()));
-        clone.setDimentions(getDimentions().map(e => e.clone()));
+        clone.setDimensions(getDimensions().map(e => e.clone()));
         return clone;
     }
 
@@ -13,7 +13,7 @@ function DataModel() {
         let model = this.clone();
         return {
             elements: model.getElements(),
-            dimentions: model.getDimentions()
+            dimensions: model.getDimensions()
         }
     }
 
@@ -61,37 +61,37 @@ function DataModel() {
         return elements;
     }
 
-    function getDimention(dimentionId) {
-        if (!IdUtil.isType(dimentionId, Data.Dimention)) { console.error("Not an dimention id! " + dimentionId); return null; };
-        return getDimentions().find(d => d.id == dimentionId)
+    function getDimension(dimensionId) {
+        if (!IdUtil.isType(dimensionId, Data.Dimension)) { console.error("Not an dimension id! " + dimensionId); return null; };
+        return getDimensions().find(d => d.id == dimensionId)
     }
 
-    function getDimentions() {
-        return mDimentions;
+    function getDimensions() {
+        return mDimensions;
     }
 
-    function setDimentions(dimentions) {
-        mDimentions = dimentions;
+    function setDimensions(dimensions) {
+        mDimensions = dimensions;
     }
 
-    function getDimentionForLevel(levelId) {
+    function getDimensionForLevel(levelId) {
         if (!IdUtil.isType(levelId, Data.Level)) { console.error("Not an level id! " + levelId); return null; };
-        return getDimentions().find(d => d.levels.some(l => l.id == levelId));
+        return getDimensions().find(d => d.levels.some(l => l.id == levelId));
     }
 
     function getLevel(levelId) {
         if (!IdUtil.isType(levelId, Data.Level)) { console.error("Not an level id! " + levelId); return null; };
-        return getDimentions().map(d => d.levels).flat().find(l => l.id == levelId);
+        return getDimensions().map(d => d.levels).flat().find(l => l.id == levelId);
     }
 
-    function getLevelForElement(dimentionId, elementId) {
-        let dimention = getDimention(dimentionId);
-        if (!dimention) return null;
-        return dimention.levels.find(l => l.elementIds.includes(elementId));
+    function getLevelForElement(dimensionId, elementId) {
+        let dimension = getDimension(dimensionId);
+        if (!dimension) return null;
+        return dimension.levels.find(l => l.elementIds.includes(elementId));
     }
 
     function getTables() {
-        if (mDimentions.length == 0) return [];
+        if (mDimensions.length == 0) return [];
         let parents = DataUtil.unique(mElements.map(e => e.parentId).filter(p => p));
         let leafs = mElements.filter(e => !parents.includes(e.id));
         let rows = []
@@ -101,9 +101,9 @@ function DataModel() {
             let level = DataUtil.getTreeLevel(this, leaf.id);
             while (nextId) {
                 let element = getElement(nextId);
-                mDimentions.filter(d => d.tier == level).forEach(dimention => {
-                    let value = DataUtil.getMappedValue(this, dimention.id, nextId);
-                    if (value) row[dimention.id] = { id: nextId, value };
+                mDimensions.filter(d => d.tier == level).forEach(dimension => {
+                    let value = DataUtil.getMappedValue(this, dimension.id, nextId);
+                    if (value) row[dimension.id] = { id: nextId, value };
                 })
 
                 level--;
@@ -112,8 +112,8 @@ function DataModel() {
             rows.push(row);
         })
 
-        let colsQueue = [mDimentions[0].id];
-        let uncheckedCols = mDimentions.slice(1).map(d => d.id);
+        let colsQueue = [mDimensions[0].id];
+        let uncheckedCols = mDimensions.slice(1).map(d => d.id);
         let rowsQueue = [];
         let uncheckedRows = rows.map((r, i) => i);
         let tables = [];
@@ -160,10 +160,10 @@ function DataModel() {
         setElements,
         getElementDecendants,
         getElementChildren,
-        getDimention,
-        getDimentions,
-        setDimentions,
-        getDimentionForLevel,
+        getDimension,
+        getDimensions,
+        setDimensions,
+        getDimensionForLevel,
         getLevel,
         getLevelForElement,
         getTables,
@@ -172,11 +172,11 @@ function DataModel() {
 
 DataModel.fromObject = function (obj) {
     let model = new DataModel();
-    if (!Array.isArray(obj.elements) || !Array.isArray(obj.dimentions)) {
+    if (!Array.isArray(obj.elements) || !Array.isArray(obj.dimensions)) {
         console.error("Invalid data model object", obj);
         return;
     }
     model.setElements(obj.elements.map(g => Data.Element.fromObject(g)));
-    model.setDimentions(obj.dimentions.map(d => Data.Dimention.fromObject(d)));
+    model.setDimensions(obj.dimensions.map(d => Data.Dimension.fromObject(d)));
     return model;
 }

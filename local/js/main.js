@@ -36,19 +36,19 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mDashboardController.setAddDimentionCallback(() => {
-        let newDimention = new Data.Dimention();
-        newDimention.name = "Dimention";
-        newDimention.type = DimentionType.DISCRETE;
-        newDimention.channel = ChannelType.FORM;
-        newDimention.tier = 0;
+    mDashboardController.setAddDimensionCallback(() => {
+        let newDimension = new Data.Dimension();
+        newDimension.name = "Dimension";
+        newDimension.type = DimensionType.DISCRETE;
+        newDimension.channel = ChannelType.FORM;
+        newDimension.tier = 0;
 
-        mModelController.addDimention(newDimention);
+        mModelController.addDimension(newDimension);
 
         mVersionController.stack(mModelController.getModel());
         mDashboardController.modelUpdate(mModelController.getModel());
 
-        return newDimention;
+        return newDimension;
     })
 
     mDashboardController.setAddLevelCallback((dimenId) => {
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     mDashboardController.setUpdateLevelCallback((dimenId, levelId, elementIds) => {
         let model = mModelController.getModel();
-        let dimention = model.getDimention(dimenId);
+        let dimension = model.getDimension(dimenId);
 
         // Validation
         elementIds = elementIds.map(eId => {
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             return e;
         }).filter(e => e).map(e => e.id);
 
-        dimention.levels.forEach(level => {
+        dimension.levels.forEach(level => {
             if (level.id == levelId) {
                 level.elementIds = DataUtil.unique(level.elementIds.concat(elementIds));
             } else {
@@ -94,47 +94,47 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mDashboardController.setUpdateDimentionNameCallback((dimentionId, name) => {
-        let dimention = mModelController.getModel().getDimention(dimentionId);
-        if (!dimention) { console.error("Invalid dimention id: ", dimentionId); return; }
-        dimention.name = name;
-        mModelController.updateDimention(dimention);
+    mDashboardController.setUpdateDimensionNameCallback((dimensionId, name) => {
+        let dimension = mModelController.getModel().getDimension(dimensionId);
+        if (!dimension) { console.error("Invalid dimension id: ", dimensionId); return; }
+        dimension.name = name;
+        mModelController.updateDimension(dimension);
 
         mVersionController.stack(mModelController.getModel());
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mDashboardController.setUpdateDimentionTypeCallback((dimentionId, type) => {
-        let dimention = mModelController.getModel().getDimention(dimentionId);
-        if (!dimention) { console.error("Invalid dimention id: ", dimentionId); return; }
-        dimention.type = type;
-        // Continuous dimentions are restricted to continuous channels. 
-        if (dimention.type == DimentionType.CONTINUOUS &&
-            (dimention.channel == ChannelType.FORM || dimention.channel == ChannelType.COLOR)) {
-            dimention.channel = ChannelType.SIZE;
+    mDashboardController.setUpdateDimensionTypeCallback((dimensionId, type) => {
+        let dimension = mModelController.getModel().getDimension(dimensionId);
+        if (!dimension) { console.error("Invalid dimension id: ", dimensionId); return; }
+        dimension.type = type;
+        // Continuous dimensions are restricted to continuous channels. 
+        if (dimension.type == DimensionType.CONTINUOUS &&
+            (dimension.channel == ChannelType.FORM || dimension.channel == ChannelType.COLOR)) {
+            dimension.channel = ChannelType.SIZE;
         }
 
-        mModelController.updateDimention(dimention);
+        mModelController.updateDimension(dimension);
 
         mVersionController.stack(mModelController.getModel());
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mDashboardController.setUpdateDimentionChannelCallback((dimentionId, channel) => {
-        let dimention = mModelController.getModel().getDimention(dimentionId);
-        if (!dimention) { console.error("Invalid dimention id: ", dimentionId); return; }
-        dimention.channel = channel;
-        mModelController.updateDimention(dimention);
+    mDashboardController.setUpdateDimensionChannelCallback((dimensionId, channel) => {
+        let dimension = mModelController.getModel().getDimension(dimensionId);
+        if (!dimension) { console.error("Invalid dimension id: ", dimensionId); return; }
+        dimension.channel = channel;
+        mModelController.updateDimension(dimension);
 
         mVersionController.stack(mModelController.getModel());
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mDashboardController.setUpdateDimentionTierCallback((dimentionId, tier) => {
-        let dimention = mModelController.getModel().getDimention(dimentionId);
-        if (!dimention) { console.error("Invalid dimention id: ", dimentionId); return; }
-        dimention.tier = tier;
-        mModelController.updateDimention(dimention);
+    mDashboardController.setUpdateDimensionTierCallback((dimensionId, tier) => {
+        let dimension = mModelController.getModel().getDimension(dimensionId);
+        if (!dimension) { console.error("Invalid dimension id: ", dimensionId); return; }
+        dimension.tier = tier;
+        mModelController.updateDimension(dimension);
 
         mVersionController.stack(mModelController.getModel());
         mDashboardController.modelUpdate(mModelController.getModel());

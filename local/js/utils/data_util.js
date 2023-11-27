@@ -152,12 +152,12 @@ let DataUtil = function () {
         return location;
     }
 
-    function getValue(element, mapping, dimention) {
+    function getValue(element, mapping, dimension) {
         if (mapping.channel == ChannelTypes.NUMBER) {
             let link = mapping.links.find(link => link.elementId == element.id);
             if (!link) { return null; };
-            if (dimention.type == DimentionType.CATEGORICAL) {
-                let level = dimention.levels.find(level => level.id == link.levelId);
+            if (dimension.type == DimensionType.CATEGORICAL) {
+                let level = dimension.levels.find(level => level.id == link.levelId);
                 if (!level) { console.error("Bad parameters, level not found for link.", link.level); return null; };
                 return level.name;
             } else {
@@ -194,18 +194,18 @@ let DataUtil = function () {
         return level;
     }
 
-    function getMappedValue(model, dimentionId, elementId) {
-        let dimention = model.getDimention(dimentionId);
-        if (dimention.channel == ChannelType.FORM || dimention.type == ChannelType.COLOR) {
-            let level = dimention.levels.find(level => level.elementIds.includes(elementId));
+    function getMappedValue(model, dimensionId, elementId) {
+        let dimension = model.getDimension(dimensionId);
+        if (dimension.channel == ChannelType.FORM || dimension.type == ChannelType.COLOR) {
+            let level = dimension.levels.find(level => level.elementIds.includes(elementId));
             return level ? level.name : null;
-        } else if (dimention.type == ChannelType.POSITION) {
+        } else if (dimension.type == ChannelType.POSITION) {
             console.error("Impliment me!")
             return null;
-        } else if (dimention.type == ChannelType.ANGLE) {
+        } else if (dimension.type == ChannelType.ANGLE) {
             console.error("Impliment me!")
             return null;
-        } else if (dimention.type == ChannelType.SIZE) {
+        } else if (dimension.type == ChannelType.SIZE) {
             console.error("Impliment me!")
             return null;
         }

@@ -42,9 +42,9 @@ describe('Struct View Controller Test', function () {
     //         assert.equal(model().getTables()[0].length, 2);
     //         assert.equal(model().getTables()[0][0].length, 2);
     //         expect(model().getTables()[0][0].sort())
-    //             .to.eql(model().getDimentions().map(d => d.name).sort())
+    //             .to.eql(model().getDimensions().map(d => d.name).sort())
     //         expect(model().getTables()[0][1].sort())
-    //             .to.eql(model().getDimentions().map(d => d.levels[0].name).sort())
+    //             .to.eql(model().getDimensions().map(d => d.levels[0].name).sort())
 
     //         let tables = jspreadsheet.getTables();
     //         assert.equal(tables.length, 1);

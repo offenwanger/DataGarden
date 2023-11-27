@@ -118,7 +118,7 @@ function getIntegrationEnviroment() {
         DashboardController: rewireJs('controllers/dashboard_controller.js').__get__("DashboardController"),
         FdlViewController: rewireJs('controllers/fdl/fdl_view_controller.js').__get__("FdlViewController"),
         FdlParentViewController: rewireJs('controllers/fdl/fdl_view_parent_controller.js').__get__("FdlParentViewController"),
-        FdlDimentionViewController: rewireJs('controllers/fdl/fdl_view_dimention_controller.js').__get__("FdlDimentionViewController"),
+        FdlDimensionViewController: rewireJs('controllers/fdl/fdl_view_dimension_controller.js').__get__("FdlDimensionViewController"),
         FdlLegendViewController: rewireJs('controllers/fdl/fdl_view_legend_controller.js').__get__("FdlLegendViewController"),
         TableViewController: rewireJs('controllers/table_view_controller.js').__get__("TableViewController"),
         TabController: rewireJs('controllers/tab_controller.js').__get__("TabController"),

@@ -5,8 +5,8 @@ function DropdownInput() {
     let mShowingType = null;
     let mDropdownContainer = d3.select('#dropdown-container');
     let mTypeSelect = mDropdownContainer.append("select");
-    mTypeSelect.append("option").attr("value", DimentionType.DISCRETE).html("Discrete");
-    mTypeSelect.append("option").attr("value", DimentionType.CONTINUOUS).html("Continuous");
+    mTypeSelect.append("option").attr("value", DimensionType.DISCRETE).html("Discrete");
+    mTypeSelect.append("option").attr("value", DimensionType.CONTINUOUS).html("Continuous");
     let mChannelSelect = mDropdownContainer.append("select");
     mChannelSelect.append("option").attr("value", ChannelType.FORM).html("Form");
     mChannelSelect.append("option").attr("value", ChannelType.COLOR).html("Color");

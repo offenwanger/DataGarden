@@ -2,21 +2,21 @@
 function ModelController() {
     let mDataModel = new DataModel();
 
-    function addDimention(dimention) {
-        if (!ValUtil.isType(dimention, Data.Dimention)) { console.error("Invalid dimention", dimention); return; }
-        mDataModel.getDimentions().push(dimention);
+    function addDimension(dimension) {
+        if (!ValUtil.isType(dimension, Data.Dimension)) { console.error("Invalid dimension", dimension); return; }
+        mDataModel.getDimensions().push(dimension);
     }
 
-    function removeDimention(dimentionId) {
-        if (!IdUtil.isType(dimentionId, Data.Dimention)) { console.error("Invalid dimention id", dimentionId); return; }
-        mDataModel.setDimentions(mDataModel.getDimentions().filter(d => d.id != dimentionId));
+    function removeDimension(dimensionId) {
+        if (!IdUtil.isType(dimensionId, Data.Dimension)) { console.error("Invalid dimension id", dimensionId); return; }
+        mDataModel.setDimensions(mDataModel.getDimensions().filter(d => d.id != dimensionId));
     }
 
-    function updateDimention(dimention) {
-        if (!ValUtil.isType(dimention, Data.Dimention)) { console.error("Invalid dimention", dimention); return; }
-        let currDimention = mDataModel.getDimention(dimention.id);
-        if (!currDimention) { console.error("Dimention not found for id", dimention.id); return; }
-        currDimention.update(dimention);
+    function updateDimension(dimension) {
+        if (!ValUtil.isType(dimension, Data.Dimension)) { console.error("Invalid dimension", dimension); return; }
+        let currDimension = mDataModel.getDimension(dimension.id);
+        if (!currDimension) { console.error("Dimension not found for id", dimension.id); return; }
+        currDimension.update(dimension);
     }
 
     function addElement(element) {
@@ -36,19 +36,19 @@ function ModelController() {
         currElement.update(element);
     }
 
-    function addLevel(dimentionId, level) {
+    function addLevel(dimensionId, level) {
         if (!ValUtil.isType(level, Data.Level)) { console.error("Invalid level", level); return; }
-        if (!IdUtil.isType(dimentionId, Data.Dimention)) { console.error("Invalid dimention id", dimentionId); return; }
-        let dimention = mDataModel.getDimention(dimentionId);
-        if (!dimention) { console.error("Dimention not found for id: ", dimentionId); return; };
-        dimention.levels.push(level);
+        if (!IdUtil.isType(dimensionId, Data.Dimension)) { console.error("Invalid dimension id", dimensionId); return; }
+        let dimension = mDataModel.getDimension(dimensionId);
+        if (!dimension) { console.error("Dimension not found for id: ", dimensionId); return; };
+        dimension.levels.push(level);
     }
 
     function removeLevel(levelId) {
-        if (!IdUtil.isType(levelId, Data.Level)) { console.error("Invalid dimention id", dimentionId); return; }
-        let dimention = mDataModel.getDimentionForLevel(levelId);
-        if (!dimention) { console.error("Dimention not found for level: ", levelId); return; };
-        dimention.levels = dimention.levels.filter(e => e.id != levelId);
+        if (!IdUtil.isType(levelId, Data.Level)) { console.error("Invalid dimension id", dimensionId); return; }
+        let dimension = mDataModel.getDimensionForLevel(levelId);
+        if (!dimension) { console.error("Dimension not found for level: ", levelId); return; };
+        dimension.levels = dimension.levels.filter(e => e.id != levelId);
     }
 
     function updateLevel(level) {
@@ -79,9 +79,9 @@ function ModelController() {
     }
 
     return {
-        addDimention,
-        removeDimention,
-        updateDimention,
+        addDimension,
+        removeDimension,
+        updateDimension,
         addElement,
         removeElement,
         updateElement,

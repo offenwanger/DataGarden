@@ -21,24 +21,24 @@ function DashboardController() {
     let mToolState = Buttons.SELECTION_BUTTON;
     let mFdlActive = true;
 
-    let mAddDimentionCallback = () => { };
+    let mAddDimensionCallback = () => { };
     let mNewStrokeCallback = () => { };
     let mParentUpdateCallback = () => { };
     let mMergeElementCallback = () => { };
     let mNewElementCallback = () => { };
     let mMoveElementCallback = () => { };
     let mDeleteCallback = () => { };
-    let mNewDimentionCallback = () => { };
+    let mNewDimensionCallback = () => { };
     let mMergeStrokesCallback = () => { };
     let mAutoMergeElements = () => { };
     let mCalculateSpineCallback = () => { };
     let mUndoCallback = () => { };
     let mRedoCallback = () => { };
     let mUpdateLevelNameCallback = () => { };
-    let mUpdateDimentionNameCallback = () => { };
-    let mUpdateDimentionTypeCallback = () => { };
-    let mUpdateDimentionChannelCallback = () => { };
-    let mUpdateDimentionTierCallback = () => { };
+    let mUpdateDimensionNameCallback = () => { };
+    let mUpdateDimensionTypeCallback = () => { };
+    let mUpdateDimensionChannelCallback = () => { };
+    let mUpdateDimensionTierCallback = () => { };
 
     function modelUpdate(model) {
         mModel = model;
@@ -110,20 +110,20 @@ function DashboardController() {
     mTextInput.setTextChangedCallback((itemId, text) => {
         if (IdUtil.isType(itemId, Data.Level)) {
             mUpdateLevelNameCallback(itemId, text);
-        } else if (IdUtil.isType(itemId, Data.Dimention)) {
-            mUpdateDimentionNameCallback(itemId, text);
+        } else if (IdUtil.isType(itemId, Data.Dimension)) {
+            mUpdateDimensionNameCallback(itemId, text);
         } else {
             console.error("Invalid id", itemId);
         }
     })
 
-    mDropdownInput.setSelectedCallback((dropdownType, dimentionId, value) => {
+    mDropdownInput.setSelectedCallback((dropdownType, dimensionId, value) => {
         if (dropdownType == DropDown.TYPE) {
-            mUpdateDimentionTypeCallback(dimentionId, value);
+            mUpdateDimensionTypeCallback(dimensionId, value);
         } else if (dropdownType == DropDown.CHANNEL || dropdownType == DropDown.CONTINUOUS_CHANNEL) {
-            mUpdateDimentionChannelCallback(dimentionId, value);
+            mUpdateDimensionChannelCallback(dimensionId, value);
         } else if (dropdownType == DropDown.TIER) {
-            mUpdateDimentionTierCallback(dimentionId, value);
+            mUpdateDimensionTierCallback(dimensionId, value);
         } else {
             console.error("Invalid type");
         }
@@ -143,8 +143,8 @@ function DashboardController() {
             mFdlViewController.setMode(FdlMode.PARENT);
         } else if (tabId == Tab.LEGEND) {
             mFdlViewController.setMode(FdlMode.LEGEND);
-        } else if (IdUtil.isType(tabId, Data.Dimention)) {
-            mFdlViewController.setMode(FdlMode.DIMENTION, tabId);
+        } else if (IdUtil.isType(tabId, Data.Dimension)) {
+            mFdlViewController.setMode(FdlMode.DIMENSION, tabId);
         }
     })
 
@@ -189,18 +189,18 @@ function DashboardController() {
         mCanvasController.highlight(selection);
     })
 
-    mFdlViewController.setAddDimentionCallback(() => {
-        let newDimention = mAddDimentionCallback();
-        mTabController.setTab(newDimention.id, newDimention.name);
-        mTabController.setActiveTab(newDimention.id);
-        mFdlViewController.setMode(FdlMode.DIMENTION, newDimention.id);
+    mFdlViewController.setAddDimensionCallback(() => {
+        let newDimension = mAddDimensionCallback();
+        mTabController.setTab(newDimension.id, newDimension.name);
+        mTabController.setActiveTab(newDimension.id);
+        mFdlViewController.setMode(FdlMode.DIMENSION, newDimension.id);
     });
 
-    mFdlViewController.setClickDimentionCallback((dimenId) => {
-        let dimention = mModel.getDimention(dimenId);
-        mTabController.setTab(dimenId, dimention.name);
+    mFdlViewController.setClickDimensionCallback((dimenId) => {
+        let dimension = mModel.getDimension(dimenId);
+        mTabController.setTab(dimenId, dimension.name);
         mTabController.setActiveTab(dimenId);
-        mFdlViewController.setMode(FdlMode.DIMENTION, dimenId);
+        mFdlViewController.setMode(FdlMode.DIMENSION, dimenId);
     });
 
     mFdlViewController.setEditNameCallback((itemId, x, y, width, height) => {
@@ -208,26 +208,26 @@ function DashboardController() {
         if (IdUtil.isType(itemId, Data.Level)) {
             item = mModel.getLevel(itemId);
         } else {
-            item = mModel.getDimention(itemId);
+            item = mModel.getDimension(itemId);
         }
         mTextInput.show(itemId, item.name, x, y, width, height);
     });
 
-    mFdlViewController.setEditTypeCallback((dimentionId, x, y, width, height) => {
-        let dimention = mModel.getDimention(dimentionId);
-        mDropdownInput.show(DropDown.TYPE, dimentionId, dimention.type, x, y, width, height);
+    mFdlViewController.setEditTypeCallback((dimensionId, x, y, width, height) => {
+        let dimension = mModel.getDimension(dimensionId);
+        mDropdownInput.show(DropDown.TYPE, dimensionId, dimension.type, x, y, width, height);
     });
 
-    mFdlViewController.setEditChannelCallback((dimentionId, x, y, width, height) => {
-        let dimention = mModel.getDimention(dimentionId);
+    mFdlViewController.setEditChannelCallback((dimensionId, x, y, width, height) => {
+        let dimension = mModel.getDimension(dimensionId);
         mDropdownInput.show(
-            dimention.type == DimentionType.DISCRETE ? DropDown.CHANNEL : DropDown.CONTINUOUS_CHANNEL,
-            dimentionId, dimention.channel, x, y, width, height);
+            dimension.type == DimensionType.DISCRETE ? DropDown.CHANNEL : DropDown.CONTINUOUS_CHANNEL,
+            dimensionId, dimension.channel, x, y, width, height);
     });
 
-    mFdlViewController.setEditTierCallback((dimentionId, x, y, width, height) => {
-        let dimention = mModel.getDimention(dimentionId);
-        mDropdownInput.show(DropDown.TIER, dimentionId, dimention.tier, x, y, width, height);
+    mFdlViewController.setEditTierCallback((dimensionId, x, y, width, height) => {
+        let dimension = mModel.getDimension(dimensionId);
+        mDropdownInput.show(DropDown.TIER, dimensionId, dimension.tier, x, y, width, height);
     });
 
     mMenuController.setColorChangeCallback((color) => {
@@ -251,19 +251,19 @@ function DashboardController() {
         setNewElementCallback: (func) => mNewElementCallback = func,
         setMoveElementCallback: (func) => mMoveElementCallback = func,
         setDeleteCallback: (func) => mDeleteCallback = func,
-        setNewDimentionCallback: (func) => mNewDimentionCallback = func,
+        setNewDimensionCallback: (func) => mNewDimensionCallback = func,
         setMergeStrokesCallback: (func) => mMergeStrokesCallback = func,
         setAutoMergeElements: (func) => mAutoMergeElements = func,
         setCalculateSpineCallback: (func) => mCalculateSpineCallback = func,
         setUndoCallback: (func) => mUndoCallback = func,
         setRedoCallback: (func) => mRedoCallback = func,
-        setAddDimentionCallback: (func) => mAddDimentionCallback = func,
+        setAddDimensionCallback: (func) => mAddDimensionCallback = func,
         setAddLevelCallback: (func) => mFdlViewController.setAddLevelCallback(func),
         setUpdateLevelCallback: (func) => mFdlViewController.setUpdateLevelCallback(func),
         setUpdateLevelNameCallback: (func) => mUpdateLevelNameCallback = func,
-        setUpdateDimentionNameCallback: (func) => mUpdateDimentionNameCallback = func,
-        setUpdateDimentionTypeCallback: (func) => mUpdateDimentionTypeCallback = func,
-        setUpdateDimentionChannelCallback: (func) => mUpdateDimentionChannelCallback = func,
-        setUpdateDimentionTierCallback: (func) => mUpdateDimentionTierCallback = func,
+        setUpdateDimensionNameCallback: (func) => mUpdateDimensionNameCallback = func,
+        setUpdateDimensionTypeCallback: (func) => mUpdateDimensionTypeCallback = func,
+        setUpdateDimensionChannelCallback: (func) => mUpdateDimensionChannelCallback = func,
+        setUpdateDimensionTierCallback: (func) => mUpdateDimensionTierCallback = func,
     }
 }

@@ -55,20 +55,20 @@ let Data = function () {
         return element;
     }
 
-    function Dimention() {
-        this.id = IdUtil.getUniqueId(Dimention);
+    function Dimension() {
+        this.id = IdUtil.getUniqueId(Dimension);
         this.creationTime = Date.now();
-        this.name = "Dimention";
-        this.type = DimentionType.DISCRETE;
+        this.name = "Dimension";
+        this.type = DimensionType.DISCRETE;
         this.channel = ChannelType.FORM;
         this.tier = 0;
-        // discrete dimentions
+        // discrete dimensions
         this.levels = [];
-        // continuous dimentions
+        // continuous dimensions
         this.domain = [0, 1]
 
         this.clone = function () {
-            let clone = new Dimention();
+            let clone = new Dimension();
             clone.id = this.id;
             clone.creationTime = this.creationTime;
             clone.name = this.name;
@@ -80,28 +80,28 @@ let Data = function () {
             return clone;
         };
 
-        this.update = function (dimention) {
-            this.id = dimention.id;
-            this.creationTime = dimention.creationTime;
-            this.name = dimention.name;
-            this.type = dimention.type;
-            this.channel = dimention.channel;
-            this.tier = dimention.tier;
-            this.levels = dimention.levels.map(l => l.clone());
-            this.domain = [...dimention.domain];
+        this.update = function (dimension) {
+            this.id = dimension.id;
+            this.creationTime = dimension.creationTime;
+            this.name = dimension.name;
+            this.type = dimension.type;
+            this.channel = dimension.channel;
+            this.tier = dimension.tier;
+            this.levels = dimension.levels.map(l => l.clone());
+            this.domain = [...dimension.domain];
         };
     }
-    Dimention.fromObject = function (obj) {
-        let dimention = new Dimention();
-        dimention.id = obj.id;
-        dimention.creationTime = obj.creationTime;
-        dimention.name = obj.name;
-        dimention.type = obj.type;
-        dimention.channel = obj.channel;
-        dimention.tier = obj.tier;
-        dimention.levels = obj.levels ? obj.levels.map(l => Level.fromObject(l)) : [];
-        dimention.domain = obj.domain ? [...obj.domain] : [0, 1];
-        return dimention;
+    Dimension.fromObject = function (obj) {
+        let dimension = new Dimension();
+        dimension.id = obj.id;
+        dimension.creationTime = obj.creationTime;
+        dimension.name = obj.name;
+        dimension.type = obj.type;
+        dimension.channel = obj.channel;
+        dimension.tier = obj.tier;
+        dimension.levels = obj.levels ? obj.levels.map(l => Level.fromObject(l)) : [];
+        dimension.domain = obj.domain ? [...obj.domain] : [0, 1];
+        return dimension;
     }
 
 
@@ -139,7 +139,7 @@ let Data = function () {
     return {
         Stroke,
         Element,
-        Dimention,
+        Dimension,
         Level,
     }
 }();

@@ -86,33 +86,33 @@ describe('Test Data Model', function () {
             expect(dataModel.getTables()).to.eql([]);
         });
 
-        it("should get a table one dimention and row", function () {
+        it("should get a table one dimension and row", function () {
             let dataModel = new DataModel();
             for (let i = 0; i < 10; i++) {
                 dataModel.getElements().push(new Data.Element());
                 dataModel.getElements()[i].strokes.push(new Data.Stroke([{ x: 0, y: i * 10 }, { x: 10, y: i * 10 }], 3, "#000000"))
             }
-            dataModel.getDimentions().push(new Data.Dimention());
-            dataModel.getDimentions()[0].type = DimentionType.DISCRETE;
-            dataModel.getDimentions()[0].channel = ChannelType.FORM;
-            dataModel.getDimentions()[0].levels.push(new Data.Level());
-            dataModel.getDimentions()[0].levels[0].elementIds
+            dataModel.getDimensions().push(new Data.Dimension());
+            dataModel.getDimensions()[0].type = DimensionType.DISCRETE;
+            dataModel.getDimensions()[0].channel = ChannelType.FORM;
+            dataModel.getDimensions()[0].levels.push(new Data.Level());
+            dataModel.getDimensions()[0].levels[0].elementIds
                 .push(dataModel.getElements()[0].id, dataModel.getElements()[1].id);
 
-            dataModel.getDimentions().push(new Data.Dimention());
-            dataModel.getDimentions()[1].type = DimentionType.DISCRETE;
-            dataModel.getDimentions()[1].channel = ChannelType.COLOR;
-            dataModel.getDimentions()[1].levels.push(new Data.Level());
+            dataModel.getDimensions().push(new Data.Dimension());
+            dataModel.getDimensions()[1].type = DimensionType.DISCRETE;
+            dataModel.getDimensions()[1].channel = ChannelType.COLOR;
+            dataModel.getDimensions()[1].levels.push(new Data.Level());
 
             assert.equal(dataModel.getTables().length, 1);
-            expect(dataModel.getTables()[0].cols).to.eql([dataModel.getDimentions()[0].id]);
-            expect(dataModel.getTables()[0].rows.map(r => r[dataModel.getDimentions()[0].id].id).sort())
+            expect(dataModel.getTables()[0].cols).to.eql([dataModel.getDimensions()[0].id]);
+            expect(dataModel.getTables()[0].rows.map(r => r[dataModel.getDimensions()[0].id].id).sort())
                 .to.eql([dataModel.getElements()[0].id, dataModel.getElements()[1].id].sort());
-            expect(dataModel.getTables()[0].rows.map(r => r[dataModel.getDimentions()[0].id].value))
-                .to.eql([dataModel.getDimentions()[0].levels[0].name, dataModel.getDimentions()[0].levels[0].name]);
+            expect(dataModel.getTables()[0].rows.map(r => r[dataModel.getDimensions()[0].id].value))
+                .to.eql([dataModel.getDimensions()[0].levels[0].name, dataModel.getDimensions()[0].levels[0].name]);
         })
 
-        it("should get a table with multiple rows and dimentions", function () {
+        it("should get a table with multiple rows and dimensions", function () {
             let dataModel = new DataModel();
             for (let i = 0; i < 10; i++) {
                 dataModel.getElements().push(new Data.Element());
@@ -122,30 +122,30 @@ describe('Test Data Model', function () {
                 dataModel.getElements()[i].parentId = dataModel.getElements()[i - 5].id;
             }
 
-            dataModel.getDimentions().push(new Data.Dimention());
-            dataModel.getDimentions()[0].type = DimentionType.DISCRETE;
-            dataModel.getDimentions()[0].channel = ChannelType.FORM;
-            dataModel.getDimentions()[0].tier = 0;
-            dataModel.getDimentions()[0].levels.push(new Data.Level());
-            dataModel.getDimentions()[0].levels[0].name = "Level1";
-            dataModel.getDimentions()[0].levels[0].elementIds
+            dataModel.getDimensions().push(new Data.Dimension());
+            dataModel.getDimensions()[0].type = DimensionType.DISCRETE;
+            dataModel.getDimensions()[0].channel = ChannelType.FORM;
+            dataModel.getDimensions()[0].tier = 0;
+            dataModel.getDimensions()[0].levels.push(new Data.Level());
+            dataModel.getDimensions()[0].levels[0].name = "Level1";
+            dataModel.getDimensions()[0].levels[0].elementIds
                 .push(dataModel.getElements()[0].id, dataModel.getElements()[1].id, dataModel.getElements()[3].id);
-            dataModel.getDimentions()[0].levels.push(new Data.Level());
-            dataModel.getDimentions()[0].levels[1].name = "Level2";
-            dataModel.getDimentions()[0].levels[1].elementIds
+            dataModel.getDimensions()[0].levels.push(new Data.Level());
+            dataModel.getDimensions()[0].levels[1].name = "Level2";
+            dataModel.getDimensions()[0].levels[1].elementIds
                 .push(dataModel.getElements()[2].id, dataModel.getElements()[4].id);
 
-            dataModel.getDimentions().push(new Data.Dimention());
-            dataModel.getDimentions()[1].type = DimentionType.DISCRETE;
-            dataModel.getDimentions()[1].channel = ChannelType.FORM;
-            dataModel.getDimentions()[1].tier = 1;
-            dataModel.getDimentions()[1].levels.push(new Data.Level());
-            dataModel.getDimentions()[1].levels[0].name = "Level3";
-            dataModel.getDimentions()[1].levels[0].elementIds
+            dataModel.getDimensions().push(new Data.Dimension());
+            dataModel.getDimensions()[1].type = DimensionType.DISCRETE;
+            dataModel.getDimensions()[1].channel = ChannelType.FORM;
+            dataModel.getDimensions()[1].tier = 1;
+            dataModel.getDimensions()[1].levels.push(new Data.Level());
+            dataModel.getDimensions()[1].levels[0].name = "Level3";
+            dataModel.getDimensions()[1].levels[0].elementIds
                 .push(dataModel.getElements()[5].id, dataModel.getElements()[6].id, dataModel.getElements()[7].id);
-            dataModel.getDimentions()[1].levels.push(new Data.Level());
-            dataModel.getDimentions()[1].levels[1].name = "Level4";
-            dataModel.getDimentions()[1].levels[1].elementIds
+            dataModel.getDimensions()[1].levels.push(new Data.Level());
+            dataModel.getDimensions()[1].levels[1].name = "Level4";
+            dataModel.getDimensions()[1].levels[1].elementIds
                 .push(dataModel.getElements()[8].id, dataModel.getElements()[9].id);
 
             assert.equal(dataModel.getTables().length, 1);
@@ -174,15 +174,15 @@ describe('Test Data Model', function () {
 
 
             for (let i = 0; i < 4; i++) {
-                dataModel.getDimentions().push(new Data.Dimention());
-                dataModel.getDimentions()[i].type = DimentionType.DISCRETE;
-                dataModel.getDimentions()[i].channel = ChannelType.FORM;
-                dataModel.getDimentions()[i].tier = i % 2;
+                dataModel.getDimensions().push(new Data.Dimension());
+                dataModel.getDimensions()[i].type = DimensionType.DISCRETE;
+                dataModel.getDimensions()[i].channel = ChannelType.FORM;
+                dataModel.getDimensions()[i].tier = i % 2;
                 for (let j = 0; j < 2; j++) {
-                    dataModel.getDimentions()[i].levels.push(new Data.Level());
-                    dataModel.getDimentions()[i].levels[j].name = "Level" + (i * 10 + j);
+                    dataModel.getDimensions()[i].levels.push(new Data.Level());
+                    dataModel.getDimensions()[i].levels[j].name = "Level" + (i * 10 + j);
                     for (let k = 0; k < 2; k++) {
-                        dataModel.getDimentions()[i].levels[j].elementIds.push(elementsTiers[i % 2].pop());
+                        dataModel.getDimensions()[i].levels[j].elementIds.push(elementsTiers[i % 2].pop());
                     }
                 }
             }

@@ -200,8 +200,8 @@ describe('FDL View Controller Test', function () {
         })
     })
 
-    describe('dimention editing tests', function () {
-        it('should open the dimention edit view wihtout crashing', function () {
+    describe('dimension editing tests', function () {
+        it('should open the dimension edit view wihtout crashing', function () {
             utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 10, y: 80 }])
             utility.drawStroke(integrationEnv, [{ x: 40, y: 20 }, { x: 40, y: 40 }, { x: 40, y: 60 }, { x: 30, y: 80 }])
 
@@ -215,16 +215,16 @@ describe('FDL View Controller Test', function () {
             ])
             utility.click(integrationEnv, "#fdl-view-container", inBetweenNodes);
 
-            utility.clickContextMenuButton(integrationEnv, "#" + ContextButtons.ADD_DIMENTION_FOR_COLOR);
+            utility.clickContextMenuButton(integrationEnv, "#" + ContextButtons.ADD_DIMENSION_FOR_COLOR);
 
             d3.tick();
 
-            assert.equal(model().getDimentions().length, 1)
+            assert.equal(model().getDimensions().length, 1)
 
-            let dimention = model().getDimentions()[0];
-            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(dimention.id));
+            let dimension = model().getDimensions()[0];
+            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(dimension.id));
             d3.tick(); // needed so that the interaction targets redraw
-            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(dimention.id));
+            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(dimension.id));
             d3.tick();
 
             assert.equal(model().getGroups().length, 1)
