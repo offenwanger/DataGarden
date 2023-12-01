@@ -133,7 +133,7 @@ function scapToMerge(scap, idMap) {
 }
 
 function log() {
-    console.log(...arguments);
+    (console).log(...arguments);
 }
 
 function IdMap() {
