@@ -4,7 +4,6 @@ let expect = chai.expect;
 
 let suite = require("./test_utils/suite_enviroment")
 let utility = require("./test_utils/utility.js");
-const { data } = require('jquery');
 
 describe('Test Data Model', function () {
     let integrationEnv;
