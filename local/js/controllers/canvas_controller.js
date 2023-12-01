@@ -265,7 +265,7 @@ function CanvasController() {
         if (mBrushActive) {
             mDrawingUtil.drawInterfaceStroke(mBrushOptions.currentStroke, mBrushOptions.color, mBrushOptions.size)
         } else if (mInteraction && mInteraction.type == SELECTING) {
-            mDrawingUtil.drawSelectionBubble(mInteraction.line, SELECTION_BUBBLE_COLOR);
+            mDrawingUtil.drawInterfaceSelectionBubble(mInteraction.line, SELECTION_BUBBLE_COLOR);
         }
 
         mSelectionIds.forEach(id => {

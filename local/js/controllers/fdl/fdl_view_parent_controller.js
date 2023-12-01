@@ -1,18 +1,17 @@
-function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
+function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap) {
     const TARGET_ELEMENT = 'elementTarget';
 
     const DIVISION_SIZE = Size.ELEMENT_NODE_SIZE * 10;
 
     let mHighlightElements = [];
-    let mSelectedObjects = [];
-
-    let mWidth = 0;
-    let mHeight = 0;
+    let mSelectedIds = [];
 
     let mModel = new DataModel();
-    let mZoomTransform = d3.zoomIdentity;
+    // TODO: Actually check screen size on this
+    let mZoomTransform = d3.zoomIdentity.translate(500, 300);
 
     let mParentUpdateCallback = () => { };
+    let mSelectionCallback = () => { };
 
     let mNodes = [];
     let mLinks = [];
@@ -103,13 +102,8 @@ function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
         mSimulation.alphaTarget(0.3).restart();
     }
 
-    function onResize(width, height) {
-        mWidth = width;
-        mHeight = height;
-
-        draw();
-
-        mSimulation.force("center", d3.forceCenter().x(mWidth / 2).y(mHeight / 2))
+    function setSelection(selectedIds) {
+        mSelectedIds = selectedIds;
     }
 
     function pan(x, y) {
@@ -123,6 +117,7 @@ function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
     }
 
     function interactionStart(interaction, modelCoords) {
+        if (interaction.type != FdlInteraction.SELECTION) { console.error("Interaction not supported!"); return; }
         let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
             .map(target => target.id ? target.id : target);
         let targetNodes = mNodes.filter(n => target.includes(n.id));
@@ -137,6 +132,7 @@ function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
     }
 
     function interactionDrag(interaction, modelCoords) {
+        if (interaction.type != FdlInteraction.SELECTION) { console.error("Interaction not supported!"); return; }
         let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
             .map(target => target.id ? target.id : target);
         let targetNodes = mNodes.filter(n => target.includes(n.id));
@@ -149,29 +145,36 @@ function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
     }
 
     function interactionEnd(interaction, modelCoords) {
-        let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
-            .map(target => target.id ? target.id : target);
-        let targetNodes = mNodes.filter(n => target.includes(n.id));
-        let dist = VectorUtil.subtract(modelCoords, interaction.start);
-        targetNodes.forEach(node => {
-            if (!interaction.endTarget) {
-                node.x = node.startX + dist.x;
-                node.y = node.startY + dist.y;
-            }
-            node.startX = null;
-            node.startY = null;
-            node.interacting = null;
-        });
+        if (interaction.type == FdlInteraction.SELECTION) {
+            let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
+                .map(target => target.id ? target.id : target);
+            let targetNodes = mNodes.filter(n => target.includes(n.id));
+            let dist = VectorUtil.subtract(modelCoords, interaction.start);
+            targetNodes.forEach(node => {
+                if (!interaction.endTarget) {
+                    node.x = node.startX + dist.x;
+                    node.y = node.startY + dist.y;
+                }
+                node.startX = null;
+                node.startY = null;
+                node.interacting = null;
+            });
 
-        if (interaction.endTarget && IdUtil.isType(interaction.endTarget, Data.Element)) {
-            mParentUpdateCallback(targetNodes.map(n => n.id), interaction.endTarget);
-        } else if (!interaction.endTarget) {
-            if (modelCoords.y < Math.min(...mNodes.filter(n => n.treeLevel == 0).map(n => n.y))) {
-                mParentUpdateCallback(targetNodes.map(n => n.id), null);
+            if (interaction.endTarget && IdUtil.isType(interaction.endTarget, Data.Element)) {
+                mParentUpdateCallback(targetNodes.map(n => n.id), interaction.endTarget);
+            } else if (!interaction.endTarget) {
+                if (modelCoords.y < Math.min(...mNodes.filter(n => n.treeLevel == 0).map(n => n.y))) {
+                    mParentUpdateCallback(targetNodes.map(n => n.id), null);
+                }
             }
-        }
 
-        mSimulation.nodes(mNodes);
+            mSimulation.nodes(mNodes);
+        } else if (interaction.type == FdlInteraction.LASOO) {
+            mOverlayUtil.reset(mZoomTransform);
+            mOverlayUtil.drawBubble(interaction.path);
+            let selectedNodes = mNodes.filter(node => mOverlayUtil.covered(node)).map(n => n.id);
+            mSelectionCallback(selectedNodes);
+        } else { console.error("Interaction not supported!"); return; }
     }
 
     function highlight(ids) {
@@ -190,22 +193,38 @@ function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
         return { x: mZoomTransform.x, y: mZoomTransform.y };
     }
 
+
+    function getZoomTransform() {
+        return {
+            x: mZoomTransform.x,
+            y: mZoomTransform.y,
+            k: mZoomTransform.k,
+        }
+    }
+
+    function start() {
+        mSimulation.alphaTarget(0.3).restart();
+    }
+
     function stop() {
         mSimulation.stop();
     }
 
     return {
         updateSimulationData,
-        onResize,
         pan,
         zoom,
         interactionStart,
         interactionDrag,
         interactionEnd,
         highlight,
+        setSelection,
         getScale,
         getTranslate,
+        getZoomTransform,
         setParentUpdateCallback: (func) => mParentUpdateCallback = func,
+        setSelectionCallback: (func) => mSelectionCallback = func,
+        start,
         stop,
     }
 

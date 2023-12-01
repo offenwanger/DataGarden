@@ -1,8 +1,6 @@
 
 function FdlViewController() {
-    const ZOOMING = 'zooming'
-    const PANNING = 'panning';
-    const SELECTION = 'selection';
+    const SELECTION_BUBBLE_COLOR = "#55555555";
 
     let mCodeUtil = new CodeUtil();
 
@@ -22,6 +20,7 @@ function FdlViewController() {
     let mInteraction = null;
 
     let mHighlightObjects = [];
+    let mSelectedObjects = [];
 
     let mCanvas = d3.select('#fdl-view-container').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
@@ -38,10 +37,11 @@ function FdlViewController() {
         mInteractionCanvas.node().getContext("2d"),
         mInterfaceCanvas.node().getContext("2d"),
     );
+    let mOverlayUtil = new OverlayUtil();
 
-    let mFdlParentViewController = new FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap);
-    let mFdlLegendViewController = new FdlLegendViewController(mDrawingUtil, mCodeUtil);
-    let mFdlDimensionViewController = new FdlDimensionViewController(mDrawingUtil, mCodeUtil, mColorMap);
+    let mFdlParentViewController = new FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap);
+    let mFdlLegendViewController = new FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil);
+    let mFdlDimensionViewController = new FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap);
 
     let mActiveViewController = mFdlParentViewController;
 
@@ -165,6 +165,7 @@ function FdlViewController() {
         convertCoordinateSystem(mSimulationData, oldActiveViewController, mActiveViewController);
 
         mActiveViewController.updateSimulationData(mSimulationData, mModel);
+        mActiveViewController.setSelection(mSelectedObjects);
     }
 
     function onResize(width, height) {
@@ -181,7 +182,7 @@ function FdlViewController() {
             .attr('width', width)
             .attr('height', height);
 
-        mFdlParentViewController.onResize(width, height);
+        mOverlayUtil.onResize(width, height);
     }
 
     function onPointerDown(screenCoords, toolState) {
@@ -191,13 +192,13 @@ function FdlViewController() {
 
         if (toolState == Buttons.PANNING_BUTTON) {
             mInteraction = {
-                type: PANNING,
+                type: FdlInteraction.PANNING,
                 start: screenCoords,
                 startTransform: mActiveViewController.getTranslate(),
             }
         } else if (toolState == Buttons.ZOOM_BUTTON) {
             mInteraction = {
-                type: ZOOMING,
+                type: FdlInteraction.ZOOMING,
                 start: screenCoords,
                 startTransform: mActiveViewController.getTranslate(),
                 scale: mActiveViewController.getScale(),
@@ -208,14 +209,19 @@ function FdlViewController() {
                 let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
                 // TODO check for multi-item selection here
                 mInteraction = {
-                    type: SELECTION,
+                    type: FdlInteraction.SELECTION,
                     start: modelCoords,
                     target,
                 }
 
                 mActiveViewController.interactionStart(mInteraction, modelCoords);
             } else {
-                console.error("Do a lasoo");
+                let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
+                mActiveViewController.stop();
+                mInteraction = {
+                    type: FdlInteraction.LASOO,
+                    path: [modelCoords]
+                }
             }
         }
     }
@@ -226,20 +232,25 @@ function FdlViewController() {
 
     function onPointerMove(screenCoords, toolState) {
         if (mInteraction) {
-            if (mInteraction.type == PANNING) {
+            if (mInteraction.type == FdlInteraction.PANNING) {
                 let mouseDist = VectorUtil.subtract(screenCoords, mInteraction.start);
                 let translate = VectorUtil.add(mInteraction.startTransform, mouseDist);
                 mActiveViewController.pan(translate.x, translate.y)
-            } else if (mInteraction.type == ZOOMING) {
+            } else if (mInteraction.type == FdlInteraction.ZOOMING) {
                 let mouseDist = screenCoords.y - mInteraction.start.y;
                 let scale = mInteraction.scale * (1 + (mouseDist / mInterfaceCanvas.attr('height')));
                 let zoomChange = scale - mInteraction.scale;
                 let transformX = -(mInteraction.start.x * zoomChange) + mInteraction.startTransform.x;
                 let transformY = -(mInteraction.start.x * zoomChange) + mInteraction.startTransform.y;
                 mActiveViewController.zoom(transformX, transformY, scale);
-            } else if (mInteraction.type == SELECTION) {
+            } else if (mInteraction.type == FdlInteraction.SELECTION) {
                 let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
                 mActiveViewController.interactionDrag(mInteraction, modelCoords);
+            } else if (mInteraction.type == FdlInteraction.LASOO) {
+                let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
+                mInteraction.path.push(modelCoords);
+                mDrawingUtil.resetInterface(mActiveViewController.getZoomTransform());
+                mDrawingUtil.drawInterfaceSelectionBubble(mInteraction.path, SELECTION_BUBBLE_COLOR);
             } else {
                 console.error("Unimplimented!")
             }
@@ -257,9 +268,14 @@ function FdlViewController() {
         let interaction = mInteraction;
         mInteraction = null;
 
-        if (interaction && interaction.type == SELECTION) {
+        if (interaction && interaction.type == FdlInteraction.SELECTION) {
+            let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
             interaction.endTarget = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (interaction.endTarget && interaction.endTarget.id) interaction.endTarget = interaction.endTarget.id;
+            mActiveViewController.interactionEnd(interaction, modelCoords);
+        } else if (interaction && interaction.type == FdlInteraction.LASOO) {
+            mDrawingUtil.resetInterface(mActiveViewController.getZoomTransform());
+            mActiveViewController.start();
             let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
             mActiveViewController.interactionEnd(interaction, modelCoords);
         }
@@ -313,6 +329,22 @@ function FdlViewController() {
 
         mEditTierCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
     })
+
+    mFdlDimensionViewController.setSelectionCallback((selectedIds) => {
+        // TODO: Check if we are appending to the selection or not
+        mSelectedObjects = selectedIds;
+        mActiveViewController.setSelection(selectedIds);
+    });
+
+    mFdlLegendViewController.setSelectionCallback((selectedIds) => {
+        mSelectedObjects = selectedIds;
+        mActiveViewController.setSelection(selectedIds);
+    });
+
+    mFdlParentViewController.setSelectionCallback((selectedIds) => {
+        mSelectedObjects = selectedIds;
+        mActiveViewController.setSelection(selectedIds);
+    });
 
     function screenToModelCoords(screenCoords, translate, scale) {
         let boundingBox = mInterfaceCanvas.node().getBoundingClientRect();

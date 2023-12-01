@@ -1,5 +1,7 @@
-const { createCanvas } = require('canvas')
+const { createCanvas } = require('./mock_canvas.js')
 const fs = require('fs')
+const RUN = Math.random();
+let fileCount = 0;
 
 let mJspreadsheet;
 
@@ -96,17 +98,12 @@ function MockElement(type) {
     }
     this.getContext = function (type) {
         if (!mCanvas) {
-            mCanvas = createCanvas(mAttrs['width'], mAttrs['height'])
-        };
-        let context = mCanvas.getContext(type);
-        context.reset = function () {
+            mCanvas = createCanvas()
             mCanvas.height = mAttrs['height'];
             mCanvas.width = mAttrs['width'];
-            this.setTransform(createCanvas(1, 1).getContext("2d").getTransform());
-        }
 
-
-        return context;
+        };
+        return mCanvas.getContext(type);
     }
     this.getBoundingClientRect = function () {
         let x = 0, y = 0;
@@ -129,14 +126,7 @@ function MockElement(type) {
     this.getTransform = function () {
         return transform;
     }
-    this.console = {
-        log: function () {
-            const out = fs.createWriteStream(__dirname + '/debug.png')
-            const stream = mCanvas.createPNGStream()
-            stream.pipe(out)
-            out.on('finish', () => { /** keeping this in case need it for debugging */ })
-        }
-    }
+    this.console = { log: function () { if (mCanvas) mCanvas.console.log() } }
     this.remove = function () {
         delete this;
     }

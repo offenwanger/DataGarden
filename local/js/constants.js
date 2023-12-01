@@ -94,3 +94,10 @@ const DropDown = {
     CHANNEL: "channel",
     TIER: "tier",
 }
+
+const FdlInteraction = {
+    ZOOMING: 'zooming',
+    PANNING: 'panning',
+    SELECTION: 'selection',
+    LASOO: 'lasoo',
+}

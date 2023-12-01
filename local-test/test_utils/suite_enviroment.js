@@ -16,6 +16,7 @@ let mockJspreadsheet = require("./mock_jspreadsheet.js");
 let mockServer = require("./mock_server.js");
 let mockPicker = require("./mock_color_picker.js");
 let mockDate = require("./mock_date.js");
+let mockCanvas = require("./mock_canvas.js")
 
 let initialized = false;
 
@@ -36,6 +37,15 @@ function init() {
                 this.load = callback;
             } else {
                 console.error("Shouldn't have any other events coming through here", event);
+            }
+        },
+        createElement(tag) {
+            if (tag == 'canvas') {
+                return mockCanvas.createCanvas();
+            } else if (tag == 'http://www.w3.org/2000/svg') {
+                console.error("impliment me!");
+            } else {
+                console.error("Type not supported!")
             }
         }
     }
@@ -113,6 +123,8 @@ function getIntegrationEnviroment() {
         TabDrawingUtil: rewireJs('utils/tab_drawing_util.js').__get__("TabDrawingUtil"),
         CodeUtil: rewireJs('utils/interaction_code_util.js').__get__("CodeUtil"),
         DrawingUtil: rewireJs('utils/drawing_util.js').__get__("DrawingUtil"),
+        ImageDrawingUtil: rewireJs('utils/image_drawing_util.js').__get__("ImageDrawingUtil"),
+        OverlayUtil: rewireJs('utils/overlay_util.js').__get__("OverlayUtil"),
         FiltersUtil: rewireJs('utils/filters_util.js').__get__("FiltersUtil"),
         CanvasController: rewireJs('controllers/canvas_controller.js').__get__("CanvasController"),
         DashboardController: rewireJs('controllers/dashboard_controller.js').__get__("DashboardController"),
