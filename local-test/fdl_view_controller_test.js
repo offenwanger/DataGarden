@@ -209,7 +209,7 @@ describe('FDL View Controller Test', function () {
 
             // dbl click
             let elements = model().getElements();
-            let inBetweenNodes = MathUtil.average([
+            let inBetweenNodes = VectorUtil.average([
                 d3.getPosition(elements[0].id),
                 d3.getPosition(elements[1].id)
             ])

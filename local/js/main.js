@@ -10,11 +10,12 @@ document.addEventListener('DOMContentLoaded', function (e) {
     mVersionController.setStash(new MemoryStash());
 
     mDashboardController.setNewStrokeCallback((stroke) => {
-        let model = mModelController.getModel();
-
         let element = new Data.Element();
         element.strokes.push(stroke);
         element.spine = ModelUtil.getStupidSpine(element);
+        element.root = element.spine[0];
+        element.angle = VectorUtil.normalize(VectorUtil.subtract(element.spine[1], element.spine[0]));
+
         mModelController.addElement(element);
 
         mDashboardController.modelUpdate(mModelController.getModel());
@@ -163,18 +164,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mDashboardController.setNewElementCallback((childStrokeId) => {
-        let stroke = mModelController.getModel().getStroke(childId);
-        let element = new Data.Element();
-        element.strokes.push(stroke);
-        element.spine = ModelUtil.getStupidSpine(element);
-        mModelController.removeStroke(childStrokeId);
-        mModelController.addElement(element);
-
-        mVersionController.stack(mModelController.getModel());
-        mDashboardController.modelUpdate(mModelController.getModel());
-    })
-
     mDashboardController.setUndoCallback(async () => {
         let obj = await mVersionController.reverse();
         if (obj) {
@@ -209,6 +198,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         let newElement = new Data.Element();
         newElement.strokes.push(...strokes);
+        let oldSpine = newElement.spine;
         newElement.spine = ModelUtil.getStupidSpine(newElement);
 
         // count the elements, if most of the strokes belong to one, make the new element

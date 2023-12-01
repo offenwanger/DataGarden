@@ -140,7 +140,7 @@ function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
         let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
             .map(target => target.id ? target.id : target);
         let targetNodes = mNodes.filter(n => target.includes(n.id));
-        let dist = MathUtil.subtract(modelCoords, interaction.start);
+        let dist = VectorUtil.subtract(modelCoords, interaction.start);
         targetNodes.forEach(node => {
             node.x = node.startX + dist.x;
             node.y = node.startY + dist.y;
@@ -152,7 +152,7 @@ function FdlParentViewController(mDrawingUtil, mCodeUtil, mColorMap) {
         let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
             .map(target => target.id ? target.id : target);
         let targetNodes = mNodes.filter(n => target.includes(n.id));
-        let dist = MathUtil.subtract(modelCoords, interaction.start);
+        let dist = VectorUtil.subtract(modelCoords, interaction.start);
         targetNodes.forEach(node => {
             if (!interaction.endTarget) {
                 node.x = node.startX + dist.x;

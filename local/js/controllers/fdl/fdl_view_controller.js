@@ -8,7 +8,6 @@ function FdlViewController() {
 
     let mHighlightCallback = () => { };
     let mMergeElementCallback = () => { };
-    let mNewElementCallback = () => { }
     let mMoveElementCallback = () => { }
     let mMoveStrokeCallback = () => { }
     let mContextMenuCallback = () => { }
@@ -228,8 +227,8 @@ function FdlViewController() {
     function onPointerMove(screenCoords, toolState) {
         if (mInteraction) {
             if (mInteraction.type == PANNING) {
-                let mouseDist = MathUtil.subtract(screenCoords, mInteraction.start);
-                let translate = MathUtil.add(mInteraction.startTransform, mouseDist);
+                let mouseDist = VectorUtil.subtract(screenCoords, mInteraction.start);
+                let translate = VectorUtil.add(mInteraction.startTransform, mouseDist);
                 mActiveViewController.pan(translate.x, translate.y)
             } else if (mInteraction.type == ZOOMING) {
                 let mouseDist = screenCoords.y - mInteraction.start.y;
@@ -403,7 +402,6 @@ function FdlViewController() {
         setEditChannelCallback: (func) => mEditChannelCallback = func,
         setEditTierCallback: (func) => mEditTierCallback = func,
         setMergeElementCallback: (func) => mMergeElementCallback = func,
-        setNewElementCallback: (func) => mNewElementCallback = func,
         setMoveElementCallback: (func) => mMoveElementCallback = func,
         setContextMenuCallback: (func) => mContextMenuCallback = func,
     }

@@ -25,7 +25,6 @@ function DashboardController() {
     let mNewStrokeCallback = () => { };
     let mParentUpdateCallback = () => { };
     let mMergeElementCallback = () => { };
-    let mNewElementCallback = () => { };
     let mMoveElementCallback = () => { };
     let mDeleteCallback = () => { };
     let mNewDimensionCallback = () => { };
@@ -263,7 +262,6 @@ function DashboardController() {
         setNewStrokeCallback: (func) => mCanvasController.setNewStrokeCallback(func),
         setParentUpdateCallback: (func) => mFdlViewController.setParentUpdateCallback(func),
         setMergeElementCallback: (func) => mMergeElementCallback = func,
-        setNewElementCallback: (func) => mNewElementCallback = func,
         setMoveElementCallback: (func) => mMoveElementCallback = func,
         setDeleteCallback: (func) => mDeleteCallback = func,
         setNewDimensionCallback: (func) => mNewDimensionCallback = func,

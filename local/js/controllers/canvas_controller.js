@@ -104,8 +104,8 @@ function CanvasController() {
 
     function onPointerMove(screenCoords, toolState) {
         if (mInteraction && mInteraction.type == PANNING) {
-            let mouseDist = MathUtil.subtract(screenCoords, mInteraction.start);
-            let translate = MathUtil.add(mInteraction, mouseDist);
+            let mouseDist = VectorUtil.subtract(screenCoords, mInteraction.start);
+            let translate = VectorUtil.add(mInteraction, mouseDist);
             mZoomTransform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mInteraction.scale);
             draw();
             drawInterface();
@@ -187,7 +187,7 @@ function CanvasController() {
             drawInterface();
         } else if (toolState == Buttons.SELECTION_BUTTON) {
             if (interaction && interaction.type == SELECTING) {
-                let moveDist = MathUtil.dist(interaction.line[0], screenToModelCoords(screenCoords));
+                let moveDist = VectorUtil.dist(interaction.line[0], screenToModelCoords(screenCoords));
                 if (moveDist > 5 || interaction.line.length > 5) {
                     mModel.getStrokes().forEach(stroke => {
                         let coveredPoints = stroke.path.reduce((count, p) => {
@@ -207,7 +207,7 @@ function CanvasController() {
                     }
                 }
             } else if (interaction && interaction.type == DRAGGING) {
-                let moveDist = MathUtil.dist(interaction.start, screenCoords);
+                let moveDist = VectorUtil.dist(interaction.start, screenCoords);
                 if (moveDist < 5) {
                     mContextMenuCallback(screenCoords, mSelectionIds);
                 } else {

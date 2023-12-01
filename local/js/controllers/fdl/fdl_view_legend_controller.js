@@ -120,14 +120,14 @@ function FdlLegendViewController(mDrawingUtil, mCodeUtil) {
         let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
             .map(target => target.id ? target.id : target);
         let targetTiles = mDimensions.concat(mLevels).filter(n => target.includes(n.id));
-        let dist = MathUtil.subtract(modelCoords, interaction.start);
+        let dist = VectorUtil.subtract(modelCoords, interaction.start);
         targetTiles.forEach(tile => {
             tile.y = tile.startY + dist.y;
         });
     }
 
     function interactionEnd(interaction, modelCoords) {
-        if (MathUtil.dist(interaction.start, modelCoords) < 5) {
+        if (VectorUtil.dist(interaction.start, modelCoords) < 5) {
             // Handle Click
             if (interaction.target == ADD_BUTTON_ID) {
                 mAddDimensionCallback();

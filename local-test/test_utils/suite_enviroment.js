@@ -107,7 +107,7 @@ function getIntegrationEnviroment() {
         ValUtil: rewireJs('utils/value_util.js').__get__("ValUtil"),
         DataUtil: rewireJs('utils/data_util.js').__get__("DataUtil"),
         PathUtil: rewireJs('utils/path_util.js').__get__("PathUtil"),
-        MathUtil: rewireJs('utils/math_util.js').__get__("MathUtil"),
+        VectorUtil: rewireJs('utils/vector_util.js').__get__("VectorUtil"),
         ModelUtil: rewireJs('utils/model_util.js').__get__("ModelUtil"),
         IdUtil: rewireJs('utils/id_util.js').__get__("IdUtil"),
         TabDrawingUtil: rewireJs('utils/tab_drawing_util.js').__get__("TabDrawingUtil"),

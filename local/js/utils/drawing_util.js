@@ -344,11 +344,11 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         }
 
         if (pointer) {
-            let middle = MathUtil.average([...outline]);
-            let radius = MathUtil.dist(middle, outline.reduce((max, next) => MathUtil.dist(middle, next) > MathUtil.dist(middle, max) ? next : max, outline[0]));
-            let pointerDirection = MathUtil.normalize(MathUtil.subtract(pointer, middle));
-            let p1 = MathUtil.add(MathUtil.scale({ x: -pointerDirection.y, y: pointerDirection.x }, radius), middle);
-            let p2 = MathUtil.add(MathUtil.scale({ x: pointerDirection.y, y: -pointerDirection.x }, radius), middle);
+            let middle = VectorUtil.average([...outline]);
+            let radius = VectorUtil.dist(middle, outline.reduce((max, next) => VectorUtil.dist(middle, next) > VectorUtil.dist(middle, max) ? next : max, outline[0]));
+            let pointerDirection = VectorUtil.normalize(VectorUtil.subtract(pointer, middle));
+            let p1 = VectorUtil.add(VectorUtil.scale({ x: -pointerDirection.y, y: pointerDirection.x }, radius), middle);
+            let p2 = VectorUtil.add(VectorUtil.scale({ x: pointerDirection.y, y: -pointerDirection.x }, radius), middle);
             let midpoint = { x: middle.x * 0.9 + pointer.x * 0.1, y: middle.y * 0.9 + pointer.y * 0.1 };
             ctx.moveTo(middle.x, middle.y);
             ctx.bezierCurveTo(p1.x, p1.y, midpoint.x, midpoint.y, pointer.x, pointer.y);
@@ -413,13 +413,13 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
             start = { x: end.x, y: end.y - (2 * r + size) }
         }
 
-        let direction = MathUtil.normalize(MathUtil.subtract(end, start));
-        let triangleBase = MathUtil.add(start, MathUtil.scale(direction, r));
+        let direction = VectorUtil.normalize(VectorUtil.subtract(end, start));
+        let triangleBase = VectorUtil.add(start, VectorUtil.scale(direction, r));
 
         return [
-            MathUtil.add(triangleBase, MathUtil.scale({ y: -direction.x, x: direction.y }, size / 2)),
-            MathUtil.add(triangleBase, MathUtil.scale({ y: direction.x, x: -direction.y }, size / 2)),
-            MathUtil.add(triangleBase, MathUtil.scale(direction, size))
+            VectorUtil.add(triangleBase, VectorUtil.scale({ y: -direction.x, x: direction.y }, size / 2)),
+            VectorUtil.add(triangleBase, VectorUtil.scale({ y: direction.x, x: -direction.y }, size / 2)),
+            VectorUtil.add(triangleBase, VectorUtil.scale(direction, size))
         ]
     }
 

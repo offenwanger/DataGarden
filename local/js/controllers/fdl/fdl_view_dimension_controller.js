@@ -208,7 +208,7 @@ function FdlDimensionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
         let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
             .map(target => target.id ? target.id : target);
         let targetItems = mNodes.concat(mLevels).concat([mDimension, mAddButton]).filter(n => target.includes(n.id));
-        let dist = MathUtil.subtract(modelCoords, interaction.start);
+        let dist = VectorUtil.subtract(modelCoords, interaction.start);
         targetItems.forEach(item => {
             if (IdUtil.isType(item.id, Data.Element)) {
                 item.x = item.startX + dist.x;
@@ -218,7 +218,7 @@ function FdlDimensionViewController(mDrawingUtil, mCodeUtil, mColorMap) {
     }
 
     function interactionEnd(interaction, modelCoords) {
-        if (MathUtil.dist(interaction.start, modelCoords) < 5) {
+        if (VectorUtil.dist(interaction.start, modelCoords) < 5) {
             // Handle Click
             if (interaction.target.id == mDimensionId) {
                 if (interaction.target.type == TARGET_LABEL) {

@@ -205,8 +205,8 @@ function mockForceSim() {
         let node = nodes.find(n => n.id == nodeId);
         let link = links.find(l => l.target.id == nodeId);
         let parent = link ? link.source : null;
-        return MathUtil.scale(new DrawingUtil().getTrianglePointer(parent, node, Size.ELEMENT_NODE_SIZE, 10)
-            .reduce((prev, curr) => MathUtil.add(prev, curr)), 1 / 3);
+        return VectorUtil.scale(new DrawingUtil().getTrianglePointer(parent, node, Size.ELEMENT_NODE_SIZE, 10)
+            .reduce((prev, curr) => VectorUtil.add(prev, curr)), 1 / 3);
     }
 
     this.force = function () { return this };

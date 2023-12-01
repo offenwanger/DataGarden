@@ -7,7 +7,7 @@ let ModelUtil = function () {
         let xMin = points.reduce((prev, current) => (prev.x < current.x) ? prev : current);
         points = [yMax, yMix, xMax, xMin];
         let pairs = points.flatMap((v, i) => points.slice(i + 1).map(w => [v, w]));
-        let dists = pairs.map(pair => MathUtil.dist(pair[0], pair[1]));
+        let dists = pairs.map(pair => VectorUtil.dist(pair[0], pair[1]));
         return pairs[dists.findIndex(i => i == Math.max(...dists))];
     }
 
@@ -15,10 +15,22 @@ let ModelUtil = function () {
         if (parentElementId == elementId) { console.error("Can't parent a node to itself! " + parentElementId); return; }
         let model = modelController.getModel();
         let element = model.getElement(elementId);
+        if (!element) { console.error("invalid element id"); return; }
+
+        let parentElement;
+        if (parentElementId) { parentElement = model.getElement(parentElementId); }
+        if (parentElementId && !parentElement) { console.error("invalid element id"); return; }
+
         if (DataUtil.isDecendant(elementId, parentElementId, model)) {
             updateParent(element.parentId, parentElementId, modelController);
             model = modelController.getModel();
         }
+
+        if (parentElement) {
+            let closestPosition = PathUtil.getClosestPointOnPath(element.root, parentElement.spine);
+            element.position = closestPosition.percent;
+        }
+
         element.parentId = parentElementId;
         modelController.updateElement(element);
     }

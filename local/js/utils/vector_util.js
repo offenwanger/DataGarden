@@ -1,4 +1,4 @@
-let MathUtil = function () {
+let VectorUtil = function () {
     function add(v1, v2) {
         if (!ValUtil.isCoord(v1)) { console.error("Bad vector", v1); return { x: 0, y: 0 }; }
         if (!ValUtil.isCoord(v2)) { console.error("Bad vector", v2); return { x: 0, y: 0 }; }
@@ -48,6 +48,41 @@ let MathUtil = function () {
         return { x: v.x / len, y: v.y / len }
     }
 
+    function equal(a, b) {
+        if (!a || !DataUtil.isNumeric(a.x) || !DataUtil.isNumeric(a.y) || !b || !DataUtil.isNumeric(b.x) || !DataUtil.isNumeric(b.y)) {
+            console.error("Invalid vectors for pointsEqual: ", a, b);
+            return false;
+        }
+
+        return a.x == b.x && a.y == b.y;
+    }
+
+    function toRotation(vector) {
+        vector = VectorUtil.normalize(vector);
+        var angle = Math.atan2(vector.y, vector.x);   //radians
+        // you need to devide by PI, and MULTIPLY by 180:
+        var degrees = 180 * angle / Math.PI;  //degrees
+        return (360 + Math.round(degrees)) % 360 - 90; //round number, avoid decimal fragments
+    }
+
+    function rotateLeft(vector) {
+        if (!vector || !DataUtil.isNumeric(vector.x) || !DataUtil.isNumeric(vector.y)) {
+            console.error("Invalid vector!", v);
+            return { x: 0, y: 0 };
+        }
+
+        return { x: -vector.y, y: vector.x };
+    }
+
+    function rotateRight(vector) {
+        if (!vector || !DataUtil.isNumeric(vector.x) || !DataUtil.isNumeric(vector.y)) {
+            console.error("Invalid vector!", v);
+            return { x: 0, y: 0 };
+        }
+
+        return { x: vector.y, y: -vector.x };
+    }
+
     return {
         add,
         subtract,
@@ -56,5 +91,9 @@ let MathUtil = function () {
         length,
         dist,
         normalize,
+        equal,
+        toRotation,
+        rotateLeft,
+        rotateRight,
     }
 }();
