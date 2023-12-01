@@ -95,7 +95,6 @@ let PathUtil = function () {
         }
 
         let metaPoints = getMetaPoints(points);
-        console.log(coords, points, metaPoints)
 
         if (metaPoints.length < 2) {
             console.error("Bad state! Should be impossible for points structures to have less than 2 points.", metaPoints);
