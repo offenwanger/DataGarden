@@ -578,10 +578,18 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
     const TEXT_HORIZONTAL_PADDING = 10;
     const TEXT_FONT_STRING = "px Segoe Print";
     const TEXT_SHRINK = 0.8;
-    function drawStringNode(x, y, label, height, shadow, code, background = 'white') {
+    function drawStringNode({ x, y, label, height, shadow = false, outline = null, code = null, background = 'white' }) {
         ctx.save();
         ctx.beginPath();
         ctx.rect(x, y, measureStringNode(label, height), height);
+
+        if (outline) {
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = outline;
+            ctx.stroke();
+        }
+
+        ctx.lineWidth = 1;
         ctx.strokeStyle = 'black';
         ctx.stroke();
         if (shadow) {

@@ -1,4 +1,4 @@
-function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil) {
+function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap) {
     const PADDING = 10;
 
     const ADD_BUTTON_ID = 'add_button';
@@ -79,32 +79,38 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil) {
             let dimensionString = dimension.name +
                 " [" + DimensionLabels[dimension.type] + "][" +
                 ChannelLabels[dimension.channel] + "][T" + dimension.tier + "]";
-            mDrawingUtil.drawStringNode(
-                dimension.x,
-                dimension.y,
-                dimensionString,
-                Size.DIMENSION_SIZE,
-                mHighlightIds.includes(dimension.id),
-                mCodeUtil.getCode(dimension.id))
+            mDrawingUtil.drawStringNode({
+                x: dimension.x,
+                y: dimension.y,
+                label: dimensionString,
+                height: Size.DIMENSION_SIZE,
+                shadow: mHighlightIds.includes(dimension.id),
+                code: mCodeUtil.getCode(dimension.id),
+                outline: mSelectionIds.includes(dimension.id) ? mColorMap(dimension.id) : null,
+            })
         })
 
         mLevels.forEach(level => {
-            mDrawingUtil.drawStringNode(
-                level.x,
-                level.y,
-                level.name,
-                Size.LEVEL_SIZE,
-                mHighlightIds.includes(level.id),
-                mCodeUtil.getCode(level.id))
+            mDrawingUtil.drawStringNode({
+                x: level.x,
+                y: level.y,
+                label: level.name,
+                height: Size.LEVEL_SIZE,
+                shadow: mHighlightIds.includes(level.id),
+                code: mCodeUtil.getCode(level.id),
+                outline: mSelectionIds.includes(level.id) ? mColorMap(level.id) : null,
+            })
         })
 
-        mDrawingUtil.drawStringNode(
-            AxisPositions.DIMENSION_X,
-            mAddButton.y,
-            "Add Dimension +",
-            Size.DIMENSION_SIZE,
-            mHighlightIds.includes(ADD_BUTTON_ID),
-            mCodeUtil.getCode(ADD_BUTTON_ID));
+        mDrawingUtil.drawStringNode({
+            x: AxisPositions.DIMENSION_X,
+            y: mAddButton.y,
+            label: "Add Dimension +",
+            height: Size.DIMENSION_SIZE,
+            shadow: mHighlightIds.includes(ADD_BUTTON_ID),
+            code: mCodeUtil.getCode(ADD_BUTTON_ID),
+            outline: mSelectionIds.includes(ADD_BUTTON_ID) ? mColorMap(ADD_BUTTON_ID) : null,
+        });
 
     }
 
@@ -146,10 +152,10 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil) {
         if (interaction.type == FdlInteraction.SELECTION) {
             if (VectorUtil.dist(interaction.start, modelCoords) < 5) {
                 // Handle Click
-                if (interaction.target == ADD_BUTTON_ID) {
+                if (interaction.endTarget == ADD_BUTTON_ID) {
                     mAddDimensionCallback();
-                } else if (IdUtil.isType(interaction.target, Data.Dimension)) {
-                    mClickDimensionCallback(interaction.target)
+                } else if (IdUtil.isType(interaction.endTarget, Data.Dimension)) {
+                    mClickDimensionCallback(interaction.endTarget)
                 }
             } else {
                 let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])

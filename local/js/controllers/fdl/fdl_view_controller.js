@@ -39,7 +39,7 @@ function FdlViewController(mColorMap) {
     let mOverlayUtil = new OverlayUtil();
 
     let mFdlParentViewController = new FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap);
-    let mFdlLegendViewController = new FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil);
+    let mFdlLegendViewController = new FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap);
     let mFdlDimensionViewController = new FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap);
 
     let mActiveViewController = mFdlParentViewController;
@@ -204,15 +204,19 @@ function FdlViewController(mColorMap) {
         } else if (toolState == Buttons.SELECTION_BUTTON) {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target) {
-                let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
-                // TODO check for multi-item selection here
                 mInteraction = {
                     type: FdlInteraction.SELECTION,
-                    start: modelCoords,
-                    target,
+                    start: screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale()),
+                }
+                if (target.id) target = target.id;
+
+                if (!mSelectionIds.includes(target)) {
+                    mSelectionIds = [target];
+                    mSelectionCallback(mSelectionIds)
                 }
 
-                mActiveViewController.interactionStart(mInteraction, modelCoords);
+                mInteraction.target = mSelectionIds;
+                mActiveViewController.interactionStart(mInteraction, mInteraction.start);
             } else {
                 let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
                 mActiveViewController.stop();

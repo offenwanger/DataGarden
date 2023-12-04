@@ -158,20 +158,16 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         drawDimension();
 
         mLevels.forEach(level => {
-            mDrawingUtil.drawStringNode(
-                AxisPositions.LEVEL_X,
-                level.y,
-                level.name,
-                Size.LEVEL_SIZE,
-                mHighlightIds.includes(level.id),
-                mCodeUtil.getCode(level.id, TARGET_LABEL),
-                level.invalid ? "#FF6865" : "white"
-            );
-
-            if (mSelectionIds.includes(level.id)) {
-                mDrawingUtil.highlightContainerRect(AxisPositions.LEVEL_X, level.y,
-                    mDrawingUtil.measureStringNode(level.name, Size.LEVEL_SIZE), Size.LEVEL_SIZE);
-            }
+            mDrawingUtil.drawStringNode({
+                x: AxisPositions.LEVEL_X,
+                y: level.y,
+                label: level.name,
+                height: Size.LEVEL_SIZE,
+                shadow: mHighlightIds.includes(level.id),
+                code: mCodeUtil.getCode(level.id, TARGET_LABEL),
+                outline: mSelectionIds.includes(level.id) ? mColorMap(level.id) : null,
+                background: level.invalid ? "#FF6865" : "white"
+            });
         })
 
         let elements = mNodes.map(n => mModel.getElement(n.id));
@@ -192,13 +188,15 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         });
 
         if (mDimensionType == DimensionType.DISCRETE) {
-            mDrawingUtil.drawStringNode(
-                AxisPositions.LEVEL_X,
-                mAddButton.y,
-                "Add Level +",
-                Size.LEVEL_SIZE,
-                mHighlightIds.includes(ADD_BUTTON_ID),
-                mCodeUtil.getCode(ADD_BUTTON_ID));
+            mDrawingUtil.drawStringNode({
+                x: AxisPositions.LEVEL_X,
+                y: mAddButton.y,
+                label: "Add Level +",
+                height: Size.LEVEL_SIZE,
+                outline: mSelectionIds.includes(ADD_BUTTON_ID) ? mColorMap(ADD_BUTTON_ID) : null,
+                shadow: mHighlightIds.includes(ADD_BUTTON_ID),
+                code: mCodeUtil.getCode(ADD_BUTTON_ID)
+            });
         }
     }
 
@@ -215,13 +213,14 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         }
         let targets = [TARGET_LABEL, TARGET_TYPE, TARGET_CHANNEL, TARGET_TIER];
         strings.forEach((string, index) => {
-            mDrawingUtil.drawStringNode(
-                AxisPositions.DIMENSION_X + mDimensionTileWidths[index],
-                mDimension.y,
-                string,
-                Size.DIMENSION_SIZE,
-                mHighlightIds.includes(mDimension.id),
-                mCodeUtil.getCode(mDimension.id, targets[index]));
+            mDrawingUtil.drawStringNode({
+                x: AxisPositions.DIMENSION_X + mDimensionTileWidths[index],
+                y: mDimension.y,
+                label: string,
+                height: Size.DIMENSION_SIZE,
+                shadow: mHighlightIds.includes(mDimension.id),
+                code: mCodeUtil.getCode(mDimension.id, targets[index])
+            });
         })
     }
 
