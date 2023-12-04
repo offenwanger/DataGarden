@@ -20,6 +20,10 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         mDashboardController.modelUpdate(mModelController.getModel());
         mVersionController.stack(mModelController.getModel().toObject());
+
+        ServerController.suggestStrip(stroke).then(result => {
+            if (result) mergeStrokes(result);
+        })
     })
 
     mDashboardController.setParentUpdateCallback((elementIds, parentElementId) => {
@@ -188,7 +192,8 @@ document.addEventListener('DOMContentLoaded', function (e) {
         // Delete everything in the selection
     })
 
-    mDashboardController.setMergeStrokesCallback((strokeIds) => {
+    mDashboardController.setMergeStrokesCallback(mergeStrokes);
+    function mergeStrokes(strokeIds) {
         let model = mModelController.getModel();
         let strokes = strokeIds.map(s => model.getStroke(s));
 
@@ -216,7 +221,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
-    });
+    }
 
     mDashboardController.setAutoMergeElements((strokeIds) => {
         let elements = DataUtil.unique(strokeIds.map(s => mModelController.getModel().getElementForStroke(s)));

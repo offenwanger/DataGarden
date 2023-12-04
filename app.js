@@ -87,5 +87,38 @@ app.post('/suggestMerge', function (req, res) {
         });
 });
 
+app.post('/suggestStrip', function (req, res) {
+    utility.log("Stroke request recieved, starting processing.")
+    if (!req.body.stroke) {
+        res.status(400).send("Error! Stroke not provided!");
+        return;
+    }
+
+    let scap = utility.strokeToScap(req.body.stroke, mIdMap);
+    let label = "stroke_" + Date.now();
+    let filename = label + ".scap";
+    let outFilenameOutScap = "out/" + label + "_out.scap"
+    let outFilenameOutSvg = "out/" + label + "_out.svg"
+    fileHandler.writeScap(filename, scap)
+        .then(() => cppConnector.runStripStream(filename))
+        .then(() => {
+            // try to read the result, see if it's any good. 
+            return fileHandler.readOutput(outFilenameOutScap);
+        }).then(outScap => {
+            let result = utility.scapToMerge(outScap, mIdMap).find(set => set.includes(req.body.stroke.id));
+            console.log(result);
+            res.status(200).json(result);
+        }).catch(error => {
+            console.error(error);
+            res.status(500).send();
+        }).then(() => {
+            if (!config.DEBUG) {
+                fileHandler.deleteScap(filename);
+                fileHandler.deleteScap(outFilenameOutScap);
+                fileHandler.deleteScap(outFilenameOutSvg);
+            }
+        });
+});
+
 // Start the application
 app.listen(port);

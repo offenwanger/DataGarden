@@ -42,8 +42,31 @@ let ServerController = function () {
         }
     }
 
+    async function suggestStrip(stroke) {
+        try {
+            let result = await fetch('/suggestStrip', {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                method: 'POST',
+                body: JSON.stringify({ stroke })
+            });
+            if (result.ok) {
+                let element = await result.json();
+                return element;
+            } else {
+                return null;
+            }
+        } catch (error) {
+            console.error("Failed to make the server request: " + error);
+            return null;
+        }
+    }
+
     return {
         getSpine,
         suggestMerge,
+        suggestStrip,
     }
 }();

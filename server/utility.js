@@ -25,6 +25,10 @@ function elementToSpineScap(element) {
     return scap;
 }
 
+function strokeToScap(stroke, idMap) {
+    return elementsToScap([{ id: stroke.id, strokes: [stroke] }], idMap)
+}
+
 function elementsToScap(elements, idMap) {
     let strokes = elements.map(e => e.strokes).flat();
     let width = Math.max(...strokes.map(s => s.path.map(p => p.x)).flat());
@@ -155,6 +159,7 @@ function IdMap() {
 
 module.exports = {
     elementToSpineScap,
+    strokeToScap,
     elementsToScap,
     elementTopCorner,
     scapToPath,
