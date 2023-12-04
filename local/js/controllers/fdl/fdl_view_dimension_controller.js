@@ -16,7 +16,6 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
     let mEditChannelCallback = () => { }
     let mEditTierCallback = () => { }
     let mUpdateLevelCallback = () => { };
-    let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
 
     let mModel = new DataModel();
@@ -112,8 +111,30 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         mSimulation.alphaTarget(0.3).restart();
     }
 
+    function onHighlight(highlightedIds) {
+        if (!highlightedIds || !Array.isArray(highlightedIds)) { mHighlightIds = []; return; }
+        mHighlightIds = DataUtil.unique(highlightedIds.map(id => {
+            if (IdUtil.isType(id, Data.Stroke)) {
+                let element = mModel.getElementForStroke(id);
+                if (!element) { console.error("Bad state, element not found for stroke"); return id; }
+                return element.id;
+            } else {
+                return id;
+            }
+        }));
+    }
+
     function onSelection(selectedIds) {
-        mSelectionIds = selectedIds;
+        if (!selectedIds || !Array.isArray(selectedIds)) { mSelectionIds = []; return; }
+        mSelectionIds = DataUtil.unique(selectedIds.map(id => {
+            if (IdUtil.isType(id, Data.Stroke)) {
+                let element = mModel.getElementForStroke(id);
+                if (!element) { console.error("Bad state, element not found for stroke"); return id; }
+                return element.id;
+            } else {
+                return id;
+            }
+        }));
     }
 
     function setDimension(dimensionId) {
@@ -156,13 +177,15 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         let elements = mNodes.map(n => mModel.getElement(n.id));
         mNodes.forEach(node => {
             if (IdUtil.isType(node.id, Data.Element)) {
-                mDrawingUtil.drawThumbnailCircle(
-                    elements.find(e => e.id == node.id).strokes,
-                    node.x,
-                    node.y,
-                    node.radius,
-                    mHighlightIds.includes(node.id),
-                    node.interacting ? null : mCodeUtil.getCode(node.id, TARGET_ELEMENT));
+                mDrawingUtil.drawThumbnailCircle({
+                    strokes: elements.find(e => e.id == node.id).strokes,
+                    cx: node.x,
+                    cy: node.y,
+                    r: node.radius,
+                    shadow: mHighlightIds.includes(node.id),
+                    outline: mSelectionIds.includes(node.id) ? mColorMap(node.id) : null,
+                    code: node.interacting ? null : mCodeUtil.getCode(node.id, TARGET_ELEMENT)
+                });
             } else {
                 console.error("Invalid state, this node not supported", node);
             }
@@ -297,7 +320,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                 }
                 mSimulation.nodes(mNodes.concat(mLevels).concat([mDimension, mAddButton]));
             }
-        } else if (interaction.type == FdlInteraction.LASOO) {
+        } else if (interaction.type == FdlInteraction.LASSO) {
             mOverlayUtil.reset(mZoomTransform);
             mOverlayUtil.drawBubble(interaction.path);
             let selectedIds = mLevels.concat(mNodes).filter(obj => mOverlayUtil.covered(obj)).map(n => n.id);
@@ -313,10 +336,6 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
     function zoom(x, y, scale) {
         mZoomTransform = d3.zoomIdentity.translate(x, y).scale(scale);
         draw();
-    }
-
-    function onHighlight(ids) {
-
     }
 
     function getTranslate() {
@@ -357,7 +376,6 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         setEditChannelCallback: (func) => mEditChannelCallback = func,
         setEditTierCallback: (func) => mEditTierCallback = func,
         setUpdateLevelCallback: (func) => mUpdateLevelCallback = func,
-        setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,
     }
 }

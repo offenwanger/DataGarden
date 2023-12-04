@@ -11,7 +11,6 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
     let mZoomTransform = d3.zoomIdentity.translate(500, 300);
 
     let mParentUpdateCallback = () => { };
-    let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
 
     let mNodes = [];
@@ -61,31 +60,19 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
 
         mNodes.forEach(node => {
             if (IdUtil.isType(node.id, Data.Element)) {
-                mDrawingUtil.drawThumbnailCircle(
-                    elements.find(e => e.id == node.id).strokes,
-                    node.x,
-                    node.y,
-                    node.radius,
-                    mHighlightIds.includes(node.id),
-                    node.interacting ? null : mCodeUtil.getCode(node.id, TARGET_ELEMENT));
+                mDrawingUtil.drawThumbnailCircle({
+                    strokes: elements.find(e => e.id == node.id).strokes,
+                    cx: node.x,
+                    cy: node.y,
+                    r: node.radius,
+                    shadow: mHighlightIds.includes(node.id),
+                    outline: mSelectionIds.includes(node.id) ? mColorMap(node.id) : null,
+                    code: node.interacting ? null : mCodeUtil.getCode(node.id, TARGET_ELEMENT)
+                });
             } else {
                 console.error("Invalid state, this node not supported", node);
             }
         });
-
-        drawInterface();
-    }
-
-
-    // interface is separate so we can redraw highlights without redrawing everything
-    function drawInterface() {
-        mDrawingUtil.resetInterface(mZoomTransform);
-        mHighlightIds.forEach(id => {
-            let node = mNodes.find(n => n.id == id);
-            if (node) {
-                mDrawingUtil.highlightCircle(node.x, node.y, node.radius, "#FF0000");
-            }
-        })
     }
 
     function updateSimulationData(data, model) {
@@ -104,8 +91,30 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
         mSimulation.alphaTarget(0.3).restart();
     }
 
+    function onHighlight(highlightedIds) {
+        if (!highlightedIds || !Array.isArray(highlightedIds)) { mHighlightIds = []; return; }
+        mHighlightIds = DataUtil.unique(highlightedIds.map(id => {
+            if (IdUtil.isType(id, Data.Stroke)) {
+                let element = mModel.getElementForStroke(id);
+                if (!element) { console.error("Bad state, element not found for stroke"); return id; }
+                return element.id;
+            } else {
+                return id;
+            }
+        }));
+    }
+
     function onSelection(selectedIds) {
-        mSelectionIds = selectedIds;
+        if (!selectedIds || !Array.isArray(selectedIds)) { mSelectionIds = []; return; }
+        mSelectionIds = DataUtil.unique(selectedIds.map(id => {
+            if (IdUtil.isType(id, Data.Stroke)) {
+                let element = mModel.getElementForStroke(id);
+                if (!element) { console.error("Bad state, element not found for stroke"); return id; }
+                return element.id;
+            } else {
+                return id;
+            }
+        }));
     }
 
     function pan(x, y) {
@@ -171,20 +180,12 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
             }
 
             mSimulation.nodes(mNodes);
-        } else if (interaction.type == FdlInteraction.LASOO) {
+        } else if (interaction.type == FdlInteraction.LASSO) {
             mOverlayUtil.reset(mZoomTransform);
             mOverlayUtil.drawBubble(interaction.path);
             let selectedNodes = mNodes.filter(node => mOverlayUtil.covered(node)).map(n => n.id);
             mSelectionCallback(selectedNodes);
         } else { console.error("Interaction not supported!"); return; }
-    }
-
-    function onHighlight(ids) {
-        if (Array.isArray(ids)) {
-            mHighlightIds = ids.filter(id => IdUtil.isType(id, Data.Element));
-        } else {
-            mHighlightIds = [];
-        }
     }
 
     function getScale() {
@@ -225,7 +226,6 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
         getTranslate,
         getZoomTransform,
         setParentUpdateCallback: (func) => mParentUpdateCallback = func,
-        setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,
         start,
         stop,

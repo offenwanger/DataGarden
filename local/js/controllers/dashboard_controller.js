@@ -2,9 +2,11 @@
 function DashboardController() {
     const TAB_HEIGHT = 60;
 
-    let mCanvasController = new CanvasController();
-    let mFdlViewController = new FdlViewController();
-    let mTableViewController = new TableViewController(); mTableViewController.hide();
+    let mColorMap = d3.scaleOrdinal(d3.schemeCategory10);
+
+    let mCanvasController = new CanvasController(mColorMap);
+    let mFdlViewController = new FdlViewController(mColorMap);
+    let mTableViewController = new TableViewController(mColorMap); mTableViewController.hide();
     let mTabController = new TabController();
 
     let mMenuController = new MenuController();
@@ -178,7 +180,9 @@ function DashboardController() {
         mTableViewController.onSelection(selectedIds);
     }
 
-    function contextMenuCallback(screenCoords, selection) {
+    mCanvasController.setContextMenuCallback(onContextMenu);
+    mFdlViewController.setContextMenuCallback(onContextMenu);
+    function onContextMenu(screenCoords, selection) {
         if (!selection) { console.error("No selection provided!"); return; }
         if (Array.isArray(selection) && IdUtil.isType(selection[0], Data.Stroke)) {
             let buttons = [ContextButtons.MERGE_TO_ELEMENT, ContextButtons.AUTO_MERGE_ELEMENTS]
@@ -188,6 +192,7 @@ function DashboardController() {
                 } else if (buttonId == ContextButtons.AUTO_MERGE_ELEMENTS) {
                     mAutoMergeElements(selection);
                 }
+                mContextMenu.hideContextMenu();
             });
         } else if (IdUtil.isType(selection, Data.Element)) {
             let buttons = [ContextButtons.SPINE, ContextButtons.STYLE_STRIP, ContextButtons.STYLE_STROKES]
@@ -199,15 +204,10 @@ function DashboardController() {
                 } else if (buttonId == ContextButtons.STYLE_STROKES) {
                     console.error("Impliment me!")
                 }
+                mContextMenu.hideContextMenu();
             });
         }
     }
-    mCanvasController.setContextMenuCallback(contextMenuCallback);
-    mFdlViewController.setContextMenuCallback(contextMenuCallback);
-
-    mFdlViewController.setHighlightCallback((selection) => {
-        mCanvasController.onHighlight(selection);
-    })
 
     mFdlViewController.setAddDimensionCallback(() => {
         let newDimension = mAddDimensionCallback();

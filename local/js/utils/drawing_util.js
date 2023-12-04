@@ -4,7 +4,7 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
     let intfCtx = interfaceContext;
 
     // scale agnostic values
-    const TARGET_INCREASE = 5;
+    const TARGET_INCREASE = 20;
     let mScale = 1;
     let mXTranslate = 0;
 
@@ -210,18 +210,25 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         ctx.restore();
     }
 
-    function drawThumbnailCircle(strokes, cx, cy, r, shadow = false, code = null) {
+    function drawThumbnailCircle({ strokes, cx, cy, r, shadow = false, outline = null, code = null }) {
         const PADDING_SCALE = 0.7;
         const MIN_PIXELS = 1;
 
         ctx.save();
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+
+        if (outline) {
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = outline;
+            ctx.stroke();
+        }
+
+        ctx.lineWidth = 1;
         ctx.strokeStyle = 'black';
         ctx.stroke();
 
         ctx.fillStyle = 'white';
-        ctx.lineWidth = 1;
         if (shadow) {
             ctx.shadowColor = "black";
             ctx.shadowOffsetX = 1;
@@ -409,23 +416,38 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         ]
     }
 
-    function drawStroke(path, color, strokeWidth, code = null) {
+    function drawStroke({ path, color, width, shadow = false, outline = null, code = null }) {
         ctx.save();
         ctx.beginPath();
-        ctx.strokeStyle = color;
-        ctx.lineWidth = strokeWidth;
         ctx.beginPath();
         ctx.moveTo(path[0].x, path[0].y);
         path.forEach(p => {
             ctx.lineTo(p.x, p.y);
         });
+
+        if (outline) {
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = outline;
+            ctx.stroke();
+        }
+
+        if (shadow) {
+            ctx.shadowColor = "black";
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+            ctx.shadowBlur = 3;
+        }
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
         ctx.stroke();
+
         ctx.restore();
 
         if (code) {
             intCtx.save();
             intCtx.strokeStyle = code;
-            intCtx.lineWidth = strokeWidth + TARGET_INCREASE / mScale;
+            intCtx.lineWidth = width + TARGET_INCREASE / mScale;
             intCtx.beginPath();
             intCtx.moveTo(path[0].x - 1, path[0].y - 1);
             path.forEach(p => {

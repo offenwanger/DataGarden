@@ -1,5 +1,5 @@
 
-function FdlViewController() {
+function FdlViewController(mColorMap) {
     const SELECTION_BUBBLE_COLOR = "#55555555";
 
     let mCodeUtil = new CodeUtil();
@@ -31,8 +31,6 @@ function FdlViewController() {
         .style("opacity", 0)
         .classed('interaction-canvas', true);
 
-    let mColorMap = d3.scaleOrdinal(d3.schemeCategory10);
-
     let mDrawingUtil = new DrawingUtil(
         mCanvas.node().getContext("2d"),
         mInteractionCanvas.node().getContext("2d"),
@@ -48,10 +46,6 @@ function FdlViewController() {
 
     function onModelUpdate(model) {
         mModel = model;
-
-        mHighlightObjects = [];
-        mHighlightLink = null
-
         updateSimulationData();
     }
 
@@ -149,6 +143,8 @@ function FdlViewController() {
         });
 
         mActiveViewController.updateSimulationData(mSimulationData, mModel);
+        mActiveViewController.onHighlight(mHighlightIds);
+        mActiveViewController.onSelection(mSelectionIds);
     }
 
     function setMode(mode, dimenId = null) {
@@ -165,9 +161,9 @@ function FdlViewController() {
 
         convertCoordinateSystem(mSimulationData, oldActiveViewController, mActiveViewController);
 
+        mActiveViewController.updateSimulationData(mSimulationData, mModel);
         mActiveViewController.onHighlight(mHighlightIds);
         mActiveViewController.onSelection(mSelectionIds);
-        mActiveViewController.updateSimulationData(mSimulationData, mModel);
     }
 
     function onResize(width, height) {
@@ -221,7 +217,7 @@ function FdlViewController() {
                 let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
                 mActiveViewController.stop();
                 mInteraction = {
-                    type: FdlInteraction.LASOO,
+                    type: FdlInteraction.LASSO,
                     path: [modelCoords]
                 }
             }
@@ -248,7 +244,7 @@ function FdlViewController() {
             } else if (mInteraction.type == FdlInteraction.SELECTION) {
                 let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
                 mActiveViewController.interactionDrag(mInteraction, modelCoords);
-            } else if (mInteraction.type == FdlInteraction.LASOO) {
+            } else if (mInteraction.type == FdlInteraction.LASSO) {
                 let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
                 mInteraction.path.push(modelCoords);
                 mDrawingUtil.resetInterface(mActiveViewController.getZoomTransform());
@@ -258,10 +254,11 @@ function FdlViewController() {
             }
         } else {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
-            if (target) {
-                mActiveViewController.onHighlight(target.id ? target.id : target);
-            } else {
-                mActiveViewController.onHighlight(null);
+            if (target && target.id) {
+                mHighlightIds = [target.id]
+                mHighlightCallback(mHighlightIds);
+            } else if (!ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
+                mHighlightCallback([]);
             }
         }
     }
@@ -275,7 +272,7 @@ function FdlViewController() {
             interaction.endTarget = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (interaction.endTarget && interaction.endTarget.id) interaction.endTarget = interaction.endTarget.id;
             mActiveViewController.interactionEnd(interaction, modelCoords);
-        } else if (interaction && interaction.type == FdlInteraction.LASOO) {
+        } else if (interaction && interaction.type == FdlInteraction.LASSO) {
             mDrawingUtil.resetInterface(mActiveViewController.getZoomTransform());
             mActiveViewController.start();
             let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
@@ -336,18 +333,6 @@ function FdlViewController() {
 
         mEditTierCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
     })
-
-    mFdlDimensionViewController.setHighlightCallback((highlightedIds) => {
-        mHighlightCallback(highlightedIds);
-    });
-
-    mFdlLegendViewController.setHighlightCallback((highlightedIds) => {
-        mHighlightCallback(highlightedIds);
-    });
-
-    mFdlParentViewController.setHighlightCallback((highlightedIds) => {
-        mHighlightCallback(highlightedIds);
-    });
 
     mFdlDimensionViewController.setSelectionCallback((selectedIds) => {
         // TODO: Check if we are appending to the selection or not

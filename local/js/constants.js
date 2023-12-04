@@ -99,5 +99,5 @@ const FdlInteraction = {
     ZOOMING: 'zooming',
     PANNING: 'panning',
     SELECTION: 'selection',
-    LASOO: 'lasoo',
+    LASSO: 'lasso',
 }

@@ -1,7 +1,7 @@
 
-function CanvasController() {
+function CanvasController(mColorMap) {
     const DRAWING = 'drawing';
-    const SELECTING = 'selecting';
+    const LASSO = 'lasso';
     const PANNING = 'panning';
     const ZOOMING = 'zooming';
     const DRAGGING = 'dragging';
@@ -30,35 +30,58 @@ function CanvasController() {
     let mContextMenuCallback = () => { };
 
     let mZoomTransform = d3.zoomIdentity;
-    let mBrushActive = false;
+    let mBrushActivePosition = false;
     let mShowSpines = null;
 
     let mBrushOptions = {
         size: 1,
-        color: "#000000FF",
-        currentStroke: [{ x: 0, y: 0 }]
+        color: "#000000FF"
     }
 
     let mHighlightIds = [];
     let mSelectionIds = [];
-
-    let mInteractionLookup = {};
-    let mReverseInteractionLookup = {};
-    let mColorIndex = 1;
-    let mTargetIncrease = 5;
 
     let mModel = new DataModel();
     let mInteraction = null;
 
     function onModelUpdate(model) {
         mModel = model;
-        mHighlightIds = []
+        draw();
+    }
+
+    function onHighlight(highlightedIds) {
+        mHighlightIds = [];
+        if (!highlightedIds || !Array.isArray(highlightedIds)) return;
+        highlightedIds.forEach(id => {
+            if (IdUtil.isType(id, Data.Element)) {
+                let element = mModel.getElement(id);
+                if (!element) { console.error("Invalid state, id not found", id); return id; }
+                mHighlightIds.push(...element.strokes.map(s => s.id))
+            } else {
+                return mHighlightIds.push(id);
+            }
+        });
+
+        draw();
+    }
+
+    function onSelection(selectedIds) {
+        mSelectionIds = [];
+        if (!selectedIds || !Array.isArray(selectedIds)) return;
+        selectedIds.forEach(id => {
+            if (IdUtil.isType(id, Data.Element)) {
+                let element = mModel.getElement(id);
+                if (!element) { console.error("Invalid state, id not found", id); return id; }
+                mSelectionIds.push(...element.strokes.map(s => s.id))
+            } else {
+                return mSelectionIds.push(id);
+            }
+        });
         draw();
     }
 
     function onPointerDown(screenCoords, toolState) {
-        if (ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect()))
-            return false;
+        if (ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) return;
 
         if (toolState == Buttons.PANNING_BUTTON) {
             mInteraction = {
@@ -68,7 +91,6 @@ function CanvasController() {
                 scale: mZoomTransform.k,
                 start: screenCoords,
             };
-            return true;
         } else if (toolState == Buttons.ZOOM_BUTTON) {
             let zoomCenter = screenToModelCoords(screenCoords);
             mInteraction = {
@@ -80,26 +102,36 @@ function CanvasController() {
                 scale: mZoomTransform.k,
                 start: screenCoords,
             };
-            return true;
         } else if (toolState == Buttons.BRUSH_BUTTON) {
-            mInteraction = { type: DRAWING };
-            mBrushOptions.currentStroke = [screenToModelCoords(screenCoords)];
-            return true;
+            mInteraction = {
+                type: DRAWING,
+                currentStroke: [screenToModelCoords(screenCoords)]
+            };
         } else if (toolState == Buttons.SELECTION_BUTTON) {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
-            if (mSelectionIds.includes(target)) {
+            if (target) {
+                // TODO: check for shift select
+                if (!mSelectionIds.includes(target)) {
+                    mSelectionIds = [target];
+                    mSelectionCallback(mSelectionIds);
+                }
                 mInteraction = {
                     type: DRAGGING,
                     start: screenCoords
                 };
             } else {
-                mSelectionIds = [];
-                mInteraction = { type: SELECTING, line: [screenToModelCoords(screenCoords)] };
+                // we didn't mouse down on anything start a lasso. 
+                mInteraction = {
+                    type: LASSO,
+                    line: [screenToModelCoords(screenCoords)]
+                };
             }
             return true;
         } else if (toolState == Buttons.SHIFT_SELECTION_BUTTON) {
             // start select interaction
         }
+
+        draw();
     }
 
     function onPointerMove(screenCoords, toolState) {
@@ -107,8 +139,6 @@ function CanvasController() {
             let mouseDist = VectorUtil.subtract(screenCoords, mInteraction.start);
             let translate = VectorUtil.add(mInteraction, mouseDist);
             mZoomTransform = d3.zoomIdentity.translate(translate.x, translate.y).scale(mInteraction.scale);
-            draw();
-            drawInterface();
         } else if (mInteraction && mInteraction.type == ZOOMING) {
             let mouseDist = screenCoords.y - mInteraction.start.y;
             let scale = mInteraction.scale * (1 + (mouseDist / mInterfaceCanvas.attr('height')));
@@ -116,107 +146,79 @@ function CanvasController() {
             let transformX = -(mInteraction.pointerX * zoomChange) + mInteraction.transformX;
             let transformY = -(mInteraction.pointerY * zoomChange) + mInteraction.transformY;
             mZoomTransform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
-            draw();
-            drawInterface();
         } else if (mInteraction && mInteraction.type == DRAWING) {
-            mBrushOptions.currentStroke.push(screenToModelCoords(screenCoords));
-            drawInterface();
-        } else if (mInteraction && mInteraction.type == SELECTING) {
+            mInteraction.currentStroke.push(screenToModelCoords(screenCoords));
+        } else if (mInteraction && mInteraction.type == LASSO) {
             mInteraction.line.push(screenToModelCoords(screenCoords));
-            drawInterface();
         } else if (mInteraction && mInteraction.type == DRAGGING) {
             console.error("impliment me!")
         } else if (mInteraction) {
             console.error("Not Handled!", mInteraction);
         } else if (toolState == Buttons.BRUSH_BUTTON) {
-            mBrushActive = true;
-            mBrushOptions.currentStroke = [screenToModelCoords(screenCoords)];
-            drawInterface();
-        } else if (toolState == Buttons.SELECTION_BUTTON) {
-            if (!ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
-                let targetId = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
-                if (targetId) {
-                    let element = mModel.getElementForStroke(targetId);
-                    let elements = mModel.getElementDecendants(element.id);
-                    mHighlightIds.push(element.id);
-                    mHighlightIds = DataUtil.unique(mHighlightIds.concat(elements.map(e => e.id)));
-                    mHighlightCallback(mHighlightIds);
-                } else {
-                    mHighlightIds = [];
-                    mHighlightCallback(null);
-                }
-            }
-            drawInterface();
+            mBrushActivePosition = [screenToModelCoords(screenCoords)];
+        }
 
-        } else if (toolState == Buttons.VIEW_BUTTON) {
+        if (toolState == Buttons.SELECTION_BUTTON) {
             let targetId = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (targetId) {
                 let element = mModel.getElementForStroke(targetId);
-                let elements = mModel.getElementDecendants(element.id);
-                mShowSpines = elements;
-                drawInterface();
+                mHighlightIds.push(...element.strokes.map(s => s.id));
+                mHighlightCallback(mHighlightIds);
             } else {
-                mShowSpines = null;
-                drawInterface();
+                mHighlightIds = [];
+                mHighlightCallback(null);
             }
         }
 
-        if (mBrushActive && toolState != Buttons.BRUSH_BUTTON) {
-            mBrushActive = false;
-            drawInterface();
+        if (toolState == Buttons.VIEW_BUTTON) {
+            mShowSpines = true;
+        }
+
+        if (mBrushActivePosition && toolState != Buttons.BRUSH_BUTTON) {
+            mBrushActivePosition = false;
         }
 
         if (mHighlightIds && toolState != Buttons.SELECTION_BUTTON) {
             mHighlightIds = [];
-            drawInterface();
+            mHighlightCallback([]);
         }
 
         if (mShowSpines && toolState != Buttons.VIEW_BUTTON) {
             mShowSpines = null;
-            drawInterface();
         }
+
+        draw();
     }
 
     function onPointerUp(screenCoords, toolState) {
         let interaction = mInteraction;
         mInteraction = null;
 
-        if (toolState == Buttons.BRUSH_BUTTON && mBrushOptions.currentStroke.length > 1) {
-            mNewStrokeCallback(new Data.Stroke(mBrushOptions.currentStroke, mBrushOptions.size, mBrushOptions.color))
-            mBrushOptions.currentStroke = [screenToModelCoords(screenCoords)];
-            drawInterface();
-        } else if (toolState == Buttons.SELECTION_BUTTON) {
-            if (interaction && interaction.type == SELECTING) {
-                let moveDist = VectorUtil.dist(interaction.line[0], screenToModelCoords(screenCoords));
-                if (moveDist > 5 || interaction.line.length > 5) {
-                    mModel.getStrokes().forEach(stroke => {
-                        let coveredPoints = stroke.path.reduce((count, p) => {
-                            if (interfaceIsCovered(modelToScreenCoords(p))) { count++; }
-                            return count;
-                        }, 0)
-                        if (coveredPoints / stroke.path.length > 0.7) {
-                            mSelectionIds.push(stroke.id);
-                        }
-                    })
-                } else {
-                    // we tapped not on a selection
-                    let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
-                    if (target) {
-                        let element = mModel.getElementForStroke(target);
-                        mContextMenuCallback(screenCoords, element.id)
-                    }
+        if (interaction && interaction.type == DRAWING && interaction.currentStroke.length > 1) {
+            mNewStrokeCallback(new Data.Stroke(interaction.currentStroke, mBrushOptions.size, mBrushOptions.color))
+        } else if (interaction && interaction.type == LASSO) {
+            // TODO: Check for shift/ctrl
+            mSelectionIds = [];
+            mModel.getStrokes().forEach(stroke => {
+                let coveredPoints = stroke.path.reduce((count, p) => {
+                    if (interfaceIsCovered(modelToScreenCoords(p))) { count++; }
+                    return count;
+                }, 0)
+                if (coveredPoints / stroke.path.length > 0.7) {
+                    mSelectionIds.push(stroke.id);
                 }
-            } else if (interaction && interaction.type == DRAGGING) {
-                let moveDist = VectorUtil.dist(interaction.start, screenCoords);
-                if (moveDist < 5) {
-                    mContextMenuCallback(screenCoords, mSelectionIds);
-                } else {
-                    console.error("Moved selection, impliment!");
-                }
+            })
+            mSelectionCallback(mSelectionIds);
+        } else if (interaction && interaction.type == DRAGGING) {
+            let moveDist = VectorUtil.dist(interaction.start, screenCoords);
+            if (moveDist < 5) {
+                mContextMenuCallback(screenCoords, mSelectionIds);
+            } else {
+                console.error("Moved selection, impliment!");
             }
-        } else if (toolState == Buttons.SHIFT_SELECTION_BUTTON) {
-            // update the selection
         }
+
+        draw();
     }
 
     function onResize(width, height) {
@@ -233,24 +235,10 @@ function CanvasController() {
             .attr('width', width)
             .attr('height', height);
         draw();
-        drawInterface();
-    }
-
-    function onHighlight(ids) {
-        if (!ids || (Array.isArray(ids) && ids.length == 0)) {
-            mHighlightIds = [];
-        } else {
-            mHighlightIds = ids;
-        }
-        drawInterface();
     }
 
     function setColor(color) {
         mBrushOptions.color = color;
-    }
-
-    function onSelection(selectedIds) {
-        mSelectionIds = selectedIds;
         draw();
     }
 
@@ -258,48 +246,30 @@ function CanvasController() {
         mDrawingUtil.reset(mZoomTransform);
         mModel.getElements().forEach(elem => {
             elem.strokes.forEach(stroke => {
-                mDrawingUtil.drawStroke(stroke.path, stroke.color, stroke.size, mCodeUtil.getCode(stroke.id))
+                mDrawingUtil.drawStroke({
+                    path: stroke.path,
+                    color: stroke.color,
+                    width: stroke.size,
+                    shadow: mHighlightIds.includes(stroke.id) || mHighlightIds.includes(elem.id),
+                    outline: mSelectionIds.includes(elem.id) || mSelectionIds.includes(stroke.id) ? mColorMap(elem.id) : null,
+                    code: mCodeUtil.getCode(stroke.id)
+                })
             })
         })
-        drawInterface();
-    }
 
-    function drawInterface() {
         mDrawingUtil.resetInterface(mZoomTransform);
 
-        if (mBrushActive) {
-            mDrawingUtil.drawInterfaceStroke(mBrushOptions.currentStroke, mBrushOptions.color, mBrushOptions.size)
-        } else if (mInteraction && mInteraction.type == SELECTING) {
+        if (mInteraction && mInteraction.type == DRAWING) {
+            mDrawingUtil.drawInterfaceStroke(mInteraction.currentStroke, mBrushOptions.color, mBrushOptions.size)
+        } else if (mBrushActivePosition) {
+            mDrawingUtil.drawInterfaceStroke([mBrushActivePosition], mBrushOptions.color, mBrushOptions.size)
+        } else if (mInteraction && mInteraction.type == LASSO) {
             mDrawingUtil.drawInterfaceSelectionBubble(mInteraction.line, SELECTION_BUBBLE_COLOR);
         }
 
-        mSelectionIds.forEach(id => {
-            if (IdUtil.isType(id, Data.Element)) {
-                let element = mModel.getElement(id);
-                if (!element) { console.error("Invalid element id", id); return; }
-                mDrawingUtil.highlightBoundingBox(DataUtil.getBoundingBox(element))
-            } else if (IdUtil.isType(id, Data.Stroke)) {
-                let stroke = mModel.getStroke(id);
-                if (!stroke) { console.error("Invalid stroke id", id); return; }
-                mDrawingUtil.highlightBoundingBox(DataUtil.getBoundingBox(stroke));
-            }
-        })
-
-        mHighlightIds.forEach(id => {
-            if (IdUtil.isType(id, Data.Element)) {
-                let element = mModel.getElement(id);
-                if (!element) { console.error("Invalid element id", id); return; }
-                mDrawingUtil.highlightBoundingBox(DataUtil.getBoundingBox(element))
-            } else if (IdUtil.isType(id, Data.Stroke)) {
-                let stroke = mModel.getStroke(id);
-                if (!stroke) { console.error("Invalid stroke id", id); return; }
-                mDrawingUtil.highlightBoundingBox(DataUtil.getBoundingBox(stroke));
-            }
-        })
-
         if (mShowSpines) {
-            mShowSpines.forEach(element => {
-                mDrawingUtil.drawSpine(element.spine)
+            mModel.getElements().forEach(elem => {
+                mDrawingUtil.drawSpine(elem.spine)
             });
         }
     }

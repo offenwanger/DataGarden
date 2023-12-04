@@ -5,7 +5,6 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil) {
 
     let mAddDimensionCallback = () => { };
     let mClickDimensionCallback = () => { };
-    let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
 
     let mZoomTransform = d3.zoomIdentity.translate(0, 300);
@@ -63,7 +62,13 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil) {
         mSimulation.alphaTarget(0.3).restart();
     }
 
+    function onHighlight(highlightedIds) {
+        if (!highlightedIds || !Array.isArray(highlightedIds)) { mHighlightIds = []; return; }
+        mHighlightIds = highlightedIds;
+    }
+
     function onSelection(selectedIds) {
+        if (!selectedIds || !Array.isArray(selectedIds)) { mSelectionIds = []; return; }
         mSelectionIds = selectedIds;
     }
 
@@ -157,7 +162,7 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil) {
 
                 mSimulation.nodes(mDimensions.concat(mLevels).concat([mAddButton]));
             }
-        } else if (interaction.type == FdlInteraction.LASOO) {
+        } else if (interaction.type == FdlInteraction.LASSO) {
             mOverlayUtil.reset(mZoomTransform);
             mOverlayUtil.drawBubble(interaction.path);
             let selectedIds = mDimensions.concat(mLevels).filter(obj => mOverlayUtil.covered(obj)).map(n => n.id);
@@ -173,16 +178,6 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil) {
     function zoom(x, y, scale) {
         mZoomTransform = d3.zoomIdentity.translate(0, y).scale(scale);
         draw();
-    }
-
-    function onHighlight(ids) {
-        if (Array.isArray(ids) && ids.length > 0) {
-            mHighlightIds = ids;
-        } else if (ids) {
-            mHighlightIds = [ids];
-        } else {
-            mHighlightIds = [];
-        }
     }
 
     function getTranslate() {
@@ -218,7 +213,6 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil) {
         getZoomTransform,
         setAddDimensionCallback: (func) => mAddDimensionCallback = func,
         setClickDimensionCallback: (func) => mClickDimensionCallback = func,
-        setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,
     }
 }
