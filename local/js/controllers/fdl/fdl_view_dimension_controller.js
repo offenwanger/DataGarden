@@ -16,6 +16,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
     let mEditChannelCallback = () => { }
     let mEditTierCallback = () => { }
     let mUpdateLevelCallback = () => { };
+    let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
 
     let mModel = new DataModel();
@@ -23,8 +24,8 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
 
     let mZoomTransform = d3.zoomIdentity.translate(0, 300);
 
-    let mHighlight = [];
-    let mSelectedIds = []
+    let mHighlightIds = [];
+    let mSelectionIds = [];
 
     let mDimension = null;
     let mLevels = [];
@@ -111,8 +112,8 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         mSimulation.alphaTarget(0.3).restart();
     }
 
-    function setSelection(selectedIds) {
-        mSelectedIds = selectedIds;
+    function onSelection(selectedIds) {
+        mSelectionIds = selectedIds;
     }
 
     function setDimension(dimensionId) {
@@ -141,10 +142,15 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                 level.y,
                 level.name,
                 Size.LEVEL_SIZE,
-                mHighlight.includes(level.id),
+                mHighlightIds.includes(level.id),
                 mCodeUtil.getCode(level.id, TARGET_LABEL),
                 level.invalid ? "#FF6865" : "white"
             );
+
+            if (mSelectionIds.includes(level.id)) {
+                mDrawingUtil.highlightContainerRect(AxisPositions.LEVEL_X, level.y,
+                    mDrawingUtil.measureStringNode(level.name, Size.LEVEL_SIZE), Size.LEVEL_SIZE);
+            }
         })
 
         let elements = mNodes.map(n => mModel.getElement(n.id));
@@ -155,6 +161,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                     node.x,
                     node.y,
                     node.radius,
+                    mHighlightIds.includes(node.id),
                     node.interacting ? null : mCodeUtil.getCode(node.id, TARGET_ELEMENT));
             } else {
                 console.error("Invalid state, this node not supported", node);
@@ -167,7 +174,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                 mAddButton.y,
                 "Add Level +",
                 Size.LEVEL_SIZE,
-                mHighlight.includes(ADD_BUTTON_ID),
+                mHighlightIds.includes(ADD_BUTTON_ID),
                 mCodeUtil.getCode(ADD_BUTTON_ID));
         }
     }
@@ -190,7 +197,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                 mDimension.y,
                 string,
                 Size.DIMENSION_SIZE,
-                mHighlight.includes(mDimension.id),
+                mHighlightIds.includes(mDimension.id),
                 mCodeUtil.getCode(mDimension.id, targets[index]));
         })
     }
@@ -293,8 +300,8 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         } else if (interaction.type == FdlInteraction.LASOO) {
             mOverlayUtil.reset(mZoomTransform);
             mOverlayUtil.drawBubble(interaction.path);
-            let selectedObjects = mLevels.concat(mNodes).filter(obj => mOverlayUtil.covered(obj)).map(n => n.id);
-            mSelectionCallback(selectedObjects);
+            let selectedIds = mLevels.concat(mNodes).filter(obj => mOverlayUtil.covered(obj)).map(n => n.id);
+            mSelectionCallback(selectedIds);
         } else { console.error("Interaction not supported!"); return; }
     }
 
@@ -308,7 +315,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         draw();
     }
 
-    function highlight(ids) {
+    function onHighlight(ids) {
 
     }
 
@@ -337,8 +344,8 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         interactionEnd,
         pan,
         zoom,
-        highlight,
-        setSelection,
+        onHighlight,
+        onSelection,
         setDimension,
         getTranslate,
         getScale,
@@ -350,6 +357,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         setEditChannelCallback: (func) => mEditChannelCallback = func,
         setEditTierCallback: (func) => mEditTierCallback = func,
         setUpdateLevelCallback: (func) => mUpdateLevelCallback = func,
+        setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,
     }
 }

@@ -126,7 +126,14 @@ function MockElement(type) {
     this.getTransform = function () {
         return transform;
     }
-    this.console = { log: function () { if (mCanvas) mCanvas.console.log() } }
+    this.console = {
+        log: function () {
+            if (mCanvas) {
+                let c = mCanvas.console
+                c.log();
+            }
+        }
+    }
     this.remove = function () {
         delete this;
     }

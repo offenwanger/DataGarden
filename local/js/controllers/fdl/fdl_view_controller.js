@@ -4,11 +4,12 @@ function FdlViewController() {
 
     let mCodeUtil = new CodeUtil();
 
-    let mHighlightCallback = () => { };
     let mMergeElementCallback = () => { };
     let mMoveElementCallback = () => { }
     let mMoveStrokeCallback = () => { }
     let mContextMenuCallback = () => { }
+    let mHighlightCallback = () => { }
+    let mSelectionCallback = () => { }
     let mEditNameCallback = () => { };
     let mEditDomainCallback = () => { };
     let mEditTypeCallback = () => { };
@@ -19,8 +20,8 @@ function FdlViewController() {
     let mSimulationData = [];
     let mInteraction = null;
 
-    let mHighlightObjects = [];
-    let mSelectedObjects = [];
+    let mHighlightIds = [];
+    let mSelectionIds = [];
 
     let mCanvas = d3.select('#fdl-view-container').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
@@ -164,8 +165,9 @@ function FdlViewController() {
 
         convertCoordinateSystem(mSimulationData, oldActiveViewController, mActiveViewController);
 
+        mActiveViewController.onHighlight(mHighlightIds);
+        mActiveViewController.onSelection(mSelectionIds);
         mActiveViewController.updateSimulationData(mSimulationData, mModel);
-        mActiveViewController.setSelection(mSelectedObjects);
     }
 
     function onResize(width, height) {
@@ -257,9 +259,9 @@ function FdlViewController() {
         } else {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target) {
-                mActiveViewController.highlight(target.id ? target.id : target);
+                mActiveViewController.onHighlight(target.id ? target.id : target);
             } else {
-                mActiveViewController.highlight(null);
+                mActiveViewController.onHighlight(null);
             }
         }
     }
@@ -281,8 +283,13 @@ function FdlViewController() {
         }
     }
 
-    function highlight(selection) {
-        mActiveViewController.highlight(selection);
+    function onHighlight(selection) {
+        mActiveViewController.onHighlight(selection);
+    }
+
+    function onSelection(selectedIds) {
+        mSelectionIds = selectedIds;
+        mActiveViewController.onSelection(mSelectionIds);
     }
 
     mFdlDimensionViewController.setEditNameCallback((itemId, x, y, width, height) => {
@@ -330,20 +337,29 @@ function FdlViewController() {
         mEditTierCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
     })
 
+    mFdlDimensionViewController.setHighlightCallback((highlightedIds) => {
+        mHighlightCallback(highlightedIds);
+    });
+
+    mFdlLegendViewController.setHighlightCallback((highlightedIds) => {
+        mHighlightCallback(highlightedIds);
+    });
+
+    mFdlParentViewController.setHighlightCallback((highlightedIds) => {
+        mHighlightCallback(highlightedIds);
+    });
+
     mFdlDimensionViewController.setSelectionCallback((selectedIds) => {
         // TODO: Check if we are appending to the selection or not
-        mSelectedObjects = selectedIds;
-        mActiveViewController.setSelection(selectedIds);
+        mSelectionCallback(selectedIds);
     });
 
     mFdlLegendViewController.setSelectionCallback((selectedIds) => {
-        mSelectedObjects = selectedIds;
-        mActiveViewController.setSelection(selectedIds);
+        mSelectionCallback(selectedIds);
     });
 
     mFdlParentViewController.setSelectionCallback((selectedIds) => {
-        mSelectedObjects = selectedIds;
-        mActiveViewController.setSelection(selectedIds);
+        mSelectionCallback(selectedIds);
     });
 
     function screenToModelCoords(screenCoords, translate, scale) {
@@ -419,10 +435,10 @@ function FdlViewController() {
         onPointerMove,
         onPointerUp,
         onResize,
-        highlight,
+        onSelection,
+        onHighlight,
         hide,
         show,
-        setHighlightCallback: (func) => mHighlightCallback = func,
         setParentUpdateCallback: (func) => mFdlParentViewController.setParentUpdateCallback(func),
         setAddDimensionCallback: (func) => mFdlLegendViewController.setAddDimensionCallback(func),
         setClickDimensionCallback: (func) => mFdlLegendViewController.setClickDimensionCallback(func),
@@ -436,5 +452,7 @@ function FdlViewController() {
         setMergeElementCallback: (func) => mMergeElementCallback = func,
         setMoveElementCallback: (func) => mMoveElementCallback = func,
         setContextMenuCallback: (func) => mContextMenuCallback = func,
+        setHighlightCallback: (func) => mHighlightCallback = func,
+        setSelectionCallback: (func) => mSelectionCallback = func,
     }
 }

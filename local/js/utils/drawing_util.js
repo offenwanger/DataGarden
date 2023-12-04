@@ -210,30 +210,28 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         ctx.restore();
     }
 
-    function drawThumbnailCircle(strokes, cx, cy, r, code = null) {
+    function drawThumbnailCircle(strokes, cx, cy, r, shadow = false, code = null) {
         const PADDING_SCALE = 0.7;
         const MIN_PIXELS = 1;
 
         ctx.save();
-        ctx.strokeStyle = 'black';
-        ctx.fillStyle = 'white';
-        ctx.lineWidth = 1;
-
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-        ctx.fill();
+        ctx.strokeStyle = 'black';
         ctx.stroke();
 
-        // Interaction //
-        if (code) {
-            intCtx.save();
-            intCtx.fillStyle = code;
-            intCtx.beginPath();
-            intCtx.arc(cx, cy, r, 0, 2 * Math.PI);
-            intCtx.fill();
-            intCtx.restore();
+        ctx.fillStyle = 'white';
+        ctx.lineWidth = 1;
+        if (shadow) {
+            ctx.shadowColor = "black";
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+            ctx.shadowBlur = 3;
         }
+        ctx.fill();
+        ctx.restore();
 
+        ctx.save();
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, 2 * Math.PI);
         ctx.clip();
@@ -260,8 +258,17 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
             });
             ctx.stroke();
         })
-
         ctx.restore();
+
+        // Interaction //
+        if (code) {
+            intCtx.save();
+            intCtx.fillStyle = code;
+            intCtx.beginPath();
+            intCtx.arc(cx, cy, r, 0, 2 * Math.PI);
+            intCtx.fill();
+            intCtx.restore();
+        }
     }
 
     function drawLines(lines, color, alpha) {

@@ -1,6 +1,9 @@
 function TableViewController() {
     let mTableDiv = d3.select("#table-view-container");
 
+    let mSelectionCallback = () => { };
+    let mHighlightCallback = () => { };
+
     function onModelUpdate(model) {
         // TODO: Don't do this, update the data instead
         mTableDiv.selectAll("*").remove();
@@ -35,9 +38,21 @@ function TableViewController() {
         mTableDiv.style("display", "");
     }
 
+    function onSelection() {
+        // TODO impliment
+    }
+
+    function onHighlight() {
+        // TODO impliment
+    }
+
     return {
         onResize,
         onModelUpdate,
+        onSelection,
+        onHighlight,
+        setSelectionCallback: (func) => mSelectionCallback = func,
+        setHighlightCallback: (func) => mHighlightCallback = func,
         hide,
         show,
     }

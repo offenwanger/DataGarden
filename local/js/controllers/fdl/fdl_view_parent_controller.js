@@ -3,14 +3,15 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
 
     const DIVISION_SIZE = Size.ELEMENT_NODE_SIZE * 10;
 
-    let mHighlightElements = [];
-    let mSelectedIds = [];
+    let mHighlightIds = [];
+    let mSelectionIds = [];
 
     let mModel = new DataModel();
     // TODO: Actually check screen size on this
     let mZoomTransform = d3.zoomIdentity.translate(500, 300);
 
     let mParentUpdateCallback = () => { };
+    let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
 
     let mNodes = [];
@@ -65,6 +66,7 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
                     node.x,
                     node.y,
                     node.radius,
+                    mHighlightIds.includes(node.id),
                     node.interacting ? null : mCodeUtil.getCode(node.id, TARGET_ELEMENT));
             } else {
                 console.error("Invalid state, this node not supported", node);
@@ -78,7 +80,7 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
     // interface is separate so we can redraw highlights without redrawing everything
     function drawInterface() {
         mDrawingUtil.resetInterface(mZoomTransform);
-        mHighlightElements.forEach(id => {
+        mHighlightIds.forEach(id => {
             let node = mNodes.find(n => n.id == id);
             if (node) {
                 mDrawingUtil.highlightCircle(node.x, node.y, node.radius, "#FF0000");
@@ -102,8 +104,8 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
         mSimulation.alphaTarget(0.3).restart();
     }
 
-    function setSelection(selectedIds) {
-        mSelectedIds = selectedIds;
+    function onSelection(selectedIds) {
+        mSelectionIds = selectedIds;
     }
 
     function pan(x, y) {
@@ -177,11 +179,11 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
         } else { console.error("Interaction not supported!"); return; }
     }
 
-    function highlight(ids) {
+    function onHighlight(ids) {
         if (Array.isArray(ids)) {
-            mHighlightElements = ids.filter(id => IdUtil.isType(id, Data.Element));
+            mHighlightIds = ids.filter(id => IdUtil.isType(id, Data.Element));
         } else {
-            mHighlightElements = [];
+            mHighlightIds = [];
         }
     }
 
@@ -217,12 +219,13 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
         interactionStart,
         interactionDrag,
         interactionEnd,
-        highlight,
-        setSelection,
+        onHighlight,
+        onSelection,
         getScale,
         getTranslate,
         getZoomTransform,
         setParentUpdateCallback: (func) => mParentUpdateCallback = func,
+        setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,
         start,
         stop,

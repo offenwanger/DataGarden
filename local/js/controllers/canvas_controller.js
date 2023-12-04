@@ -31,7 +31,6 @@ function CanvasController() {
 
     let mZoomTransform = d3.zoomIdentity;
     let mBrushActive = false;
-    let mHighlightIds = [];
     let mShowSpines = null;
 
     let mBrushOptions = {
@@ -40,6 +39,7 @@ function CanvasController() {
         currentStroke: [{ x: 0, y: 0 }]
     }
 
+    let mHighlightIds = [];
     let mSelectionIds = [];
 
     let mInteractionLookup = {};
@@ -236,7 +236,7 @@ function CanvasController() {
         drawInterface();
     }
 
-    function highlight(ids) {
+    function onHighlight(ids) {
         if (!ids || (Array.isArray(ids) && ids.length == 0)) {
             mHighlightIds = [];
         } else {
@@ -247,6 +247,11 @@ function CanvasController() {
 
     function setColor(color) {
         mBrushOptions.color = color;
+    }
+
+    function onSelection(selectedIds) {
+        mSelectionIds = selectedIds;
+        draw();
     }
 
     function draw() {
@@ -269,9 +274,15 @@ function CanvasController() {
         }
 
         mSelectionIds.forEach(id => {
-            let stroke = mModel.getStroke(id);
-            if (!stroke) { console.error("Invalid stroke id", id); return; }
-            mDrawingUtil.highlightBoundingBox(DataUtil.getBoundingBox(stroke));
+            if (IdUtil.isType(id, Data.Element)) {
+                let element = mModel.getElement(id);
+                if (!element) { console.error("Invalid element id", id); return; }
+                mDrawingUtil.highlightBoundingBox(DataUtil.getBoundingBox(element))
+            } else if (IdUtil.isType(id, Data.Stroke)) {
+                let stroke = mModel.getStroke(id);
+                if (!stroke) { console.error("Invalid stroke id", id); return; }
+                mDrawingUtil.highlightBoundingBox(DataUtil.getBoundingBox(stroke));
+            }
         })
 
         mHighlightIds.forEach(id => {
@@ -336,7 +347,8 @@ function CanvasController() {
         onPointerUp,
         onResize,
         setColor,
-        highlight,
+        onSelection,
+        onHighlight,
         setNewStrokeCallback: (func) => mNewStrokeCallback = func,
         setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,

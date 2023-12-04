@@ -1,5 +1,6 @@
 
 const { createCanvas } = require('canvas');
+const fs = require('fs');
 const RUN = Math.random();
 let fileCount = 0;
 

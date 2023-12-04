@@ -5,12 +5,13 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil) {
 
     let mAddDimensionCallback = () => { };
     let mClickDimensionCallback = () => { };
+    let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
 
     let mZoomTransform = d3.zoomIdentity.translate(0, 300);
 
-    let mHighlight = [];
-    let mSelectedIds = [];
+    let mHighlightIds = [];
+    let mSelectionIds = [];
 
     let mDimensions = [];
     let mLevels = [];
@@ -62,8 +63,8 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil) {
         mSimulation.alphaTarget(0.3).restart();
     }
 
-    function setSelection(selectedIds) {
-        mSelectedIds = selectedIds;
+    function onSelection(selectedIds) {
+        mSelectionIds = selectedIds;
     }
 
     function draw() {
@@ -78,7 +79,7 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil) {
                 dimension.y,
                 dimensionString,
                 Size.DIMENSION_SIZE,
-                mHighlight.includes(dimension.id),
+                mHighlightIds.includes(dimension.id),
                 mCodeUtil.getCode(dimension.id))
         })
 
@@ -88,7 +89,7 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil) {
                 level.y,
                 level.name,
                 Size.LEVEL_SIZE,
-                mHighlight.includes(level.id),
+                mHighlightIds.includes(level.id),
                 mCodeUtil.getCode(level.id))
         })
 
@@ -97,7 +98,7 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil) {
             mAddButton.y,
             "Add Dimension +",
             Size.DIMENSION_SIZE,
-            mHighlight.includes(ADD_BUTTON_ID),
+            mHighlightIds.includes(ADD_BUTTON_ID),
             mCodeUtil.getCode(ADD_BUTTON_ID));
 
     }
@@ -159,8 +160,8 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil) {
         } else if (interaction.type == FdlInteraction.LASOO) {
             mOverlayUtil.reset(mZoomTransform);
             mOverlayUtil.drawBubble(interaction.path);
-            let selectedObjects = mDimensions.concat(mLevels).filter(obj => mOverlayUtil.covered(obj)).map(n => n.id);
-            mSelectionCallback(selectedObjects);
+            let selectedIds = mDimensions.concat(mLevels).filter(obj => mOverlayUtil.covered(obj)).map(n => n.id);
+            mSelectionCallback(selectedIds);
         } else { console.error("Interaction not supported!"); return; }
     }
 
@@ -174,13 +175,13 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil) {
         draw();
     }
 
-    function highlight(ids) {
+    function onHighlight(ids) {
         if (Array.isArray(ids) && ids.length > 0) {
-            mHighlight = ids;
+            mHighlightIds = ids;
         } else if (ids) {
-            mHighlight = [ids];
+            mHighlightIds = [ids];
         } else {
-            mHighlight = [];
+            mHighlightIds = [];
         }
     }
 
@@ -210,13 +211,14 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil) {
         interactionEnd,
         pan,
         zoom,
-        highlight,
-        setSelection,
+        onHighlight,
+        onSelection,
         getTranslate,
         getScale,
         getZoomTransform,
         setAddDimensionCallback: (func) => mAddDimensionCallback = func,
         setClickDimensionCallback: (func) => mClickDimensionCallback = func,
+        setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,
     }
 }

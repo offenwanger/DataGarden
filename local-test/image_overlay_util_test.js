@@ -58,7 +58,7 @@ describe('OverlayUtil tests', function () {
             expect(overlayUtil.covered({ x: 11, y: 11 })).to.eql(true);
             expect(overlayUtil.covered({ x: 45, y: 45 })).to.eql(true);
             expect(overlayUtil.covered({ x: 55, y: 55 })).to.eql(false);
-            overlayUtil.reset({ x: 10, y: 10, k: 2 });
+            overlayUtil.reset({ x: 10, y: 10, k: 3 });
             overlayUtil.drawBubble([{ x: 10, y: 10 }, { x: 50, y: 10 }, { x: 50, y: 50 }, { x: 25, y: 50 }]);
             expect(overlayUtil.covered({ x: 11, y: 11 })).to.eql(true);
             // this one went off the edge, so it's the only one to change

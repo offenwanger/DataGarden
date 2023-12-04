@@ -42,11 +42,14 @@ function DashboardController() {
 
     function modelUpdate(model) {
         mModel = model;
+        // interface
+        mTabController.onModelUpdate(model);
+        // main controllers
         mCanvasController.onModelUpdate(model);
         mFdlViewController.onModelUpdate(model);
-        mTabController.onModelUpdate(model);
-        mDropdownInput.onModelUpdate(model);
         mTableViewController.onModelUpdate(model);
+        // minor controllers
+        mDropdownInput.onModelUpdate(model);
     }
 
     function onResize(width, height) {
@@ -157,15 +160,23 @@ function DashboardController() {
         }
     })
 
-    mCanvasController.setHighlightCallback((selection) => {
-        mFdlViewController.highlight(selection);
-    })
+    mCanvasController.setHighlightCallback(onHighlight)
+    mFdlViewController.setHighlightCallback(onHighlight)
+    mTableViewController.setHighlightCallback(onHighlight)
+    function onHighlight(highlightedIds) {
+        mCanvasController.onHighlight(highlightedIds);
+        mFdlViewController.onHighlight(highlightedIds);
+        mTableViewController.onHighlight(highlightedIds);
+    }
 
-    mCanvasController.setSelectionCallback((selection) => {
-        // selection could be strokes or elements
-        // might select an entire element tree
-        mVersionController.stack(selection);
-    })
+    mCanvasController.setSelectionCallback(onSelection)
+    mFdlViewController.setSelectionCallback(onSelection)
+    mTableViewController.setSelectionCallback(onSelection)
+    function onSelection(selectedIds) {
+        mCanvasController.onSelection(selectedIds);
+        mFdlViewController.onSelection(selectedIds);
+        mTableViewController.onSelection(selectedIds);
+    }
 
     function contextMenuCallback(screenCoords, selection) {
         if (!selection) { console.error("No selection provided!"); return; }
@@ -195,7 +206,7 @@ function DashboardController() {
     mFdlViewController.setContextMenuCallback(contextMenuCallback);
 
     mFdlViewController.setHighlightCallback((selection) => {
-        mCanvasController.highlight(selection);
+        mCanvasController.onHighlight(selection);
     })
 
     mFdlViewController.setAddDimensionCallback(() => {
