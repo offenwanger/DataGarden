@@ -263,34 +263,34 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
 
     function interactionEnd(interaction, modelCoords) {
         if (interaction.type == FdlInteraction.SELECTION) {
-            if (VectorUtil.dist(interaction.start, modelCoords) < 5) {
+            if (VectorUtil.dist(interaction.start, modelCoords) < 5 && interaction.startTarget) {
                 // Handle Click
-                if (interaction.target.id == mDimensionId) {
-                    if (interaction.target.type == TARGET_LABEL) {
-                        mEditNameCallback(interaction.target.id, mDimension.x, mDimension.y,
+                if (interaction.startTarget && interaction.startTarget.id == mDimensionId) {
+                    if (interaction.startTarget.type == TARGET_LABEL) {
+                        mEditNameCallback(interaction.startTarget.id, mDimension.x, mDimension.y,
                             mDimensionTileWidths[1] - mDimensionTileWidths[0], Size.DIMENSION_SIZE);
-                    } else if (interaction.target.type == TARGET_TYPE) {
-                        mEditTypeCallback(interaction.target.id, mDimension.x + mDimensionTileWidths[1], mDimension.y,
+                    } else if (interaction.startTarget.type == TARGET_TYPE) {
+                        mEditTypeCallback(interaction.startTarget.id, mDimension.x + mDimensionTileWidths[1], mDimension.y,
                             mDimensionTileWidths[2] - mDimensionTileWidths[1], Size.DIMENSION_SIZE);
-                    } else if (interaction.target.type == TARGET_CHANNEL) {
-                        mEditChannelCallback(interaction.target.id, mDimension.x + mDimensionTileWidths[2], mDimension.y,
+                    } else if (interaction.startTarget.type == TARGET_CHANNEL) {
+                        mEditChannelCallback(interaction.startTarget.id, mDimension.x + mDimensionTileWidths[2], mDimension.y,
                             mDimensionTileWidths[3] - mDimensionTileWidths[2], Size.DIMENSION_SIZE);
-                    } else if (interaction.target.type == TARGET_TIER) {
-                        mEditTierCallback(interaction.target.id, mDimension.x + mDimensionTileWidths[3], mDimension.y,
+                    } else if (interaction.startTarget.type == TARGET_TIER) {
+                        mEditTierCallback(interaction.startTarget.id, mDimension.x + mDimensionTileWidths[3], mDimension.y,
                             mDimensionTileWidths[4] - mDimensionTileWidths[3], Size.DIMENSION_SIZE);
                     } else {
-                        console.error("Unsupported Target Type", interaction.target.type);
+                        console.error("Unsupported Target Type", interaction.startTarget.type);
                     }
-                } else if (interaction.target.id && IdUtil.isType(interaction.target.id, Data.Level)) {
-                    let levelNode = mLevels.find(l => l.id == interaction.target.id);
-                    if (!levelNode) { console.error("Invalid level id", interaction.target.id); return; }
-                    mEditNameCallback(interaction.target.id, levelNode.x, levelNode.y,
+                } else if (interaction.startTarget && IdUtil.isType(interaction.startTarget.id, Data.Level)) {
+                    let levelNode = mLevels.find(l => l.id == interaction.startTarget.id);
+                    if (!levelNode) { console.error("Invalid level id", interaction.startTarget.id); return; }
+                    mEditNameCallback(interaction.startTarget.id, levelNode.x, levelNode.y,
                         mDrawingUtil.measureStringNode(levelNode.name, Size.LEVEL_SIZE), Size.LEVEL_SIZE);
-                } else if (interaction.target == ADD_BUTTON_ID) {
+                } else if (interaction.startTarget && interaction.endTarget.id == ADD_BUTTON_ID) {
                     mAddLevelCallback(mDimensionId);
-                } else if (interaction.target.id && (interaction.target.id == DimensionValueId.V2 || interaction.target.id == DimensionValueId.V1)) {
-                    let node = mLevels.find(l => l.id == interaction.target.id);
-                    mEditDomainCallback(mDimensionId, interaction.target.id, node.x, node.y,
+                } else if (interaction.startTarget && (interaction.startTarget.id == DimensionValueId.V2 || interaction.startTarget.id == DimensionValueId.V1)) {
+                    let node = mLevels.find(l => l.id == interaction.startTarget.id);
+                    mEditDomainCallback(mDimensionId, interaction.startTarget.id, node.x, node.y,
                         mDrawingUtil.measureStringNode(node.name, Size.LEVEL_SIZE), Size.LEVEL_SIZE)
                 }
             } else {
@@ -308,10 +308,10 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                 let elementTargets = target.filter(id => IdUtil.isType(id, Data.Element));
                 if (elementTargets.length > 0) {
                     let levelTarget;
-                    if (interaction.endTarget && IdUtil.isType(interaction.endTarget, Data.Level)) {
-                        levelTarget = interaction.endTarget;
-                    } else if (interaction.endTarget && IdUtil.isType(interaction.endTarget, Data.Element)) {
-                        levelTarget = mModel.getLevelForElement(mDimensionId, interaction.endTarget);
+                    if (interaction.endTarget && IdUtil.isType(interaction.endTarget.id, Data.Level)) {
+                        levelTarget = interaction.endTarget.id;
+                    } else if (interaction.endTarget && IdUtil.isType(interaction.endTarget.id, Data.Element)) {
+                        levelTarget = mModel.getLevelForElement(mDimensionId, interaction.endTarget.id);
                     } else if (modelCoords.y < Math.min(...mLevels.concat([mDimension]).map(n => n.y))) {
                         levelTarget = null;
                     }

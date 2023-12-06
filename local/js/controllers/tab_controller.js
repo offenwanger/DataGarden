@@ -62,7 +62,7 @@ function TabController() {
     function onPointerDown(screenCoords, toolState) {
         let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
         if (target) {
-            mInteraction = target;
+            mInteraction = target.id;
         }
     }
 
@@ -84,7 +84,7 @@ function TabController() {
 
     function onPointerUp(screenCoords, toolState) {
         let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
-        if (target && target.id == mInteraction.id) {
+        if (target && target.id == mInteraction) {
             if (target.type == TAB_TARGET) {
                 mSetTabCallback(target.id);
             } else if (target.type == CLOSE_TARGET) {

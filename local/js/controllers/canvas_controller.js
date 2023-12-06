@@ -111,8 +111,8 @@ function CanvasController(mColorMap) {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target) {
                 // TODO: check for shift select
-                if (!mSelectionIds.includes(target)) {
-                    mSelectionIds = [target];
+                if (!mSelectionIds.includes(target.id)) {
+                    mSelectionIds = [target.id];
                     mSelectionCallback(mSelectionIds);
                 }
                 mInteraction = {
@@ -159,9 +159,9 @@ function CanvasController(mColorMap) {
         }
 
         if (toolState == Buttons.SELECTION_BUTTON) {
-            let targetId = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
-            if (targetId) {
-                let element = mModel.getElementForStroke(targetId);
+            let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
+            if (target) {
+                let element = mModel.getElementForStroke(target.id);
                 mHighlightIds.push(...element.strokes.map(s => s.id));
                 mHighlightCallback(mHighlightIds);
             } else {

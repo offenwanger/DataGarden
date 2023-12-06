@@ -171,8 +171,8 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
                 node.interacting = null;
             });
 
-            if (interaction.endTarget && IdUtil.isType(interaction.endTarget, Data.Element)) {
-                mParentUpdateCallback(targetNodes.map(n => n.id), interaction.endTarget);
+            if (interaction.endTarget && IdUtil.isType(interaction.endTarget.id, Data.Element)) {
+                mParentUpdateCallback(targetNodes.map(n => n.id), interaction.endTarget.id);
             } else if (!interaction.endTarget) {
                 if (modelCoords.y < Math.min(...mNodes.filter(n => n.treeLevel == 0).map(n => n.y))) {
                     mParentUpdateCallback(targetNodes.map(n => n.id), null);

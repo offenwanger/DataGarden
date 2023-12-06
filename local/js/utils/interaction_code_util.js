@@ -7,11 +7,7 @@ let CodeUtil = function () {
 
     function getId(hex) {
         if (mInteractionLookup[hex]) {
-            if (mInteractionLookup[hex].type == NO_TYPE) {
-                return mInteractionLookup[hex].id;
-            } else {
-                return mInteractionLookup[hex];
-            }
+            return mInteractionLookup[hex];
         } else {
             return null;
         }

@@ -152,10 +152,10 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
         if (interaction.type == FdlInteraction.SELECTION) {
             if (VectorUtil.dist(interaction.start, modelCoords) < 5) {
                 // Handle Click
-                if (interaction.endTarget == ADD_BUTTON_ID) {
+                if (interaction.endTarget.id == ADD_BUTTON_ID) {
                     mAddDimensionCallback();
-                } else if (IdUtil.isType(interaction.endTarget, Data.Dimension)) {
-                    mClickDimensionCallback(interaction.endTarget)
+                } else if (IdUtil.isType(interaction.endTarget.id, Data.Dimension)) {
+                    mClickDimensionCallback(interaction.endTarget.id)
                 }
             } else {
                 let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])

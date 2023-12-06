@@ -207,11 +207,11 @@ function FdlViewController(mColorMap) {
                 mInteraction = {
                     type: FdlInteraction.SELECTION,
                     start: screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale()),
+                    startTarget: target,
                 }
-                if (target.id) target = target.id;
 
-                if (!mSelectionIds.includes(target)) {
-                    mSelectionIds = [target];
+                if (!mSelectionIds.includes(target.id)) {
+                    mSelectionIds = [target.id];
                     mSelectionCallback(mSelectionIds)
                 }
 
@@ -258,7 +258,7 @@ function FdlViewController(mColorMap) {
             }
         } else {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
-            if (target && target.id) {
+            if (target) {
                 mHighlightIds = [target.id]
                 mHighlightCallback(mHighlightIds);
             } else if (!ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
@@ -274,7 +274,6 @@ function FdlViewController(mColorMap) {
         if (interaction && interaction.type == FdlInteraction.SELECTION) {
             let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
             interaction.endTarget = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
-            if (interaction.endTarget && interaction.endTarget.id) interaction.endTarget = interaction.endTarget.id;
             mActiveViewController.interactionEnd(interaction, modelCoords);
         } else if (interaction && interaction.type == FdlInteraction.LASSO) {
             mDrawingUtil.resetInterface(mActiveViewController.getZoomTransform());

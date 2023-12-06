@@ -38,8 +38,11 @@ document.addEventListener('DOMContentLoaded', function (e) {
     })
 
     mDashboardController.setAddDimensionCallback(() => {
+        let maxNum = Math.max(0, ...mModelController.getModel().getDimensions()
+            .map(d => d.name.startsWith("Dimension") ? parseInt(d.name.slice(9)) : 0)
+            .filter(n => !isNaN(n)))
         let newDimension = new Data.Dimension();
-        newDimension.name = "Dimension";
+        newDimension.name = "Dimension" + (maxNum + 1);
         newDimension.type = DimensionType.DISCRETE;
         newDimension.channel = ChannelType.FORM;
         newDimension.tier = 0;
@@ -53,8 +56,15 @@ document.addEventListener('DOMContentLoaded', function (e) {
     })
 
     mDashboardController.setAddLevelCallback((dimenId) => {
+        let model = mModelController.getModel();
+        let dimention = model.getDimension(dimenId);
+        if (!dimention) { console.error("Invalid dimention id", dimenId); return; }
+        let maxNum = Math.max(0, ...dimention.levels
+            .map(l => l.name.startsWith("Level") ? parseInt(l.name.slice(5)) : 0)
+            .filter(n => !isNaN(n)))
+
         let newLevel = new Data.Level();
-        newLevel.name = "Level";
+        newLevel.name = "Level" + (maxNum + 1);
         mModelController.addLevel(dimenId, newLevel);
 
         mVersionController.stack(mModelController.getModel());
