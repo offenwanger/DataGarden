@@ -270,6 +270,8 @@ function CanvasController(mColorMap) {
         if (mShowSpines) {
             mModel.getElements().forEach(elem => {
                 mDrawingUtil.drawSpine(elem.spine)
+                mDrawingUtil.drawRoot(elem.root)
+                mDrawingUtil.drawAngle(elem.root, elem.angle)
             });
         }
     }

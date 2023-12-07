@@ -545,6 +545,46 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         intfCtx.restore();
     }
 
+    function drawRoot(root) {
+        intfCtx.save();
+        intfCtx.beginPath();
+        intfCtx.arc(root.x, root.y, 5, 0, 2 * Math.PI);
+        intfCtx.strokeStyle = "white";
+        intfCtx.lineWidth = 4 / mScale;
+        intfCtx.stroke();
+        intfCtx.strokeStyle = "green";
+        intfCtx.lineWidth = 2 / mScale;
+        intfCtx.stroke();
+        intfCtx.restore();
+    }
+
+    function drawAngle(root, angle) {
+        let length = 20;
+        let arrowLength = 5;
+        let point = VectorUtil.add(root, VectorUtil.scale(angle, length));
+        intfCtx.save();
+        intfCtx.beginPath();
+        intfCtx.moveTo(root.x, root.y);
+        intfCtx.lineTo(point.x, point.y);
+
+        let arrow1 = VectorUtil.add(point, VectorUtil.scale(VectorUtil.rotate(angle, Math.PI * 0.75), arrowLength));
+        intfCtx.moveTo(arrow1.x, arrow1.y);
+        intfCtx.lineTo(point.x, point.y);
+
+        let arrow2 = VectorUtil.add(point, VectorUtil.scale(VectorUtil.rotate(angle, -Math.PI * 0.75), arrowLength));
+        intfCtx.moveTo(arrow2.x, arrow2.y);
+        intfCtx.lineTo(point.x, point.y);
+
+        intfCtx.strokeStyle = "white";
+        intfCtx.lineWidth = 4 / mScale;
+        intfCtx.stroke();
+        intfCtx.strokeStyle = "red";
+        intfCtx.lineWidth = 2 / mScale;
+        intfCtx.stroke();
+        intfCtx.restore();
+    }
+
+
     function drawInterfaceSelectionBubble(path, color) {
         intfCtx.save();
         intfCtx.setLineDash([5 / mScale, 10 / mScale]);
@@ -652,6 +692,8 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         getTrianglePointer,
         highlightBoundingBox,
         drawSpine,
+        drawRoot,
+        drawAngle,
         drawInterfaceSelectionBubble,
         drawBand,
         drawStringNode,
