@@ -208,8 +208,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         let newElement = new Data.Element();
         newElement.strokes.push(...strokes);
-        let oldSpine = newElement.spine;
         newElement.spine = ModelUtil.getStupidSpine(newElement);
+        newElement.root = newElement.spine[0];
+        newElement.angle = VectorUtil.normalize(VectorUtil.subtract(newElement.spine[1], newElement.spine[0]));
 
         // count the elements, if most of the strokes belong to one, make the new element
         // a sibling of that element
