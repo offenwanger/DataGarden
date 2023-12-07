@@ -288,7 +288,15 @@ function FdlViewController(mColorMap) {
     }
 
     function onSelection(selectedIds) {
-        mSelectionIds = selectedIds;
+        mSelectionIds = DataUtil.unique(selectedIds.map(id => {
+            if (IdUtil.isType(id, Data.Stroke)) {
+                let element = mModel.getElementForStroke(id);
+                if (!element) { console.error("Bad state, element not found for stroke"); return id; }
+                return element.id;
+            } else {
+                return id;
+            }
+        }));
         mActiveViewController.onSelection(mSelectionIds);
     }
 

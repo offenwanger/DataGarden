@@ -126,15 +126,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
 
     function onSelection(selectedIds) {
         if (!selectedIds || !Array.isArray(selectedIds)) { mSelectionIds = []; return; }
-        mSelectionIds = DataUtil.unique(selectedIds.map(id => {
-            if (IdUtil.isType(id, Data.Stroke)) {
-                let element = mModel.getElementForStroke(id);
-                if (!element) { console.error("Bad state, element not found for stroke"); return id; }
-                return element.id;
-            } else {
-                return id;
-            }
-        }));
+        mSelectionIds = selectedIds;
     }
 
     function setDimension(dimensionId) {
