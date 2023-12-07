@@ -83,6 +83,12 @@ let VectorUtil = function () {
         return { x: vector.y, y: -vector.x };
     }
 
+    function rotate(v, radians) {
+        var cos = Math.cos(radians);
+        var sin = Math.sin(radians);
+        return { x: v.x * cos - v.y * sin, y: v.x * sin + v.y * cos };
+    }
+
     return {
         add,
         subtract,
@@ -95,5 +101,6 @@ let VectorUtil = function () {
         toRotation,
         rotateLeft,
         rotateRight,
+        rotate,
     }
 }();
