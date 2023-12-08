@@ -5,9 +5,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
     new EventManager(mDashboardController);
 
     let mVersionController = new VersionController();
-
-    let mLastStrokeStacked = Date.now();
-    mVersionController.setStash(new MemoryStash());
+    mVersionController.setStash(new MemoryStash()).then(() => {
+        mVersionController.stack(mModelController.getModel().toObject());
+    });
 
     mDashboardController.setNewStrokeCallback((stroke) => {
         let element = new Data.Element();
@@ -19,13 +19,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mModelController.addElement(element);
 
         mDashboardController.modelUpdate(mModelController.getModel());
-
-        if (Date.now() - mLastStrokeStacked > 5000) {
-            mVersionController.stack(mModelController.getModel());
-            mLastStrokeStacked = Date.now();
-        } else {
-            mVersionController.replace(mModelController.getModel());
-        }
+        mVersionController.stack(mModelController.getModel().toObject());
     })
 
     mDashboardController.setParentUpdateCallback((elementIds, parentElementId) => {
@@ -33,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             ModelUtil.updateParent(parentElementId, elementId, mModelController)
         })
 
-        mVersionController.stack(mModelController.getModel());
+        mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
@@ -49,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         mModelController.addDimension(newDimension);
 
-        mVersionController.stack(mModelController.getModel());
+        mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
 
         return newDimension;
@@ -67,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         newLevel.name = "Level" + (maxNum + 1);
         mModelController.addLevel(dimenId, newLevel);
 
-        mVersionController.stack(mModelController.getModel());
+        mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
     });
 
@@ -91,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             mModelController.updateLevel(level);
         });
 
-        mVersionController.stack(mModelController.getModel());
+        mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
     });
 
@@ -101,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         level.name = name;
         mModelController.updateLevel(level);
 
-        mVersionController.stack(mModelController.getModel());
+        mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
@@ -111,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         dimension.name = name;
         mModelController.updateDimension(dimension);
 
-        mVersionController.stack(mModelController.getModel());
+        mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
@@ -122,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         dimension.domain = domain;
         mModelController.updateDimension(dimension);
 
-        mVersionController.stack(mModelController.getModel());
+        mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
@@ -138,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         mModelController.updateDimension(dimension);
 
-        mVersionController.stack(mModelController.getModel());
+        mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
@@ -153,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         }
         mModelController.updateDimension(dimension);
 
-        mVersionController.stack(mModelController.getModel());
+        mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
@@ -163,38 +157,30 @@ document.addEventListener('DOMContentLoaded', function (e) {
         dimension.tier = tier;
         mModelController.updateDimension(dimension);
 
-        mVersionController.stack(mModelController.getModel());
+        mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
     mDashboardController.setMergeElementCallback((selection, mergeElementId) => {
         ModelUtil.mergeElements(mModelController, selection, mergeElementId);
 
-        mVersionController.stack(mModelController.getModel());
+        mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
     mDashboardController.setUndoCallback(async () => {
         let obj = await mVersionController.reverse();
         if (obj) {
-            if (Array.isArray(obj)) {
-                // update the selection
-            } else {
-                mModelController.setModel(DataModel.fromObject(obj));
-                mDashboardController.modelUpdate(mModelController.getModel());
-            }
+            mModelController.setModel(DataModel.fromObject(obj));
+            mDashboardController.modelUpdate(mModelController.getModel());
         }
     })
 
     mDashboardController.setRedoCallback(async () => {
         let obj = await mVersionController.advance();
         if (obj) {
-            if (Array.isArray(obj)) {
-                // update the selection
-            } else {
-                mModelController.setModel(DataModel.fromObject(obj));
-                mDashboardController.modelUpdate(mModelController.getModel());
-            }
+            mModelController.setModel(DataModel.fromObject(obj));
+            mDashboardController.modelUpdate(mModelController.getModel());
         }
     })
 
@@ -228,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         ModelUtil.clearEmptyElements(mModelController);
         mModelController.addElement(newElement);
 
-        mVersionController.stack(mModelController.getModel());
+        mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
     });
 
@@ -275,7 +261,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             });
             if (hasChanged) {
                 mDashboardController.modelUpdate(mModelController.getModel());
-                mVersionController.stack(mModelController.getModel());
+                mVersionController.stack(mModelController.getModel().toObject());
             }
         });
     });
@@ -288,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 element = mModelController.getModel().getElement(elementId);
                 element.spine = result;
                 mModelController.updateElement(element);
-                mVersionController.stack(mModelController.getModel());
+                mVersionController.stack(mModelController.getModel().toObject());
                 mDashboardController.modelUpdate(mModelController.getModel());
             }
         });

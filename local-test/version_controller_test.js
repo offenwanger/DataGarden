@@ -5,7 +5,7 @@ let expect = chai.expect;
 let suite = require("./test_utils/suite_enviroment")
 let utility = require("./test_utils/utility.js")
 
-describe('Stroke View Controller Test', function () {
+describe('Version Controller Tests', function () {
     let integrationEnv;
     beforeEach(function () {
         integrationEnv = suite.getIntegrationEnviroment();
@@ -30,28 +30,18 @@ describe('Stroke View Controller Test', function () {
             // update time so they get cached
             Date.time = 300000;
             utility.drawStroke(integrationEnv, [{ x: 40, y: 20 }, { x: 40, y: 40 }, { x: 40, y: 60 }, { x: 40, y: 80 }]);
-
-            assert.equal(model().getGroups().length, 1);
             assert.equal(model().getElements().length, 3);
 
             await utility.undo(integrationEnv);
-
-            assert.equal(model().getGroups().length, 1);
             assert.equal(model().getElements().length, 2);
 
             await utility.undo(integrationEnv);
-
-            assert.equal(model().getGroups().length, 1);
             assert.equal(model().getElements().length, 1);
 
             await utility.redo(integrationEnv);
-
-            assert.equal(model().getGroups().length, 1);
             assert.equal(model().getElements().length, 2);
 
             await utility.redo(integrationEnv);
-
-            assert.equal(model().getGroups().length, 1);
             assert.equal(model().getElements().length, 3);
         });
     })

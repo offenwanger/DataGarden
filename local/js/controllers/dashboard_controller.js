@@ -102,6 +102,19 @@ function DashboardController() {
         mToolState = state;
     }
 
+    function onUndo() {
+        // if next undo is a selection, do that, otherwise pass it along
+        // return the undo promise
+        return mUndoCallback();
+    }
+
+    function onRedo() {
+        // if next redo is a selection, do that, otherwise pass it along
+        // return the redo promise
+        return mRedoCallback();
+    }
+
+
     function onEnter() {
         if (mTextInput.isShowing()) {
             mTextInput.returnText();
@@ -268,6 +281,8 @@ function DashboardController() {
         onDblClick,
         onLongPress,
         onKeyStateChange,
+        onUndo,
+        onRedo,
         onEnter,
         onDelete,
         setNewStrokeCallback: (func) => mCanvasController.setNewStrokeCallback(func),

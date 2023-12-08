@@ -14,7 +14,6 @@ function VersionController() {
 
     function stack(obj) {
         if (!mModelStash) return;
-        if (obj instanceof DataModel) obj = obj.toObject();
         mRedoCache = [];
         let versionNumber = mModelStash.stash(obj);
         mStack.push(versionNumber)
@@ -22,7 +21,6 @@ function VersionController() {
 
     function replace(obj) {
         if (!mModelStash) return;
-        if (obj instanceof DataModel) obj = obj.toObject();
         mRedoCache = [];
         mModelStash.stash(obj, mStack[mStack.length - 1]);
     }

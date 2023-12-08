@@ -113,6 +113,8 @@ function MockElement(type) {
         } else if (d3.getRoot().select("#fdl-view-container").select('.canvas-container').select('.interaction-canvas') == this ||
             d3.getRoot().select("#fdl-view-container").select('.canvas-container').select('.interface-canvas') == this) {
             x = d3.getRoot().select("#fdl-view-container").select('.canvas-container').select('.interface-canvas').attr('width')
+        } else if (d3.getRoot().select("#tabs-container").select('.canvas-container').select('.interaction-canvas') == this) {
+            x = d3.getRoot().select("#tabs-container").select('.canvas-container').select('.interaction-canvas').attr('width')
         } else {
             console.error("Unexpected!")
         }
@@ -262,16 +264,14 @@ module.exports = function (jspreadsheet) {
     let forceSim = new mockForceSim();
     rootNode.append('div').attr("id", "canvas-view-container").append(new MockElement().classed("canvas-container", true));
     rootNode.append('div').attr("id", "fdl-view-container").append(new MockElement().classed("canvas-container", true));
-    rootNode.append('div').attr("id", "tabs-container").append(new MockElement().classed("canvas-container", true));;
+    rootNode.append('div').attr("id", "tabs-container").append(new MockElement().classed("canvas-container", true));
     rootNode.append('div').attr("id", "color-container");
-    rootNode.append('div').attr("id", "interface-container");
+    rootNode.append('div').attr("id", "interface-container").append(new MockElement().attr("id", "interface-svg"));
     rootNode.append('div').attr("id", "dashboard-container");
     rootNode.append('div').attr("id", "canvas-container");
     rootNode.append('div').attr("id", "tab-view-container");
     rootNode.append('div').attr("id", "canvas-container");
-    rootNode.append('div').attr("id", "canvas-container");
     rootNode.append('div').attr("id", "table-view-container");
-    rootNode.append('div').attr("id", "interface-svg");
     rootNode.append('div').attr("id", "input-box");
     rootNode.append('div').attr("id", "dropdown-container");
 
