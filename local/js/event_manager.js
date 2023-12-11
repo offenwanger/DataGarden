@@ -25,16 +25,18 @@ function EventManager(dashboard) {
 
     d3.select(document).on('keydown', function (e) {
         if (e.repeat) return;
+
+        let key = e.key.toLowerCase();
         // we can sometimes still get a double down, so check for that to. 
-        if (mKeysDown.includes(e.key)) return;
-        mKeysDown.push(e.key)
+        if (mKeysDown.includes(key)) return;
+        mKeysDown.push(key)
 
         mDashboard.onKeyStateChange(mKeysDown);
 
-        if ((e.ctrlKey || e.metaKey) && e.key == 'z') {
+        if ((e.ctrlKey || e.metaKey) && key == 'z') {
             // return the promise for syncronization control and testing purposes.
             return mDashboard.onUndo();
-        } else if (((e.ctrlKey || e.metaKey) && e.key == 'y') || ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key == 'z')) {
+        } else if (((e.ctrlKey || e.metaKey) && key == 'y') || ((e.ctrlKey || e.metaKey) && e.shiftKey && key == 'z')) {
             // return the promise for syncronization control and testing purposes.
             return mDashboard.onRedo();
         } else if (/* delete */ e.which == 46) {
@@ -45,7 +47,8 @@ function EventManager(dashboard) {
     });
 
     d3.select(document).on('keyup', function (e) {
-        mKeysDown = mKeysDown.filter(i => i !== e.key);
+        let key = e.key.toLowerCase();
+        mKeysDown = mKeysDown.filter(i => i !== key);
         mDashboard.onKeyStateChange(mKeysDown);
     });
 

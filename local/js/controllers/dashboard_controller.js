@@ -20,7 +20,13 @@ function DashboardController() {
     let mCanvasPercent = 0.5;
     let mWidth = 0;
 
+    let mDefaultToolState = Buttons.SELECTION_BUTTON;
     let mToolState = Buttons.SELECTION_BUTTON;
+
+    mMenuController.deactivateAll();
+    mMenuController.activateButton(mToolState);
+
+    let mStructureMode = false;
     let mFdlActive = true;
 
     let mAddDimensionCallback = () => { };
@@ -97,9 +103,14 @@ function DashboardController() {
     }
 
     function onKeyStateChange(keysDown) {
-        let state = mKeyBinding.getState(keysDown);
-        mMenuController.stateTransition(mToolState, state);
-        mToolState = state;
+        let activeButton = mKeyBinding.getState(keysDown);
+        if (activeButton) {
+            mToolState = activeButton;
+        } else {
+            mToolState = mDefaultToolState;
+        }
+        mMenuController.deactivateAll();
+        mMenuController.activateButton(mToolState);
     }
 
     function onUndo() {
@@ -272,6 +283,30 @@ function DashboardController() {
         mCanvasController.setColor(color);
     });
 
+    mMenuController.setOnClickCallback((button) => {
+        if (button == Buttons.BRUSH_BUTTON ||
+            button == Buttons.SELECTION_BUTTON ||
+            button == Buttons.PANNING_BUTTON ||
+            button == Buttons.ZOOM_BUTTON) {
+            if (mToolState == mDefaultToolState) {
+                mMenuController.deactivateButton(mDefaultToolState);
+                mMenuController.activateButton(button);
+            }
+            mDefaultToolState = button;
+            mToolState = button;
+        } else if (button == Buttons.VIEW_BUTTON) {
+            if (mStructureMode) {
+                mStructureMode = false;
+                mMenuController.deactivateButton(button);
+            } else {
+                mStructureMode = true;
+                mMenuController.activateButton(button);
+            }
+            mCanvasController.setStructureMode(mStructureMode);
+        }
+
+    })
+
     return {
         modelUpdate,
         onResize,
@@ -286,6 +321,7 @@ function DashboardController() {
         onEnter,
         onDelete,
         setNewStrokeCallback: (func) => mCanvasController.setNewStrokeCallback(func),
+        setStructureMode: (to) => mCanvasController.setStructureMode(to),
         setParentUpdateCallback: (func) => mFdlViewController.setParentUpdateCallback(func),
         setMergeElementCallback: (func) => mMergeElementCallback = func,
         setMoveElementCallback: (func) => mMoveElementCallback = func,

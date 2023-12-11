@@ -4,6 +4,7 @@ const Buttons = {
     PANNING_BUTTON: "Pan",
     ZOOM_BUTTON: "Zoom",
     VIEW_BUTTON: "View",
+    COLOR_BUTTON: "Color",
 }
 
 const Size = {

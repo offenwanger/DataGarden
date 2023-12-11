@@ -31,7 +31,7 @@ function CanvasController(mColorMap) {
 
     let mZoomTransform = d3.zoomIdentity;
     let mBrushActivePosition = false;
-    let mShowSpines = null;
+    let mStructureMode = null;
 
     let mBrushOptions = {
         size: 1,
@@ -170,10 +170,6 @@ function CanvasController(mColorMap) {
             }
         }
 
-        if (toolState == Buttons.VIEW_BUTTON) {
-            mShowSpines = true;
-        }
-
         if (mBrushActivePosition && toolState != Buttons.BRUSH_BUTTON) {
             mBrushActivePosition = false;
         }
@@ -181,10 +177,6 @@ function CanvasController(mColorMap) {
         if (mHighlightIds && toolState != Buttons.SELECTION_BUTTON) {
             mHighlightIds = [];
             mHighlightCallback([]);
-        }
-
-        if (mShowSpines && toolState != Buttons.VIEW_BUTTON) {
-            mShowSpines = null;
         }
 
         draw();
@@ -242,6 +234,10 @@ function CanvasController(mColorMap) {
         draw();
     }
 
+    function setStructureMode(to) {
+        mStructureMode = to;
+    }
+
     function draw() {
         mDrawingUtil.reset(mZoomTransform);
         mModel.getElements().forEach(elem => {
@@ -267,7 +263,7 @@ function CanvasController(mColorMap) {
             mDrawingUtil.drawInterfaceSelectionBubble(mInteraction.line, SELECTION_BUBBLE_COLOR);
         }
 
-        if (mShowSpines) {
+        if (mStructureMode) {
             mModel.getElements().forEach(elem => {
                 mDrawingUtil.drawSpine(elem.spine)
                 mDrawingUtil.drawRoot(elem.root)
@@ -319,6 +315,7 @@ function CanvasController(mColorMap) {
         onPointerUp,
         onResize,
         setColor,
+        setStructureMode,
         onSelection,
         onHighlight,
         setNewStrokeCallback: (func) => mNewStrokeCallback = func,

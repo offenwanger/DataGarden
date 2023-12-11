@@ -1,6 +1,4 @@
-function MenuButton(id, svg, img, buttonSize, onLoad) {
-    let mClickCallback = () => { };
-
+function MenuButton(id, svg, img, buttonSize, clickCallback, onLoad) {
     let mButton = svg.append('g')
         .attr("id", id);
     let mSvg = mButton.append('g')
@@ -10,7 +8,7 @@ function MenuButton(id, svg, img, buttonSize, onLoad) {
         .attr("height", buttonSize)
         .attr("width", buttonSize)
         .attr("opacity", 0)
-        .on('pointerup', () => { mClickCallback(); });
+        .on('pointerup', () => { clickCallback(); });
 
     d3.xml(img).then(data => {
         let width = data.documentElement.getAttribute('width');
@@ -62,5 +60,4 @@ function MenuButton(id, svg, img, buttonSize, onLoad) {
     this.hide = hide;
     this.show = show;
     this.setActive = setActive;
-    this.setOnClickCallback = (func) => mClickCallback = func;
 }

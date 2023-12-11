@@ -4,7 +4,6 @@ let KeyBinding = function () {
         [Buttons.SELECTION_BUTTON, "s"],
         [Buttons.PANNING_BUTTON, "a"],
         [Buttons.ZOOM_BUTTON, "a", "s"],
-        [Buttons.VIEW_BUTTON, "f"],
     ]
 
     function getState(keys) {
@@ -23,7 +22,7 @@ let KeyBinding = function () {
         if (found) {
             return validStates.reduce(function (p, c) { return p.length > c.length ? c : p; }, { length: Infinity })[0];
         } else {
-            return Buttons.SELECTION_BUTTON;
+            return null;
         }
     }
 
