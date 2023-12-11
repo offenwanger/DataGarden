@@ -16,6 +16,7 @@ const Size = {
 const Padding = {
     NODE: 5,
     CLUSTER: 20,
+    LEVEL: 5,
 }
 
 const ContextButtons = {
