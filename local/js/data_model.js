@@ -103,6 +103,7 @@ function DataModel() {
                 let element = getElement(nextId);
                 mDimensions.filter(d => d.tier == level).forEach(dimension => {
                     let value = DataUtil.getMappedValue(this, dimension.id, nextId);
+                    if (typeof value == "number") { value = Math.round(value * 100) / 100 }
                     if (value) row[dimension.id] = { id: nextId, value };
                 })
 
