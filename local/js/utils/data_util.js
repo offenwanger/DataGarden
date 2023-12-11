@@ -240,6 +240,24 @@ let DataUtil = function () {
         return !isNaN(new Date(dateStr));
     }
 
+    function angleToPercent(angle) {
+        return (angle + Math.PI) / (Math.PI * 2);
+    }
+
+    function getRelativeAngle(element, parent) {
+        let tangent;
+        if (parent) {
+            tangent = PathUtil.getTangentForPercent(parent.spine, element.position);
+        } else {
+            tangent = { x: 0, y: -1 };
+        }
+
+        let angle = VectorUtil.toRotation(element.angle) - VectorUtil.toRotation(tangent);
+        if (angle > Math.PI) angle = Math.PI * 2 - angle;
+        return angle;
+
+    }
+
     return {
         numToColor,
         rgbToHex,
@@ -261,5 +279,7 @@ let DataUtil = function () {
         domainIsValid,
         isNumeric,
         isDateLike,
+        angleToPercent,
+        getRelativeAngle,
     }
 }();

@@ -156,13 +156,9 @@ let PathUtil = function () {
         let metaPointIndex = 0;
         for (let percentIndex = 0; percentIndex < percents.length; percentIndex++) {
             if (percents[percentIndex] <= 0) {
-                let direction = VectorUtil.subtract(points[0], points[1]);
-                let length = Math.abs(percents[percentIndex]) * TAIL_LENGTH;
-                returnable.push(getPointAtDistanceAlongVector(length, direction, points[0]));
+                returnable.push({ x: points[0].x, y: points[0].y });
             } else if (percents[percentIndex] >= 1) {
-                let direction = VectorUtil.subtract(points[points.length - 1], points[points.length - 2]);
-                let length = (percents[percentIndex] - 1) * TAIL_LENGTH;
-                returnable.push(getPointAtDistanceAlongVector(length, direction, points[points.length - 1]));
+                returnable.push({ x: points[points.length - 1].x, y: points[points.length - 1].y });
             } else {
                 let afterPoint = null;
                 while (metaPointIndex < metaPoints.length && percents[percentIndex] > metaPoints[metaPointIndex].percent) {
@@ -236,8 +232,8 @@ let PathUtil = function () {
                 }
                 let beforePoint = metaPoints[afterPoint.index - 1];
 
-                let normalPositionBefore = VectorUtil.addAToB(beforePoint.point, beforePoint.normal);
-                let normalPositionAfter = VectorUtil.addAToB(afterPoint.point, afterPoint.normal);
+                let normalPositionBefore = VectorUtil.add(beforePoint.point, beforePoint.normal);
+                let normalPositionAfter = VectorUtil.add(afterPoint.point, afterPoint.normal);
 
                 let percentBetween = (percent - beforePoint.percent) / (afterPoint.percent - beforePoint.percent);
                 let x = percentBetween * (afterPoint.point.x - beforePoint.point.x) + beforePoint.point.x;
@@ -250,6 +246,15 @@ let PathUtil = function () {
                 return VectorUtil.normalize(normalVector);
             }
         })
+    }
+
+    function getTangentForPercent(points, percent) {
+        let normal = getNormalForPercent(points, percent);
+        return VectorUtil.rotateLeft(normal);
+    }
+
+    function getPercentBetweenPoints(p1, p2, percent) {
+        return VectorUtil.add(p1, VectorUtil.scale(VectorUtil.subtract(p2, p1), percent));
     }
 
     // UTILITY //
@@ -441,6 +446,8 @@ let PathUtil = function () {
         equalsPath,
         getPositionForPercent,
         getNormalForPercent,
+        getTangentForPercent,
         getClosestPointOnPath,
+        getPercentBetweenPoints,
     }
 }();

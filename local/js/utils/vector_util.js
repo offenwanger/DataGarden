@@ -59,10 +59,7 @@ let VectorUtil = function () {
 
     function toRotation(vector) {
         vector = VectorUtil.normalize(vector);
-        var angle = Math.atan2(vector.y, vector.x);   //radians
-        // you need to devide by PI, and MULTIPLY by 180:
-        var degrees = 180 * angle / Math.PI;  //degrees
-        return (360 + Math.round(degrees)) % 360 - 90; //round number, avoid decimal fragments
+        return Math.atan2(vector.y, vector.x);
     }
 
     function rotateLeft(vector) {

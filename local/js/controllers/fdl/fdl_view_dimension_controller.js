@@ -1,13 +1,13 @@
 function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap) {
     const ADD_BUTTON_ID = 'add_button';
-    const MAX_VALUE_ID = 'max_value';
-    const MIN_VALUE_ID = 'min_value';
     const TARGET_ELEMENT = "element_target";
     const TARGET_LABEL = "element_label";
     const TARGET_TYPE = "element_type";
     const TARGET_CHANNEL = "element_channel";
     const TARGET_TIER = "element_tier";
     const NODE_COLUMN_WIDTH = 300
+    const ADD_LEVEL_LABEL = "Add Level +";
+    const LINK_ID = "link_"
 
     let mAddLevelCallback = () => { };
     let mEditNameCallback = () => { };
@@ -29,11 +29,20 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
     let mDimension = null;
     let mLevels = [];
     let mNodes = [];
+    let mLinkPoints = [];
     let mAddButton = { id: ADD_BUTTON_ID, x: 0, y: 0 };
 
     let mDimensionWidth = 0;
     let mDimensionType;
     let mDimensionTileWidths = [];
+
+    let mMinSize = 0
+    let mMaxSize = 1
+
+    let mMaxLevelWdith = 10;
+    let mAxisX = 0;
+    let mAxisTop = 0;
+    let mAxisBottom = 200;
 
     let mLinks = [];
 
@@ -45,11 +54,13 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         .force("axis", d3.forceX((d => IdUtil.isType(d.id, Data.Element) ? mDimensionWidth + NODE_COLUMN_WIDTH / 2 : 0)).strength(0.7))
         .force("collide", d3.forceCollide((d) => {
             if (IdUtil.isType(d.id, Data.Dimension)) {
-                return Size.DIMENSION_SIZE;
+                return Size.DIMENSION_SIZE + Padding.LEVEL * 2;
             } else if (IdUtil.isType(d.id, Data.Level) || d.id == ADD_BUTTON_ID || d.id == DimensionValueId.V1 || d.id == DimensionValueId.V2) {
-                return Size.LEVEL_SIZE;
+                return Size.LEVEL_SIZE + Padding.LEVEL * 2;
             } else if (IdUtil.isType(d.id, Data.Element)) {
                 return d.radius + Padding.NODE * 2;
+            } else if (d.id.startsWith(LINK_ID)) {
+                // do nothing
             } else {
                 console.error("Unsupported node!", d.id); return 0;
             }
@@ -60,21 +71,15 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                 if (item.id == mDimensionId) {
                     let yTarget = Math.min(0, ...mNodes.map(n => n.y), ...mLevels.map(n => n.y)) - Size.DIMENSION_SIZE - Size.ELEMENT_NODE_SIZE;
                     item.y = item.y += (yTarget - item.y) * mSimulation.alpha();
-                    item.x = AxisPositions.DIMENSION_X;
-                } else if (IdUtil.isType(item.id, Data.Level)) {
-                    item.x = AxisPositions.LEVEL_X;
                 } else if (item.id == ADD_BUTTON_ID) {
                     let yTarget = Math.max(Size.DIMENSION_SIZE, ...mNodes.map(n => n.y), ...mLevels.map(n => n.y)) + Size.LEVEL_SIZE + Size.ELEMENT_NODE_SIZE;
                     item.y = item.y += (yTarget - item.y) * mSimulation.alpha();
-                    item.x = AxisPositions.LEVEL_X;
                 } else if (item.id == DimensionValueId.V1) {
                     let yTarget = Math.min(Size.DIMENSION_SIZE, ...mNodes.map(n => n.y));
                     item.y = item.y += (yTarget - item.y) * mSimulation.alpha();
-                    item.x = AxisPositions.LEVEL_X;
                 } else if (item.id == DimensionValueId.V2) {
                     let yTarget = Math.max(Size.DIMENSION_SIZE * 2, ...mNodes.map(n => n.y));
                     item.y = item.y += (yTarget - item.y) * mSimulation.alpha();
-                    item.x = AxisPositions.LEVEL_X;
                 }
             });
             draw();
@@ -88,24 +93,85 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         if (!dimension) { console.error("Bad State! Dimension not found!"); return; }
 
         mDimension = data.find(item => item.id == mDimensionId);
+        mNodes = data.filter(item => IdUtil.isType(item.id, Data.Element) && DataUtil.getTreeLevel(mModel, item.id) == dimension.tier);
+        mLevels = data.filter(item => item.dimension == mDimensionId);
+
         // TODO: do this properly, i.e. measure all the stuff in that column
         mDimensionWidth = mDrawingUtil.measureStringNode(mDimension.name +
             " [" + DimensionLabels[mDimension.type] + "][" +
             ChannelLabels[mDimension.channel] + "][T" + mDimension.tier + "]", Size.DIMENSION_SIZE);
         mDimensionType = dimension.type;
 
-        mLevels = data.filter(item => item.dimension == mDimensionId);
+        mMaxLevelWdith = mLevels.concat({ name: ADD_LEVEL_LABEL }).reduce((max, level) => {
+            return Math.max(max, mDrawingUtil.measureStringNode(level.name, Size.LEVEL_SIZE));
+        }, 10)
+        mAxisX = mMaxLevelWdith + AxisPositions.LEVEL_X + Padding.NODE
 
-        mNodes = data.filter(item => IdUtil.isType(item.id, Data.Element) && DataUtil.getTreeLevel(mModel, item.id) == dimension.tier);
 
+        mLinkPoints = [];
         mLinks = [];
-        dimension.levels.forEach(level => {
-            level.elementIds.forEach(elementId => {
-                mLinks.push({ source: elementId, target: level.id });
-            })
-        })
+        if (dimension.channel == ChannelType.SIZE) {
+            mNodes.forEach(n => {
+                let element = mModel.getElement(n.id);
+                let size = PathUtil.getPathLength(element.spine);
+                mLinkPoints.push({ id: LINK_ID + n.id, size });
+                mLinks.push({ source: n.id, target: LINK_ID + n.id });
+            });
+            mMinSize = Math.round(Math.min(Infinity, ...mLinkPoints.map(p => p.size)));
+            mMinSize = mMinSize == Infinity ? 0 : mMinSize;
+            mMaxSize = Math.round(1 + Math.max(0, ...mLinkPoints.map(p => p.size)));
+            mLinkPoints.forEach(p => {
+                let percent = (p.size - mMinSize) / (mMaxSize - mMinSize);
+                let point = PathUtil.getPercentBetweenPoints(
+                    { x: mAxisX, y: mAxisTop },
+                    { x: mAxisX, y: mAxisBottom },
+                    percent
+                )
+                p.x = point.x;
+                p.y = point.y;
+            });
+        } else if (dimension.channel == ChannelType.POSITION) {
+            mNodes.forEach(n => {
+                let element = mModel.getElement(n.id);
+                let point = PathUtil.getPercentBetweenPoints(
+                    { x: mAxisX, y: mAxisTop },
+                    { x: mAxisX, y: mAxisBottom },
+                    element.position,
+                )
+                mLinkPoints.push({ id: LINK_ID + n.id, x: point.x, y: point.y });
+                mLinks.push({ source: n.id, target: LINK_ID + n.id });
+            });
+        } else if (dimension.channel == ChannelType.ANGLE) {
+            mNodes.forEach(n => {
+                let linkPoint = { id: LINK_ID + n.id };
+                let element = mModel.getElement(n.id);
+                let angle = DataUtil.getRelativeAngle(element, element.parentId ? mModel.getElement(element.parentId) : null)
+                let percent = DataUtil.angleToPercent(angle);
 
-        mSimulation.nodes(mLevels.concat(mNodes).concat([mDimension, mAddButton]));
+                linkPoint.angle = angle;
+                let point = PathUtil.getPercentBetweenPoints(
+                    { x: mAxisX, y: mAxisTop },
+                    { x: mAxisX, y: mAxisBottom },
+                    percent,
+                )
+                linkPoint.x = point.x;
+                linkPoint.y = point.y;
+                mLinkPoints.push(linkPoint);
+                mLinks.push({ source: n.id, target: LINK_ID + n.id });
+            });
+        }
+        mLinkPoints.forEach(p => { p.fx = p.x; p.fy = p.y });
+
+        if (dimension.type == DimensionType.DISCRETE && (dimension.channel == ChannelType.FORM || dimension.channel == ChannelType.COLOR)) {
+            dimension.levels.forEach(level => {
+                level.elementIds.forEach(elementId => {
+                    mLinks.push({ source: elementId, target: level.id });
+                })
+            })
+        } else {
+
+        }
+        mSimulation.nodes(mLevels.concat(mNodes).concat(mLinkPoints).concat([mDimension, mAddButton]));
         mSimulation.force('link').links(mLinks);
 
         mSimulation.alphaTarget(0.3).restart();
@@ -138,14 +204,43 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         mDrawingUtil.reset(mZoomTransform);
 
         let dimension = mModel.getDimension(mDimensionId);
-        dimension.levels.forEach(level => {
-            let clusterNodes = mNodes.filter(n => level.elementIds.includes(n.id));
-            if (clusterNodes.length > 0) {
-                let hull = d3.polygonHull(DataUtil.getPaddedPoints(clusterNodes, Padding.NODE)).map(p => { return { x: p[0], y: p[1] } });
-                let levelNode = mLevels.find(l => l.id == level.id);
-                mDrawingUtil.drawBubble(hull, levelNode, mColorMap(level.id), 0.4);
+        if (dimension.channel == ChannelType.FORM || dimension.channel == ChannelType.COLOR) {
+            dimension.levels.forEach(level => {
+                let clusterNodes = mNodes.filter(n => level.elementIds.includes(n.id));
+                if (clusterNodes.length > 0) {
+                    let hull = d3.polygonHull(DataUtil.getPaddedPoints(clusterNodes, Padding.NODE)).map(p => { return { x: p[0], y: p[1] } });
+                    let levelNode = mLevels.find(l => l.id == level.id);
+                    mDrawingUtil.drawBubble(hull, levelNode, mColorMap(level.id), 0.4);
+                }
+            })
+        } else {
+            let startLabel, endLabel;
+            if (dimension.channel == ChannelType.SIZE) {
+                startLabel = mMinSize;
+                endLabel = mMaxSize;
+            } else if (dimension.channel == ChannelType.POSITION) {
+                startLabel = "0%";
+                endLabel = "100%";
+            } else if (dimension.channel == ChannelType.ANGLE) {
+                startLabel = "-180°";
+                endLabel = "180°";
+            } else {
+                console.error("Dimention channel not supported", dimension.channel);
             }
-        })
+
+            mDrawingUtil.drawAxis({
+                start: { x: mAxisX, y: mAxisTop },
+                end: { x: mAxisX, y: mAxisBottom },
+                startLabel, endLabel
+            });
+
+            mLinks.forEach(link => {
+                mDrawingUtil.drawLinkLine({
+                    start: link.source,
+                    end: link.target
+                });
+            })
+        }
 
         drawDimension();
 
@@ -183,7 +278,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
             mDrawingUtil.drawStringNode({
                 x: AxisPositions.LEVEL_X,
                 y: mAddButton.y,
-                label: "Add Level +",
+                label: ADD_LEVEL_LABEL,
                 height: Size.LEVEL_SIZE,
                 outline: mSelectionIds.includes(ADD_BUTTON_ID) ? mColorMap(ADD_BUTTON_ID) : null,
                 shadow: mHighlightIds.includes(ADD_BUTTON_ID),

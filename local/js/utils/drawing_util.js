@@ -683,6 +683,41 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         return width;
     }
 
+    const LABEL_FONT_HEIGHT = 10;
+    function drawAxis({ start, end, startLabel, endLabel }) {
+        ctx.save();
+        ctx.strokeStyle = "black";
+        ctx.beginPath();
+        ctx.moveTo(start.x, start.y);
+        ctx.lineTo(end.x, end.y);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.save();
+        ctx.fillStyle = 'black';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left'
+        ctx.font = LABEL_FONT_HEIGHT + TEXT_FONT_STRING;
+        ctx.fillText(startLabel, start.x, start.y);
+        ctx.fillText(endLabel, end.x, end.y);
+        ctx.restore();
+    }
+
+    function drawLinkLine({ start, end }) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(start.x, start.y);
+        ctx.lineTo(end.x, end.y);
+        ctx.setLineDash([5 / mScale, 10 / mScale]);
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2 / mScale;
+        ctx.stroke();
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 1 / mScale;
+        ctx.stroke();
+        ctx.restore();
+    }
+
     return {
         reset,
         resetInterface,
@@ -712,5 +747,7 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         drawBand,
         drawStringNode,
         measureStringNode,
+        drawAxis,
+        drawLinkLine,
     }
 }
