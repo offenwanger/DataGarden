@@ -545,7 +545,7 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         intfCtx.restore();
     }
 
-    function drawRoot(root) {
+    function drawRoot(root, position) {
         intfCtx.save();
         intfCtx.beginPath();
         intfCtx.arc(root.x, root.y, 5, 0, 2 * Math.PI);
@@ -555,6 +555,20 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         intfCtx.strokeStyle = "green";
         intfCtx.lineWidth = 2 / mScale;
         intfCtx.stroke();
+
+        if (position) {
+            intfCtx.setLineDash([5 / mScale, 5 / mScale]);
+            intfCtx.beginPath();
+            intfCtx.moveTo(root.x, root.y)
+            intfCtx.lineTo(position.x, position.y)
+            intfCtx.strokeStyle = "white";
+            intfCtx.lineWidth = 2 / mScale;
+            intfCtx.stroke();
+            intfCtx.strokeStyle = "green";
+            intfCtx.lineWidth = 1 / mScale;
+            intfCtx.stroke();
+        }
+
         intfCtx.restore();
     }
 

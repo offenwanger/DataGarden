@@ -42,10 +42,20 @@ function CanvasController(mColorMap) {
     let mSelectionIds = [];
 
     let mModel = new DataModel();
+    let mProjections = {};
     let mInteraction = null;
 
     function onModelUpdate(model) {
         mModel = model;
+        mProjections = {};
+        let elements = model.getElements();
+        elements.forEach(element => {
+            if (element.parentId) {
+                let parent = elements.find(e => e.id == element.parentId);
+                if (!parent) { console.error("Invalid parent id!", element.parentId); return; }
+                mProjections[element.id] = PathUtil.getPositionForPercent(parent.spine, element.position);
+            }
+        })
         draw();
     }
 
@@ -266,7 +276,7 @@ function CanvasController(mColorMap) {
         if (mStructureMode) {
             mModel.getElements().forEach(elem => {
                 mDrawingUtil.drawSpine(elem.spine)
-                mDrawingUtil.drawRoot(elem.root)
+                mDrawingUtil.drawRoot(elem.root, mProjections[elem.id])
                 mDrawingUtil.drawAngle(elem.root, elem.angle)
             });
         }

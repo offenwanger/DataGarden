@@ -24,8 +24,28 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     mDashboardController.setParentUpdateCallback((elementIds, parentElementId) => {
         elementIds.forEach(elementId => {
-            ModelUtil.updateParent(parentElementId, elementId, mModelController)
-        })
+            ModelUtil.updateParent(parentElementId, elementId, mModelController);
+        });
+
+        // get the model again so all the elements will have the correct data.
+        let model = mModelController.getModel();
+        let parent = null;
+        if (parentElementId) {
+            parent = mModelController.getModel().getElement(parentElementId);
+            if (!parent) { console.error("Invalid element id", parentElementId); return; }
+        }
+        elementIds.forEach(elementId => {
+            // update position
+            let element = model.getElement(elementId);
+            if (!element) { console.error("Invalid element id", elementId); return; }
+            if (parent) {
+                let projection = PathUtil.getClosestPointOnPath(element.root, parent.spine);
+                element.position = projection.percent;
+            } else {
+                element.position = null;
+            }
+            mModelController.updateElement(element);
+        });
 
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
