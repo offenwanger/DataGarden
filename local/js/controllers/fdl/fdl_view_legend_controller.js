@@ -22,7 +22,6 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
         .alpha(0.3)
         .on("tick", () => {
             mSimulation.nodes().forEach(n => {
-                n.x = IdUtil.isType(n.id, Data.Dimension) ? AxisPositions.DIMENSION_X : AxisPositions.LEVEL_X;
                 let id = n.id;
                 if (id == DimensionValueId.V1 || id == DimensionValueId.V2) id = n.dimension + n.id;
                 n.y += (mYPositions[id] - n.y) * mSimulation.alpha();
