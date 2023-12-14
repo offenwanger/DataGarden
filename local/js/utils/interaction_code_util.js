@@ -5,14 +5,6 @@ let CodeUtil = function () {
     let mReverseInteractionLookup = {};
     let mColorIndex = 100;
 
-    function getId(hex) {
-        if (mInteractionLookup[hex]) {
-            return mInteractionLookup[hex];
-        } else {
-            return null;
-        }
-    }
-
     function getCode(id, type = NO_TYPE) {
         if (mReverseInteractionLookup[id + "_" + type]) {
             return mReverseInteractionLookup[id + "_" + type];
@@ -31,7 +23,14 @@ let CodeUtil = function () {
             screenCoords.x - boundingBox.x < boundingBox.width && screenCoords.y - boundingBox.y < boundingBox.height) {
             let p = ctx.getImageData(screenCoords.x - boundingBox.x, screenCoords.y - boundingBox.y, 1, 1).data;
             let hex = DataUtil.rgbToHex(p[0], p[1], p[2]);
-            return getId(hex);
+            if (hex == "#000000") return null;
+            if (!mInteractionLookup[hex]) {
+                // alising problem, recursively shuffle 1 over until we get a valid target. 
+                // shouldn't loop as we will eventually wander off the screen. 
+                return getTarget({ x: screenCoords.x + 1, y: screenCoords.y }, interactionCanvas)
+            } else {
+                return mInteractionLookup[hex];
+            }
         } else {
             return null;
         }
@@ -44,7 +43,6 @@ let CodeUtil = function () {
     }
 
     return {
-        getId,
         getCode,
         getTarget,
         clear,

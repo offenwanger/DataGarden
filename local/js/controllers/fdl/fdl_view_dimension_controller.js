@@ -45,6 +45,9 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
 
     let mLinks = [];
 
+    let mTargetLock = null;
+    let mDraggedItems = [];
+
     let mSimulation = d3.forceSimulation()
         .alphaDecay(Decay.ALPHA)
         .velocityDecay(Decay.VELOCITY)
@@ -66,6 +69,15 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         }))
         .alpha(0.3)
         .on("tick", () => {
+
+            // do this for eveything included non-sim items
+            allItems().forEach(node => {
+                if (node.targetX && node.targetY) {
+                    node.x += (node.targetX - node.x) * mSimulation.alpha();
+                    node.y += (node.targetY - node.y) * mSimulation.alpha();
+                }
+            });
+
             mSimulation.nodes().forEach(item => {
                 if (item.id == mDimensionId) {
                     let yTarget = Math.min(0, ...mNodes.map(n => n.y), ...mLevels.map(n => n.y)) - Size.DIMENSION_SIZE - Size.ELEMENT_NODE_SIZE;
@@ -81,6 +93,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                     item.y = item.y += (yTarget - item.y) * mSimulation.alpha();
                 }
             });
+
             draw();
         })
         .stop();
@@ -200,12 +213,16 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
 
 
     function draw() {
+        let draggedIds = mDraggedItems.map(n => n.id);
+
         mDrawingUtil.reset(mZoomTransform);
 
         let dimension = mModel.getDimension(mDimensionId);
         if (dimension.channel == ChannelType.FORM || dimension.channel == ChannelType.COLOR) {
             dimension.levels.forEach(level => {
-                let clusterNodes = mNodes.filter(n => level.elementIds.includes(n.id));
+                let clusterNodes = mNodes
+                    .filter(n => level.elementIds.includes(n.id))
+                    .filter(n => !draggedIds.includes(n.id))
                 if (clusterNodes.length > 0) {
                     let hull = d3.polygonHull(DataUtil.getPaddedPoints(clusterNodes, Padding.NODE)).map(p => { return { x: p[0], y: p[1] } });
                     let levelNode = mLevels.find(l => l.id == level.id);
@@ -257,21 +274,8 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         })
 
         let elements = mNodes.map(n => mModel.getElement(n.id));
-        mNodes.forEach(node => {
-            if (IdUtil.isType(node.id, Data.Element)) {
-                mDrawingUtil.drawThumbnailCircle({
-                    strokes: elements.find(e => e.id == node.id).strokes,
-                    cx: node.x,
-                    cy: node.y,
-                    r: node.radius,
-                    shadow: mHighlightIds.includes(node.id),
-                    outline: mSelectionIds.includes(node.id) ? mColorMap(node.id) : null,
-                    code: node.interacting ? null : mCodeUtil.getCode(node.id, TARGET_ELEMENT)
-                });
-            } else {
-                console.error("Invalid state, this node not supported", node);
-            }
-        });
+        mNodes.filter(n => !draggedIds.includes(n.id)).forEach(node => drawNode(node, elements.find(e => e.id == node.id)));
+        mNodes.filter(n => draggedIds.includes(n.id)).forEach(node => drawNode(node, elements.find(e => e.id == node.id)))
 
         if (mDimensionType == DimensionType.DISCRETE) {
             mDrawingUtil.drawStringNode({
@@ -310,6 +314,22 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         })
     }
 
+    function drawNode(node, element) {
+        if (IdUtil.isType(node.id, Data.Element)) {
+            mDrawingUtil.drawThumbnailCircle({
+                strokes: element.strokes,
+                cx: node.x,
+                cy: node.y,
+                r: node.radius,
+                shadow: mHighlightIds.includes(node.id),
+                outline: mSelectionIds.includes(node.id) ? mColorMap(node.id) : null,
+                code: node.interacting ? null : mCodeUtil.getCode(node.id, TARGET_ELEMENT)
+            });
+        } else {
+            console.error("Invalid state, this node not supported", node);
+        }
+    }
+
     function start() {
         mSimulation.alphaTarget(0.3).restart();
     }
@@ -320,31 +340,45 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
 
     function interactionStart(interaction, modelCoords) {
         if (interaction.type != FdlInteraction.SELECTION) { console.error("Interaction not supported!"); return; }
-        let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
-            .map(target => target.id ? target.id : target);
-        let targetItems = mNodes.concat(mLevels).concat([mDimension, mAddButton]).filter(n => target.includes(n.id));
-        let remainingItems = mNodes.concat(mLevels).concat([mDimension, mAddButton]).filter(n => !target.includes(n.id));
-        targetItems.forEach(item => {
+        mDraggedItems = allItems().filter(n => interaction.target.includes(n.id));
+        mDraggedItems.forEach(item => {
             item.startX = item.x;
             item.startY = item.y;
             item.interacting = true;
         });
 
-        mSimulation.nodes(remainingItems);
+        mSimulation.nodes(allItems().filter(n => !interaction.target.includes(n.id)));
     }
 
     function interactionDrag(interaction, modelCoords) {
         if (interaction.type != FdlInteraction.SELECTION) { console.error("Interaction not supported!"); return; }
-        let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
-            .map(target => target.id ? target.id : target);
-        let targetItems = mNodes.concat(mLevels).concat([mDimension, mAddButton]).filter(n => target.includes(n.id));
-        let dist = VectorUtil.subtract(modelCoords, interaction.start);
-        targetItems.forEach(item => {
-            if (IdUtil.isType(item.id, Data.Element)) {
-                item.x = item.startX + dist.x;
+
+        if (interaction.mouseOverTarget) {
+            if (interaction.mouseOverTarget.id == mTargetLock) {
+                // do nothing
+            } else if (IdUtil.isType(interaction.mouseOverTarget.id, Data.Level)) {
+                mTargetLock = interaction.mouseOverTarget.id;
+                let targetLevel = mLevels.find(n => n.id == mTargetLock);
+                mDraggedItems.forEach(item => {
+                    if (IdUtil.isType(item.id, Data.Element)) {
+                        item.targetX = (targetLevel.x + mDimensionWidth) / 2;
+                        item.targetY = targetLevel.y + Size.LEVEL_SIZE / 2;
+                    }
+                });
             }
-            item.y = item.startY + dist.y;
-        });
+        } else {
+            mTargetLock = null;
+        }
+
+        let dist = VectorUtil.subtract(modelCoords, interaction.start);
+        if (!mTargetLock) {
+            mDraggedItems.forEach(item => {
+                if (IdUtil.isType(item.id, Data.Element)) {
+                    item.targetX = item.startX + dist.x;
+                }
+                item.targetY = item.startY + dist.y;
+            });
+        }
     }
 
     function interactionEnd(interaction, modelCoords) {
@@ -380,19 +414,16 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                         mDrawingUtil.measureStringNode(node.name, Size.LEVEL_SIZE), Size.LEVEL_SIZE)
                 }
             } else {
-                // Handle Drag End
-                let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
-                    .map(target => target.id ? target.id : target);
-
-                let targetItems = mNodes.concat(mLevels).concat([mDimension, mAddButton]).filter(n => target.includes(n.id));
-                targetItems.forEach(item => {
+                mDraggedItems.forEach(item => {
                     item.startX = null;
                     item.startY = null;
+                    item.targetX = null;
+                    item.targetY = null;
                     item.interacting = null;
                 });
 
-                let elementTargets = target.filter(id => IdUtil.isType(id, Data.Element));
-                if (elementTargets.length > 0) {
+                let elementTargetIds = mDraggedItems.map(i => i.id).filter(id => IdUtil.isType(id, Data.Element));
+                if (elementTargetIds.length > 0) {
                     let levelTarget;
                     if (interaction.endTarget && IdUtil.isType(interaction.endTarget.id, Data.Level)) {
                         levelTarget = interaction.endTarget.id;
@@ -401,9 +432,11 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                     } else if (modelCoords.y < Math.min(...mLevels.concat([mDimension]).map(n => n.y))) {
                         levelTarget = null;
                     }
-                    mUpdateLevelCallback(mDimensionId, levelTarget, elementTargets);
+                    mUpdateLevelCallback(mDimensionId, levelTarget, elementTargetIds);
                 }
-                mSimulation.nodes(mNodes.concat(mLevels).concat([mDimension, mAddButton]));
+
+                mDraggedItems = [];
+                mSimulation.nodes(allItems());
             }
         } else if (interaction.type == FdlInteraction.LASSO) {
             mOverlayUtil.reset(mZoomTransform);
@@ -437,6 +470,10 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
             y: mZoomTransform.y,
             k: mZoomTransform.k,
         }
+    }
+
+    function allItems() {
+        return mNodes.concat(mLevels).concat([mDimension, mAddButton]);
     }
 
     return {

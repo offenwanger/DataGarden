@@ -1,5 +1,6 @@
 function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap) {
     const TARGET_ELEMENT = 'elementTarget';
+    const TARGET_LOCK = "target_lock";
 
     const DIVISION_SIZE = Size.ELEMENT_NODE_SIZE * 10;
 
@@ -9,6 +10,9 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
     let mModel = new DataModel();
     // TODO: Actually check screen size on this
     let mZoomTransform = d3.zoomIdentity.translate(500, 300);
+
+    let mTargetLock = null;
+    let mDraggedNodes = [];
 
     let mParentUpdateCallback = () => { };
 
@@ -22,7 +26,15 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
         .force("link", d3.forceLink().id(d => d.id))
         .force("tree-level", d3.forceY((d => (d.treeLevel + 0.5) * DIVISION_SIZE)).strength(0.7))
         .alpha(0.3)
-        .on("tick", () => { draw(); })
+        .on("tick", () => {
+            mNodes.forEach(node => {
+                if (node.targetX && node.targetY) {
+                    node.x += (node.targetX - node.x) * mSimulation.alpha();
+                    node.y += (node.targetY - node.y) * mSimulation.alpha();
+                }
+            })
+            draw();
+        })
         .stop();
 
     function draw() {
@@ -50,28 +62,45 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
         let elements = mNodes.map(n => mModel.getElement(n.id));
         let parents = DataUtil.unique(elements.map(e => e.parentId).filter(p => p));
         parents.forEach(parentId => {
+            let draggedIds = mDraggedNodes.map(n => n.id);
             let clusterNodes = elements.filter(e => e.parentId == parentId).map(e => mNodes.find(n => n.id == e.id));
             if (clusterNodes.length == 0) { console.error("Invalid cluster, no nodes", c); return; }
+            clusterNodes = clusterNodes.filter(n => !draggedIds.includes(n.id))
+            if (clusterNodes.length == 0) return;
             let hull = d3.polygonHull(DataUtil.getPaddedPoints(clusterNodes, Padding.NODE)).map(p => { return { x: p[0], y: p[1] } });
             let parentNode = mNodes.find(n => n.id == parentId);
             mDrawingUtil.drawBubble(hull, parentNode, mColorMap(parentId), 0.4);
         })
 
-        mNodes.forEach(node => {
-            if (IdUtil.isType(node.id, Data.Element)) {
-                mDrawingUtil.drawThumbnailCircle({
-                    strokes: elements.find(e => e.id == node.id).strokes,
-                    cx: node.x,
-                    cy: node.y,
-                    r: node.radius,
-                    shadow: mHighlightIds.includes(node.id),
-                    outline: mSelectionIds.includes(node.id) ? mColorMap(node.id) : null,
-                    code: node.interacting ? null : mCodeUtil.getCode(node.id, TARGET_ELEMENT)
-                });
-            } else {
-                console.error("Invalid state, this node not supported", node);
-            }
-        });
+        if (mTargetLock) {
+            let targetNode = mNodes.find(n => n.id == mTargetLock);
+            mDrawingUtil.drawCircleTarget({
+                cx: targetNode.x,
+                cy: targetNode.y,
+                r: targetNode.radius * 3,
+                code: mCodeUtil.getCode(mTargetLock, TARGET_LOCK)
+            })
+        }
+
+        let draggedIds = mDraggedNodes.map(n => n.id);
+        mNodes.filter(n => !draggedIds.includes(n.id)).forEach(node => drawNode(node, elements.find(e => e.id == node.id)));
+        mDraggedNodes.forEach(node => drawNode(node, elements.find(e => e.id == node.id)))
+    }
+
+    function drawNode(node, element) {
+        if (IdUtil.isType(node.id, Data.Element)) {
+            mDrawingUtil.drawThumbnailCircle({
+                strokes: element.strokes,
+                cx: node.x,
+                cy: node.y,
+                r: node.radius,
+                shadow: mHighlightIds.includes(node.id),
+                outline: mSelectionIds.includes(node.id) ? mColorMap(node.id) : null,
+                code: node.interacting ? null : mCodeUtil.getCode(node.id, TARGET_ELEMENT)
+            });
+        } else {
+            console.error("Invalid state, this node not supported", node);
+        }
     }
 
     function updateSimulationData(data, model) {
@@ -120,56 +149,68 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
 
     function interactionStart(interaction, modelCoords) {
         if (interaction.type != FdlInteraction.SELECTION) { console.error("Interaction not supported!"); return; }
-        let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
-            .map(target => target.id ? target.id : target);
-        let targetNodes = mNodes.filter(n => target.includes(n.id));
-        let remainingNodes = mNodes.filter(n => !target.includes(n.id));
-        targetNodes.forEach(node => {
+        mDraggedNodes = mNodes.filter(n => interaction.target.includes(n.id));
+        mDraggedNodes.forEach(node => {
             node.startX = node.x;
             node.startY = node.y;
             node.interacting = true;
         });
 
+        let remainingNodes = mNodes.filter(n => !interaction.target.includes(n.id));
         mSimulation.nodes(remainingNodes);
     }
 
     function interactionDrag(interaction, modelCoords) {
         if (interaction.type != FdlInteraction.SELECTION) { console.error("Interaction not supported!"); return; }
-        let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
-            .map(target => target.id ? target.id : target);
-        let targetNodes = mNodes.filter(n => target.includes(n.id));
-        let dist = VectorUtil.subtract(modelCoords, interaction.start);
-        targetNodes.forEach(node => {
-            node.x = node.startX + dist.x;
-            node.y = node.startY + dist.y;
-        });
+        if (interaction.mouseOverTarget) {
+            if (interaction.mouseOverTarget.id == mTargetLock) {
+                // do nothing
+            } else if (interaction.mouseOverTarget.type == TARGET_ELEMENT) {
+                mTargetLock = interaction.mouseOverTarget.id;
+                let targetNode = mNodes.find(n => n.id == mTargetLock);
+                mDraggedNodes.forEach(node => {
+                    node.targetX = targetNode.x + Size.ELEMENT_NODE_SIZE * (1 - + Math.random() * 2);
+                    node.targetY = targetNode.y + Size.ELEMENT_NODE_SIZE * (1 + Math.random());
+                });
+            }
+        } else {
+            mTargetLock = null;
+        }
 
+        if (!mTargetLock) {
+            let dist = VectorUtil.subtract(modelCoords, interaction.start);
+            mDraggedNodes.forEach(node => {
+                node.targetX = node.startX + dist.x;
+                node.targetY = node.startY + dist.y;
+            });
+        }
     }
 
     function interactionEnd(interaction, modelCoords) {
         if (interaction.type == FdlInteraction.SELECTION) {
-            let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
-                .map(target => target.id ? target.id : target);
-            let targetNodes = mNodes.filter(n => target.includes(n.id));
             let dist = VectorUtil.subtract(modelCoords, interaction.start);
-            targetNodes.forEach(node => {
+            mDraggedNodes.forEach(node => {
                 if (!interaction.endTarget) {
                     node.x = node.startX + dist.x;
                     node.y = node.startY + dist.y;
                 }
                 node.startX = null;
                 node.startY = null;
+                node.targetX = null;
+                node.targetY = null;
                 node.interacting = null;
             });
 
             if (interaction.endTarget && IdUtil.isType(interaction.endTarget.id, Data.Element)) {
-                mParentUpdateCallback(targetNodes.map(n => n.id), interaction.endTarget.id);
+                mParentUpdateCallback(mDraggedNodes.map(n => n.id), interaction.endTarget.id);
             } else if (!interaction.endTarget) {
                 if (modelCoords.y < Math.min(...mNodes.filter(n => n.treeLevel == 0).map(n => n.y))) {
-                    mParentUpdateCallback(targetNodes.map(n => n.id), null);
+                    mParentUpdateCallback(mDraggedNodes.map(n => n.id), null);
                 }
             }
 
+            mDraggedNodes = [];
+            mTargetLock = null;
             mSimulation.nodes(mNodes);
         } else if (interaction.type == FdlInteraction.LASSO) {
             mOverlayUtil.reset(mZoomTransform);

@@ -718,6 +718,15 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         ctx.restore();
     }
 
+    function drawCircleTarget({ cx, cy, r, code }) {
+        intCtx.save();
+        intCtx.fillStyle = code;
+        intCtx.beginPath();
+        intCtx.arc(cx, cy, r, 0, 2 * Math.PI);
+        intCtx.fill();
+        intCtx.restore();
+    }
+
     return {
         reset,
         resetInterface,
@@ -749,5 +758,6 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         measureStringNode,
         drawAxis,
         drawLinkLine,
+        drawCircleTarget,
     }
 }

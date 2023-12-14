@@ -259,6 +259,7 @@ function FdlViewController(mColorMap) {
                 mActiveViewController.zoom(transformX, transformY, scale);
             } else if (mInteraction.type == FdlInteraction.SELECTION) {
                 let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
+                mInteraction.mouseOverTarget = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
                 mActiveViewController.interactionDrag(mInteraction, modelCoords);
             } else if (mInteraction.type == FdlInteraction.LASSO) {
                 let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
@@ -268,14 +269,14 @@ function FdlViewController(mColorMap) {
             } else {
                 console.error("Unimplimented!")
             }
-        } else {
-            let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
-            if (target) {
-                mHighlightIds = [target.id]
-                mHighlightCallback(mHighlightIds);
-            } else if (!ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
-                mHighlightCallback([]);
-            }
+        }
+
+        let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
+        if (target) {
+            mHighlightIds = [target.id]
+            mHighlightCallback(mHighlightIds);
+        } else if (!ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
+            mHighlightCallback([]);
         }
     }
 
