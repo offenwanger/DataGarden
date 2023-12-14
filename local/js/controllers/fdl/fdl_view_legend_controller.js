@@ -5,7 +5,6 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
 
     let mAddDimensionCallback = () => { };
     let mClickDimensionCallback = () => { };
-    let mSelectionCallback = () => { };
 
     let mZoomTransform = d3.zoomIdentity.translate(0, 300);
 
@@ -171,7 +170,7 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
             mOverlayUtil.reset(mZoomTransform);
             mOverlayUtil.drawBubble(interaction.path);
             let selectedIds = mDimensions.concat(mLevels).filter(obj => mOverlayUtil.covered(obj)).map(n => n.id);
-            mSelectionCallback(selectedIds);
+            return selectedIds;
         } else { console.error("Interaction not supported!"); return; }
     }
 
@@ -218,6 +217,5 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
         getZoomTransform,
         setAddDimensionCallback: (func) => mAddDimensionCallback = func,
         setClickDimensionCallback: (func) => mClickDimensionCallback = func,
-        setSelectionCallback: (func) => mSelectionCallback = func,
     }
 }

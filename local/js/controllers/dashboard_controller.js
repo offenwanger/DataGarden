@@ -13,20 +13,16 @@ function DashboardController() {
     let mContextMenu = new ContextMenu(d3.select('#interface-svg'));
     let mTextInput = new TextInput();
     let mDropdownInput = new DropdownInput();
-    let mKeyBinding = new KeyBinding();
+    let mSystemState = new SystemState();
 
     let mModel = new DataModel();
 
     let mCanvasPercent = 0.5;
     let mWidth = 0;
 
-    let mDefaultToolState = Buttons.SELECTION_BUTTON;
-    let mToolState = Buttons.SELECTION_BUTTON;
-
     mMenuController.deactivateAll();
-    mMenuController.activateButton(mToolState);
+    mMenuController.activateButton(mSystemState.getToolState());
 
-    let mStructureMode = false;
     let mFdlActive = true;
 
     let mAddDimensionCallback = () => { };
@@ -72,26 +68,26 @@ function DashboardController() {
     function onPointerDown(screenCoords) {
         mContextMenu.hideContextMenu();
         if (screenCoords.x < mWidth * mCanvasPercent) {
-            mCanvasController.onPointerDown(screenCoords, mToolState);
+            mCanvasController.onPointerDown(screenCoords, mSystemState);
         } else if (screenCoords.y < TAB_HEIGHT) {
-            mTabController.onPointerDown(screenCoords, mToolState)
+            mTabController.onPointerDown(screenCoords, mSystemState)
         } else if (mFdlActive) {
-            mFdlViewController.onPointerDown(screenCoords, mToolState)
+            mFdlViewController.onPointerDown(screenCoords, mSystemState)
         } else {
             // The table is active and will handle it's own mouse events. I hope.
         }
     }
 
     function onPointerMove(screenCoords) {
-        mCanvasController.onPointerMove(screenCoords, mToolState);
-        mTabController.onPointerMove(screenCoords, mToolState);
-        mFdlViewController.onPointerMove(screenCoords, mToolState);
+        mCanvasController.onPointerMove(screenCoords, mSystemState);
+        mTabController.onPointerMove(screenCoords, mSystemState);
+        mFdlViewController.onPointerMove(screenCoords, mSystemState);
     }
 
     function onPointerUp(screenCoords) {
-        mCanvasController.onPointerUp(screenCoords, mToolState);
-        mTabController.onPointerUp(screenCoords, mToolState);
-        mFdlViewController.onPointerUp(screenCoords, mToolState);
+        mCanvasController.onPointerUp(screenCoords, mSystemState);
+        mTabController.onPointerUp(screenCoords, mSystemState);
+        mFdlViewController.onPointerUp(screenCoords, mSystemState);
     }
 
     function onDblClick(screenCoords) {
@@ -103,14 +99,9 @@ function DashboardController() {
     }
 
     function onKeyStateChange(keysDown) {
-        let activeButton = mKeyBinding.getState(keysDown);
-        if (activeButton) {
-            mToolState = activeButton;
-        } else {
-            mToolState = mDefaultToolState;
-        }
+        mSystemState.setKeys(keysDown);
         mMenuController.deactivateAll();
-        mMenuController.activateButton(mToolState);
+        mMenuController.activateButton(mSystemState.getToolState());
     }
 
     function onUndo() {
@@ -288,23 +279,20 @@ function DashboardController() {
             button == Buttons.SELECTION_BUTTON ||
             button == Buttons.PANNING_BUTTON ||
             button == Buttons.ZOOM_BUTTON) {
-            if (mToolState == mDefaultToolState) {
-                mMenuController.deactivateButton(mDefaultToolState);
+            if (mSystemState.isDefaultToolState()) {
+                mMenuController.deactivateButton(mSystemState.getToolState());
                 mMenuController.activateButton(button);
             }
-            mDefaultToolState = button;
-            mToolState = button;
+            mSystemState.setDefaultToolState(button)
         } else if (button == Buttons.VIEW_BUTTON) {
-            if (mStructureMode) {
-                mStructureMode = false;
+            mSystemState.toggleStructureViewActive();
+            if (mSystemState.isStructureViewActive()) {
                 mMenuController.deactivateButton(button);
             } else {
-                mStructureMode = true;
                 mMenuController.activateButton(button);
             }
-            mCanvasController.setStructureMode(mStructureMode);
+            mCanvasController.setStructureMode(mSystemState.isStructureViewActive());
         }
-
     })
 
     return {

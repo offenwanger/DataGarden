@@ -11,7 +11,6 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
     let mZoomTransform = d3.zoomIdentity.translate(500, 300);
 
     let mParentUpdateCallback = () => { };
-    let mSelectionCallback = () => { };
 
     let mNodes = [];
     let mLinks = [];
@@ -176,7 +175,7 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
             mOverlayUtil.reset(mZoomTransform);
             mOverlayUtil.drawBubble(interaction.path);
             let selectedNodes = mNodes.filter(node => mOverlayUtil.covered(node)).map(n => n.id);
-            mSelectionCallback(selectedNodes);
+            return selectedNodes;
         } else { console.error("Interaction not supported!"); return; }
     }
 
@@ -218,7 +217,6 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
         getTranslate,
         getZoomTransform,
         setParentUpdateCallback: (func) => mParentUpdateCallback = func,
-        setSelectionCallback: (func) => mSelectionCallback = func,
         start,
         stop,
     }

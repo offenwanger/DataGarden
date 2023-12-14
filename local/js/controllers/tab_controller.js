@@ -59,14 +59,14 @@ function TabController() {
         draw();
     }
 
-    function onPointerDown(screenCoords, toolState) {
+    function onPointerDown(screenCoords, systemState) {
         let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
         if (target) {
             mInteraction = target.id;
         }
     }
 
-    function onPointerMove(screenCoords, toolState) {
+    function onPointerMove(screenCoords, systemState) {
         if (!mInteraction) {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target) {
@@ -82,7 +82,7 @@ function TabController() {
         }
     }
 
-    function onPointerUp(screenCoords, toolState) {
+    function onPointerUp(screenCoords, systemState) {
         let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
         if (target && target.id == mInteraction) {
             if (target.type == TAB_TARGET) {

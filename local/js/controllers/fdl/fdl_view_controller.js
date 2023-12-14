@@ -186,40 +186,47 @@ function FdlViewController(mColorMap) {
         mOverlayUtil.onResize(width, height);
     }
 
-    function onPointerDown(screenCoords, toolState) {
+    function onPointerDown(screenCoords, systemState) {
         if (ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
-            console.error("Bad event state", screenCoords, toolState); return;
+            console.error("Bad event state", screenCoords, systemState.getToolState()); return;
         };
 
-        if (toolState == Buttons.PANNING_BUTTON) {
+        if (systemState.getToolState() == Buttons.PANNING_BUTTON) {
             mInteraction = {
                 type: FdlInteraction.PANNING,
                 start: screenCoords,
                 startTransform: mActiveViewController.getTranslate(),
             }
-        } else if (toolState == Buttons.ZOOM_BUTTON) {
+        } else if (systemState.getToolState() == Buttons.ZOOM_BUTTON) {
             mInteraction = {
                 type: FdlInteraction.ZOOMING,
                 start: screenCoords,
                 startTransform: mActiveViewController.getTranslate(),
                 scale: mActiveViewController.getScale(),
             }
-        } else if (toolState == Buttons.SELECTION_BUTTON) {
+        } else if (systemState.getToolState() == Buttons.SELECTION_BUTTON || systemState.getToolState() == Buttons.BRUSH_BUTTON) {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target) {
-                mInteraction = {
-                    type: FdlInteraction.SELECTION,
-                    start: screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale()),
-                    startTarget: target,
-                }
+                if (systemState.isCtrl()) {
+                    mSelectionIds.splice(mSelectionIds.indexOf(target.id), 1);
+                    mSelectionCallback(DataUtil.unique(mSelectionIds));
+                } else {
+                    if (systemState.isShift()) {
+                        mSelectionIds.push(target.id);
+                        mSelectionCallback(mSelectionIds);
+                    } else if (!mSelectionIds.includes(target.id)) {
+                        mSelectionIds = [target.id];
+                        mSelectionCallback(mSelectionIds);
+                    }
 
-                if (!mSelectionIds.includes(target.id)) {
-                    mSelectionIds = [target.id];
-                    mSelectionCallback(mSelectionIds)
+                    mInteraction = {
+                        type: FdlInteraction.SELECTION,
+                        start: screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale()),
+                        startTarget: target,
+                    }
+                    mInteraction.target = mSelectionIds;
+                    mActiveViewController.interactionStart(mInteraction, mInteraction.start);
                 }
-
-                mInteraction.target = mSelectionIds;
-                mActiveViewController.interactionStart(mInteraction, mInteraction.start);
             } else {
                 let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
                 mActiveViewController.stop();
@@ -228,14 +235,16 @@ function FdlViewController(mColorMap) {
                     path: [modelCoords]
                 }
             }
+        } else {
+            console.error("Unhandled state!", systemState.getToolState());
         }
     }
 
-    function onDblClick(screenCoords, toolState) {
+    function onDblClick(screenCoords, systemState) {
 
     }
 
-    function onPointerMove(screenCoords, toolState) {
+    function onPointerMove(screenCoords, systemState) {
         if (mInteraction) {
             if (mInteraction.type == FdlInteraction.PANNING) {
                 let mouseDist = VectorUtil.subtract(screenCoords, mInteraction.start);
@@ -270,7 +279,7 @@ function FdlViewController(mColorMap) {
         }
     }
 
-    function onPointerUp(screenCoords, toolState) {
+    function onPointerUp(screenCoords, systemState) {
         let interaction = mInteraction;
         mInteraction = null;
 
@@ -282,7 +291,14 @@ function FdlViewController(mColorMap) {
             mDrawingUtil.resetInterface(mActiveViewController.getZoomTransform());
             mActiveViewController.start();
             let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
-            mActiveViewController.interactionEnd(interaction, modelCoords);
+            let selectedIds = mActiveViewController.interactionEnd(interaction, modelCoords);
+            if (systemState.isShift()) {
+                mSelectionCallback(DataUtil.unique(mSelectionIds.concat(selectedIds)))
+            } else if (systemState.isCtrl()) {
+                mSelectionCallback(mSelectionIds.filter(id => !selectedIds.includes(id)));
+            } else {
+                mSelectionCallback(selectedIds);
+            }
         }
     }
 
@@ -347,19 +363,6 @@ function FdlViewController(mColorMap) {
 
         mEditTierCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
     })
-
-    mFdlDimensionViewController.setSelectionCallback((selectedIds) => {
-        // TODO: Check if we are appending to the selection or not
-        mSelectionCallback(selectedIds);
-    });
-
-    mFdlLegendViewController.setSelectionCallback((selectedIds) => {
-        mSelectionCallback(selectedIds);
-    });
-
-    mFdlParentViewController.setSelectionCallback((selectedIds) => {
-        mSelectionCallback(selectedIds);
-    });
 
     function screenToModelCoords(screenCoords, translate, scale) {
         let boundingBox = mInterfaceCanvas.node().getBoundingClientRect();

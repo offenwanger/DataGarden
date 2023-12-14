@@ -108,7 +108,7 @@ function getIntegrationEnviroment() {
         MenuButton: rewireJs('menu/menu_button.js').__get__("MenuButton"),
         ToolTip: rewireJs('menu/tooltip.js').__get__("ToolTip"),
         VersionController: rewireJs('controllers/version_controller.js').__get__("VersionController"),
-        KeyBinding: rewireJs('controllers/key_binding_controller.js').__get__("KeyBinding"),
+        SystemState: rewireJs('controllers/system_state_controller.js').__get__("SystemState"),
         MemoryStash: rewireJs('controllers/version_controller.js').__get__("MemoryStash"),
         ServerController: rewireJs('controllers/server_controller.js').__get__("ServerController"),
         ModelController: snagConstructor(rewireJs('controllers/model_controller.js'), "ModelController"),

@@ -90,10 +90,10 @@ function CanvasController(mColorMap) {
         draw();
     }
 
-    function onPointerDown(screenCoords, toolState) {
+    function onPointerDown(screenCoords, systemState) {
         if (ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) return;
 
-        if (toolState == Buttons.PANNING_BUTTON) {
+        if (systemState.getToolState() == Buttons.PANNING_BUTTON) {
             mInteraction = {
                 type: PANNING,
                 x: mZoomTransform.x,
@@ -101,7 +101,7 @@ function CanvasController(mColorMap) {
                 scale: mZoomTransform.k,
                 start: screenCoords,
             };
-        } else if (toolState == Buttons.ZOOM_BUTTON) {
+        } else if (systemState.getToolState() == Buttons.ZOOM_BUTTON) {
             let zoomCenter = screenToModelCoords(screenCoords);
             mInteraction = {
                 type: ZOOMING,
@@ -112,16 +112,24 @@ function CanvasController(mColorMap) {
                 scale: mZoomTransform.k,
                 start: screenCoords,
             };
-        } else if (toolState == Buttons.BRUSH_BUTTON) {
+        } else if (systemState.getToolState() == Buttons.BRUSH_BUTTON && !systemState.isShift() && !systemState.isCtrl()) {
             mInteraction = {
                 type: DRAWING,
                 currentStroke: [screenToModelCoords(screenCoords)]
             };
-        } else if (toolState == Buttons.SELECTION_BUTTON) {
+        } else if (systemState.getToolState() == Buttons.SELECTION_BUTTON ||
+            (systemState.getToolState() == Buttons.BRUSH_BUTTON && (systemState.isShift() || systemState.isCtrl()))) {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target) {
-                // TODO: check for shift select
-                if (!mSelectionIds.includes(target.id)) {
+                if (systemState.isShift()) {
+                    mSelectionIds.push(target.id);
+                    mSelectionCallback(mSelectionIds);
+                } else if (systemState.isCtrl()) {
+                    if (mSelectionIds.includes(target.id)) {
+                        mSelectionIds.splice(mSelectionIds.indexOf(target.id), 1);
+                        mSelectionCallback(mSelectionIds);
+                    }
+                } else if (!mSelectionIds.includes(target.id)) {
                     mSelectionIds = [target.id];
                     mSelectionCallback(mSelectionIds);
                 }
@@ -137,14 +145,14 @@ function CanvasController(mColorMap) {
                 };
             }
             return true;
-        } else if (toolState == Buttons.SHIFT_SELECTION_BUTTON) {
+        } else if (systemState.getToolState() == Buttons.SHIFT_SELECTION_BUTTON) {
             // start select interaction
         }
 
         draw();
     }
 
-    function onPointerMove(screenCoords, toolState) {
+    function onPointerMove(screenCoords, systemState) {
         if (mInteraction && mInteraction.type == PANNING) {
             let mouseDist = VectorUtil.subtract(screenCoords, mInteraction.start);
             let translate = VectorUtil.add(mInteraction, mouseDist);
@@ -164,11 +172,11 @@ function CanvasController(mColorMap) {
             console.error("impliment me!")
         } else if (mInteraction) {
             console.error("Not Handled!", mInteraction);
-        } else if (toolState == Buttons.BRUSH_BUTTON) {
+        } else if (systemState.getToolState() == Buttons.BRUSH_BUTTON) {
             mBrushActivePosition = [screenToModelCoords(screenCoords)];
         }
 
-        if (toolState == Buttons.SELECTION_BUTTON) {
+        if (systemState.getToolState() == Buttons.SELECTION_BUTTON) {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target) {
                 let element = mModel.getElementForStroke(target.id);
@@ -180,11 +188,11 @@ function CanvasController(mColorMap) {
             }
         }
 
-        if (mBrushActivePosition && toolState != Buttons.BRUSH_BUTTON) {
+        if (mBrushActivePosition && systemState.getToolState() != Buttons.BRUSH_BUTTON) {
             mBrushActivePosition = false;
         }
 
-        if (mHighlightIds && toolState != Buttons.SELECTION_BUTTON) {
+        if (mHighlightIds && systemState.getToolState() != Buttons.SELECTION_BUTTON) {
             mHighlightIds = [];
             mHighlightCallback([]);
         }
@@ -192,26 +200,31 @@ function CanvasController(mColorMap) {
         draw();
     }
 
-    function onPointerUp(screenCoords, toolState) {
+    function onPointerUp(screenCoords, systemState) {
         let interaction = mInteraction;
         mInteraction = null;
 
         if (interaction && interaction.type == DRAWING && interaction.currentStroke.length > 1) {
             mNewStrokeCallback(new Data.Stroke(interaction.currentStroke, mBrushOptions.size, mBrushOptions.color))
         } else if (interaction && interaction.type == LASSO) {
-            // TODO: Check for shift/ctrl
-            mSelectionIds = [];
+            if (!systemState.isShift() && !systemState.isCtrl()) {
+                mSelectionIds = [];
+            }
             mModel.getStrokes().forEach(stroke => {
                 let coveredPoints = stroke.path.reduce((count, p) => {
                     if (interfaceIsCovered(modelToScreenCoords(p))) { count++; }
                     return count;
                 }, 0)
                 if (coveredPoints / stroke.path.length > 0.7) {
-                    mSelectionIds.push(stroke.id);
+                    if (systemState.isCtrl()) {
+                        mSelectionIds.splice(mSelectionIds.indexOf(stroke.id), 1);
+                    } else {
+                        mSelectionIds.push(stroke.id);
+                    }
                 }
             })
             mSelectionCallback(mSelectionIds);
-        } else if (interaction && interaction.type == DRAGGING) {
+        } else if (interaction && interaction.type == DRAGGING && !systemState.isShift() && !systemState.isCtrl()) {
             let moveDist = VectorUtil.dist(interaction.start, screenCoords);
             if (moveDist < 5) {
                 mContextMenuCallback(screenCoords, mSelectionIds);

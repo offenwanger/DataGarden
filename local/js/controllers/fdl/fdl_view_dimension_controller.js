@@ -16,7 +16,6 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
     let mEditChannelCallback = () => { }
     let mEditTierCallback = () => { }
     let mUpdateLevelCallback = () => { };
-    let mSelectionCallback = () => { };
 
     let mModel = new DataModel();
     let mDimensionId = null;
@@ -410,7 +409,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
             mOverlayUtil.reset(mZoomTransform);
             mOverlayUtil.drawBubble(interaction.path);
             let selectedIds = mLevels.concat(mNodes).filter(obj => mOverlayUtil.covered(obj)).map(n => n.id);
-            mSelectionCallback(selectedIds);
+            return selectedIds;
         } else { console.error("Interaction not supported!"); return; }
     }
 
@@ -462,6 +461,5 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         setEditChannelCallback: (func) => mEditChannelCallback = func,
         setEditTierCallback: (func) => mEditTierCallback = func,
         setUpdateLevelCallback: (func) => mUpdateLevelCallback = func,
-        setSelectionCallback: (func) => mSelectionCallback = func,
     }
 }
