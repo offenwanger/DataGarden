@@ -180,11 +180,11 @@ function CanvasController(mColorMap) {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target) {
                 let element = mModel.getElementForStroke(target.id);
-                mHighlightIds.push(...element.strokes.map(s => s.id));
+                mHighlightIds = element.strokes.map(s => s.id);
                 mHighlightCallback(mHighlightIds);
             } else {
                 mHighlightIds = [];
-                mHighlightCallback(null);
+                mHighlightCallback([]);
             }
         }
 
