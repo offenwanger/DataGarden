@@ -202,7 +202,6 @@ let DataUtil = function () {
         } else if (dimension.channel == ChannelType.POSITION) {
             if (dimension.type == DimensionType.CONTINUOUS) {
                 let element = model.getElement(elementId);
-                console.log((parseFloat(dimension.domain[1]) - parseFloat(dimension.domain[0])), element.position, parseFloat(dimension.domain[0]))
                 return (parseFloat(dimension.domain[1]) - parseFloat(dimension.domain[0])) * element.position + parseFloat(dimension.domain[0]);
             } else {
                 console.error("Impliment me!")
