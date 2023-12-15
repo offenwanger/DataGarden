@@ -59,6 +59,15 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
             mDrawingUtil.drawBand("lightgrey", top, bottom);
         }
 
+        if (mTargetLock) {
+            let targetNode = mNodes.find(n => n.id == mTargetLock);
+            mDrawingUtil.drawCircleTarget({
+                cx: targetNode.x,
+                cy: targetNode.y,
+                r: targetNode.radius * 3,
+                code: mCodeUtil.getCode(mTargetLock, TARGET_LOCK)
+            })
+        }
 
         let elements = mNodes.map(n => mModel.getElement(n.id));
         let parents = DataUtil.unique(elements.map(e => e.parentId).filter(p => p));
@@ -79,16 +88,6 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
                 code: draggedIds.includes(parentId) ? null : mCodeUtil.getCode(parentId, TARGET_BUBBLE)
             });
         })
-
-        if (mTargetLock) {
-            let targetNode = mNodes.find(n => n.id == mTargetLock);
-            mDrawingUtil.drawCircleTarget({
-                cx: targetNode.x,
-                cy: targetNode.y,
-                r: targetNode.radius * 3,
-                code: mCodeUtil.getCode(mTargetLock, TARGET_LOCK)
-            })
-        }
 
         let draggedIds = mDraggedNodes.map(n => n.id);
         mNodes.filter(n => !draggedIds.includes(n.id)).forEach(node => drawNode(node, elements.find(e => e.id == node.id)));
