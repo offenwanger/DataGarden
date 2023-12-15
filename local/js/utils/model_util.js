@@ -1,16 +1,4 @@
 let ModelUtil = function () {
-    function getStupidSpine(element) {
-        let points = element.strokes.map(s => s.path).flat();
-        let yMax = points.reduce((prev, current) => (prev.y > current.y) ? prev : current);
-        let yMix = points.reduce((prev, current) => (prev.y < current.y) ? prev : current);
-        let xMax = points.reduce((prev, current) => (prev.x > current.x) ? prev : current);
-        let xMin = points.reduce((prev, current) => (prev.x < current.x) ? prev : current);
-        points = [yMax, yMix, xMax, xMin];
-        let pairs = points.flatMap((v, i) => points.slice(i + 1).map(w => [v, w]));
-        let dists = pairs.map(pair => VectorUtil.dist(pair[0], pair[1]));
-        return pairs[dists.findIndex(i => i == Math.max(...dists))];
-    }
-
     function updateParent(parentElementId, elementId, modelController) {
         if (parentElementId == elementId) { console.error("Can't parent a node to itself! " + parentElementId); return; }
         let model = modelController.getModel();
@@ -69,7 +57,6 @@ let ModelUtil = function () {
     }
 
     return {
-        getStupidSpine,
         updateParent,
         mergeElements,
         clearEmptyElements,

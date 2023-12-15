@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
     mDashboardController.setNewStrokeCallback((stroke) => {
         let element = new Data.Element();
         element.strokes.push(stroke);
-        element.spine = ModelUtil.getStupidSpine(element);
+        element.spine = DataUtil.getStupidSpine(element);
         element.root = element.spine[0];
         element.angle = VectorUtil.normalize(VectorUtil.subtract(element.spine[1], element.spine[0]));
 
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         let newElement = new Data.Element();
         newElement.strokes.push(...strokes);
-        newElement.spine = ModelUtil.getStupidSpine(newElement);
+        newElement.spine = DataUtil.getStupidSpine(newElement);
         newElement.root = newElement.spine[0];
         newElement.angle = VectorUtil.normalize(VectorUtil.subtract(newElement.spine[1], newElement.spine[0]));
 
