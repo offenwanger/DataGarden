@@ -320,7 +320,7 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         }
     }
 
-    function drawBubble(outline, pointer, color, alpha, code) {
+    function drawBubble({ outline, pointer, color, alpha, shadow, code }) {
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.fillStyle = color;
@@ -336,18 +336,27 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
             ctx.quadraticCurveTo(extendedOutline[i].x, extendedOutline[i].y, xc, yc);
         }
 
+        let middle, p1, p2, midpoint;
         if (pointer) {
-            let middle = VectorUtil.average([...outline]);
-            let radius = VectorUtil.dist(middle, outline.reduce((max, next) => VectorUtil.dist(middle, next) > VectorUtil.dist(middle, max) ? next : max, outline[0]));
+            middle = VectorUtil.average([...outline]);
             let pointerDirection = VectorUtil.normalize(VectorUtil.subtract(pointer, middle));
-            let p1 = VectorUtil.add(VectorUtil.scale({ x: -pointerDirection.y, y: pointerDirection.x }, radius), middle);
-            let p2 = VectorUtil.add(VectorUtil.scale({ x: pointerDirection.y, y: -pointerDirection.x }, radius), middle);
-            let midpoint = { x: middle.x * 0.9 + pointer.x * 0.1, y: middle.y * 0.9 + pointer.y * 0.1 };
+            let widthX = Math.max(...outline.map(p => p.x)) - Math.min(...outline.map(p => p.x));
+            let widthY = Math.max(...outline.map(p => p.y)) - Math.min(...outline.map(p => p.y))
+            let width = widthX * pointerDirection.y * pointerDirection.y + widthY * pointerDirection.x * pointerDirection.x;
+            p1 = VectorUtil.add(VectorUtil.scale({ x: -pointerDirection.y, y: pointerDirection.x }, width), middle);
+            p2 = VectorUtil.add(VectorUtil.scale({ x: pointerDirection.y, y: -pointerDirection.x }, width), middle);
+            midpoint = { x: middle.x * 0.9 + pointer.x * 0.1, y: middle.y * 0.9 + pointer.y * 0.1 };
             ctx.moveTo(middle.x, middle.y);
             ctx.bezierCurveTo(p1.x, p1.y, midpoint.x, midpoint.y, pointer.x, pointer.y);
             ctx.bezierCurveTo(midpoint.x, midpoint.y, p2.x, p2.y, middle.x, middle.y);
         }
 
+        if (shadow) {
+            ctx.shadowColor = "black";
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+            ctx.shadowBlur = 3;
+        }
         ctx.fill('nonzero');
         ctx.restore();
 
@@ -358,6 +367,11 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
             intCtx.beginPath();
             intCtx.moveTo(outline[outline.length - 1].x, outline[outline.length - 1].y);
             outline.forEach(p => intCtx.lineTo(p.x, p.y));
+            if (pointer) {
+                intCtx.moveTo(middle.x, middle.y);
+                intCtx.bezierCurveTo(p1.x, p1.y, midpoint.x, midpoint.y, pointer.x, pointer.y);
+                intCtx.bezierCurveTo(midpoint.x, midpoint.y, p2.x, p2.y, middle.x, middle.y);
+            }
             intCtx.fill();
             intCtx.restore();
         }

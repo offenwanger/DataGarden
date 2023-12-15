@@ -1,5 +1,6 @@
 function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap) {
-    const TARGET_ELEMENT = 'elementTarget';
+    const TARGET_ELEMENT = 'element_target';
+    const TARGET_BUBBLE = 'bubble_target'
     const TARGET_LOCK = "target_lock";
 
     const DIVISION_SIZE = Size.ELEMENT_NODE_SIZE * 10;
@@ -69,7 +70,14 @@ function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
             if (clusterNodes.length == 0) return;
             let hull = d3.polygonHull(DataUtil.getPaddedPoints(clusterNodes, Padding.NODE)).map(p => { return { x: p[0], y: p[1] } });
             let parentNode = mNodes.find(n => n.id == parentId);
-            mDrawingUtil.drawBubble(hull, parentNode, mColorMap(parentId), 0.4);
+            mDrawingUtil.drawBubble({
+                outline: hull,
+                pointer: parentNode,
+                color: mColorMap(parentId),
+                alpha: 0.4,
+                shadow: mHighlightIds.includes(parentId),
+                code: draggedIds.includes(parentId) ? null : mCodeUtil.getCode(parentId, TARGET_BUBBLE)
+            });
         })
 
         if (mTargetLock) {

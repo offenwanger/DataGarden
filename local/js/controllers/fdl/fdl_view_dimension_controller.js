@@ -5,7 +5,8 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
     const TARGET_TYPE = "element_type";
     const TARGET_CHANNEL = "element_channel";
     const TARGET_TIER = "element_tier";
-    const NODE_COLUMN_WIDTH = 300
+    const TARGET_BUBBLE = "level_bubble";
+    const NODE_COLUMN_WIDTH = 300;
     const ADD_LEVEL_LABEL = "Add Level +";
     const LINK_ID = "link_"
 
@@ -226,7 +227,14 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                 if (clusterNodes.length > 0) {
                     let hull = d3.polygonHull(DataUtil.getPaddedPoints(clusterNodes, Padding.NODE)).map(p => { return { x: p[0], y: p[1] } });
                     let levelNode = mLevels.find(l => l.id == level.id);
-                    mDrawingUtil.drawBubble(hull, levelNode, mColorMap(level.id), 0.4);
+                    mDrawingUtil.drawBubble({
+                        outline: hull,
+                        pointer: levelNode,
+                        color: mColorMap(level.id),
+                        alpha: 0.4,
+                        shadow: mHighlightIds.includes(level.id),
+                        code: mCodeUtil.getCode(level.id, TARGET_BUBBLE)
+                    });
                 }
             })
         } else {
