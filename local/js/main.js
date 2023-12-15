@@ -10,13 +10,25 @@ document.addEventListener('DOMContentLoaded', function (e) {
     });
 
     mDashboardController.setNewStrokeCallback((stroke) => {
-        let element = new Data.Element();
-        element.strokes.push(stroke);
-        element.spine = DataUtil.getStupidSpine(element);
-        element.root = element.spine[0];
-        element.angle = VectorUtil.normalize(VectorUtil.subtract(element.spine[1], element.spine[0]));
+        let model = mModelController.getModel();
+        let mergeGroup = StructureFairy.getMerge(stroke, model);
+        if (mergeGroup.length) {
+            let element = mergeGroup[0];
+            element.strokes.push(stroke);
+            mModelController.updateElement(element)
+        } else {
+            let parentId = StructureFairy.getParent(stroke, mModelController.getModel());
 
-        mModelController.addElement(element);
+            let element = new Data.Element();
+            element.strokes.push(stroke);
+            element.spine = DataUtil.getStupidSpine(element);
+            element.root = element.spine[0];
+            element.angle = VectorUtil.normalize(VectorUtil.subtract(element.spine[1], element.spine[0]));
+            mModelController.addElement(element);
+            if (parentId) {
+                ModelUtil.updateParent(parentId, element.id, mModelController);
+            }
+        }
 
         mDashboardController.modelUpdate(mModelController.getModel());
         mVersionController.stack(mModelController.getModel().toObject());

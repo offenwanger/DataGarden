@@ -1,6 +1,7 @@
 let PathUtil = function () {
     let cache = {};
     const PATH_PRECISION = 10; // pixels
+    let mOverlayUtil = new OverlayUtil();
 
     function translate(path, v) {
         if (!ValUtil.isPath(path)) { console.error("Bad path", path); return path; }
@@ -257,6 +258,52 @@ let PathUtil = function () {
         return VectorUtil.add(p1, VectorUtil.scale(VectorUtil.subtract(p2, p1), percent));
     }
 
+    function isLineLike(points) {
+        let metaPoints = getMetaPoints(points);
+        let normalAngles = metaPoints.map(p => VectorUtil.toRotation(p.normal) + Math.PI);
+        let normalAnglesRotated = normalAngles.map(a => (a + Math.PI) % (2 * Math.PI));
+
+        // if there are so few meta points, it's too short to be read as a line. 
+        if (metaPoints.length < 6) return false;
+
+        let medianNormals = [];
+        let medianNormalsRotated = []
+        for (let i = 2; i < normalAngles.length - 2; i++) {
+            medianNormals.push(normalAngles.slice(i - 2, i + 2).sort()[2]);
+            medianNormalsRotated.push(normalAnglesRotated.slice(i - 2, i + 2).sort()[2]);
+        };
+        let maxDiff = Math.min(Math.max(...medianNormals) - Math.min(...medianNormals), Math.max(...medianNormalsRotated) - Math.min(...medianNormalsRotated))
+
+        return maxDiff < Math.PI;
+    }
+
+    function pathOverlaps(p1, p2) {
+        let p1LineLike = PathUtil.isLineLike(p1);
+        let p2LineLike = PathUtil.isLineLike(p2);
+        p1 = getMetaPoints(p1).map(p => p.point);
+        p2 = getMetaPoints(p2).map(p => p.point);
+        if (p1LineLike && p2LineLike) {
+            let closePointCount = p1.reduce((count, p) => {
+                let closestPoint = getClosestPointOnPath(p, p2);
+                let dist = VectorUtil.dist(closestPoint, p);
+                return dist < 10 ? count + 1 : count;
+            }, 0)
+            return (closePointCount > p1.length / 5);
+        } else {
+            mOverlayUtil.onResize(
+                Math.max(...p1.map(p => p.x), ...p2.map(p => p.x)),
+                Math.max(...p1.map(p => p.y), ...p2.map(p => p.y))
+            )
+            if (p1LineLike) {
+                mOverlayUtil.drawBubble(p2);
+                return p1.some(p => mOverlayUtil.covered(p));
+            } else {
+                mOverlayUtil.drawBubble(p1);
+                return p2.some(p => mOverlayUtil.covered(p));
+            }
+        }
+    }
+
     // UTILITY //
     function getHash(points) {
         if (!Array.isArray(points)) {
@@ -449,5 +496,7 @@ let PathUtil = function () {
         getTangentForPercent,
         getClosestPointOnPath,
         getPercentBetweenPoints,
+        isLineLike,
+        pathOverlaps,
     }
 }();

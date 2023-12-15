@@ -291,6 +291,13 @@ let DataUtil = function () {
         return pairs[dists.findIndex(i => i == Math.max(...dists))];
     }
 
+    function boundingBoxIntersects(bb1, bb2) {
+        return !(bb2.x > bb1.x + bb1.width ||
+            bb2.x + bb2.width < bb1.x ||
+            bb2.y > bb1.y + bb1.height ||
+            bb2.y + bb2.height < bb1.y);
+    }
+
     return {
         numToColor,
         rgbToHex,
@@ -315,5 +322,6 @@ let DataUtil = function () {
         angleToPercent,
         getRelativeAngle,
         getStupidSpine,
+        boundingBoxIntersects,
     }
 }();
