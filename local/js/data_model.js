@@ -84,6 +84,16 @@ function DataModel() {
         return getDimensions().map(d => d.levels).flat().find(l => l.id == levelId);
     }
 
+    function getLevels() {
+        return getDimensions().map(d => {
+            if (d.type == DimensionType.DISCRETE) {
+                return d.levels;
+            } else {
+                return []
+            }
+        }).flat();
+    }
+
     function getLevelForElement(dimensionId, elementId) {
         let dimension = getDimension(dimensionId);
         if (!dimension) return null;
@@ -166,6 +176,7 @@ function DataModel() {
         setDimensions,
         getDimensionForLevel,
         getLevel,
+        getLevels,
         getLevelForElement,
         getTables,
     }
