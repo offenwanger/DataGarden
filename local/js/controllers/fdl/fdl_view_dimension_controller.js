@@ -249,7 +249,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                 startLabel = "-180°";
                 endLabel = "180°";
             } else {
-                console.error("Dimention channel not supported", dimension.channel);
+                console.error("Dimension channel not supported", dimension.channel);
             }
 
             mDrawingUtil.drawAxis({
@@ -414,7 +414,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                     if (!levelNode) { console.error("Invalid level id", interaction.startTarget.id); return; }
                     mEditNameCallback(interaction.startTarget.id, levelNode.x, levelNode.y,
                         mDrawingUtil.measureStringNode(levelNode.name, Size.LEVEL_SIZE), Size.LEVEL_SIZE);
-                } else if (interaction.startTarget && interaction.endTarget.id == ADD_BUTTON_ID) {
+                } else if (interaction.startTarget && interaction.endTarget && interaction.endTarget.id == ADD_BUTTON_ID) {
                     mAddLevelCallback(mDimensionId);
                 } else if (interaction.startTarget && (interaction.startTarget.id == DimensionValueId.V2 || interaction.startTarget.id == DimensionValueId.V1)) {
                     let node = mLevels.find(l => l.id == interaction.startTarget.id);
