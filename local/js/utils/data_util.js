@@ -218,7 +218,7 @@ let DataUtil = function () {
             }
         } else if (dimension.channel == ChannelType.SIZE) {
             if (dimension.type == DimensionType.CONTINUOUS) {
-                let elements = model.getElements().filter(e => DataUtil.getTreeLevel(model, element.id) == dimension.tier);
+                let elements = model.getElements().filter(e => DataUtil.getTreeLevel(model, e.id) == dimension.tier);
                 let sizes = elements.map(e => PathUtil.getPathLength(e.spine));
                 let min = Math.min(...sizes);
                 let max = Math.max(...sizes)
@@ -298,6 +298,30 @@ let DataUtil = function () {
             bb2.y + bb2.height < bb1.y);
     }
 
+    function isDataId(id) {
+        if (!id) return false;
+        let result = false;
+        Object.values(Data).forEach(dataClass => {
+            result = result || IdUtil.isType(id, dataClass);
+        });
+        return result
+    }
+
+    function itemExists(id, model) {
+        if (IdUtil.isType(id, Data.Stroke)) {
+            model.getStroke(id) ? true : false;
+        } else if (IdUtil.isType(id, Data.Element)) {
+            model.getElement(id) ? true : false;
+        } else if (IdUtil.isType(id, Data.Level)) {
+            model.getLevel(id) ? true : false;
+        } else if (IdUtil.isType(id, Data.Dimension)) {
+            model.getDimension(id) ? true : false;
+        } else {
+            console.error("Id unsupported", id); return false;
+        }
+    }
+
+
     return {
         numToColor,
         rgbToHex,
@@ -323,5 +347,7 @@ let DataUtil = function () {
         getRelativeAngle,
         getStupidSpine,
         boundingBoxIntersects,
+        isDataId,
+        itemExists,
     }
 }();

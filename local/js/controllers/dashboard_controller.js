@@ -14,6 +14,7 @@ function DashboardController() {
     let mTextInput = new TextInput();
     let mDropdownInput = new DropdownInput();
     let mSystemState = new SystemState();
+    let mSelection = [];
 
     let mModel = new DataModel();
 
@@ -54,6 +55,7 @@ function DashboardController() {
         mTableViewController.onModelUpdate(model);
         // minor controllers
         mDropdownInput.onModelUpdate(model);
+        mSelection = mSelection.filter(id => !DataUtil.isDataId(id) || DataUtil.itemExists(id, model));
     }
 
     function onResize(width, height) {
@@ -124,19 +126,19 @@ function DashboardController() {
     }
 
     function onDelete() {
-
+        mDeleteCallback(mSelection)
     }
 
     mTextInput.setTextChangedCallback((itemId, text) => {
-        if (itemId.dimention) {
-            let dimension = mModel.getDimension(itemId.dimention);
+        if (itemId.dimension) {
+            let dimension = mModel.getDimension(itemId.dimension);
             let domain = dimension.domain;
             if (itemId.id == DimensionValueId.V2) {
                 domain[1] = text;
             } else if (itemId.id == DimensionValueId.V1) {
                 domain[0] = text;
             } else { console.error("Invalid id", itemId); return; }
-            mUpdateDimensionDomainCallback(itemId.dimention, domain);
+            mUpdateDimensionDomainCallback(itemId.dimension, domain);
         } else if (IdUtil.isType(itemId, Data.Level)) {
             mUpdateLevelNameCallback(itemId, text);
         } else if (IdUtil.isType(itemId, Data.Dimension)) {
@@ -190,6 +192,7 @@ function DashboardController() {
     mFdlViewController.setSelectionCallback(onSelection)
     mTableViewController.setSelectionCallback(onSelection)
     function onSelection(selectedIds) {
+        mSelection = selectedIds;
         mCanvasController.onSelection(selectedIds);
         mFdlViewController.onSelection(selectedIds);
         mTableViewController.onSelection(selectedIds);
@@ -276,10 +279,10 @@ function DashboardController() {
         mTextInput.show(itemId, item.name, x, y, width, height);
     });
 
-    mFdlViewController.setEditDomainCallback((dimentionId, minMax, x, y, width, height) => {
-        let dimention = mModel.getDimension(dimentionId);
-        mTextInput.show({ dimention: dimentionId, id: minMax },
-            minMax == DimensionValueId.V1 ? dimention.domain[0] : dimention.domain[1],
+    mFdlViewController.setEditDomainCallback((dimensionId, minMax, x, y, width, height) => {
+        let dimension = mModel.getDimension(dimensionId);
+        mTextInput.show({ dimension: dimensionId, id: minMax },
+            minMax == DimensionValueId.V1 ? dimension.domain[0] : dimension.domain[1],
             x, y, width, height);
     });
 

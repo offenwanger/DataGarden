@@ -46,6 +46,8 @@ function FdlViewController(mColorMap) {
 
     function onModelUpdate(model) {
         mModel = model;
+        mHighlightIds = [];
+        mSelectionIds = mSelectionIds.filter(id => !DataUtil.isDataId(id) || DataUtil.itemExists(id, model));
         updateSimulationData();
     }
 

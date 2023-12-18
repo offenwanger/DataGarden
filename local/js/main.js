@@ -83,9 +83,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     mDashboardController.setAddLevelCallback((dimenId) => {
         let model = mModelController.getModel();
-        let dimention = model.getDimension(dimenId);
-        if (!dimention) { console.error("Invalid dimention id", dimenId); return; }
-        let maxNum = Math.max(0, ...dimention.levels
+        let dimension = model.getDimension(dimenId);
+        if (!dimension) { console.error("Invalid dimension id", dimenId); return; }
+        let maxNum = Math.max(0, ...dimension.levels
             .map(l => l.name.startsWith("Level") ? parseInt(l.name.slice(5)) : 0)
             .filter(n => !isNaN(n)))
 
@@ -224,7 +224,21 @@ document.addEventListener('DOMContentLoaded', function (e) {
     })
 
     mDashboardController.setDeleteCallback((selection) => {
-        // Delete everything in the selection
+        selection.filter(id => IdUtil.isType(id, Data.Element)).forEach(elementId => {
+            ModelUtil.removeElement(elementId, mModelController);
+        })
+        selection.filter(id => IdUtil.isType(id, Data.Stroke)).forEach(strokeId => {
+            mModelController.removeStroke(strokeId);
+            ModelUtil.clearEmptyElements(mModelController);
+        })
+        selection.filter(id => IdUtil.isType(id, Data.Dimension)).forEach(dimensionId => {
+            mModelController.removeDimension(dimensionId);
+        })
+        selection.filter(id => IdUtil.isType(id, Data.Level)).forEach(levelId => {
+            mModelController.removeLevel(levelId);
+        })
+        mVersionController.stack(mModelController.getModel().toObject());
+        mDashboardController.modelUpdate(mModelController.getModel());
     })
 
     mDashboardController.setMergeStrokesCallback((strokeIds) => {

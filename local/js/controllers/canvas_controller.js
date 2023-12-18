@@ -56,6 +56,8 @@ function CanvasController(mColorMap) {
                 mProjections[element.id] = PathUtil.getPositionForPercent(parent.spine, element.position);
             }
         })
+        mHighlightIds = [];
+        mSelectionIds = mSelectionIds.filter(id => !DataUtil.isDataId(id) || DataUtil.itemExists(id, model));
         draw();
     }
 
