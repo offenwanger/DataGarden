@@ -234,7 +234,6 @@ function CanvasController(mColorMap) {
                 console.error("Moved selection, impliment!");
             }
         }
-        console.log(interaction)
 
         draw();
     }
