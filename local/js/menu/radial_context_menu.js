@@ -21,21 +21,6 @@ function RadialContextMenu(svg, id, items, buttonSize) {
         innerRadius = buttonCenterDist - buttonSize / 2 - BUTTON_PADDING;
     }
 
-    mMenuContainer.append('circle')
-        .attr("cx", 0)
-        .attr("cx", 0)
-        .attr("r", innerRadius)
-        .attr('fill', "#FFFFFF00")
-        .on("pointerdown", function (event) {
-            // catch the event, but don't send back the call yet
-            event.stopPropagation();
-        })
-        .on("pointerup", function (event) {
-            // also catch this event, now send a click call
-            mClickCallback(ContextButtons.CENTER);
-            event.stopPropagation();
-        });
-
     if (items.length >= MIN_BUTTONS) {
         let shadowCircleD = "M" + -radius + ",0 " +
             "A" + Math.round(radius) + "," + Math.round(radius) + ",0,1,0," + -radius + ",-1 " +
@@ -50,6 +35,21 @@ function RadialContextMenu(svg, id, items, buttonSize) {
             .attr('stroke-width', "3")
             .attr("filter", FiltersUtil.DROP_SHADOW);
     }
+
+    mMenuContainer.append('circle')
+        .attr("cx", 0)
+        .attr("cx", 0)
+        .attr("r", innerRadius)
+        .attr('fill', "#FFFFFF00")
+        .on("pointerdown", function (event) {
+            // catch the event, but don't send back the call yet
+            event.stopPropagation();
+        })
+        .on("pointerup", function (event) {
+            // also catch this event, now send a click call
+            mClickCallback(ContextButtons.CENTER);
+            event.stopPropagation();
+        });
 
     for (let i = 0; i < items.length; i++) {
         let a = i * angle;

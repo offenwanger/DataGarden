@@ -135,7 +135,8 @@ function CanvasController(mColorMap) {
                 }
                 mInteraction = {
                     type: DRAGGING,
-                    start: screenCoords
+                    start: screenCoords,
+                    startTarget: target,
                 };
             } else {
                 // we didn't mouse down on anything start a lasso. 
@@ -227,11 +228,13 @@ function CanvasController(mColorMap) {
         } else if (interaction && interaction.type == DRAGGING && !systemState.isShift() && !systemState.isCtrl()) {
             let moveDist = VectorUtil.dist(interaction.start, screenCoords);
             if (moveDist < 5) {
-                mContextMenuCallback(screenCoords, mSelectionIds);
+                let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
+                mContextMenuCallback(screenCoords, mSelectionIds, interaction.startTarget.id);
             } else {
                 console.error("Moved selection, impliment!");
             }
         }
+        console.log(interaction)
 
         draw();
     }

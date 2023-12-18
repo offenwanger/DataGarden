@@ -197,31 +197,59 @@ function DashboardController() {
 
     mCanvasController.setContextMenuCallback(onContextMenu);
     mFdlViewController.setContextMenuCallback(onContextMenu);
-    function onContextMenu(screenCoords, selection) {
-        if (!selection) { console.error("No selection provided!"); return; }
-        if (Array.isArray(selection) && IdUtil.isType(selection[0], Data.Stroke)) {
-            let buttons = [ContextButtons.MERGE_TO_ELEMENT, ContextButtons.AUTO_MERGE_ELEMENTS]
-            mContextMenu.showContextMenu(screenCoords, buttons, (buttonId) => {
-                if (buttonId == ContextButtons.MERGE_TO_ELEMENT) {
-                    mMergeStrokesCallback(selection);
-                } else if (buttonId == ContextButtons.AUTO_MERGE_ELEMENTS) {
-                    mAutoMergeElements(selection);
-                }
-                mContextMenu.hideContextMenu();
-            });
-        } else if (IdUtil.isType(selection, Data.Element)) {
-            let buttons = [ContextButtons.SPINE, ContextButtons.STYLE_STRIP, ContextButtons.STYLE_STROKES]
-            mContextMenu.showContextMenu(screenCoords, buttons, (buttonId) => {
-                if (buttonId == ContextButtons.SPINE) {
-                    mCalculateSpineCallback(selection);
-                } else if (buttonId == ContextButtons.STYLE_STRIP) {
-                    console.error("Impliment me!")
-                } else if (buttonId == ContextButtons.STYLE_STROKES) {
-                    console.error("Impliment me!")
-                }
-                mContextMenu.hideContextMenu();
-            });
+    function onContextMenu(screenCoords, selection, target) {
+        if (!selection || !Array.isArray(selection)) { console.error("Invalid selection!", selection); return; }
+        if (!selection.some(id => IdUtil.isType(id, Data.Stroke)
+            || IdUtil.isType(id, Data.Element)
+            || IdUtil.isType(id, Data.Level)
+            || IdUtil.isType(id, Data.Dimension))) {
+            // no buttons for context menu
+            return;
         }
+        let buttons = [ContextButtons.DELETE];
+        if (selection.some(id => IdUtil.isType(id, Data.Stroke) || IdUtil.isType(id, Data.Element))) {
+            buttons.push(ContextButtons.MERGE_TO_ELEMENT);
+            buttons.push(ContextButtons.STYLE_STRIP);
+            buttons.push(ContextButtons.STYLE_STROKES);
+        }
+
+        if (target && IdUtil.isType(target, Data.Element) || IdUtil.isType(target, Data.Stroke)) {
+            buttons.push(ContextButtons.SPINE);
+        }
+
+
+        mContextMenu.showContextMenu(screenCoords, buttons, (buttonId) => {
+            if (buttonId == ContextButtons.MERGE_TO_ELEMENT) {
+                let strokes = [];
+                selection.forEach(id => {
+                    if (IdUtil.isType(id, Data.Stroke)) {
+                        strokes.push(id);
+                    } else if (IdUtil.isType(id, Data.Element)) {
+                        let element = mModel.getElement(id);
+                        if (!element) console.error("Invalid element id", id);
+                        strokes.push(...element.strokes.map(s => s.id));
+                    }
+                })
+                mMergeStrokesCallback(strokes);
+            } else if (buttonId == ContextButtons.SPINE) {
+                let element;
+                if (IdUtil.isType(target, Data.Stroke)) {
+                    element = mModel.getElementForStroke(target);
+                } else if (IdUtil.isType(target, Data.Element)) {
+                    element = mModel.getElement(target);
+                }
+                if (!element) console.error("Cannot find element for id", id);
+                mCalculateSpineCallback(element.id);
+            } else if (buttonId == ContextButtons.STYLE_STRIP) {
+                console.error("Impliment me!")
+            } else if (buttonId == ContextButtons.STYLE_STROKES) {
+                console.error("Impliment me!")
+            } else if (buttonId == ContextButtons.DELETE) {
+                mDeleteCallback(selection);
+            }
+            mContextMenu.hideContextMenu();
+        });
+
     }
 
     mFdlViewController.setAddDimensionCallback(() => {

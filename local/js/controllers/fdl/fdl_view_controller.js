@@ -288,6 +288,11 @@ function FdlViewController(mColorMap) {
             let modelCoords = screenToModelCoords(screenCoords, mActiveViewController.getTranslate(), mActiveViewController.getScale());
             interaction.endTarget = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             mActiveViewController.interactionEnd(interaction, modelCoords);
+
+            let moveDist = VectorUtil.dist(interaction.start, modelCoords);
+            if (moveDist < 5 && !systemState.isShift() && !systemState.isCtrl()) {
+                mContextMenuCallback(screenCoords, mSelectionIds, interaction.startTarget.id);
+            }
         } else if (interaction && interaction.type == FdlInteraction.LASSO) {
             mDrawingUtil.resetInterface(mActiveViewController.getZoomTransform());
             mActiveViewController.start();

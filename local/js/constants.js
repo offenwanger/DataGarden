@@ -31,6 +31,7 @@ const ContextButtons = {
     SPINE: 'recalculate-spine',
     STYLE_STRIP: 'style-element-strip',
     STYLE_STROKES: 'style-element-strokes',
+    DELETE: 'delete-the-stuff'
 }
 
 const ChannelType = {

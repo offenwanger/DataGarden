@@ -53,6 +53,11 @@ function ContextMenu(svg) {
         img: "img/style_strokes.svg",
         tooltip: "Style element using it's strokes",
     }
+    mButtonData[ContextButtons.DELETE] = {
+        id: ContextButtons.DELETE,
+        img: "img/delete_icon.svg",
+        tooltip: "Delete all the things",
+    }
 
     function showContextMenu(pos, buttons, callback) {
         hideContextMenu();
