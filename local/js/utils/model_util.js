@@ -41,24 +41,40 @@ let ModelUtil = function () {
             }
             let mergeElement = modelController.getModel().getElement(target);
             mergeElement.strokes = mergeElement.strokes.concat(element.strokes);
-            modelController.removeElement(elementId);
+            removeElement(elementId);
             modelController.updateElement(mergeElement);
         });
     }
 
     function clearEmptyElements(modelController) {
-        let elements = modelController.getModel().getElements();
-        let removeElementIds = elements.filter(e => e.strokes.length == 0).map(e => e.id);
-        removeElementIds.forEach(id => modelController.removeElement(id));
-        elements.filter(e => removeElementIds.includes(e.parentId) && !removeElementIds.includes(e.id)).forEach(e => {
-            e.parentId = null;
-            modelController.updateElement(e);
-        });
+        modelController.getModel().getElements()
+            .filter(e => e.strokes.length == 0)
+            .map(e => e.id)
+            .forEach(eId => removeElement(eId, modelController));
+    }
+
+    function removeElement(elementId, modelController) {
+        if (!IdUtil.isType(elementId, Data.Element)) { console.error("Invalid element id", elementId); return; }
+        let model = modelController.getModel();
+        let element = model.getElement(elementId);
+        if (!element) return; // already gone. No need to error, it should be fine. 
+        model.getElementChildren(elementId).forEach(child => {
+            child.parentId = element.parentId;
+            modelController.updateElement(child);
+        })
+        model.getLevels().forEach(level => {
+            if (level.elementIds.includes(elementId)) {
+                level.elementIds = level.elementIds.filter(id => id != elementId);
+                modelController.updateLevel(level);
+            }
+        })
+        modelController.removeElement(elementId);
     }
 
     return {
         updateParent,
         mergeElements,
         clearEmptyElements,
+        removeElement,
     }
 }();
