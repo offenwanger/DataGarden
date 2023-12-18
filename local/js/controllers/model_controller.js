@@ -45,7 +45,10 @@ function ModelController() {
     }
 
     function removeLevel(levelId) {
-        if (!IdUtil.isType(levelId, Data.Level)) { console.error("Invalid dimension id", dimensionId); return; }
+        if (!IdUtil.isType(levelId, Data.Level)) { console.error("Invalid level id", levelId); return; }
+        let level = mDataModel.getLevel(levelId);
+        // if it's already not here, fine. 
+        if (!level) { return; }
         let dimension = mDataModel.getDimensionForLevel(levelId);
         if (!dimension) { console.error("Dimension not found for level: ", levelId); return; };
         dimension.levels = dimension.levels.filter(e => e.id != levelId);
@@ -65,6 +68,9 @@ function ModelController() {
     }
 
     function removeStroke(strokeId) {
+        if (!IdUtil.isType(strokeId, Data.Stroke)) { console.error("Invalid Storke Id", strokeId); return; };
+        let stroke = mDataModel.getStroke(strokeId);
+        if (!stroke) { return; } // already not here.
         let elem = mDataModel.getElementForStroke(strokeId);
         if (!elem) { console.error("Element not found for stroke: ", strokeId); return; };
         elem.strokes = elem.strokes.filter(s => s.id != strokeId);
