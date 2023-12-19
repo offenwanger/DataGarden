@@ -116,7 +116,7 @@ function getIntegrationEnviroment() {
         DataModel: rewireJs('data_model.js').__get__("DataModel"),
         ValUtil: rewireJs('utils/value_util.js').__get__("ValUtil"),
         DataUtil: rewireJs('utils/data_util.js').__get__("DataUtil"),
-        PathUtil: rewireJs('utils/path_util.js').__get__("PathUtil"),
+        StructureFairy: rewireJs('utils/structure_fairy.js').__get__("StructureFairy"),
         VectorUtil: rewireJs('utils/vector_util.js').__get__("VectorUtil"),
         ModelUtil: rewireJs('utils/model_util.js').__get__("ModelUtil"),
         IdUtil: rewireJs('utils/id_util.js').__get__("IdUtil"),
@@ -137,6 +137,10 @@ function getIntegrationEnviroment() {
     };
 
     main.__set__(integrationEnv);
+    // things with dependencies
+    integrationEnv.PathUtil = rewireJs('utils/path_util.js').__get__("PathUtil"),
+        main.__set__(integrationEnv);
+
     integrationEnv.main = main;
     integrationEnv.documentLoad = documentLoad;
     integrationEnv.instances = instances;

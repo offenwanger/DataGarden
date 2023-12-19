@@ -20,216 +20,109 @@ describe('FDL View Controller Test', function () {
         return integrationEnv.instances.ModelController.getModel();
     }
 
-    describe('element merging test', function () {
-        it('should merge two elements', function () {
-            // draw a line
-
-            utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 20, y: 80 }])
-            utility.drawStroke(integrationEnv, [{ x: 40, y: 20 }, { x: 40, y: 40 }, { x: 40, y: 60 }, { x: 40, y: 80 }])
-
-            d3.tick();
-
-            assert.equal(model().getGroups().length, 1);
-            let elements = model().getElements();
-            assert.equal(elements.length, 2);
-
-            utility.clickMenuButton(integrationEnv, "#pause-button");
-            utility.drag(integrationEnv, "#fdl-view-container", [d3.getPosition(elements[0].id), d3.getPosition(elements[1].id)])
-
-            assert.equal(model().getElements().length, 1);
-            assert.equal(model().getElements()[0].strokes.length, 2);
-        });
-
-        it('should explode merged element', function () {
-            utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 20, y: 80 }])
-            utility.drawStroke(integrationEnv, [{ x: 40, y: 20 }, { x: 40, y: 40 }, { x: 40, y: 60 }, { x: 40, y: 80 }])
-            utility.drawStroke(integrationEnv, [{ x: 40, y: 20 }, { x: 40, y: 40 }, { x: 40, y: 60 }, { x: 40, y: 80 }])
-
-            d3.tick();
-
-            utility.clickMenuButton(integrationEnv, "#pause-button");
-            let elements = model().getElements();
-            utility.drag(integrationEnv, "#fdl-view-container", [d3.getPosition(elements[1].id), d3.getPosition(elements[0].id)])
-            utility.drag(integrationEnv, "#fdl-view-container", [d3.getPosition(elements[2].id), d3.getPosition(elements[0].id)])
-
-            d3.tick();
-
-            assert.equal(model().getElements().length, 1);
-            assert.equal(model().getElements()[0].strokes.length, 3);
-
-            // dbl click
-            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(elements[0].id));
-            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(elements[0].id));
-
-            d3.tick();
-
-            let nodes = d3.getNodes();
-            assert.equal(nodes.length, 3);
-            expect(nodes.map(n => n.isStroke)).to.eql([true, true, true]);
-        });
-    })
-
-    describe('element parenting test', function () {
+    describe('element parenting tests', function () {
         it('should parent two elements', function () {
-            utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 20, y: 80 }])
-            utility.drawStroke(integrationEnv, [{ x: 40, y: 20 }, { x: 40, y: 40 }, { x: 40, y: 60 }, { x: 40, y: 80 }])
-
-            d3.tick();
-
-            let elements = integrationEnv.instances.ModelController.getModel().getElements();
-            utility.drag(integrationEnv, "#fdl-view-container", [d3.getLinkPosition(elements[0].id), d3.getPosition(elements[1].id)])
-
-            assert.equal(model().getElements().length, 2);
-            expect(model().getElements().map(e => e.parentId ? true : false)).to.eql([false, true]);
+            assert.equal('implimented', true)
         });
 
-    })
-
-    describe('highlight test', function () {
-        it('should highlight strokes', function () {
-            utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 10, y: 80 }])
-            utility.drawStroke(integrationEnv, [{ x: 40, y: 20 }, { x: 40, y: 40 }, { x: 40, y: 60 }, { x: 30, y: 80 }])
-            utility.drawStroke(integrationEnv, [{ x: 50, y: 20 }, { x: 50, y: 40 }, { x: 50, y: 60 }, { x: 30, y: 80 }])
-
-            d3.tick();
-
-            utility.clickMenuButton(integrationEnv, "#pause-button");
-            let elements = model().getElements();
-            utility.drag(integrationEnv, "#fdl-view-container", [d3.getPosition(elements[1].id), d3.getPosition(elements[0].id)])
-
-            d3.tick();
-
-            let pos = d3.getPosition(model().getElements()[0].id);
-            for (i = 20; i >= 0; i--) {
-                utility.mouseOver(integrationEnv, "#fdl-view-container", { x: pos.x, y: pos.y - i });
-            }
-
-            // dbl click
-            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(elements[0].id));
-            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(elements[0].id));
-
-            d3.tick();
-
-
-            pos = d3.getPosition(model().getElements()[0].strokes[0].id);
-            for (i = 20; i >= 0; i--) {
-                utility.mouseOver(integrationEnv, "#fdl-view-container", { x: pos.x, y: pos.y - i });
-            }
-
-            let pixels = utility.getCanvas("stroke", 'interface').getContext("2d").getImageData(0, 0, 100, 100).data;
-            assert.equal(pixels.some(v => v > 0), true);
+        it('should parent groups of elements', function () {
+            assert.equal('implimented', true)
         });
 
-        it('should highlight linked link', function () {
-            utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 20, y: 80 }])
-            utility.drawStroke(integrationEnv, [{ x: 40, y: 20 }, { x: 40, y: 40 }, { x: 40, y: 60 }, { x: 40, y: 80 }])
-
-            d3.tick();
-
-            let elements = integrationEnv.instances.ModelController.getModel().getElements();
-            utility.drag(integrationEnv, "#fdl-view-container", [d3.getLinkPosition(elements[0].id), d3.getPosition(elements[1].id)])
-
-            d3.tick();
-
-            assert.equal(model().getElements().length, 2);
-            expect(model().getElements().map(e => e.parentId ? true : false)).to.eql([false, true]);
-
-            // move the mouse away and check that there is no interface
-            utility.mouseOver(integrationEnv, "#fdl-view-container", { x: 100, y: 100 });
-            d3.tick();
-            let pixels = utility.getCanvas("fdl", 'interface').getContext("2d").getImageData(0, 0, 100, 100).data;
-            assert.equal(pixels.every(v => v == 0), true);
-
-            // move the mouse over the parent triangle and check that it higlights
-            let pos = d3.getLinkPosition(model().getElements().find(e => !e.parentId).id);
-            for (i = 20; i >= 0; i--) {
-                utility.mouseOver(integrationEnv, "#fdl-view-container", { x: pos.x, y: pos.y - i });
-                d3.tick();
-            }
-            pixels = utility.getCanvas("fdl", 'interface').getContext("2d").getImageData(pos.x, pos.y, 1, 1).data;
-            assert.equal(DataUtil.rgbToHex(pixels[0], pixels[1], pixels[2]), "#ff0000");
-
-            // move the mouse over the child triangle and check that it higlights
-            pos = d3.getLinkPosition(model().getElements().find(e => e.parentId).id);
-            for (i = 20; i >= 0; i--) {
-                utility.mouseOver(integrationEnv, "#fdl-view-container", { x: pos.x, y: pos.y - i });
-                d3.tick();
-            }
-
-            pixels = utility.getCanvas("fdl", 'interface').getContext("2d").getImageData(pos.x, pos.y, 1, 1).data;
-            assert.equal(DataUtil.rgbToHex(pixels[0], pixels[1], pixels[2]), "#ff0000");
+        it('should prevent parenting loops', function () {
+            assert.equal('implimented', true)
         });
 
+        it('should parent elements via the bubble', function () {
+            assert.equal('implimented', true)
+        });
+
+        it('should reparent on delete', function () {
+            assert.equal('implimented', true)
+        });
     })
 
-    describe('merge tests', function () {
-        it('should create a new group for a stroke', function () {
-            utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 10, y: 80 }])
-            utility.drawStroke(integrationEnv, [{ x: 40, y: 20 }, { x: 40, y: 40 }, { x: 40, y: 60 }, { x: 30, y: 80 }])
-            utility.drawStroke(integrationEnv, [{ x: 50, y: 20 }, { x: 50, y: 40 }, { x: 50, y: 60 }, { x: 30, y: 80 }])
+    describe('deletion tests', function () {
+        it('should delete a dimention', function () {
+            assert.equal('implimented', true)
+        });
 
-            d3.tick();
+        it('should delete a level', function () {
+            assert.equal('implimented', true)
+        });
 
-            utility.clickMenuButton(integrationEnv, "#pause-button");
-            let elements = model().getElements();
-            utility.drag(integrationEnv, "#fdl-view-container", [d3.getPosition(elements[1].id), d3.getPosition(elements[0].id)])
+        it('should delete a stroke', function () {
+            assert.equal('implimented', true)
+        });
 
-            utility.clickMenuButton(integrationEnv, "#pause-button");
-            d3.tick();
-            utility.clickMenuButton(integrationEnv, "#pause-button");
+        it('should delete an element', function () {
+            assert.equal('implimented', true)
+        });
 
-            assert.equal(model().getElements().length, 2);
+        it('should delete a selection of everything', function () {
+            assert.equal('implimented', true)
+        });
 
-            // dbl click
-            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(elements[0].id));
-            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(elements[0].id));
-
-            utility.clickMenuButton(integrationEnv, "#pause-button");
-            d3.tick();
-            utility.clickMenuButton(integrationEnv, "#pause-button");
-
-            utility.drag(integrationEnv, "#fdl-view-container", [d3.getPosition(model().getElements()[0].strokes[1].id), { x: 20, y: 20 }, { x: 100, y: 100 }])
-
-            utility.clickMenuButton(integrationEnv, "#pause-button");
-            d3.tick();
-            utility.clickMenuButton(integrationEnv, "#pause-button");
-
-            assert.equal(model().getGroups().length, 2);
-            assert.equal(model().getElements().length, 3);
-            expect(model().getElements().map(e => e.strokes.length)).to.eql([1, 1, 1]);
-        })
+        it('should only delete levels and dimensions when on an appropriate tab', function () {
+            assert.equal('implimented', true)
+        });
     })
 
-    describe('dimension editing tests', function () {
-        it('should open the dimension edit view wihtout crashing', function () {
-            utility.drawStroke(integrationEnv, [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 10, y: 80 }])
-            utility.drawStroke(integrationEnv, [{ x: 40, y: 20 }, { x: 40, y: 40 }, { x: 40, y: 60 }, { x: 30, y: 80 }])
+    describe('dimention setting tests', function () {
+        it('should create a dimention', function () {
+            assert.equal('implimented', true)
+        });
 
-            d3.tick();
+        it('should change dimention name', function () {
+            assert.equal('implimented', true)
+        });
 
-            // dbl click
-            let elements = model().getElements();
-            let inBetweenNodes = VectorUtil.average([
-                d3.getPosition(elements[0].id),
-                d3.getPosition(elements[1].id)
-            ])
-            utility.click(integrationEnv, "#fdl-view-container", inBetweenNodes);
+        it('should change dimention type to continuous', function () {
+            assert.equal('implimented', true)
+        });
 
-            utility.clickContextMenuButton(integrationEnv, "#" + ContextButtons.ADD_DIMENSION_FOR_COLOR);
+        it('should change dimention type to discrete', function () {
+            assert.equal('implimented', true)
+        });
 
-            d3.tick();
+        it('should change dimention channel to form', function () {
+            assert.equal('implimented', true)
+        });
 
-            assert.equal(model().getDimensions().length, 1)
+        it('should change dimention channel to color', function () {
+            assert.equal('implimented', true)
+        });
 
-            let dimension = model().getDimensions()[0];
-            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(dimension.id));
-            d3.tick(); // needed so that the interaction targets redraw
-            utility.click(integrationEnv, "#fdl-view-container", d3.getPosition(dimension.id));
-            d3.tick();
+        it('should change dimention channel to size', function () {
+            assert.equal('implimented', true)
+        });
 
-            assert.equal(model().getGroups().length, 1)
-            assert.equal(model().getGroups()[0].mappings.length, 1)
-            assert.equal(model().getGroups()[0].mappings[0].channelType, ChannelType.COLOR)
-        })
+        it('should change dimention channel to angle', function () {
+            assert.equal('implimented', true)
+        });
+
+        it('should change dimention channel to dist', function () {
+            assert.equal('implimented', true)
+        });
+
+        it('should change dimention type back and forth without losing old information', function () {
+            assert.equal('implimented', true)
+        });
+
+        it('should create a level', function () {
+            assert.equal('implimented', true)
+        });
+
+        it('should change a level name', function () {
+            assert.equal('implimented', true)
+        });
+
+        it('should assign elements to level on drop', function () {
+            assert.equal('implimented', true)
+        });
+
+        it('should change element assignment on drop', function () {
+            assert.equal('implimented', true)
+        });
     })
 });

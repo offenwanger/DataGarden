@@ -22,30 +22,24 @@ describe('EventManager Tests', function () {
         });
 
         it('should instantiate', function () {
-            new EventManager();
+            new EventManager({ onResize: () => { } });
         });
     })
 
     describe('window resize test', function () {
         it('should call the resize functions', function () {
-            let called = [false, false];
+            let called = false;
             let eventManager = new EventManager({
                 onResize: (w, h) => {
-                    called[0] = true;
-                    assert.equal(w, 500);
-                    assert.equal(h, 800);
-                }
-            }, {
-                onResize: (w, h) => {
-                    called[1] = true;
-                    assert.equal(w, 500);
+                    called = true;
+                    assert.equal(w, 1000);
                     assert.equal(h, 800);
                 }
             });
 
             d3.getCallbacks()['resize']();
 
-            assert.equal(true, called.every(t => t));
+            assert.equal(true, called);
         });
     })
 });

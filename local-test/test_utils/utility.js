@@ -154,7 +154,7 @@ function clickMenuButton(integrationEnv, id) {
 }
 
 function clickContextMenuButton(integrationEnv, buttonId) {
-    let button = integrationEnv.d3.select('#interface-container').select('#interface-svg').select("#context-menu").select(buttonId);
+    let button = integrationEnv.d3.select("#context-menu").select(buttonId);
     let pointerdown = button.getCallbacks()['pointerdown'];
     let pointerup = button.getCallbacks()['pointerup'];
     pointerdown.call(button, { stopPropagation: () => { } });
@@ -177,6 +177,12 @@ function getCanvas(view, layer) {
     return d3.select("#" + view + "-view").select('.canvas-container').select('.' + layer + '-canvas');
 }
 
+function clickSelect(integrationEnv, id, pos) {
+    integrationEnv.d3.getCallbacks()['keydown']({ key: "s" });
+    click(integrationEnv, id, pos);
+    integrationEnv.d3.getCallbacks()['keyup']({ key: "s" });
+}
+
 module.exports = {
     makeModel,
     deepEquals,
@@ -191,4 +197,5 @@ module.exports = {
     clickContextMenuButton,
     undo, redo,
     getCanvas,
+    clickSelect,
 }

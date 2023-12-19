@@ -46,7 +46,10 @@ function MockElement(type) {
     }
     this.attr = function (att, val = null) {
         if (val !== null) {
-            mAttrs[att] = val
+            mAttrs[att] = val;
+            if (mCanvas && (att == 'width' || att == 'height')) {
+                mCanvas[att] = val;
+            }
             return this;
         };
         return mAttrs[att];
@@ -209,7 +212,7 @@ function mockForceSim() {
     }
 
     this.force = function () { return this };
-    this.nodes = (n) => { nodes = n; return this };
+    this.nodes = (n) => { if (n) { nodes = n; return this; } else return nodes; };
     this.alpha = () => { return this };
     this.alphaDecay = () => { return this };
     this.velocityDecay = () => { return this };
