@@ -70,10 +70,9 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         }))
         .alpha(0.3)
         .on("tick", () => {
-
             // do this for eveything included non-sim items
             allItems().forEach(node => {
-                if (node.targetX && node.targetY) {
+                if (node && node.targetX && node.targetY) {
                     node.x += (node.targetX - node.x) * mSimulation.alpha();
                     node.y += (node.targetY - node.y) * mSimulation.alpha();
                 }
@@ -217,6 +216,8 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         let draggedIds = mDraggedItems.map(n => n.id);
 
         mDrawingUtil.reset(mZoomTransform);
+        // we haven't been set yet, don't draw.
+        if (!mDimensionId) return;
 
         let dimension = mModel.getDimension(mDimensionId);
         if (dimension.channel == ChannelType.FORM || dimension.channel == ChannelType.COLOR) {
