@@ -9,6 +9,7 @@ let SystemState = function () {
     let mKeys = [];
     let mDefaultState = Buttons.BRUSH_BUTTON;
     let mStructureViewActive = false;
+    let mOverrideState = null;
 
     function setDefaultToolState(state) {
         mDefaultState = state;
@@ -23,6 +24,8 @@ let SystemState = function () {
     }
 
     function getToolState() {
+        if (mOverrideState) return mOverrideState;
+
         let keys = [...mKeys];
         let validStates = mStateArray;
         let checkIndex = 1;
@@ -40,6 +43,14 @@ let SystemState = function () {
         } else {
             return mDefaultState;
         }
+    }
+
+    function setOverrideToolState(tool) {
+        mOverrideState = tool;
+    }
+
+    function clearOverrideToolState() {
+        mOverrideState = null;
     }
 
     function isShift() {
@@ -63,6 +74,8 @@ let SystemState = function () {
         isDefaultToolState,
         setKeys,
         getToolState,
+        setOverrideToolState,
+        clearOverrideToolState,
         isShift,
         isCtrl,
         toggleStructureViewActive,

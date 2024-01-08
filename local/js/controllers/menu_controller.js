@@ -34,7 +34,8 @@ function MenuController() {
     };
 
     function activateButton(buttonId) {
-        if (!buttonId in mButtons) { console.error("Invalid button id: " + buttonId); return; }
+        // if the active button is not a menu button do nothing.
+        if (!buttonId in mButtons) { return; }
         let button = mButtons[buttonId];
         button.setActive(true);
         button.show();
@@ -44,7 +45,8 @@ function MenuController() {
     }
 
     function deactivateButton(buttonId) {
-        if (!buttonId in mButtons) { console.error("Invalid button id: " + buttonId); return; }
+        // if the active button is not a menu button do nothing.
+        if (!buttonId in mButtons) { return; }
         mButtons[buttonId].setActive(false);
         if (mParents.find(([parentId, childId]) => childId == buttonId)) {
             mButtons[buttonId].hide();

@@ -102,6 +102,7 @@ function getIntegrationEnviroment() {
         EventManager: rewireJs('event_manager.js').__get__("EventManager"),
         MenuController: rewireJs('controllers/menu_controller.js').__get__("MenuController"),
         ContextMenu: rewireJs('menu/context_menu.js').__get__("ContextMenu"),
+        CursorTag: rewireJs('menu/cursor_tag.js').__get__("CursorTag"),
         TextInput: rewireJs('menu/text_input.js').__get__("TextInput"),
         DropdownInput: rewireJs('menu/dropdown_input.js').__get__("DropdownInput"),
         RadialContextMenu: rewireJs('menu/radial_context_menu.js').__get__("RadialContextMenu"),

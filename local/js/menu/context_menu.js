@@ -58,6 +58,11 @@ function ContextMenu(svg) {
         img: "img/delete_icon.svg",
         tooltip: "Delete all the things",
     }
+    mButtonData[ContextButtons.PARENT] = {
+        id: ContextButtons.PARENT,
+        img: "img/parent_icon.svg",
+        tooltip: "Set the parent for the selection",
+    }
 
     function showContextMenu(pos, buttons, callback) {
         hideContextMenu();

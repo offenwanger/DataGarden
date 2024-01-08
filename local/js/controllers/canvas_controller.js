@@ -28,6 +28,7 @@ function CanvasController(mColorMap) {
     let mHighlightCallback = () => { };
     let mSelectionCallback = () => { };
     let mContextMenuCallback = () => { };
+    let mParentUpdateCallback = () => { };
 
     let mZoomTransform = d3.zoomIdentity;
     let mBrushActivePosition = false;
@@ -148,8 +149,24 @@ function CanvasController(mColorMap) {
                 };
             }
             return true;
-        } else if (systemState.getToolState() == Buttons.SHIFT_SELECTION_BUTTON) {
-            // start select interaction
+        } else if (systemState.getToolState() == ContextButtons.PARENT) {
+            let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
+            if (target && IdUtil.isType(target.id, Data.Stroke)) {
+                let targetElement = mModel.getElementForStroke(target.id);
+                if (!targetElement) { console.error("Invalid stroke id", target.id); return; }
+                let elementIds = DataUtil.unique(mSelectionIds.map(id => {
+                    if (IdUtil.isType(id, Data.Stroke)) {
+                        let element = mModel.getElementForStroke(id);
+                        if (!element) { console.error("Invalid stroke id", id); return null; }
+                        return element.id
+                    }
+                }).filter(id => id && id != targetElement.id));
+                if (elementIds.length > 0) {
+                    mParentUpdateCallback(elementIds, targetElement.id);
+                }
+            }
+        } else {
+            console.error('State not handled', systemState.getToolState())
         }
 
         draw();
@@ -179,7 +196,7 @@ function CanvasController(mColorMap) {
             mBrushActivePosition = [screenToModelCoords(screenCoords)];
         }
 
-        if (systemState.getToolState() == Buttons.SELECTION_BUTTON) {
+        if (systemState.getToolState() == Buttons.SELECTION_BUTTON || systemState.getToolState() == ContextButtons.PARENT) {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target) {
                 let element = mModel.getElementForStroke(target.id);
@@ -189,15 +206,13 @@ function CanvasController(mColorMap) {
                 mHighlightIds = [];
                 mHighlightCallback([]);
             }
+        } else if (mHighlightIds) {
+            mHighlightIds = [];
+            mHighlightCallback([]);
         }
 
         if (mBrushActivePosition && systemState.getToolState() != Buttons.BRUSH_BUTTON) {
             mBrushActivePosition = false;
-        }
-
-        if (mHighlightIds && systemState.getToolState() != Buttons.SELECTION_BUTTON) {
-            mHighlightIds = [];
-            mHighlightCallback([]);
         }
 
         draw();
@@ -349,5 +364,6 @@ function CanvasController(mColorMap) {
         setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,
         setContextMenuCallback: (func) => mContextMenuCallback = func,
+        setParentUpdateCallback: (func) => mParentUpdateCallback = func,
     }
 }

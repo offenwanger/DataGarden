@@ -11,6 +11,7 @@ function DashboardController() {
 
     let mMenuController = new MenuController();
     let mContextMenu = new ContextMenu(d3.select('#interface-svg'));
+    let mCursorTag = new CursorTag(d3.select('#interface-svg'));
     let mTextInput = new TextInput();
     let mDropdownInput = new DropdownInput();
     let mSystemState = new SystemState();
@@ -28,7 +29,6 @@ function DashboardController() {
 
     let mAddDimensionCallback = () => { };
     let mNewStrokeCallback = () => { };
-    let mParentUpdateCallback = () => { };
     let mMergeElementCallback = () => { };
     let mMoveElementCallback = () => { };
     let mDeleteCallback = () => { };
@@ -78,12 +78,17 @@ function DashboardController() {
         } else {
             // The table is active and will handle it's own mouse events. I hope.
         }
+        if (mSystemState.getToolState() == ContextButtons.PARENT) {
+            mSystemState.clearOverrideToolState();
+            mCursorTag.hide()
+        }
     }
 
     function onPointerMove(screenCoords) {
         mCanvasController.onPointerMove(screenCoords, mSystemState);
         mTabController.onPointerMove(screenCoords, mSystemState);
         mFdlViewController.onPointerMove(screenCoords, mSystemState);
+        mCursorTag.onPointerMove(screenCoords, mSystemState);
     }
 
     function onPointerUp(screenCoords) {
@@ -202,24 +207,20 @@ function DashboardController() {
     mFdlViewController.setContextMenuCallback(onContextMenu);
     function onContextMenu(screenCoords, selection, target) {
         if (!selection || !Array.isArray(selection)) { console.error("Invalid selection!", selection); return; }
-        if (!selection.some(id => IdUtil.isType(id, Data.Stroke)
+        if (!selection.some(id =>
+            IdUtil.isType(id, Data.Stroke)
             || IdUtil.isType(id, Data.Element)
             || IdUtil.isType(id, Data.Level)
             || IdUtil.isType(id, Data.Dimension))) {
-            // no buttons for context menu
+            // if it's not one of the above, there's no context menu.  
             return;
         }
         let buttons = [ContextButtons.DELETE];
         if (selection.some(id => IdUtil.isType(id, Data.Stroke) || IdUtil.isType(id, Data.Element))) {
             buttons.push(ContextButtons.MERGE_TO_ELEMENT);
-            buttons.push(ContextButtons.STYLE_STRIP);
-            buttons.push(ContextButtons.STYLE_STROKES);
-        }
-
-        if (target && IdUtil.isType(target, Data.Element) || IdUtil.isType(target, Data.Stroke)) {
+            buttons.push(ContextButtons.PARENT);
             buttons.push(ContextButtons.SPINE);
         }
-
 
         mContextMenu.showContextMenu(screenCoords, buttons, (buttonId) => {
             if (buttonId == ContextButtons.MERGE_TO_ELEMENT) {
@@ -243,10 +244,9 @@ function DashboardController() {
                 }
                 if (!element) console.error("Cannot find element for id", id);
                 mCalculateSpineCallback(element.id);
-            } else if (buttonId == ContextButtons.STYLE_STRIP) {
-                console.error("Impliment me!")
-            } else if (buttonId == ContextButtons.STYLE_STROKES) {
-                console.error("Impliment me!")
+            } else if (buttonId == ContextButtons.PARENT) {
+                mSystemState.setOverrideToolState(ContextButtons.PARENT);
+                mCursorTag.show(ContextButtons.PARENT)
             } else if (buttonId == ContextButtons.DELETE) {
                 mDeleteCallback(selection);
             }
@@ -341,7 +341,7 @@ function DashboardController() {
         onDelete,
         setNewStrokeCallback: (func) => mCanvasController.setNewStrokeCallback(func),
         setStructureMode: (to) => mCanvasController.setStructureMode(to),
-        setParentUpdateCallback: (func) => mFdlViewController.setParentUpdateCallback(func),
+        setParentUpdateCallback: (func) => { mFdlViewController.setParentUpdateCallback(func); mCanvasController.setParentUpdateCallback(func); },
         setMergeElementCallback: (func) => mMergeElementCallback = func,
         setMoveElementCallback: (func) => mMoveElementCallback = func,
         setDeleteCallback: (func) => mDeleteCallback = func,

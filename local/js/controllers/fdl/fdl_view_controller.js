@@ -15,6 +15,7 @@ function FdlViewController(mColorMap) {
     let mEditTypeCallback = () => { };
     let mEditChannelCallback = () => { };
     let mEditTierCallback = () => { };
+    let mParentUpdateCallback = () => { }
 
     let mModel = new DataModel();
     let mSimulationData = [];
@@ -39,6 +40,7 @@ function FdlViewController(mColorMap) {
     let mOverlayUtil = new OverlayUtil();
 
     let mFdlParentViewController = new FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap);
+    mFdlParentViewController.setParentUpdateCallback((elementsIds, parentId) => mParentUpdateCallback(elementsIds, parentId));
     let mFdlLegendViewController = new FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap);
     let mFdlDimensionViewController = new FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap);
 
@@ -237,6 +239,22 @@ function FdlViewController(mColorMap) {
                     path: [modelCoords]
                 }
             }
+        } else if (systemState.getToolState() == ContextButtons.PARENT) {
+            let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
+            let elementId;
+            if (target && IdUtil.isType(target.id, Data.Element)) {
+                elementId = target.id;
+            } else if (target && IdUtil.isType(target.id, Data.Stroke)) {
+                elementId = mModel.getElementForStroke(target.id);
+            }
+            if (elementId) {
+                let ids = mSelectionIds.filter(id => id != elementId);
+                if (ids.length > 0) {
+                    mParentUpdateCallback(ids, elementId)
+                }
+            }
+
+
         } else {
             console.error("Unhandled state!", systemState.getToolState());
         }
@@ -449,7 +467,6 @@ function FdlViewController(mColorMap) {
         onHighlight,
         hide,
         show,
-        setParentUpdateCallback: (func) => mFdlParentViewController.setParentUpdateCallback(func),
         setAddDimensionCallback: (func) => mFdlLegendViewController.setAddDimensionCallback(func),
         setClickDimensionCallback: (func) => mFdlLegendViewController.setClickDimensionCallback(func),
         setAddLevelCallback: (func) => mFdlDimensionViewController.setAddLevelCallback(func),
@@ -464,5 +481,6 @@ function FdlViewController(mColorMap) {
         setContextMenuCallback: (func) => mContextMenuCallback = func,
         setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,
+        setParentUpdateCallback: (func) => mParentUpdateCallback = func,
     }
 }
