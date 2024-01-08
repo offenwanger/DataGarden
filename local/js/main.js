@@ -86,11 +86,11 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let dimension = model.getDimension(dimenId);
         if (!dimension) { console.error("Invalid dimension id", dimenId); return; }
         let maxNum = Math.max(0, ...dimension.levels
-            .map(l => l.name.startsWith("Level") ? parseInt(l.name.slice(5)) : 0)
+            .map(l => l.name.startsWith("Category") ? parseInt(l.name.slice(8)) : 0)
             .filter(n => !isNaN(n)))
 
         let newLevel = new Data.Level();
-        newLevel.name = "Level" + (maxNum + 1);
+        newLevel.name = "Category" + (maxNum + 1);
         mModelController.addLevel(dimenId, newLevel);
 
         mVersionController.stack(mModelController.getModel().toObject());

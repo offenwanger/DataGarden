@@ -8,7 +8,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
     const TARGET_TIER = "element_tier";
     const TARGET_BUBBLE = "level_bubble";
     const NODE_COLUMN_WIDTH = 300;
-    const ADD_LEVEL_LABEL = "Add Level +";
+    const ADD_LEVEL_LABEL = "Add Category +";
     const BACK_LABEL = "<- Back to all Dimensions";
     const LINK_ID = "link_"
 

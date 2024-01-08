@@ -125,7 +125,7 @@ let Data = function () {
     function Level() {
         this.id = IdUtil.getUniqueId(Level);
         this.creationTime = Date.now();
-        this.name = "Level";
+        this.name = "Category";
         this.elementIds = [];
 
         this.clone = function () {
