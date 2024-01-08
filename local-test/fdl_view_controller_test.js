@@ -43,7 +43,7 @@ describe('FDL View Controller Test', function () {
     })
 
     describe('deletion tests', function () {
-        it('should delete a dimention', function () {
+        it('should delete a dimension', function () {
             assert.equal('implimented', true)
         });
 
@@ -68,44 +68,44 @@ describe('FDL View Controller Test', function () {
         });
     })
 
-    describe('dimention setting tests', function () {
-        it('should create a dimention', function () {
+    describe('dimension setting tests', function () {
+        it('should create a dimension', function () {
             assert.equal('implimented', true)
         });
 
-        it('should change dimention name', function () {
+        it('should change dimension name', function () {
             assert.equal('implimented', true)
         });
 
-        it('should change dimention type to continuous', function () {
+        it('should change dimension type to continuous', function () {
             assert.equal('implimented', true)
         });
 
-        it('should change dimention type to discrete', function () {
+        it('should change dimension type to discrete', function () {
             assert.equal('implimented', true)
         });
 
-        it('should change dimention channel to form', function () {
+        it('should change dimension channel to form', function () {
             assert.equal('implimented', true)
         });
 
-        it('should change dimention channel to color', function () {
+        it('should change dimension channel to color', function () {
             assert.equal('implimented', true)
         });
 
-        it('should change dimention channel to size', function () {
+        it('should change dimension channel to size', function () {
             assert.equal('implimented', true)
         });
 
-        it('should change dimention channel to angle', function () {
+        it('should change dimension channel to angle', function () {
             assert.equal('implimented', true)
         });
 
-        it('should change dimention channel to dist', function () {
+        it('should change dimension channel to dist', function () {
             assert.equal('implimented', true)
         });
 
-        it('should change dimention type back and forth without losing old information', function () {
+        it('should change dimension type back and forth without losing old information', function () {
             assert.equal('implimented', true)
         });
 
