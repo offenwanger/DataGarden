@@ -8,6 +8,8 @@ function TabController() {
     const TAB_TARGET = "tab";
     const CLOSE_TARGET = "close";
 
+    const LEGEND_LABEL = "Dimensions";
+
     let mSetTabCallback = () => { };
 
     let mCodeUtil = new CodeUtil();
@@ -16,17 +18,16 @@ function TabController() {
     let mMousedOver = null;
 
     let mActiveTab = Tab.PARENT;
-    let mDefaultTabs = [{
+    let mTabs = [{
         title: "Parents",
         id: Tab.PARENT,
     }, {
+        title: LEGEND_LABEL,
+        id: Tab.LEGEND,
+    }, {
         title: "Table",
         id: Tab.TABLE,
-    }, {
-        title: "Legend",
-        id: Tab.LEGEND,
     }]
-    let mDimensionTabs = [];
 
     let mTabDrawingUtil = new TabDrawingUtil(
         mCanvas.node().getContext("2d"),
@@ -34,12 +35,13 @@ function TabController() {
     );
 
     function onModelUpdate(model) {
-        mDimensionTabs.forEach(dimensionTab => {
-            let dimension = model.getDimension(dimensionTab.id);
-            if (dimension) {
-                dimensionTab.title = dimension.name;
-            } else {
-                removeTab(dimensionTab.id);
+        mTabs.forEach(tab => {
+            if (IdUtil.isType(tab.id, Data.Dimension)) {
+                let dimension = model.getDimension(tab.id);
+                if (!dimension) {
+                    resetDimensionTab();
+                    mSetTabCallback(Tab.LEGEND);
+                }
             }
         })
         draw();
@@ -105,11 +107,9 @@ function TabController() {
         let canvasHeight = mCanvas.attr("height");
         let tabHeight = Math.round(canvasHeight * 0.8);
         let topPadding = canvasHeight - tabHeight - 1;
+        let tabWidth = canvasWidth / mTabs.length;
 
-        let tabs = mDefaultTabs.concat(mDimensionTabs);
-        let tabWidth = canvasWidth / tabs.length;
-
-        tabs.forEach((tab, index) => {
+        mTabs.forEach((tab, index) => {
             if (tab.id != mActiveTab) {
                 mTabDrawingUtil.drawTab(
                     index * tabWidth,
@@ -118,23 +118,23 @@ function TabController() {
                     tabHeight,
                     tab.title,
                     tab.id == mMousedOver,
-                    mCodeUtil.getCode(tab.id, TAB_TARGET),
-                    IdUtil.isType(tab.id, Data.Dimension) ? mCodeUtil.getCode(tab.id, CLOSE_TARGET) : null);
+                    mCodeUtil.getCode(tab.id, TAB_TARGET));
             }
         })
         mTabDrawingUtil.drawHorizontalLine(canvasHeight - 2, canvasWidth, 2);
 
-        let tab = tabs.find(t => t.id == mActiveTab);
-        let index = tabs.findIndex(t => t.id == mActiveTab);
-        mTabDrawingUtil.drawTab(
-            index * tabWidth,
-            topPadding,
-            tabWidth + 10,
-            tabHeight,
-            tab.title,
-            true,
-            mCodeUtil.getCode(tab.id, TAB_TARGET),
-            IdUtil.isType(tab.id, Data.Dimension) ? mCodeUtil.getCode(tab.id, CLOSE_TARGET) : null);
+        let tab = mTabs.find(t => t.id == mActiveTab);
+        let index = mTabs.findIndex(t => t.id == mActiveTab);
+        if (tab) {
+            mTabDrawingUtil.drawTab(
+                index * tabWidth,
+                topPadding,
+                tabWidth + 10,
+                tabHeight,
+                tab.title,
+                true,
+                mCodeUtil.getCode(tab.id, TAB_TARGET));
+        }
     }
 
     function setActiveTab(tabId) {
@@ -142,19 +142,17 @@ function TabController() {
         draw();
     }
 
-    function setTab(id, title) {
-        let tab = mDimensionTabs.find(t => t.id == id);
-        if (!tab) {
-            tab = { id };
-            mDimensionTabs.push(tab);
-        }
-        tab.title = title;
+    function setDimensionTab(id, title) {
+        let dimenTab = mTabs.find(tab => IdUtil.isType(tab.id, Data.Dimension) || tab.id == Tab.LEGEND);
+        dimenTab.id = id;
+        dimenTab.title = title;
         draw();
     }
 
-    function removeTab(id) {
-        mDimensionTabs.splice(mDimensionTabs.find(t => t.id == id), 1);
-        if (mActiveTab == id) { mSetTabCallback(Tab.LEGEND); }
+    function resetDimensionTab() {
+        let dimenTab = mTabs.find(tab => IdUtil.isType(tab.id, Data.Dimension) || tab.id == Tab.LEGEND);
+        dimenTab.id = Tab.LEGEND;
+        dimenTab.title = LEGEND_LABEL;
         draw();
     }
 
@@ -165,8 +163,8 @@ function TabController() {
         onPointerMove,
         onPointerUp,
         setActiveTab,
-        setTab,
-        removeTab,
+        setDimensionTab,
+        resetDimensionTab,
         setSetTabCallback: (func) => mSetTabCallback = func,
     }
 }

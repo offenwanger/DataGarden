@@ -257,17 +257,23 @@ function DashboardController() {
 
     mFdlViewController.setAddDimensionCallback(() => {
         let newDimension = mAddDimensionCallback();
-        mTabController.setTab(newDimension.id, newDimension.name);
+        mTabController.setDimensionTab(newDimension.id, newDimension.name);
         mTabController.setActiveTab(newDimension.id);
         mFdlViewController.setMode(FdlMode.DIMENSION, newDimension.id);
     });
 
     mFdlViewController.setClickDimensionCallback((dimenId) => {
         let dimension = mModel.getDimension(dimenId);
-        mTabController.setTab(dimenId, dimension.name);
+        mTabController.setDimensionTab(dimenId, dimension.name);
         mTabController.setActiveTab(dimenId);
         mFdlViewController.setMode(FdlMode.DIMENSION, dimenId);
     });
+
+    mFdlViewController.setBackToAllDimensionsCallback(() => {
+        mTabController.resetDimensionTab();
+        mTabController.setActiveTab(Tab.LEGEND);
+        mFdlViewController.setMode(FdlMode.LEGEND);
+    })
 
     mFdlViewController.setEditNameCallback((itemId, x, y, width, height) => {
         let item;
