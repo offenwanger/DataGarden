@@ -41,6 +41,8 @@ function TabController() {
                 if (!dimension) {
                     resetDimensionTab();
                     mSetTabCallback(Tab.LEGEND);
+                } else {
+                    tab.title = dimension.name;
                 }
             }
         })
