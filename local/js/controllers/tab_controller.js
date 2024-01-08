@@ -19,7 +19,7 @@ function TabController() {
 
     let mActiveTab = Tab.PARENT;
     let mTabs = [{
-        title: "Parents",
+        title: "Overview",
         id: Tab.PARENT,
     }, {
         title: LEGEND_LABEL,
