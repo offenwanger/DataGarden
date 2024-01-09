@@ -348,6 +348,7 @@ function DashboardController() {
         setNewStrokeCallback: (func) => mCanvasController.setNewStrokeCallback(func),
         setStructureMode: (to) => mCanvasController.setStructureMode(to),
         setParentUpdateCallback: (func) => { mFdlViewController.setParentUpdateCallback(func); mCanvasController.setParentUpdateCallback(func); },
+        setTranslateStrokesCallback: (func) => mCanvasController.setTranslateStrokesCallback(func),
         setMergeElementCallback: (func) => mMergeElementCallback = func,
         setMoveElementCallback: (func) => mMoveElementCallback = func,
         setDeleteCallback: (func) => mDeleteCallback = func,

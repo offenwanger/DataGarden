@@ -29,6 +29,7 @@ function CanvasController(mColorMap) {
     let mSelectionCallback = () => { };
     let mContextMenuCallback = () => { };
     let mParentUpdateCallback = () => { };
+    let mTranslateStrokesCallback = () => { };
 
     let mZoomTransform = d3.zoomIdentity;
     let mBrushActivePosition = false;
@@ -189,7 +190,7 @@ function CanvasController(mColorMap) {
         } else if (mInteraction && mInteraction.type == LASSO) {
             mInteraction.line.push(screenToModelCoords(screenCoords));
         } else if (mInteraction && mInteraction.type == DRAGGING) {
-            console.error("impliment me!")
+            mInteraction.translation = VectorUtil.subtract(screenCoords, mInteraction.start);
         } else if (mInteraction) {
             console.error("Not Handled!", mInteraction);
         } else if (systemState.getToolState() == Buttons.BRUSH_BUTTON) {
@@ -248,7 +249,7 @@ function CanvasController(mColorMap) {
                 let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
                 mContextMenuCallback(screenCoords, mSelectionIds, interaction.startTarget.id);
             } else {
-                console.error("Moved selection, impliment!");
+                mTranslateStrokesCallback(mSelectionIds, VectorUtil.subtract(screenCoords, interaction.start));
             }
         }
 
@@ -284,8 +285,12 @@ function CanvasController(mColorMap) {
         mDrawingUtil.reset(mZoomTransform);
         mModel.getElements().forEach(elem => {
             elem.strokes.forEach(stroke => {
+                let drawPath = stroke.path;
+                if (mInteraction && mInteraction.type == DRAGGING && mSelectionIds.includes(stroke.id)) {
+                    drawPath = stroke.path.map(p => VectorUtil.add(mInteraction.translation, p));
+                }
                 mDrawingUtil.drawStroke({
-                    path: stroke.path,
+                    path: drawPath,
                     color: stroke.color,
                     width: stroke.size,
                     shadow: mHighlightIds.includes(stroke.id) || mHighlightIds.includes(elem.id),
@@ -365,5 +370,6 @@ function CanvasController(mColorMap) {
         setSelectionCallback: (func) => mSelectionCallback = func,
         setContextMenuCallback: (func) => mContextMenuCallback = func,
         setParentUpdateCallback: (func) => mParentUpdateCallback = func,
+        setTranslateStrokesCallback: (func) => mTranslateStrokesCallback = func,
     }
 }

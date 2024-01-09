@@ -34,6 +34,19 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mVersionController.stack(mModelController.getModel().toObject());
     })
 
+    mDashboardController.setTranslateStrokesCallback((strokeIds, translation) => {
+        let model = mModelController.getModel();
+        strokeIds.forEach(strokeId => {
+            let stroke = model.getStroke(strokeId);
+            if (!stroke) { console.error("Invalid stroke id", strokeId); return; }
+            stroke.path = stroke.path.map(p => VectorUtil.add(p, translation));
+            mModelController.updateStroke(stroke);
+        });
+
+        mVersionController.stack(mModelController.getModel().toObject());
+        mDashboardController.modelUpdate(mModelController.getModel());
+    });
+
     mDashboardController.setParentUpdateCallback((elementIds, parentElementId) => {
         elementIds.forEach(elementId => {
             ModelUtil.updateParent(parentElementId, elementId, mModelController);
