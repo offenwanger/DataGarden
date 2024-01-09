@@ -36,6 +36,13 @@ function ModelController() {
         currElement.update(element);
     }
 
+    function updateStroke(stroke) {
+        if (!ValUtil.isType(stroke, Data.Stroke)) { console.error("Invalid stroke", stroke); return; }
+        let currStroke = mDataModel.getStroke(stroke.id);
+        if (!currStroke) { console.error("Stroke not found for id", stroke.id); return; }
+        currStroke.update(stroke);
+    }
+
     function addLevel(dimensionId, level) {
         if (!ValUtil.isType(level, Data.Level)) { console.error("Invalid level", level); return; }
         if (!IdUtil.isType(dimensionId, Data.Dimension)) { console.error("Invalid dimension id", dimensionId); return; }
@@ -91,6 +98,7 @@ function ModelController() {
         addElement,
         removeElement,
         updateElement,
+        updateStroke,
         addLevel,
         removeLevel,
         updateLevel,
