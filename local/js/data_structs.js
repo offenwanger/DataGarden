@@ -12,6 +12,14 @@ let Data = function () {
             clone.creationTime = this.creationTime;
             return clone;
         };
+
+        this.update = function (stroke) {
+            this.id = stroke.id;
+            this.creationTime = stroke.creationTime;
+            this.path = stroke.path.map(p => { return { x: p.x, y: p.y } });
+            this.size = stroke.size;
+            this.color = stroke.color;
+        };
     }
     Stroke.fromObject = function (obj) {
         let storke = new Stroke(obj.path, obj.size, obj.color);
