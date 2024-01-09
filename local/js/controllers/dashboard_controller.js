@@ -324,9 +324,9 @@ function DashboardController() {
         } else if (button == Buttons.VIEW_BUTTON) {
             mSystemState.toggleStructureViewActive();
             if (mSystemState.isStructureViewActive()) {
-                mMenuController.deactivateButton(button);
-            } else {
                 mMenuController.activateButton(button);
+            } else {
+                mMenuController.deactivateButton(button);
             }
             mCanvasController.setStructureMode(mSystemState.isStructureViewActive());
         }
