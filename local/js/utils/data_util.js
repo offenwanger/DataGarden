@@ -280,6 +280,10 @@ let DataUtil = function () {
     }
 
     function getStupidSpine(element) {
+        if (element.strokes.length == 1) {
+            return element.strokes[0].path;
+        }
+
         let points = element.strokes.map(s => s.path).flat();
         let yMax = points.reduce((prev, current) => (prev.y > current.y) ? prev : current);
         let yMix = points.reduce((prev, current) => (prev.y < current.y) ? prev : current);
@@ -292,6 +296,7 @@ let DataUtil = function () {
     }
 
     function boundingBoxIntersects(bb1, bb2) {
+        a
         return !(bb2.x > bb1.x + bb1.width ||
             bb2.x + bb2.width < bb1.x ||
             bb2.y > bb1.y + bb1.height ||
