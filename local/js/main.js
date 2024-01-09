@@ -43,6 +43,16 @@ document.addEventListener('DOMContentLoaded', function (e) {
             mModelController.updateStroke(stroke);
         });
 
+        let elements = DataUtil.unique(strokeIds.map(s => model.getElementForStroke(s)).filter(e => e));
+        elements.forEach(element => {
+            if (element.strokes.every(s => strokeIds.includes(s.id))) {
+                element.spine = element.spine.map(p => VectorUtil.add(p, translation));
+                element.root = VectorUtil.add(element.root, translation);
+                mModelController.updateElement(element);
+            }
+        });
+
+
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
     });
