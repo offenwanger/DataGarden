@@ -63,6 +63,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
             if (element.strokes.every(s => strokeIds.includes(s.id))) {
                 element.spine = element.spine.map(p => VectorUtil.add(p, translation));
                 element.root = VectorUtil.add(element.root, translation);
+                if (element.parentId) {
+                    let parentElement = mModelController.getModel().getElement(element.parentId)
+                    if (parentElement) {
+                        let closestPosition = PathUtil.getClosestPointOnPath(element.root, parentElement.spine);
+                        element.position = closestPosition.percent;
+                    }
+                }
                 mModelController.updateElement(element);
             }
         });
