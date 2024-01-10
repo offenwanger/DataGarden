@@ -27,6 +27,21 @@ document.addEventListener('DOMContentLoaded', function (e) {
             mModelController.addElement(element);
             if (parentId) {
                 ModelUtil.updateParent(parentId, element.id, mModelController);
+
+                model = mModelController.getModel();
+                let parent = model.getElement(parentId);
+                let axis = DataUtil.getLongestAxis(element);
+                let p1 = PathUtil.getClosestPointOnPath(axis[0], parent.spine);
+                let p2 = PathUtil.getClosestPointOnPath(axis[1], parent.spine);
+                element = model.getElement(element.id);
+                if (VectorUtil.dist(p1, axis[0]) < VectorUtil.dist(p2, axis[1])) {
+                    element.root = axis[0];
+                    element.angle = VectorUtil.normalize(VectorUtil.subtract(axis[1], axis[0]))
+                } else {
+                    element.root = axis[1];
+                    element.angle = VectorUtil.normalize(VectorUtil.subtract(axis[0], axis[1]))
+                }
+                mModelController.updateElement(element);
             }
         }
 

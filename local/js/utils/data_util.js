@@ -304,6 +304,10 @@ let DataUtil = function () {
             return element.strokes[0].path;
         }
 
+        return getLongestAxis(element);
+    }
+
+    function getLongestAxis(element) {
         let points = element.strokes.map(s => s.path).flat();
         let yMax = points.reduce((prev, current) => (prev.y > current.y) ? prev : current);
         let yMix = points.reduce((prev, current) => (prev.y < current.y) ? prev : current);
@@ -371,6 +375,7 @@ let DataUtil = function () {
         angleToPercent,
         getRelativeAngle,
         getStupidSpine,
+        getLongestAxis,
         boundingBoxIntersects,
         isDataId,
         itemExists,
