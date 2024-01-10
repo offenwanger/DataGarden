@@ -57,6 +57,16 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mDashboardController.modelUpdate(mModelController.getModel());
     });
 
+    mDashboardController.setUpdateAngleCallback((elementId, root, angle) => {
+        let element = mModelController.getModel().getElement(elementId);
+        if (!element) { console.error("invalid element id", elementId); return; }
+        element.root = root;
+        element.angle = angle;
+        mModelController.updateElement(element);
+        mVersionController.stack(mModelController.getModel().toObject());
+        mDashboardController.modelUpdate(mModelController.getModel());
+    });
+
     mDashboardController.setParentUpdateCallback((elementIds, parentElementId) => {
         elementIds.forEach(elementId => {
             ModelUtil.updateParent(parentElementId, elementId, mModelController);

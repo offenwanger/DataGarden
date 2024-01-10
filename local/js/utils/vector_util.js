@@ -86,6 +86,14 @@ let VectorUtil = function () {
         return { x: v.x * cos - v.y * sin, y: v.x * sin + v.y * cos };
     }
 
+    function projectToLine(p, p1, p2) {
+        let p1p2 = { x: p2.x - p1.x, y: p2.y - p1.y };
+        let p1p = { x: p.x - p1.x, y: p.y - p1.y }
+
+        let t = (p1p2.x * p1p.x + p1p2.y * p1p.y) / (p1p2.x * p1p2.x + p1p2.y * p1p2.y);
+        return { x: p1.x + p1p2.x * t, y: p1.y + p1p2.y * t, t }
+    }
+
     return {
         add,
         subtract,
@@ -99,5 +107,6 @@ let VectorUtil = function () {
         rotateLeft,
         rotateRight,
         rotate,
+        projectToLine,
     }
 }();

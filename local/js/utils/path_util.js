@@ -304,6 +304,19 @@ let PathUtil = function () {
         }
     }
 
+    function getDistanceMetric(path, line) {
+        let distVal = path.map(p => {
+            let projection = VectorUtil.projectToLine(p, line[0], line[1]);
+            let dist = VectorUtil.dist(projection, p);
+            if (projection.t < 0) projection.t = Math.abs(projection.t) + 1;
+            if (projection.t > 1) {
+                dist *= projection.t;
+            }
+            return dist * dist;
+        }).reduce((sum, v) => sum + v, 0) / path.length;
+        return distVal;
+    }
+
     // UTILITY //
     function getHash(points) {
         if (!Array.isArray(points)) {
@@ -498,5 +511,6 @@ let PathUtil = function () {
         getPercentBetweenPoints,
         isLineLike,
         pathOverlaps,
+        getDistanceMetric,
     }
 }();

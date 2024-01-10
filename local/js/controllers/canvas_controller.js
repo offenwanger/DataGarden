@@ -30,6 +30,7 @@ function CanvasController(mColorMap) {
     let mContextMenuCallback = () => { };
     let mParentUpdateCallback = () => { };
     let mTranslateStrokesCallback = () => { };
+    let mUpdateAngleCallback = () => { }
 
     let mZoomTransform = d3.zoomIdentity;
     let mBrushActivePosition = false;
@@ -45,6 +46,7 @@ function CanvasController(mColorMap) {
 
     let mModel = new DataModel();
     let mProjections = {};
+    let mBoundingBoxes = [];
     let mInteraction = null;
 
     function onModelUpdate(model) {
@@ -57,9 +59,12 @@ function CanvasController(mColorMap) {
                 if (!parent) { console.error("Invalid parent id!", element.parentId); return; }
                 mProjections[element.id] = PathUtil.getPositionForPercent(parent.spine, element.position);
             }
+
+            mBoundingBoxes.push({ id: element.id, box: DataUtil.getBoundingBox(element) });
         })
         mHighlightIds = [];
         mSelectionIds = mSelectionIds.filter(id => !DataUtil.isDataId(id) || DataUtil.itemExists(id, model));
+        onSelection(mSelectionIds);
         draw();
     }
 
@@ -121,6 +126,10 @@ function CanvasController(mColorMap) {
                 type: DRAWING,
                 currentStroke: [screenToModelCoords(screenCoords)]
             };
+            if (mStructureMode) {
+                let coords = screenToModelCoords(screenCoords);
+                mInteraction.targetElement = getIntendedElementId(coords, coords);
+            }
         } else if (systemState.getToolState() == Buttons.SELECTION_BUTTON ||
             (systemState.getToolState() == Buttons.BRUSH_BUTTON && (systemState.isShift() || systemState.isCtrl()))) {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
@@ -155,13 +164,7 @@ function CanvasController(mColorMap) {
             if (target && IdUtil.isType(target.id, Data.Stroke)) {
                 let targetElement = mModel.getElementForStroke(target.id);
                 if (!targetElement) { console.error("Invalid stroke id", target.id); return; }
-                let elementIds = DataUtil.unique(mSelectionIds.map(id => {
-                    if (IdUtil.isType(id, Data.Stroke)) {
-                        let element = mModel.getElementForStroke(id);
-                        if (!element) { console.error("Invalid stroke id", id); return null; }
-                        return element.id
-                    }
-                }).filter(id => id && id != targetElement.id));
+                let elementIds = getSelectedElementIds().filter(id => id != targetElement.id);
                 if (elementIds.length > 0) {
                     mParentUpdateCallback(elementIds, targetElement.id);
                 }
@@ -187,6 +190,11 @@ function CanvasController(mColorMap) {
             mZoomTransform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
         } else if (mInteraction && mInteraction.type == DRAWING) {
             mInteraction.currentStroke.push(screenToModelCoords(screenCoords));
+            if (mStructureMode) {
+                mInteraction.targetElement = getIntendedElementId(
+                    mInteraction.currentStroke[0],
+                    mInteraction.currentStroke[mInteraction.currentStroke.length - 1]);
+            }
         } else if (mInteraction && mInteraction.type == LASSO) {
             mInteraction.line.push(screenToModelCoords(screenCoords));
         } else if (mInteraction && mInteraction.type == DRAGGING) {
@@ -224,7 +232,16 @@ function CanvasController(mColorMap) {
         mInteraction = null;
 
         if (interaction && interaction.type == DRAWING && interaction.currentStroke.length > 1) {
-            mNewStrokeCallback(new Data.Stroke(interaction.currentStroke, mBrushOptions.size, mBrushOptions.color))
+            if (mStructureMode) {
+                if (interaction.targetElement) {
+                    let root = interaction.currentStroke[0];
+                    let angle = VectorUtil.normalize(VectorUtil.subtract(interaction.currentStroke[interaction.currentStroke.length - 1], interaction.currentStroke[0]));
+                    mUpdateAngleCallback(interaction.targetElement, root, angle);
+                }
+            } else {
+                let storke = new Data.Stroke(interaction.currentStroke, mBrushOptions.size, mBrushOptions.color);
+                mNewStrokeCallback(storke);
+            }
         } else if (interaction && interaction.type == LASSO) {
             if (!systemState.isShift() && !systemState.isCtrl()) {
                 mSelectionIds = [];
@@ -303,7 +320,20 @@ function CanvasController(mColorMap) {
         mDrawingUtil.resetInterface(mZoomTransform);
 
         if (mInteraction && mInteraction.type == DRAWING) {
-            mDrawingUtil.drawInterfaceStroke(mInteraction.currentStroke, mBrushOptions.color, mBrushOptions.size)
+            if (mStructureMode) {
+                if (!mInteraction.targetElement) {
+                    mDrawingUtil.drawRoot(mInteraction.currentStroke[0])
+                    if (mInteraction.currentStroke.length > 1) {
+                        let angle = VectorUtil.normalize(
+                            VectorUtil.subtract(
+                                mInteraction.currentStroke[mInteraction.currentStroke.length - 1],
+                                mInteraction.currentStroke[0]));
+                        mDrawingUtil.drawAngle(mInteraction.currentStroke[0], angle);
+                    }
+                }
+            } else {
+                mDrawingUtil.drawInterfaceStroke(mInteraction.currentStroke, mBrushOptions.color, mBrushOptions.size)
+            }
         } else if (mBrushActivePosition) {
             mDrawingUtil.drawInterfaceStroke([mBrushActivePosition], mBrushOptions.color, mBrushOptions.size)
         } else if (mInteraction && mInteraction.type == LASSO) {
@@ -312,9 +342,15 @@ function CanvasController(mColorMap) {
 
         if (mStructureMode) {
             mModel.getElements().forEach(elem => {
+                let root = elem.root;
+                let angle = elem.angle;
+                if (mInteraction && mInteraction.type == DRAWING && mStructureMode && mInteraction.targetElement == elem.id && mInteraction.currentStroke.length > 1) {
+                    root = mInteraction.currentStroke[0];
+                    angle = VectorUtil.normalize(VectorUtil.subtract(mInteraction.currentStroke[mInteraction.currentStroke.length - 1], mInteraction.currentStroke[0]));
+                }
                 mDrawingUtil.drawSpine(elem.spine)
-                mDrawingUtil.drawRoot(elem.root, mProjections[elem.id])
-                mDrawingUtil.drawAngle(elem.root, elem.angle)
+                mDrawingUtil.drawRoot(root, mProjections[elem.id])
+                mDrawingUtil.drawAngle(root, angle)
             });
         }
     }
@@ -355,6 +391,47 @@ function CanvasController(mColorMap) {
 
     }
 
+    function getIntendedElementId(p1, p2) {
+        if (VectorUtil.equal(p1, p2)) {
+            p2 = { x: p2.x, y: p2.y + 1 };
+        }
+        let bb = { x: Math.min(p1.x, p2.x), y: Math.min(p1.y, p2.y) };
+        bb.width = Math.max(p1.x, p2.x) - bb.x;
+        bb.height = Math.max(p1.y, p2.y) - bb.y;
+
+        let overlapIds = mBoundingBoxes.filter(boxData => DataUtil.overlap(bb, boxData.box, 10)).map(d => d.id);
+        if (overlapIds.length == 0) return null;
+        let selectedElements = getSelectedElementIds();
+        let validIds = overlapIds.filter(id => selectedElements.includes(id));
+        if (validIds.length == 0) validIds = overlapIds;
+
+        let result = validIds.reduce((minData, currId) => {
+            let element = mModel.getElement(currId)
+            let dist = PathUtil.getDistanceMetric(element.strokes.map(s => s.path).flat(), [p1, p2]);
+            if (dist < minData.dist) {
+                return { id: currId, dist };
+            } else {
+                return minData;
+            }
+        }, { dist: Infinity });
+
+        if (result) {
+            return result.id;
+        } else {
+            return null;
+        }
+    }
+
+    function getSelectedElementIds() {
+        return DataUtil.unique(mSelectionIds
+            .filter(id => IdUtil.isType(id, Data.Stroke))
+            .map(sId => {
+                let element = mModel.getElementForStroke(sId);
+                if (!element) { console.error("invalid stroke id"); return null; }
+                return element.id;
+            })).filter(id => id);
+    }
+
     return {
         onModelUpdate,
         onPointerDown,
@@ -371,5 +448,6 @@ function CanvasController(mColorMap) {
         setContextMenuCallback: (func) => mContextMenuCallback = func,
         setParentUpdateCallback: (func) => mParentUpdateCallback = func,
         setTranslateStrokesCallback: (func) => mTranslateStrokesCallback = func,
+        setUpdateAngleCallback: (func) => mUpdateAngleCallback = func,
     }
 }

@@ -66,10 +66,30 @@ let DataUtil = function () {
         return { x, y, width: xMax - x, height: yMax - y, }
     }
 
-    function overlap(bb1, bb2) {
+    function overlap(bb1, bb2, tollerance = 0) {
+        tollerance /= 2;
+        bb1 = { x: bb1.x - tollerance, y: bb1.y - tollerance, height: bb1.height + tollerance, width: bb1.width + tollerance }
+        bb2 = { x: bb2.x - tollerance, y: bb2.y - tollerance, height: bb2.height + tollerance, width: bb2.width + tollerance }
         let overlap1D = (min1, max1, min2, max2) => max1 >= min2 && max2 >= min1;
         return overlap1D(bb1.x, bb1.x + bb1.width, bb2.x, bb2.x + bb2.width) &&
             overlap1D(bb1.y, bb1.y + bb1.height, bb2.y, bb2.y + bb2.height);
+    }
+
+    function getDifferenceMetric(bb1, bb2) {
+        let corners = [bb1, bb2].map(bb => {
+            return [
+                { x: bb.x, y: bb.y },
+                { x: bb.x + bb.width, y: bb.y },
+                { x: bb.x, y: bb.y + bb.height },
+                { x: bb.x + bb.width, y: bb.y + bb.height },
+            ]
+        })
+        let distMetric = 0
+        for (let i = 0; i < 4; i++) {
+            let d = VectorUtil.dist(corners[0][i], corners[1][i]);
+            distMetric += d * d;
+        }
+        return distMetric;
     }
 
     function getElementSize(element) {
@@ -333,6 +353,7 @@ let DataUtil = function () {
         imageDataToHex,
         getBoundingBox,
         overlap,
+        getDifferenceMetric,
         getElementSize,
         getElementLevel,
         isDecendant,
