@@ -14,6 +14,8 @@ function DashboardController() {
     let mCursorTag = new CursorTag(d3.select('#interface-svg'));
     let mTextInput = new TextInput();
     let mDropdownInput = new DropdownInput();
+    let mDimentionViewBackButton = new FloatingButton(d3.select('#interface-svg'));
+
     let mSystemState = new SystemState();
     let mSelection = [];
 
@@ -167,6 +169,8 @@ function DashboardController() {
 
     mTabController.setSetTabCallback(tabId => {
         mTabController.setActiveTab(tabId);
+        mDimentionViewBackButton.hide();
+
         if (tabId == Tab.TABLE) {
             mFdlViewController.hide();
             mTableViewController.show();
@@ -180,7 +184,7 @@ function DashboardController() {
         } else if (tabId == Tab.LEGEND) {
             mFdlViewController.setMode(FdlMode.LEGEND);
         } else if (IdUtil.isType(tabId, Data.Dimension)) {
-            mFdlViewController.setMode(FdlMode.DIMENSION, tabId);
+            setDimensionTab(tabId);
         }
     })
 
@@ -257,23 +261,12 @@ function DashboardController() {
 
     mFdlViewController.setAddDimensionCallback(() => {
         let newDimension = mAddDimensionCallback();
-        mTabController.setDimensionTab(newDimension.id, newDimension.name);
-        mTabController.setActiveTab(newDimension.id);
-        mFdlViewController.setMode(FdlMode.DIMENSION, newDimension.id);
+        setDimensionTab(newDimension.id);
     });
 
     mFdlViewController.setClickDimensionCallback((dimenId) => {
-        let dimension = mModel.getDimension(dimenId);
-        mTabController.setDimensionTab(dimenId, dimension.name);
-        mTabController.setActiveTab(dimenId);
-        mFdlViewController.setMode(FdlMode.DIMENSION, dimenId);
+        setDimensionTab(dimenId)
     });
-
-    mFdlViewController.setBackToAllDimensionsCallback(() => {
-        mTabController.resetDimensionTab();
-        mTabController.setActiveTab(Tab.LEGEND);
-        mFdlViewController.setMode(FdlMode.LEGEND);
-    })
 
     mFdlViewController.setEditNameCallback((itemId, x, y, width, height) => {
         let item;
@@ -331,6 +324,22 @@ function DashboardController() {
             mCanvasController.setStructureMode(mSystemState.isStructureViewActive());
         }
     })
+
+    mDimentionViewBackButton.setOnClickCallback(() => {
+        mDimentionViewBackButton.hide();
+        mTabController.resetDimensionTab();
+        mTabController.setActiveTab(Tab.LEGEND);
+        mFdlViewController.setMode(FdlMode.LEGEND);
+    })
+
+    function setDimensionTab(dimenId) {
+        let dimension = mModel.getDimension(dimenId);
+        mTabController.setDimensionTab(dimenId, dimension.name);
+        mTabController.setActiveTab(dimenId);
+        mFdlViewController.setMode(FdlMode.DIMENSION, dimenId);
+        let tabBB = mTabController.getTabBB(dimenId);
+        mDimentionViewBackButton.show(tabBB.x + 1, tabBB.y + 3 + tabBB.height, "<- Back to All Dimentions");
+    }
 
     return {
         modelUpdate,

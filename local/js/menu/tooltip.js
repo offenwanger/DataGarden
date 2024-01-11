@@ -1,6 +1,6 @@
 function ToolTip(svg) {
     let mText = svg.append("text")
-        .style("font", "16px bold sans-serif")
+        .style("font", "16px DefaultFont")
         .style("stroke-linejoin", "round")
         .style("fill", "black")
         .style("stroke", "white")

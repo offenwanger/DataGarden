@@ -103,39 +103,29 @@ function TabController() {
 
 
     function draw() {
-        mTabDrawingUtil.reset();
-
         let canvasWidth = mCanvas.attr("width");
         let canvasHeight = mCanvas.attr("height");
-        let tabHeight = Math.round(canvasHeight * 0.8);
-        let topPadding = canvasHeight - tabHeight - 1;
-        let tabWidth = canvasWidth / mTabs.length;
 
-        mTabs.forEach((tab, index) => {
+        mTabDrawingUtil.reset();
+        mTabs.forEach(tab => {
             if (tab.id != mActiveTab) {
-                mTabDrawingUtil.drawTab(
-                    index * tabWidth,
-                    topPadding,
-                    tabWidth + 10,
-                    tabHeight,
-                    tab.title,
-                    tab.id == mMousedOver,
-                    mCodeUtil.getCode(tab.id, TAB_TARGET));
+                let config = getTabBB(tab.id);
+                if (!config) { console.error("Tab not found", tab.id); return; }
+                config.title = tab.title;
+                config.shadow = tab.id == mMousedOver;
+                config.code = mCodeUtil.getCode(tab.id, TAB_TARGET)
+                mTabDrawingUtil.drawTab(config);
             }
         })
         mTabDrawingUtil.drawHorizontalLine(canvasHeight - 2, canvasWidth, 2);
 
         let tab = mTabs.find(t => t.id == mActiveTab);
-        let index = mTabs.findIndex(t => t.id == mActiveTab);
         if (tab) {
-            mTabDrawingUtil.drawTab(
-                index * tabWidth,
-                topPadding,
-                tabWidth + 10,
-                tabHeight,
-                tab.title,
-                true,
-                mCodeUtil.getCode(tab.id, TAB_TARGET));
+            let config = getTabBB(mActiveTab)
+            config.title = tab.title;
+            config.shadow = true;
+            config.code = mCodeUtil.getCode(tab.id, TAB_TARGET)
+            mTabDrawingUtil.drawTab(config);
         }
     }
 
@@ -158,6 +148,32 @@ function TabController() {
         draw();
     }
 
+    function getTabBB(tabId) {
+        let canvasWidth = mCanvas.attr("width");
+        let canvasHeight = mCanvas.attr("height");
+        let tabHeight = Math.round(canvasHeight * 0.8);
+        let topPadding = canvasHeight - tabHeight - 1;
+        let tabWidth = canvasWidth / mTabs.length;
+        let index = mTabs.findIndex(t => t.id == tabId);
+        if (index == -1) return null;
+        return {
+            x: index * tabWidth,
+            y: topPadding,
+            width: tabWidth + 10,
+            height: tabHeight,
+        }
+    }
+
+    function getTabBBExternal(tabId) {
+        let bb = getTabBB(tabId);
+        if (bb) {
+            let box = mCanvas.node().getBoundingClientRect();
+            bb.x += box.x;
+            bb.y += box.y;
+        }
+        return bb;
+    }
+
     return {
         onModelUpdate,
         onResize,
@@ -167,6 +183,7 @@ function TabController() {
         setActiveTab,
         setDimensionTab,
         resetDimensionTab,
+        getTabBB: getTabBBExternal,
         setSetTabCallback: (func) => mSetTabCallback = func,
     }
 }

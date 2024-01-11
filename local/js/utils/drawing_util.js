@@ -60,7 +60,7 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         ctx.save();
         ctx.fillStyle = "black";
         let fontSize = height / lines.length - 2 * lines.length;
-        ctx.font = fontSize + "px Verdana";
+        ctx.font = fontSize + "px DefaultFont";
         lines.forEach((line, index) => {
             ctx.fillText(line, x + 10, y + (fontSize + 2) * (index + 1));
         })
@@ -113,7 +113,7 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
 
         ctx.fillStyle = "black";
         let fontSize = r * 1.5;
-        ctx.font = fontSize + "px Verdana";
+        ctx.font = fontSize + "px DefaultFont";
         let horizontalTextOffset = -fontSize * 0.4;
         let verticalTextOffset = fontSize / 2 - 1;
 
@@ -644,7 +644,7 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
     }
 
     const TEXT_HORIZONTAL_PADDING = 10;
-    const TEXT_FONT_STRING = "px Segoe Print";
+    const TEXT_FONT_STRING = "px DefaultFont";
     const TEXT_SHRINK = 0.8;
     function drawStringNode({ x, y, label, height, shadow = false, outline = null, code = null, background = 'white' }) {
         ctx.save();

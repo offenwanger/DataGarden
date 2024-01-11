@@ -1,6 +1,5 @@
 function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap) {
     const ADD_BUTTON_ID = 'add_button';
-    const BACK_BUTTON_ID = 'back_button';
     const TARGET_ELEMENT = "element_target";
     const TARGET_LABEL = "element_label";
     const TARGET_TYPE = "element_type";
@@ -13,7 +12,6 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
     const LINK_ID = "link_"
 
     let mAddLevelCallback = () => { };
-    let mBackToAllDimensionsCallback = () => { };
     let mEditNameCallback = () => { };
     let mEditDomainCallback = () => { };
     let mEditTypeCallback = () => { }
@@ -34,7 +32,6 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
     let mNodes = [];
     let mLinkPoints = [];
     let mAddButton = { id: ADD_BUTTON_ID, x: 0, y: 0 };
-    let mBackButton = { id: BACK_BUTTON_ID, x: 0, y: 0 };
 
     let mDimensionWidth = 0;
     let mDimensionType;
@@ -83,8 +80,6 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                         item.targetY = top - Size.DIMENSION_SIZE - Size.ELEMENT_NODE_SIZE;
                     } else if (item.id == ADD_BUTTON_ID) {
                         item.targetY = bottom;
-                    } else if (item.id == BACK_BUTTON_ID) {
-                        item.targetY = bottom + Size.LEVEL_SIZE * 2;
                     } else if (item.id == DimensionValueId.V1 ||
                         item.id == DimensionValueId.V2 ||
                         IdUtil.isType(item.id, Data.Level)) {
@@ -190,7 +185,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         } else {
 
         }
-        mSimulation.nodes(mLevels.concat(mNodes).concat(mLinkPoints).concat([mDimension, mAddButton, mBackButton]));
+        mSimulation.nodes(mLevels.concat(mNodes).concat(mLinkPoints).concat([mDimension, mAddButton]));
         mSimulation.force('link').links(mLinks);
 
         mSimulation.alphaTarget(0.3).restart();
@@ -304,16 +299,6 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                 code: mCodeUtil.getCode(ADD_BUTTON_ID)
             });
         }
-
-        mDrawingUtil.drawStringNode({
-            x: AxisPositions.LEVEL_X,
-            y: mBackButton.y,
-            label: BACK_LABEL,
-            height: Size.LEVEL_SIZE,
-            outline: mSelectionIds.includes(BACK_BUTTON_ID) ? mColorMap(BACK_BUTTON_ID) : null,
-            shadow: mHighlightIds.includes(BACK_BUTTON_ID),
-            code: mCodeUtil.getCode(BACK_BUTTON_ID)
-        });
     }
 
     function drawDimension() {
@@ -441,8 +426,6 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                         mDrawingUtil.measureStringNode(levelNode.name, Size.LEVEL_SIZE), Size.LEVEL_SIZE);
                 } else if (interaction.startTarget && interaction.endTarget && interaction.endTarget.id == ADD_BUTTON_ID) {
                     mAddLevelCallback(mDimensionId);
-                } else if (interaction.startTarget && interaction.endTarget && interaction.endTarget.id == BACK_BUTTON_ID) {
-                    mBackToAllDimensionsCallback();
                 } else if (interaction.startTarget && (interaction.startTarget.id == DimensionValueId.V2 || interaction.startTarget.id == DimensionValueId.V1)) {
                     let node = mLevels.find(l => l.id == interaction.startTarget.id);
                     mEditDomainCallback(mDimensionId, interaction.startTarget.id, node.x, node.y,
@@ -508,7 +491,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
     }
 
     function allItems() {
-        return mNodes.concat(mLevels).concat([mDimension, mAddButton, mBackButton]);
+        return mNodes.concat(mLevels).concat([mDimension, mAddButton]);
     }
 
     return {
@@ -527,7 +510,6 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         getScale,
         getZoomTransform,
         setAddLevelCallback: (func) => mAddLevelCallback = func,
-        setBackToAllDimensionsCallback: (func) => mBackToAllDimensionsCallback = func,
         setEditNameCallback: (func) => mEditNameCallback = func,
         setEditDomainCallback: (func) => mEditDomainCallback = func,
         setEditTypeCallback: (func) => mEditTypeCallback = func,

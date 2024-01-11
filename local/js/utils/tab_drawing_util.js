@@ -12,7 +12,7 @@ function TabDrawingUtil(context, interactionContext) {
         intCtx.imageSmoothingEnabled = false;
     }
 
-    function drawTab(x, y, width, height, title, shadow, code, closeCode) {
+    function drawTab({ x, y, width, height, title, shadow, code, closeCode }) {
         let indent = Math.round(width * INDENT_DEPTH);
         ctx.save();
 
@@ -42,7 +42,7 @@ function TabDrawingUtil(context, interactionContext) {
 
         ctx.textBaseline = 'middle';
         ctx.textAlign = 'left'
-        ctx.font = Math.round(height * 0.8) + "px Segoe Print";
+        ctx.font = Math.round(height * 0.8) + "px DefaultFont";
         ctx.fillText(title, x + indent, y + height / 2);
 
         ctx.restore();
@@ -74,7 +74,7 @@ function TabDrawingUtil(context, interactionContext) {
             ctx.fill();
             ctx.stroke();
             ctx.fillStyle = 'black';
-            ctx.font = Math.round(squareSize) + "px Segoe Print";
+            ctx.font = Math.round(squareSize) + "px DefaultFont";
             ctx.fillText("X", squareX + 4, squareY + squareSize - 6);
             ctx.restore();
 
