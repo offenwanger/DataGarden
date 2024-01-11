@@ -59,21 +59,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         .force("y", d3.forceY(0).strength(0.05))
         .force("link", d3.forceLink().id(d => d.id))
         .force("axis", d3.forceX((d => IdUtil.isType(d.id, Data.Element) ? mDimensionWidth + NODE_COLUMN_WIDTH / 2 : 0)).strength(0.7))
-        .force("collide", d3.forceCollide((d) => {
-            if (IdUtil.isType(d.id, Data.Element)) {
-                return d.radius + Padding.NODE * 2;
-            } else if (IdUtil.isType(d.id, Data.Dimension) ||
-                IdUtil.isType(d.id, Data.Level) ||
-                d.id == ADD_BUTTON_ID ||
-                d.id == BACK_BUTTON_ID ||
-                d.id == DimensionValueId.V1 ||
-                d.id == DimensionValueId.V2 ||
-                d.id.startsWith(LINK_ID)) {
-                return 0;
-            } else {
-                console.error("Unsupported node!", d.id); return 0;
-            }
-        }))
+        .force("collide", d3.forceCollide((d) => IdUtil.isType(d.id, Data.Element) ? d.radius + Padding.NODE * 2 : 0))
         .alpha(0.3)
         .on("tick", () => {
             // do this for eveything included non-sim items
@@ -337,6 +323,12 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
             "[" + ChannelLabels[mDimension.channel] + "]",
             "[T" + mDimension.tier + "]"
         ];
+        let valid = [
+            true,
+            DataUtil.dimensionTypeValid(mDimension),
+            DataUtil.dimensionChannelValid(mDimension),
+            DataUtil.dimensionTierValid(mDimension)
+        ]
         mDimensionTileWidths = [0];
         for (let i = 0; i < strings.length; i++) {
             mDimensionTileWidths.push(mDrawingUtil.measureStringNode(strings[i], Size.DIMENSION_SIZE) + mDimensionTileWidths[i] + 3);
@@ -349,7 +341,8 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                 label: string,
                 height: Size.DIMENSION_SIZE,
                 shadow: mHighlightIds.includes(mDimension.id),
-                code: mCodeUtil.getCode(mDimension.id, targets[index])
+                code: mCodeUtil.getCode(mDimension.id, targets[index]),
+                background: valid[index] ? "white" : "#FF6865",
             });
         })
     }

@@ -85,6 +85,7 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
                 shadow: mHighlightIds.includes(dimension.id),
                 code: mCodeUtil.getCode(dimension.id),
                 outline: mSelectionIds.includes(dimension.id) ? mColorMap(dimension.id) : null,
+                background: DataUtil.dimensionValid(dimension) ? "white" : "#FF6865",
             })
         })
 

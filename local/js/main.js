@@ -211,11 +211,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let dimension = mModelController.getModel().getDimension(dimensionId);
         if (!dimension) { console.error("Invalid dimension id: ", dimensionId); return; }
         dimension.type = type;
-        // Continuous dimensions are restricted to continuous channels. 
-        if (dimension.type == DimensionType.CONTINUOUS &&
-            (dimension.channel == ChannelType.FORM || dimension.channel == ChannelType.COLOR)) {
-            dimension.channel = ChannelType.SIZE;
-        }
 
         mModelController.updateDimension(dimension);
 
@@ -227,15 +222,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let dimension = mModelController.getModel().getDimension(dimensionId);
         if (!dimension) { console.error("Invalid dimension id: ", dimensionId); return; }
         dimension.channel = channel;
-        // Continuous dimensions are restricted to continuous channels. 
-        if ((channel == ChannelType.FORM || channel == ChannelType.COLOR) &&
-            dimension.type == DimensionType.CONTINUOUS) {
-            dimension.type = DimensionType.DISCRETE;
-        } else if (channel == ChannelType.POSITION) {
-            if (dimension.tier < 1) {
-                dimension.tier = 1;
-            }
-        }
         mModelController.updateDimension(dimension);
 
         mVersionController.stack(mModelController.getModel().toObject());
@@ -246,9 +232,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let dimension = mModelController.getModel().getDimension(dimensionId);
         if (!dimension) { console.error("Invalid dimension id: ", dimensionId); return; }
         dimension.tier = tier;
-        if (tier == 0 && dimension.channel == ChannelType.POSITION) {
-            dimension.channel = ChannelType.SIZE;
-        }
         mModelController.updateDimension(dimension);
 
         mVersionController.stack(mModelController.getModel().toObject());

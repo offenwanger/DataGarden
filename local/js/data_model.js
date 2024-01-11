@@ -101,7 +101,8 @@ function DataModel() {
     }
 
     function getTables() {
-        if (mDimensions.length == 0) return [];
+        let dimensions = mDimensions.filter(d => DataUtil.dimensionValid(d));
+        if (dimensions.length == 0) return [];
         let parents = DataUtil.unique(mElements.map(e => e.parentId).filter(p => p));
         let leafs = mElements.filter(e => !parents.includes(e.id));
         let rows = []
@@ -111,7 +112,7 @@ function DataModel() {
             let level = DataUtil.getTreeLevel(this, leaf.id);
             while (nextId) {
                 let element = getElement(nextId);
-                mDimensions.filter(d => d.tier == level).forEach(dimension => {
+                dimensions.filter(d => d.tier == level).forEach(dimension => {
                     let value = DataUtil.getMappedValue(this, dimension.id, nextId);
                     if (typeof value == "number") { value = Math.round(value * 100) / 100 }
                     if (value) row[dimension.id] = { id: nextId, value };
@@ -123,8 +124,8 @@ function DataModel() {
             rows.push(row);
         })
 
-        let colsQueue = [mDimensions[0].id];
-        let uncheckedCols = mDimensions.slice(1).map(d => d.id);
+        let colsQueue = [dimensions[0].id];
+        let uncheckedCols = dimensions.slice(1).map(d => d.id);
         let rowsQueue = [];
         let uncheckedRows = rows.map((r, i) => i);
         let tables = [];

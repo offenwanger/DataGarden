@@ -242,7 +242,7 @@ let DataUtil = function () {
                 let sizes = elements.map(e => PathUtil.getPathLength(e.spine));
                 let min = Math.min(...sizes);
                 let max = Math.max(...sizes)
-                let eSize = PathUtil.getPathLength(elements.find(e.id == elementId).spine);
+                let eSize = PathUtil.getPathLength(elements.find(e => e.id == elementId).spine);
                 let percent = (eSize - min) / (max - min);
                 return (parseFloat(dimension.domain[1]) - parseFloat(dimension.domain[0])) * percent + parseFloat(dimension.domain[0]);
             } else {
@@ -349,6 +349,35 @@ let DataUtil = function () {
         }
     }
 
+    function dimensionTypeValid(dimension) {
+        if (dimension.type == DimensionType.CONTINUOUS) {
+            return dimension.channel == ChannelType.ANGLE || dimension.channel == ChannelType.POSITION || dimension.channel == ChannelType.SIZE;
+        } else {
+            // all types are valid for discrete dimens
+            return true;
+        }
+    }
+
+    function dimensionChannelValid(dimension) {
+        // same for now.
+        return dimensionTypeValid(dimension);
+    }
+
+    function dimensionTierValid(dimension) {
+        if (dimension.channel == ChannelType.POSITION) {
+            return dimension.tier > 0;
+        } else {
+            return true;
+        }
+    }
+
+    function dimensionValid(dimension) {
+        return dimensionTypeValid(dimension) &&
+            dimensionChannelValid(dimension) &&
+            dimensionTierValid(dimension);
+    }
+
+
 
     return {
         numToColor,
@@ -379,5 +408,9 @@ let DataUtil = function () {
         boundingBoxIntersects,
         isDataId,
         itemExists,
+        dimensionTypeValid,
+        dimensionChannelValid,
+        dimensionTierValid,
+        dimensionValid,
     }
 }();
