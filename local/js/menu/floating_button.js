@@ -34,7 +34,6 @@ function FloatingButton(svg) {
             .attr("width", bb.width + BUTTON_PADDING * 2)
             .attr("height", bb.height + BUTTON_PADDING * 2)
             .style("display", "");
-        console.log("here", x, y, text)
     }
 
     function hide() {
