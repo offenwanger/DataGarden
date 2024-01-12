@@ -18,6 +18,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
     let mEditChannelCallback = () => { }
     let mEditTierCallback = () => { }
     let mUpdateLevelCallback = () => { };
+    let mLevelOrderUpdateCallback = () => { };
 
     let mModel = new DataModel();
     let mDimensionId = null;
@@ -452,6 +453,19 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                     }
                     mUpdateLevelCallback(mDimensionId, levelTarget, elementTargetIds);
                 }
+
+                let levelTargetIds = mDraggedItems.map(i => i.id).filter(id => IdUtil.isType(id, Data.Level));
+                if (levelTargetIds.length > 0) {
+                    let dimension = mModel.getDimension(mDimensionId);
+                    let levelsOrdering = dimension.levels.map(l => {
+                        let levelItem = mLevels.find(i => i.id == l.id);
+                        if (!levelItem) { console.error("Item not found for level id", l.id); return { id: l.id, y: 0 } }
+                        return { id: l.id, y: levelItem.y };
+                    })
+                    levelsOrdering.sort((a, b) => a.y - b.y);
+                    mLevelOrderUpdateCallback(mDimensionId, levelsOrdering.map(lo => lo.id));
+                }
+
                 mSimulation.nodes(allItems());
             }
         } else if (interaction.type == FdlInteraction.LASSO) {
@@ -516,5 +530,6 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         setEditChannelCallback: (func) => mEditChannelCallback = func,
         setEditTierCallback: (func) => mEditTierCallback = func,
         setUpdateLevelCallback: (func) => mUpdateLevelCallback = func,
+        setLevelOrderUpdateCallback: (func) => mLevelOrderUpdateCallback = func,
     }
 }

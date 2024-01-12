@@ -176,6 +176,25 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mDashboardController.modelUpdate(mModelController.getModel());
     });
 
+    mDashboardController.setLevelOrderUpdateCallback((dimenId, newOrder) => {
+        let model = mModelController.getModel();
+        let dimension = model.getDimension(dimenId);
+
+        let levels = dimension.levels;
+        dimension.levels = [];
+        newOrder.forEach(levelId => {
+            dimension.levels.push(levels.find(l => l.id == levelId));
+        });
+
+        dimension.levels = dimension.levels.filter(l => l);
+        if (dimension.levels.length != levels.length) { console.error("Inavalid order!"); return; }
+
+        mModelController.updateDimension(dimension);
+
+        mVersionController.stack(mModelController.getModel().toObject());
+        mDashboardController.modelUpdate(mModelController.getModel());
+    })
+
     mDashboardController.setUpdateLevelNameCallback((levelId, name) => {
         let level = mModelController.getModel().getLevel(levelId);
         if (!level) { console.error("Invalid level id: ", levelId); return; }
