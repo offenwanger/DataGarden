@@ -31,7 +31,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
     let mDimension = null;
     let mLevels = [];
     let mNodes = [];
-    let mLinkPoints = [];
+    let mContAxisLinkPoints = [];
     let mAddButton = { id: ADD_BUTTON_ID, x: 0, y: 0 };
 
     let mDimensionWidth = 0;
@@ -43,8 +43,8 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
 
     let mMaxLevelWdith = 10;
     let mAxisX = 0;
-    let mAxisTop = 0;
-    let mAxisBottom = 200;
+    let mAxisTop = Size.LEVEL_SIZE * 2;
+    let mAxisBottom = Size.LEVEL_SIZE * 4;
 
     let mLinks = [];
 
@@ -60,8 +60,47 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         .force("collide", d3.forceCollide((d) => IdUtil.isType(d.id, Data.Element) ? d.radius + Padding.NODE * 2 : 0))
         .alpha(0.3)
         .on("tick", () => {
+            let top = mNodes.length == 0 ? 0 : Math.min(...mNodes.map(n => n.y));
+            let bottom = Math.max(mLevels.length * Size.LEVEL_SIZE * 2, ...mNodes.map(n => n.y));
+            let height = bottom - top;
+
+            mSimulation.force("y", d3.forceY(height / 2).strength(0.05))
+
+            // update dimension and level positions
+            // but only if we're not dragging
+            if (mDraggedItems.length == 0) {
+                allItems().forEach(item => {
+                    if (item.id == mDimensionId) {
+                        item.targetY = 0;
+                    } else if (item.id == ADD_BUTTON_ID) {
+                        item.targetY = height + Size.LEVEL_SIZE * 2;
+                    } else if (item.id == DimensionValueId.V1) {
+                        item.targetY = Size.LEVEL_SIZE * 2;
+                    } else if (item.id == DimensionValueId.V2) {
+                        item.targetY = height;
+                    } else if (IdUtil.isType(item.id, Data.Level)) {
+                        let index = mLevels.findIndex(l => l.id == item.id);
+                        item.targetY = (index + 1) * height / mLevels.length;
+                    }
+                });
+
+                mAxisBottom = Math.max(height, Size.LEVEL_SIZE * 2);
+                mContAxisLinkPoints.forEach(point => {
+                    let pos = PathUtil.getPercentBetweenPoints(
+                        { x: mAxisX, y: mAxisTop },
+                        { x: mAxisX, y: mAxisBottom },
+                        point.percent
+                    );
+                    point.fx = pos.x;
+                    point.fy = pos.y;
+                });
+            }
+
             // do this for eveything included non-sim items
             allItems().forEach(node => {
+                if (!node.x) node.x = 0;
+                if (!node.y) node.y = 0;
+
                 if (node && node.targetX) {
                     node.x += (node.targetX - node.x) * mSimulation.alpha();
                 }
@@ -70,32 +109,10 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                 }
             });
 
-            let top = mNodes.length == 0 ? 0 : Math.min(...mNodes.map(n => n.y));
-            let bottom = Math.max(mLevels.length * Size.LEVEL_SIZE * 2, ...mNodes.map(n => n.y));
-
-            // update dimension and level positions
-            // but only if we're not dragging
-            if (mDraggedItems.length == 0) {
-                mSimulation.nodes().forEach(item => {
-                    if (item.id == mDimensionId) {
-                        item.targetY = top - Size.DIMENSION_SIZE - Size.ELEMENT_NODE_SIZE;
-                    } else if (item.id == ADD_BUTTON_ID) {
-                        item.targetY = bottom;
-                    } else if (item.id == DimensionValueId.V1 ||
-                        item.id == DimensionValueId.V2 ||
-                        IdUtil.isType(item.id, Data.Level)) {
-                        let index;
-                        if (item.id == DimensionValueId.V1) {
-                            index = 0;
-                        } else if (item.id == DimensionValueId.V2) {
-                            index = 1;
-                        } else {
-                            index = mLevels.findIndex(l => l.id == item.id);
-                        }
-                        item.targetY = index * (bottom - top) / mLevels.length + top;
-                    }
-                });
-            }
+            mLevels.forEach(level => {
+                level.fx = level.x;
+                level.fy = level.y;
+            })
 
             draw();
         })
@@ -123,59 +140,39 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         mAxisX = mMaxLevelWdith + AxisPositions.LEVEL_X + Padding.NODE
 
 
-        mLinkPoints = [];
+        mContAxisLinkPoints = [];
         mLinks = [];
         if (dimension.channel == ChannelType.SIZE) {
             mNodes.forEach(n => {
                 let element = mModel.getElement(n.id);
                 let size = PathUtil.getPathLength(element.spine);
-                mLinkPoints.push({ id: LINK_ID + n.id, size });
+                mContAxisLinkPoints.push({ id: LINK_ID + n.id, size });
                 mLinks.push({ source: n.id, target: LINK_ID + n.id });
             });
-            mMinSize = Math.round(Math.min(Infinity, ...mLinkPoints.map(p => p.size)));
-            mMinSize = mMinSize == Infinity ? 0 : mMinSize;
-            mMaxSize = Math.round(1 + Math.max(0, ...mLinkPoints.map(p => p.size)));
-            mLinkPoints.forEach(p => {
-                let percent = (p.size - mMinSize) / (mMaxSize - mMinSize);
-                let point = PathUtil.getPercentBetweenPoints(
-                    { x: mAxisX, y: mAxisTop },
-                    { x: mAxisX, y: mAxisBottom },
-                    percent
-                )
-                p.x = point.x;
-                p.y = point.y;
-            });
-        } else if (dimension.channel == ChannelType.POSITION) {
+
+            if (mNodes.length > 0) {
+                let minSize = Math.round(Math.min(...mContAxisLinkPoints.map(p => p.size)))
+                let maxSize = Math.round(1 + Math.max(...mContAxisLinkPoints.map(p => p.size)));
+                let range = maxSize - minSize;
+                mContAxisLinkPoints.forEach(p => {
+                    p.percent = (p.size - minSize) / range
+                })
+            }
+        } else if (dimension.channel == ChannelType.POSITION && dimension.tier > 0) {
             mNodes.forEach(n => {
                 let element = mModel.getElement(n.id);
-                let point = PathUtil.getPercentBetweenPoints(
-                    { x: mAxisX, y: mAxisTop },
-                    { x: mAxisX, y: mAxisBottom },
-                    element.position,
-                )
-                mLinkPoints.push({ id: LINK_ID + n.id, x: point.x, y: point.y });
+                mContAxisLinkPoints.push({ id: LINK_ID + n.id, percent: element.position });
                 mLinks.push({ source: n.id, target: LINK_ID + n.id });
             });
         } else if (dimension.channel == ChannelType.ANGLE) {
             mNodes.forEach(n => {
-                let linkPoint = { id: LINK_ID + n.id };
                 let element = mModel.getElement(n.id);
                 let angle = DataUtil.getRelativeAngle(element, element.parentId ? mModel.getElement(element.parentId) : null)
                 let percent = DataUtil.angleToPercent(angle);
-
-                linkPoint.angle = angle;
-                let point = PathUtil.getPercentBetweenPoints(
-                    { x: mAxisX, y: mAxisTop },
-                    { x: mAxisX, y: mAxisBottom },
-                    percent,
-                )
-                linkPoint.x = point.x;
-                linkPoint.y = point.y;
-                mLinkPoints.push(linkPoint);
+                mContAxisLinkPoints.push({ id: LINK_ID + n.id, percent });
                 mLinks.push({ source: n.id, target: LINK_ID + n.id });
             });
         }
-        mLinkPoints.forEach(p => { p.fx = p.x; p.fy = p.y });
 
         if (dimension.type == DimensionType.DISCRETE && (dimension.channel == ChannelType.FORM || dimension.channel == ChannelType.COLOR)) {
             dimension.levels.forEach(level => {
@@ -183,10 +180,9 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                     mLinks.push({ source: elementId, target: level.id });
                 })
             })
-        } else {
-
         }
-        mSimulation.nodes(mLevels.concat(mNodes).concat(mLinkPoints).concat([mDimension, mAddButton]));
+
+        mSimulation.nodes(mNodes.concat(mContAxisLinkPoints).concat(mLevels));
         mSimulation.force('link').links(mLinks);
 
         mSimulation.alphaTarget(0.3).restart();
@@ -366,7 +362,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
             item.interacting = true;
         });
 
-        mSimulation.nodes(allItems().filter(n => !interaction.target.includes(n.id)));
+        mSimulation.nodes(mNodes.concat(mContAxisLinkPoints).concat(mLevels).filter(n => !interaction.target.includes(n.id)));
     }
 
     function interactionDrag(interaction, modelCoords) {
@@ -466,7 +462,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                     mLevelOrderUpdateCallback(mDimensionId, levelsOrdering.map(lo => lo.id));
                 }
 
-                mSimulation.nodes(allItems());
+                mSimulation.nodes(mNodes.concat(mContAxisLinkPoints).concat(mLevels));
             }
         } else if (interaction.type == FdlInteraction.LASSO) {
             mOverlayUtil.reset(mZoomTransform);
