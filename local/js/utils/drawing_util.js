@@ -132,29 +132,37 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         ctx.restore();
     }
 
-    function drawColorCircle(cx, cy, r, color, code = null) {
+    function drawColorCircle({ x, y, r, color, filled = true, code = null }) {
         ctx.save();
-
-        ctx.strokeStyle = 'black';
-        ctx.fillStyle = color;
-        ctx.lineWidth = 1;
-
         ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.stroke();
+        ctx.arc(x, y, r, 0, 2 * Math.PI);
+
+        if (filled) {
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        } else {
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 4 / mScale;
+            ctx.stroke();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2 / mScale;
+            ctx.stroke();
+        }
+
+        ctx.restore();
 
         // Interaction //
         if (code) {
             intCtx.save();
             intCtx.fillStyle = code;
             intCtx.beginPath();
-            intCtx.arc(cx, cy, r, 0, 2 * Math.PI);
+            intCtx.arc(x, y, r, 0, 2 * Math.PI);
             intCtx.fill();
             intCtx.restore();
         }
-
-        ctx.restore();
     }
 
     function drawChannelIconCircle(channelType, cx, cy, r, code = null) {

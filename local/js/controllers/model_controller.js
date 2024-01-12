@@ -43,24 +43,6 @@ function ModelController() {
         currStroke.update(stroke);
     }
 
-    function addLevel(dimensionId, level) {
-        if (!ValUtil.isType(level, Data.Level)) { console.error("Invalid level", level); return; }
-        if (!IdUtil.isType(dimensionId, Data.Dimension)) { console.error("Invalid dimension id", dimensionId); return; }
-        let dimension = mDataModel.getDimension(dimensionId);
-        if (!dimension) { console.error("Dimension not found for id: ", dimensionId); return; };
-        dimension.levels.push(level);
-    }
-
-    function removeLevel(levelId) {
-        if (!IdUtil.isType(levelId, Data.Level)) { console.error("Invalid level id", levelId); return; }
-        let level = mDataModel.getLevel(levelId);
-        // if it's already not here, fine. 
-        if (!level) { return; }
-        let dimension = mDataModel.getDimensionForLevel(levelId);
-        if (!dimension) { console.error("Dimension not found for level: ", levelId); return; };
-        dimension.levels = dimension.levels.filter(e => e.id != levelId);
-    }
-
     function updateLevel(level) {
         if (!ValUtil.isType(level, Data.Level)) { console.error("Invalid level", level); return; }
         let currLevel = mDataModel.getLevel(level.id);
@@ -99,8 +81,6 @@ function ModelController() {
         removeElement,
         updateElement,
         updateStroke,
-        addLevel,
-        removeLevel,
         updateLevel,
         addStroke,
         removeStroke,

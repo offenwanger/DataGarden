@@ -6,10 +6,11 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
     const TARGET_CHANNEL = "element_channel";
     const TARGET_TIER = "element_tier";
     const TARGET_BUBBLE = "level_bubble";
+    const TARGET_AXIS_CONTROL = "axis_control";
     const NODE_COLUMN_WIDTH = 300;
     const ADD_LEVEL_LABEL = "Add Category +";
-    const BACK_LABEL = "<- Back to all Dimensions";
     const LINK_ID = "link_"
+    const CONTROL_ID = 'control_'
 
     let mAddLevelCallback = () => { };
     let mEditNameCallback = () => { };
@@ -19,6 +20,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
     let mEditTierCallback = () => { }
     let mUpdateLevelCallback = () => { };
     let mLevelOrderUpdateCallback = () => { };
+    let mUpdateRangeControlCallback = () => { };
 
     let mModel = new DataModel();
     let mDimensionId = null;
@@ -32,6 +34,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
     let mLevels = [];
     let mNodes = [];
     let mContAxisLinkPoints = [];
+    let mContAxisControlNodes = [];
     let mAddButton = { id: ADD_BUTTON_ID, x: 0, y: 0 };
 
     let mDimensionWidth = 0;
@@ -42,14 +45,14 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
     let mMaxSize = 1
 
     let mMaxLevelWdith = 10;
-    let mAxisX = 0;
-    let mAxisTop = Size.LEVEL_SIZE * 2;
+    const mAxisTop = Size.LEVEL_SIZE * 2;
     let mAxisBottom = Size.LEVEL_SIZE * 4;
+    let mAxisX = 0;
 
     let mLinks = [];
 
     let mTargetLock = null;
-    let mDraggedItems = [];
+    let mDraggedNodes = [];
 
     let mSimulation = d3.forceSimulation()
         .alphaDecay(Decay.ALPHA)
@@ -63,40 +66,46 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
             let top = mNodes.length == 0 ? 0 : Math.min(...mNodes.map(n => n.y));
             let bottom = Math.max(mLevels.length * Size.LEVEL_SIZE * 2, ...mNodes.map(n => n.y));
             let height = bottom - top;
+            mAxisBottom = Math.max(height, Size.LEVEL_SIZE * 2);
 
             mSimulation.force("y", d3.forceY(height / 2).strength(0.05))
 
             // update dimension and level positions
             // but only if we're not dragging
-            if (mDraggedItems.length == 0) {
-                allItems().forEach(item => {
-                    if (item.id == mDimensionId) {
-                        item.targetY = 0;
-                    } else if (item.id == ADD_BUTTON_ID) {
-                        item.targetY = height + Size.LEVEL_SIZE * 2;
-                    } else if (item.id == DimensionValueId.V1) {
-                        item.targetY = Size.LEVEL_SIZE * 2;
-                    } else if (item.id == DimensionValueId.V2) {
-                        item.targetY = height;
-                    } else if (IdUtil.isType(item.id, Data.Level)) {
-                        let index = mLevels.findIndex(l => l.id == item.id);
-                        item.targetY = (index + 1) * height / mLevels.length;
+            if (mDraggedNodes.length == 0) {
+                allItems().forEach(node => {
+                    if (node.id == mDimensionId) {
+                        node.targetY = 0;
+                    } else if (node.id == ADD_BUTTON_ID) {
+                        node.targetY = height + Size.LEVEL_SIZE * 2;
+                    } else if (node.id == DimensionValueId.V1) {
+                        node.targetY = Size.LEVEL_SIZE * 2;
+                    } else if (node.id == DimensionValueId.V2) {
+                        node.targetY = height;
+                    } else if (IdUtil.isType(node.id, Data.Level)) {
+                        let index = mLevels.findIndex(l => l.id == node.id);
+                        node.targetY = (index + 1) * height / mLevels.length;
+                    } else if (("" + node.id).startsWith(LINK_ID)) {
+                        let pos = PathUtil.getPercentBetweenPoints(
+                            { x: mAxisX, y: mAxisTop },
+                            { x: mAxisX, y: mAxisBottom },
+                            node.percent
+                        );
+                        node.fx = pos.x;
+                        node.fy = pos.y;
+                    } else if (("" + node.id).startsWith(CONTROL_ID)) {
+                        let pos = PathUtil.getPercentBetweenPoints(
+                            { x: mAxisX, y: mAxisTop },
+                            { x: mAxisX, y: mAxisBottom },
+                            node.percent
+                        );
+                        node.x = pos.x;
+                        node.y = pos.y;
                     }
-                });
-
-                mAxisBottom = Math.max(height, Size.LEVEL_SIZE * 2);
-                mContAxisLinkPoints.forEach(point => {
-                    let pos = PathUtil.getPercentBetweenPoints(
-                        { x: mAxisX, y: mAxisTop },
-                        { x: mAxisX, y: mAxisBottom },
-                        point.percent
-                    );
-                    point.fx = pos.x;
-                    point.fy = pos.y;
                 });
             }
 
-            // do this for eveything included non-sim items
+            // do this for eveything included non-sim nodes
             allItems().forEach(node => {
                 if (!node.x) node.x = 0;
                 if (!node.y) node.y = 0;
@@ -107,12 +116,11 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                 if (node && node.targetY) {
                     node.y += (node.targetY - node.y) * mSimulation.alpha();
                 }
-            });
 
-            mLevels.forEach(level => {
-                level.fx = level.x;
-                level.fy = level.y;
-            })
+                // not all nodes get set by the simulation so just cover those.
+                if (node.fx) node.x = node.fx;
+                if (node.fy) node.y = node.fy;
+            });
 
             draw();
         })
@@ -124,9 +132,9 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         let dimension = mModel.getDimension(mDimensionId);
         if (!dimension) { console.error("Bad State! Dimension not found!"); return; }
 
-        mDimension = data.find(item => item.id == mDimensionId);
-        mNodes = data.filter(item => IdUtil.isType(item.id, Data.Element) && DataUtil.getTreeLevel(mModel, item.id) == dimension.tier);
-        mLevels = data.filter(item => item.dimension == mDimensionId);
+        mDimension = data.find(node => node.id == mDimensionId);
+        mNodes = data.filter(node => IdUtil.isType(node.id, Data.Element) && DataUtil.getTreeLevel(mModel, node.id) == dimension.tier);
+        mLevels = data.filter(node => node.dimension == mDimensionId);
 
         // TODO: do this properly, i.e. measure all the stuff in that column
         mDimensionWidth = mDrawingUtil.measureStringNode(mDimension.name +
@@ -141,6 +149,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
 
 
         mContAxisLinkPoints = [];
+        mContAxisControlNodes = [];
         mLinks = [];
         if (dimension.channel == ChannelType.SIZE) {
             mNodes.forEach(n => {
@@ -180,9 +189,14 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                     mLinks.push({ source: elementId, target: level.id });
                 })
             })
+        } else if (dimension.type == DimensionType.DISCRETE &&
+            (dimension.channel == ChannelType.SIZE || dimension.channel == ChannelType.POSITION || dimension.channel == ChannelType.ANGLE)) {
+            dimension.ranges.forEach((range, index) => {
+                mContAxisControlNodes.push({ id: CONTROL_ID + index, index, percent: range });
+            });
         }
 
-        mSimulation.nodes(mNodes.concat(mContAxisLinkPoints).concat(mLevels));
+        mSimulation.nodes(simulationNodes());
         mSimulation.force('link').links(mLinks);
 
         mSimulation.alphaTarget(0.3).restart();
@@ -212,7 +226,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
 
 
     function draw() {
-        let draggedIds = mDraggedItems.map(n => n.id);
+        let draggedIds = mDraggedNodes.map(n => n.id);
 
         mDrawingUtil.reset(mZoomTransform);
         // we haven't been set yet, don't draw.
@@ -264,6 +278,25 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                     end: link.target
                 });
             })
+
+            mContAxisControlNodes.forEach(node => {
+                mDrawingUtil.drawColorCircle({
+                    x: node.x,
+                    y: node.y,
+                    r: 5,
+                    color: 'blue',
+                    filled: false,
+                    code: mCodeUtil.getCode(node.id, TARGET_AXIS_CONTROL),
+                })
+
+                mDrawingUtil.drawLinkLine({ start: node, end: mLevels[node.index], dashed: false });
+                mDrawingUtil.drawLinkLine({ start: node, end: mLevels[node.index + 1], dashed: false });
+            })
+
+            if (mLevels.length > 0) {
+                mDrawingUtil.drawLinkLine({ start: { x: mAxisX, y: mAxisTop }, end: mLevels[0], dashed: false });
+                mDrawingUtil.drawLinkLine({ start: { x: mAxisX, y: mAxisBottom }, end: mLevels[mLevels.length - 1], dashed: false });
+            }
         }
 
         drawDimension();
@@ -355,29 +388,52 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
 
     function interactionStart(interaction, modelCoords) {
         if (interaction.type != FdlInteraction.SELECTION) { console.error("Interaction not supported!"); return; }
-        mDraggedItems = allItems().filter(n => interaction.target.includes(n.id));
-        mDraggedItems.forEach(item => {
-            item.startX = item.x;
-            item.startY = item.y;
-            item.interacting = true;
-        });
+        if (interaction.startTarget && interaction.startTarget.type == TARGET_AXIS_CONTROL) {
+            mDraggedNodes = [interaction.startTarget];
+            mContAxisControlNodes.forEach(node => node.startY = node.y);
+        } else {
+            mDraggedNodes = allItems().filter(n => interaction.target.includes(n.id));
+            mDraggedNodes.forEach(node => {
+                node.startX = node.x;
+                node.startY = node.y;
+                node.interacting = true;
+            });
+        }
 
-        mSimulation.nodes(mNodes.concat(mContAxisLinkPoints).concat(mLevels).filter(n => !interaction.target.includes(n.id)));
+        mSimulation.nodes(simulationNodes().filter(n => !interaction.target.includes(n.id)));
     }
 
     function interactionDrag(interaction, modelCoords) {
         if (interaction.type != FdlInteraction.SELECTION) { console.error("Interaction not supported!"); return; }
 
-        if (interaction.mouseOverTarget) {
+        if (interaction.startTarget && interaction.startTarget.type == TARGET_AXIS_CONTROL) {
+            let targetIndex = mContAxisControlNodes.findIndex(node => node.id == interaction.startTarget.id);
+            mContAxisControlNodes[targetIndex].targetY = Math.min(Math.max(modelCoords.y, mAxisTop), mAxisBottom);
+            mContAxisControlNodes.forEach((node, index) => {
+                if (index < targetIndex) {
+                    if (node.startY > mContAxisControlNodes[targetIndex].targetY) {
+                        node.targetY = mContAxisControlNodes[targetIndex].targetY;
+                    } else {
+                        node.targetY = node.startY
+                    }
+                } else if (index > targetIndex) {
+                    if (node.startY < mContAxisControlNodes[targetIndex].targetY) {
+                        node.targetY = mContAxisControlNodes[targetIndex].targetY;
+                    } else {
+                        node.targetY = node.startY
+                    }
+                }
+            })
+        } else if (interaction.mouseOverTarget) {
             if (interaction.mouseOverTarget.id == mTargetLock) {
                 // do nothing
             } else if (IdUtil.isType(interaction.mouseOverTarget.id, Data.Level)) {
                 mTargetLock = interaction.mouseOverTarget.id;
                 let targetLevel = mLevels.find(n => n.id == mTargetLock);
-                mDraggedItems.forEach(item => {
-                    if (IdUtil.isType(item.id, Data.Element)) {
-                        item.targetX = (targetLevel.x + mDimensionWidth) / 2;
-                        item.targetY = targetLevel.y + Size.LEVEL_SIZE / 2;
+                mDraggedNodes.forEach(node => {
+                    if (IdUtil.isType(node.id, Data.Element)) {
+                        node.targetX = (targetLevel.x + mDimensionWidth) / 2;
+                        node.targetY = targetLevel.y + Size.LEVEL_SIZE / 2;
                     }
                 });
             }
@@ -387,11 +443,11 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
 
         let dist = VectorUtil.subtract(modelCoords, interaction.start);
         if (!mTargetLock) {
-            mDraggedItems.forEach(item => {
-                if (IdUtil.isType(item.id, Data.Element)) {
-                    item.targetX = item.startX + dist.x;
+            mDraggedNodes.forEach(node => {
+                if (IdUtil.isType(node.id, Data.Element)) {
+                    node.targetX = node.startX + dist.x;
                 }
-                item.targetY = item.startY + dist.y;
+                node.targetY = node.startY + dist.y;
             });
         }
     }
@@ -429,15 +485,15 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                         mDrawingUtil.measureStringNode(node.name, Size.LEVEL_SIZE), Size.LEVEL_SIZE)
                 }
             } else {
-                mDraggedItems.forEach(item => {
-                    item.startX = null;
-                    item.startY = null;
-                    item.targetX = null;
-                    item.targetY = null;
-                    item.interacting = null;
+                mDraggedNodes.forEach(node => {
+                    node.startX = null;
+                    node.startY = null;
+                    node.targetX = null;
+                    node.targetY = null;
+                    node.interacting = null;
                 });
 
-                let elementTargetIds = mDraggedItems.map(i => i.id).filter(id => IdUtil.isType(id, Data.Element));
+                let elementTargetIds = mDraggedNodes.map(i => i.id).filter(id => IdUtil.isType(id, Data.Element));
                 if (elementTargetIds.length > 0) {
                     let levelTarget;
                     if (interaction.endTarget && IdUtil.isType(interaction.endTarget.id, Data.Level)) {
@@ -450,19 +506,26 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
                     mUpdateLevelCallback(mDimensionId, levelTarget, elementTargetIds);
                 }
 
-                let levelTargetIds = mDraggedItems.map(i => i.id).filter(id => IdUtil.isType(id, Data.Level));
+                let levelTargetIds = mDraggedNodes.map(i => i.id).filter(id => IdUtil.isType(id, Data.Level));
                 if (levelTargetIds.length > 0) {
                     let dimension = mModel.getDimension(mDimensionId);
                     let levelsOrdering = dimension.levels.map(l => {
-                        let levelItem = mLevels.find(i => i.id == l.id);
-                        if (!levelItem) { console.error("Item not found for level id", l.id); return { id: l.id, y: 0 } }
-                        return { id: l.id, y: levelItem.y };
+                        let levelNode = mLevels.find(i => i.id == l.id);
+                        if (!levelNode) { console.error("Node not found for level id", l.id); return { id: l.id, y: 0 } }
+                        return { id: l.id, y: levelNode.y };
                     })
                     levelsOrdering.sort((a, b) => a.y - b.y);
                     mLevelOrderUpdateCallback(mDimensionId, levelsOrdering.map(lo => lo.id));
                 }
 
-                mSimulation.nodes(mNodes.concat(mContAxisLinkPoints).concat(mLevels));
+                if (interaction.startTarget && interaction.startTarget.type == TARGET_AXIS_CONTROL) {
+                    let target = mContAxisControlNodes.find(node => node.id == interaction.startTarget.id);
+                    let yPos = Math.min(Math.max(modelCoords.y, mAxisTop), mAxisBottom);
+                    let percent = (yPos - mAxisTop) / (mAxisBottom - mAxisTop);
+                    mUpdateRangeControlCallback(mDimensionId, target.index, percent);
+                }
+
+                mSimulation.nodes(simulationNodes());
             }
         } else if (interaction.type == FdlInteraction.LASSO) {
             mOverlayUtil.reset(mZoomTransform);
@@ -471,7 +534,7 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
             return selectedIds;
         } else { console.error("Interaction not supported!"); return; }
 
-        mDraggedItems = [];
+        mDraggedNodes = [];
     }
 
     function pan(x, y) {
@@ -501,7 +564,14 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
     }
 
     function allItems() {
-        return mNodes.concat(mLevels).concat([mDimension, mAddButton]);
+        return mNodes.concat(mLevels)
+            .concat(mContAxisLinkPoints)
+            .concat(mContAxisControlNodes)
+            .concat([mDimension, mAddButton]);
+    }
+
+    function simulationNodes() {
+        return mNodes.concat(mContAxisLinkPoints).concat(mLevels);
     }
 
     return {
@@ -527,5 +597,6 @@ function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColo
         setEditTierCallback: (func) => mEditTierCallback = func,
         setUpdateLevelCallback: (func) => mUpdateLevelCallback = func,
         setLevelOrderUpdateCallback: (func) => mLevelOrderUpdateCallback = func,
+        setUpdateRangeControlCallback: (func) => mUpdateRangeControlCallback = func,
     }
 }

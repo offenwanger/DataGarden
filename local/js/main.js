@@ -140,13 +140,19 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let model = mModelController.getModel();
         let dimension = model.getDimension(dimenId);
         if (!dimension) { console.error("Invalid dimension id", dimenId); return; }
-        let maxNum = Math.max(0, ...dimension.levels
-            .map(l => l.name.startsWith("Category") ? parseInt(l.name.slice(8)) : 0)
-            .filter(n => !isNaN(n)))
 
         let newLevel = new Data.Level();
-        newLevel.name = "Category" + (maxNum + 1);
-        mModelController.addLevel(dimenId, newLevel);
+        newLevel.name = "Category" + (Math.max(0, ...dimension.levels
+            .map(l => l.name.startsWith("Category") ? parseInt(l.name.slice(8)) : 0)
+            .filter(n => !isNaN(n))) + 1);
+        dimension.levels.push(newLevel)
+
+        if (dimension.levels.length > 1) {
+            let lastRange = dimension.ranges.length ? dimension.ranges[dimension.ranges.length - 1] : 0;
+            dimension.ranges.push((1 - lastRange) / 2 + lastRange)
+        }
+
+        mModelController.updateDimension(dimension);
 
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
@@ -188,6 +194,22 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         dimension.levels = dimension.levels.filter(l => l);
         if (dimension.levels.length != levels.length) { console.error("Inavalid order!"); return; }
+
+        mModelController.updateDimension(dimension);
+
+        mVersionController.stack(mModelController.getModel().toObject());
+        mDashboardController.modelUpdate(mModelController.getModel());
+    })
+
+    mDashboardController.setUpdateRangeControlCallback((dimenId, rangeIndex, percent) => {
+        let model = mModelController.getModel();
+        let dimension = model.getDimension(dimenId);
+
+        dimension.ranges = dimension.ranges.map((range, index) => {
+            if (index == rangeIndex) return percent;
+            if (index < rangeIndex) return range > percent ? percent : range;
+            if (index > rangeIndex) return range < percent ? percent : range;
+        })
 
         mModelController.updateDimension(dimension);
 
@@ -292,7 +314,12 @@ document.addEventListener('DOMContentLoaded', function (e) {
             mModelController.removeDimension(dimensionId);
         })
         selection.filter(id => IdUtil.isType(id, Data.Level)).forEach(levelId => {
-            mModelController.removeLevel(levelId);
+            let model = mModelController.getModel();
+            let dimen = model.getDimenstionForLevel(levelId);
+            let index = dimen.findIndex(l => l.id == levelId);
+            dimen.levels.splice(index, 1);
+            dimen.ranges.splice(index, 1);
+            mModelController.updateDimension(dimen);
         })
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());

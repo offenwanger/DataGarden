@@ -220,36 +220,51 @@ let DataUtil = function () {
             let level = dimension.levels.find(level => level.elementIds.includes(elementId));
             return level ? level.name : null;
         } else if (dimension.channel == ChannelType.POSITION) {
+            let element = model.getElement(elementId);
+            let percent = element.position;
             if (dimension.type == DimensionType.CONTINUOUS) {
-                let element = model.getElement(elementId);
-                return (parseFloat(dimension.domain[1]) - parseFloat(dimension.domain[0])) * element.position + parseFloat(dimension.domain[0]);
+                return (parseFloat(dimension.domain[1]) - parseFloat(dimension.domain[0])) * percent + parseFloat(dimension.domain[0]);
             } else {
-                console.error("Impliment me!")
-                return null;
+                let level = getLevelForPercent(dimension, percent);
+                return level ? level.name : null;
             }
         } else if (dimension.channel == ChannelType.ANGLE) {
+            let element = model.getElement(elementId);
+            let percent = DataUtil.angleToPercent(DataUtil.getRelativeAngle(element, element.parentId ? model.getElement(element.parentId) : null));
             if (dimension.type == DimensionType.CONTINUOUS) {
-                let element = model.getElement(elementId);
-                let percent = DataUtil.angleToPercent(DataUtil.getRelativeAngle(element, element.parentId ? model.getElement(element.parentId) : null));
                 return (parseFloat(dimension.domain[1]) - parseFloat(dimension.domain[0])) * percent + parseFloat(dimension.domain[0]);
             } else {
-                console.error("Impliment me!")
-                return null;
+                let level = getLevelForPercent(dimension, percent);
+                return level ? level.name : null;
             }
         } else if (dimension.channel == ChannelType.SIZE) {
+            let elements = model.getElements().filter(e => DataUtil.getTreeLevel(model, e.id) == dimension.tier);
+            let sizes = elements.map(e => PathUtil.getPathLength(e.spine));
+            let min = Math.min(...sizes);
+            let max = Math.max(...sizes)
+            let eSize = PathUtil.getPathLength(elements.find(e => e.id == elementId).spine);
+            let percent = (eSize - min) / (max - min);
             if (dimension.type == DimensionType.CONTINUOUS) {
-                let elements = model.getElements().filter(e => DataUtil.getTreeLevel(model, e.id) == dimension.tier);
-                let sizes = elements.map(e => PathUtil.getPathLength(e.spine));
-                let min = Math.min(...sizes);
-                let max = Math.max(...sizes)
-                let eSize = PathUtil.getPathLength(elements.find(e => e.id == elementId).spine);
-                let percent = (eSize - min) / (max - min);
                 return (parseFloat(dimension.domain[1]) - parseFloat(dimension.domain[0])) * percent + parseFloat(dimension.domain[0]);
             } else {
-                console.error("Impliment me!")
-                return null;
+                let level = getLevelForPercent(dimension, percent);
+                return level ? level.name : null;
             }
         }
+    }
+
+    function getLevelForPercent(dimension, percent) {
+        if (dimension.levels.length == 0) return null
+        if (dimension.levels.length == 1) return dimension.levels[0];
+        for (let i = 0; i < dimension.ranges.length; i++) {
+            if (percent <= dimension.ranges[i]) return dimension.levels[i];
+        }
+        if (percent > dimension.ranges[dimension.ranges.length - 1]) {
+            return dimension.levels[dimension.levels.length - 1];
+        }
+
+        console.error("No valid level found for percent", percent);
+        return null;
     }
 
     function getPaddedPoints(nodes, padding) {

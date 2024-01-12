@@ -469,6 +469,7 @@ function FdlViewController(mColorMap) {
         setAddLevelCallback: (func) => mFdlDimensionViewController.setAddLevelCallback(func),
         setUpdateLevelCallback: (func) => mFdlDimensionViewController.setUpdateLevelCallback(func),
         setLevelOrderUpdateCallback: (func) => mFdlDimensionViewController.setLevelOrderUpdateCallback(func),
+        setUpdateRangeControlCallback: (func) => mFdlDimensionViewController.setUpdateRangeControlCallback(func),
         setEditNameCallback: (func) => mEditNameCallback = func,
         setEditDomainCallback: (func) => mEditDomainCallback = func,
         setEditTypeCallback: (func) => mEditTypeCallback = func,

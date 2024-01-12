@@ -372,6 +372,7 @@ function DashboardController() {
         setAddLevelCallback: (func) => mFdlViewController.setAddLevelCallback(func),
         setUpdateLevelCallback: (func) => mFdlViewController.setUpdateLevelCallback(func),
         setLevelOrderUpdateCallback: (func) => mFdlViewController.setLevelOrderUpdateCallback(func),
+        setUpdateRangeControlCallback: (func) => mFdlViewController.setUpdateRangeControlCallback(func),
         setUpdateLevelNameCallback: (func) => mUpdateLevelNameCallback = func,
         setUpdateDimensionNameCallback: (func) => mUpdateDimensionNameCallback = func,
         setUpdateDimensionDomainCallback: (func) => mUpdateDimensionDomainCallback = func,

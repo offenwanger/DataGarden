@@ -91,6 +91,9 @@ let Data = function () {
         this.levels = [];
         // continuous dimensions
         this.domain = [0, 1]
+        // discrete dimensions to continuous channels
+        // length = levels - 1
+        this.ranges = []
 
         this.clone = function () {
             let clone = new Dimension();
@@ -102,6 +105,7 @@ let Data = function () {
             clone.tier = this.tier;
             clone.levels = this.levels.map(l => l.clone());
             clone.domain = [...this.domain];
+            clone.ranges = [...this.ranges];
             return clone;
         };
 
@@ -114,6 +118,7 @@ let Data = function () {
             this.tier = dimension.tier;
             this.levels = dimension.levels.map(l => l.clone());
             this.domain = [...dimension.domain];
+            this.ranges = [...dimension.ranges];
         };
     }
     Dimension.fromObject = function (obj) {
@@ -126,6 +131,7 @@ let Data = function () {
         dimension.tier = obj.tier;
         dimension.levels = obj.levels ? obj.levels.map(l => Level.fromObject(l)) : [];
         dimension.domain = obj.domain ? [...obj.domain] : [0, 1];
+        dimension.ranges = obj.ranges ? [...obj.ranges] : [];
         return dimension;
     }
 
