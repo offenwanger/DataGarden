@@ -352,15 +352,16 @@ let DataUtil = function () {
 
     function itemExists(id, model) {
         if (IdUtil.isType(id, Data.Stroke)) {
-            model.getStroke(id) ? true : false;
+            return model.getStroke(id) ? true : false;
         } else if (IdUtil.isType(id, Data.Element)) {
-            model.getElement(id) ? true : false;
+            return model.getElement(id) ? true : false;
         } else if (IdUtil.isType(id, Data.Level)) {
-            model.getLevel(id) ? true : false;
+            return model.getLevel(id) ? true : false;
         } else if (IdUtil.isType(id, Data.Dimension)) {
-            model.getDimension(id) ? true : false;
+            return model.getDimension(id) ? true : false;
         } else {
-            console.error("Id unsupported", id); return false;
+            console.error("Id unsupported", id);
+            return false;
         }
     }
 
