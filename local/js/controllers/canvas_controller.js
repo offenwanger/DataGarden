@@ -332,10 +332,18 @@ function CanvasController(mColorMap) {
                     }
                 }
             } else {
-                mDrawingUtil.drawInterfaceStroke(mInteraction.currentStroke, mBrushOptions.color, mBrushOptions.size)
+                mDrawingUtil.drawStroke({
+                    path: mInteraction.currentStroke,
+                    color: mBrushOptions.color,
+                    width: mBrushOptions.size
+                });
             }
         } else if (mBrushActivePosition) {
-            mDrawingUtil.drawInterfaceStroke([mBrushActivePosition], mBrushOptions.color, mBrushOptions.size)
+            mDrawingUtil.drawStroke({
+                path: [mBrushActivePosition],
+                color: mBrushOptions.color,
+                width: mBrushOptions.size
+            });
         } else if (mInteraction && mInteraction.type == LASSO) {
             mDrawingUtil.drawInterfaceSelectionBubble(mInteraction.line, SELECTION_BUBBLE_COLOR);
         }

@@ -264,14 +264,15 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         ctx.beginPath();
         strokes.forEach(stroke => {
             ctx.beginPath();
-            ctx.strokeStyle = stroke.color;
-            ctx.lineWidth = Math.max(stroke.size, minStroke);
-            ctx.beginPath();
             ctx.moveTo(stroke.path[0].x - bb.x, stroke.path[0].y - bb.y);
             stroke.path.forEach(p => {
                 ctx.lineTo(p.x - bb.x, p.y - bb.y);
             });
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = Math.max(stroke.size, minStroke);
             ctx.stroke();
+            ctx.fillStyle = stroke.color;
+            ctx.fill();
         })
         ctx.restore();
 
@@ -460,9 +461,13 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
             ctx.shadowBlur = 3;
         }
 
-        ctx.strokeStyle = color;
+        ctx.strokeStyle = "black";
         ctx.lineWidth = width;
         ctx.stroke();
+        if (color) {
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
 
         ctx.restore();
 
@@ -479,20 +484,6 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
             intCtx.restore();
         }
     }
-
-    function drawInterfaceStroke(path, color, strokeWidth) {
-        intfCtx.save();
-        intfCtx.strokeStyle = color;
-        intfCtx.lineWidth = strokeWidth;
-        intfCtx.beginPath();
-        intfCtx.moveTo(path[0].x, path[0].y);
-        path.forEach(p => {
-            intfCtx.lineTo(p.x, p.y);
-        });
-        intfCtx.stroke();
-        intfCtx.restore();
-    }
-
 
     function drawConnector(top, bottom, left, right) {
         let pathStart = [];
@@ -763,7 +754,6 @@ function DrawingUtil(context, interactionContext, interfaceContext) {
         drawThumbnailCircle,
         drawLines,
         drawStroke,
-        drawInterfaceStroke,
         drawConnector,
         drawLink,
         drawBubble,

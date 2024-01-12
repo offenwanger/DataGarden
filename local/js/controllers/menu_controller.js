@@ -19,7 +19,7 @@ function MenuController() {
     mButtons[Buttons.VIEW_BUTTON] = new MenuButton("view-button", mSvg, "img/eyecon_button.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.VIEW_BUTTON));
     mButtons[Buttons.COLOR_BUTTON] = new MenuButton("color-button", mSvg, "img/color_selector.svg", BUTTON_SIZE, () => mColorPicker.openHandler(), () => {
         // When loaded, set the color, this triggers on change
-        mColorPicker.setColor("#333333", false)
+        mColorPicker.setColor("#33333300", false)
     });
 
     let mParents = [
@@ -71,9 +71,9 @@ function MenuController() {
         mButtons[Buttons.ZOOM_BUTTON].setPosition(BUTTON_SIZE + buttonSpacing * 0.25, buttonSpacing * 0.75);
         mButtons[Buttons.SELECTION_BUTTON].setPosition(BUTTON_SIZE, buttonSpacing * 1.5);
         mButtons[Buttons.BRUSH_BUTTON].setPosition(BUTTON_SIZE, buttonSpacing * 2.5);
-        mButtons[Buttons.VIEW_BUTTON].setPosition(BUTTON_SIZE, buttonSpacing * 3.5);
-        mButtons[Buttons.COLOR_BUTTON].setPosition(BUTTON_SIZE, buttonSpacing * 4.5);
-        mColorPickerContainer.style("left", (BUTTON_SIZE * 1.5) + "px").style("top", (buttonSpacing * 4.5 - BUTTON_SIZE / 2) + "px");
+        mButtons[Buttons.COLOR_BUTTON].setPosition(BUTTON_SIZE, buttonSpacing * 3.5);
+        mColorPickerContainer.style("left", (BUTTON_SIZE * 1.5) + "px").style("top", (buttonSpacing * 3.5 - BUTTON_SIZE / 2) + "px");
+        mButtons[Buttons.VIEW_BUTTON].setPosition(BUTTON_SIZE, buttonSpacing * 4.5);
 
     }
 
