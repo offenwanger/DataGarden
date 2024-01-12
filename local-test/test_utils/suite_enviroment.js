@@ -108,6 +108,7 @@ function getIntegrationEnviroment() {
         RadialContextMenu: rewireJs('menu/radial_context_menu.js').__get__("RadialContextMenu"),
         MenuButton: rewireJs('menu/menu_button.js').__get__("MenuButton"),
         ToolTip: rewireJs('menu/tooltip.js').__get__("ToolTip"),
+        FloatingButton: rewireJs('menu/floating_button.js').__get__("FloatingButton"),
         VersionController: rewireJs('controllers/version_controller.js').__get__("VersionController"),
         SystemState: rewireJs('controllers/system_state_controller.js').__get__("SystemState"),
         MemoryStash: rewireJs('controllers/version_controller.js').__get__("MemoryStash"),
