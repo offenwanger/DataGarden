@@ -7,6 +7,7 @@ import { CursorTag } from "../menu/cursor_tag.js";
 import { DropdownInput } from "../menu/dropdown_input.js";
 import { FloatingButton } from "../menu/floating_button.js";
 import { TextInput } from "../menu/text_input.js";
+import { ClassifierUtil } from "../utils/classifier_util.js";
 import { DataUtil } from "../utils/data_util.js";
 import { IdUtil } from "../utils/id_util.js";
 import { CanvasController } from "./canvas_controller.js";
@@ -158,6 +159,18 @@ export function DashboardController() {
 
     function onDelete() {
         mDeleteCallback(mSelection)
+    }
+
+    async function onExportElementsSet() {
+        try {
+            let workspace = await FileHandler.getWorkspace()
+            mModel.getElements().forEach((element, index) => {
+                workspace.writePNG(ClassifierUtil.elementToImg(element, 16), 'trainingData', Date.now() + "16_e" + index);
+                workspace.writePNG(ClassifierUtil.elementToImg(element, 32), 'trainingData', Date.now() + "32_e" + index);
+            });
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     mTextInput.setTextChangedCallback((itemId, text) => {
@@ -405,6 +418,7 @@ export function DashboardController() {
         onRedo,
         onEnter,
         onDelete,
+        onExportElementsSet,
         setNewStrokeCallback: (func) => mCanvasController.setNewStrokeCallback(func),
         setStructureMode: (to) => mCanvasController.setStructureMode(to),
         setParentUpdateCallback: (func) => { mFdlViewController.setParentUpdateCallback(func); mCanvasController.setParentUpdateCallback(func); },

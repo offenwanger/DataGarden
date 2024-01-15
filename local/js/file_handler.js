@@ -1,3 +1,5 @@
+import { WorkspaceController } from "./controllers/workspace_controller.js";
+
 export let FileHandler = function () {
     function downloadJSON(obj) {
         let blob = new Blob([JSON.stringify(obj)], { type: 'text/plain' });
@@ -25,10 +27,9 @@ export let FileHandler = function () {
         return JSON.parse(contents);
     }
 
-    async function getWorkspace(create) {
+    async function getWorkspace() {
         let directoryHandle = await window.showDirectoryPicker();
         let workspace = new WorkspaceController(directoryHandle);
-        await workspace.init(create);
         return workspace;
     }
 

@@ -321,6 +321,16 @@ export let DataUtil = function () {
 
     }
 
+    function getStraightenedStrokes(element) {
+        let rotation = VectorUtil.toRotation(element.angle);
+        let straight = VectorUtil.toRotation({ x: 0, y: -1 });
+        return element.strokes.map(s => {
+            s = s.clone();
+            s.path = s.path.map(p => VectorUtil.rotateAroundPoint(p, element.root, rotation - straight));
+            return s;
+        })
+    }
+
     function getStupidSpine(element) {
         if (element.strokes.length == 1) {
             return element.strokes[0].path;
@@ -426,6 +436,7 @@ export let DataUtil = function () {
         isDateLike,
         angleToPercent,
         getRelativeAngle,
+        getStraightenedStrokes,
         getStupidSpine,
         getLongestAxis,
         boundingBoxIntersects,

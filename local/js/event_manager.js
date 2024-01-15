@@ -48,6 +48,8 @@ export function EventManager(dashboard) {
             mDashboard.onDelete();
         } else if (/* enter */ e.which == 13) {
             mDashboard.onEnter();
+        } else if ((e.ctrlKey || e.metaKey) && key == 'm') {
+            return mDashboard.onExportElementsSet();
         }
     });
 

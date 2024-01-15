@@ -47,6 +47,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
 
     let mDimensionWidth = 0;
     let mDimensionType;
+    let mDimensionChannel;
     let mDimensionTileWidths = [];
 
     let mMinSize = 0
@@ -149,6 +150,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             " [" + DimensionLabels[mDimension.type] + "][" +
             ChannelLabels[mDimension.channel] + "][T" + mDimension.tier + "]", Size.DIMENSION_SIZE);
         mDimensionType = dimension.type;
+        mDimensionChannel = dimension.channel;
 
         mMaxLevelWdith = mLevels.concat({ name: ADD_LEVEL_LABEL }).reduce((max, level) => {
             return Math.max(max, mDrawingUtil.measureStringNode(level.name, Size.LEVEL_SIZE));
@@ -372,8 +374,13 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
 
     function drawNode(node, element) {
         if (IdUtil.isType(node.id, Data.Element)) {
+            let strokes = element.strokes;
+            if (mDimensionChannel == ChannelType.FORM) {
+                strokes = DataUtil.getStraightenedStrokes(element);
+            }
+
             mDrawingUtil.drawThumbnailCircle({
-                strokes: element.strokes,
+                strokes,
                 cx: node.x,
                 cy: node.y,
                 r: node.radius,
