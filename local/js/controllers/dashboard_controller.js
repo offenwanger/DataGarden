@@ -165,8 +165,8 @@ export function DashboardController() {
         try {
             let workspace = await FileHandler.getWorkspace()
             mModel.getElements().forEach((element, index) => {
-                workspace.writePNG(ClassifierUtil.elementToImg(element, 16), 'trainingData', Date.now() + "16_e" + index);
-                workspace.writePNG(ClassifierUtil.elementToImg(element, 32), 'trainingData', Date.now() + "32_e" + index);
+                workspace.writePNG(ClassifierUtil.elementToImg(element, 16), 'trainingData', "16p" + Date.now() + "e" + index);
+                workspace.writePNG(ClassifierUtil.elementToImg(element, 32), 'trainingData', "32p" + Date.now() + "e" + index);
             });
         } catch (e) {
             console.error(e);
