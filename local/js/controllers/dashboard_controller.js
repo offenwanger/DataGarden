@@ -381,9 +381,6 @@ export function DashboardController() {
             mCanvasController.setStructureMode(mSystemState.isStructureViewActive());
         } else if (button == Buttons.DOWNLOAD) {
             FileHandler.downloadJSON(mModel.toObject());
-            FileHandler.downloadPNG(d3.select('#canvas-view-container')
-                .select('.canvas-container')
-                .select('canvas').node());
         } else if (button == Buttons.UPLOAD) {
             mLoadModelCallback();
         }
