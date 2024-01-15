@@ -2,7 +2,10 @@
  * Listens to global browser events 
  */
 
-function EventManager(dashboard) {
+import { Buttons } from "./constants.js";
+import { VectorUtil } from "./utils/vector_util.js";
+
+export function EventManager(dashboard) {
     const DBL_CLICK_SPEED = 500;
     const DBL_CLICK_DIST = 10;
 
@@ -16,6 +19,8 @@ function EventManager(dashboard) {
     let mLongPressTimeout;
 
     let mKeysDown = [];
+
+    let mStartPos = null;
 
     mDashboard.onResize(window.innerWidth, window.innerHeight);
 

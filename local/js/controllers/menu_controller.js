@@ -1,3 +1,7 @@
+import { Buttons } from "../constants.js";
+import { MenuButton } from "../menu/menu_button.js";
+import { FiltersUtil } from "../utils/filters_util.js";
+
 export function MenuController() {
     const BUTTON_SIZE = 40;
     let mColorPicker;

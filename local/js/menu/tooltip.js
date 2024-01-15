@@ -1,4 +1,4 @@
-function ToolTip(svg) {
+export function ToolTip(svg) {
     let mText = svg.append("text")
         .style("font", "16px DefaultFont")
         .style("stroke-linejoin", "round")

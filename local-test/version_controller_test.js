@@ -1,9 +1,9 @@
-let chai = require('chai');
+import * as  chai from 'chai';
 let assert = chai.assert;
 let expect = chai.expect;
 
-let suite = require("./test_utils/suite_enviroment")
-let utility = require("./test_utils/utility.js")
+import * as suite from "./test_utils/suite_enviroment.js"
+import * as utility from "./test_utils/utility.js"
 
 describe('Version Controller Tests', function () {
     let integrationEnv;
@@ -15,10 +15,6 @@ describe('Version Controller Tests', function () {
     afterEach(function (done) {
         integrationEnv.cleanup(done);
     });
-
-    function model() {
-        return integrationEnv.instances.ModelController.getModel();
-    }
 
     describe('drawing undo and redo tests', function () {
         it('should undo drawing a line', async function () {

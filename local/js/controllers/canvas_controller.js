@@ -1,5 +1,15 @@
+import { DataModel } from "../data_model.js";
+import { DataUtil } from "../utils/data_util.js";
+import { DrawingUtil } from "../utils/drawing_util.js";
+import { IdUtil } from "../utils/id_util.js";
+import { CodeUtil } from "../utils/code_util.js";
+import { PathUtil } from "../utils/path_util.js";
+import { ValUtil } from "../utils/value_util.js";
+import { VectorUtil } from "../utils/vector_util.js";
+import { Buttons, ContextButtons } from "../constants.js";
+import { Data } from "../data_structs.js";
 
-function CanvasController(mColorMap) {
+export function CanvasController(mColorMap) {
     const DRAWING = 'drawing';
     const LASSO = 'lasso';
     const PANNING = 'panning';

@@ -1,4 +1,10 @@
-function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap) {
+import { AxisPositions, ChannelLabels, Decay, DimensionLabels, DimensionType, DimensionValueId, FdlInteraction, Size } from "../../constants.js";
+import { Data } from "../../data_structs.js";
+import { DataUtil } from "../../utils/data_util.js";
+import { IdUtil } from "../../utils/id_util.js";
+import { VectorUtil } from "../../utils/vector_util.js";
+
+export function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap) {
     const PADDING = 10;
 
     const ADD_BUTTON_ID = 'add_button';
@@ -14,6 +20,8 @@ function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMa
     let mDimensions = [];
     let mLevels = [];
     let mAddButton = { id: ADD_BUTTON_ID, x: 0, y: 0 };
+
+    let mYPositions = [];
 
     let mSimulation = d3.forceSimulation()
         .alphaDecay(Decay.ALPHA)

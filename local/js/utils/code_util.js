@@ -1,4 +1,6 @@
-let CodeUtil = function () {
+import { DataUtil } from "./data_util.js";
+
+export function CodeUtil() {
     const NO_TYPE = 'no_type_specified';
 
     let mInteractionLookup = {};

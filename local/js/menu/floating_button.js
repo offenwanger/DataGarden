@@ -1,4 +1,6 @@
-function FloatingButton(svg) {
+import { ContextButtons } from "../constants.js";
+
+export function FloatingButton(svg) {
     const BUTTON_PADDING = 5;
 
     let mClickCallback = () => { };

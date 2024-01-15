@@ -1,4 +1,9 @@
-let ModelUtil = function () {
+import { Data } from "../data_structs.js";
+import { DataUtil } from "./data_util.js";
+import { IdUtil } from "./id_util.js";
+import { PathUtil } from "./path_util.js";
+
+export let ModelUtil = function () {
     function updateParent(parentElementId, elementId, modelController) {
         if (parentElementId == elementId) { console.error("Can't parent a node to itself! " + parentElementId); return; }
         let model = modelController.getModel();

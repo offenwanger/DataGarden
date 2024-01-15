@@ -1,86 +1,15 @@
 // This file defines the enviroment for tests.
 // it's not actually a test it's just calling it test makes things easier. 
 
-
-let fs = require('fs');
-let vm = require('vm');
-let rewire = require('rewire');
-let rewireJs = function (name) { return rewire("../../local/js/" + name) }
-let chai = require('chai')
-const { createCanvas } = require('canvas');
+import chai from 'chai'
 
 let assert = chai.assert;
 
-let mockD3 = require("./mock_d3.js");
-let mockJspreadsheet = require("./mock_jspreadsheet.js");
-let mockServer = require("./mock_server.js");
-let mockPicker = require("./mock_color_picker.js");
-let mockDate = require("./mock_date.js");
-let mockCanvas = require("./mock_canvas.js")
+import { resetGlobals } from './setup_globals.js'
 
-let initialized = false;
+import * as main from '../../local/js/main.js'
 
-function init() {
-    vm.runInThisContext(fs.readFileSync(__dirname + "/" + "../../local/js/constants.js"));
-
-    // Trap error and trigger a failure. 
-    let consoleError = console.error;
-    console.error = function (message) {
-        consoleError(...arguments);
-        assert.equal("No Error", "Error: " + message);
-    }
-
-    global.document = {
-        isDocument: true,
-        addEventListener: function (event, callback) {
-            if (event == 'DOMContentLoaded') {
-                this.load = callback;
-            } else {
-                console.error("Shouldn't have any other events coming through here", event);
-            }
-        },
-        createElement(tag) {
-            if (tag == 'canvas') {
-                return mockCanvas.createCanvas();
-            } else if (tag == 'http://www.w3.org/2000/svg') {
-                console.error("impliment me!");
-            } else {
-                console.error("Type not supported!")
-            }
-        }
-    }
-
-    global.window = {
-        isWindow: true,
-        innerWidth: 1000,
-        innerHeight: 800,
-    }
-
-    global.Date = new mockDate();
-
-    global.timeouts = [];
-    global.setTimeout = function (callback, delay) {
-        global.timeouts.push(callback);
-        return global.timeouts.length - 1;
-    }
-
-    global.clearTimeout = function (index = null) {
-        if (index || index == 0) global.timeouts[index] = null;
-    }
-
-    global.Image = function () { return createCanvas(10, 10) };
-}
-
-
-function getIntegrationEnviroment() {
-    // This gets run once and sets the constants.
-    if (!initialized) { init(); initialized = true; }
-
-    let main = rewireJs('main.js');
-
-    // grab this immidiately because the next test will overwrite it. 
-    // Yes, I know, this is bad programming, but I want my nice test 
-    // coverage library so sue me. 
+export function getIntegrationEnviroment() {
     let documentLoad = document.load;
 
     let instances = {};
@@ -91,57 +20,7 @@ function getIntegrationEnviroment() {
         }
     };
 
-    let server = new mockServer();
-    let jspreadsheet = new mockJspreadsheet();
-    let integrationEnv = {
-        d3: new mockD3(jspreadsheet),
-        server: server,
-        fetch: () => server.fetch(...arguments),
-        jspreadsheet,
-        Picker: mockPicker,
-        EventManager: rewireJs('event_manager.js').__get__("EventManager"),
-        MenuController: rewireJs('controllers/menu_controller.js').__get__("MenuController"),
-        ContextMenu: rewireJs('menu/context_menu.js').__get__("ContextMenu"),
-        CursorTag: rewireJs('menu/cursor_tag.js').__get__("CursorTag"),
-        TextInput: rewireJs('menu/text_input.js').__get__("TextInput"),
-        DropdownInput: rewireJs('menu/dropdown_input.js').__get__("DropdownInput"),
-        RadialContextMenu: rewireJs('menu/radial_context_menu.js').__get__("RadialContextMenu"),
-        MenuButton: rewireJs('menu/menu_button.js').__get__("MenuButton"),
-        ToolTip: rewireJs('menu/tooltip.js').__get__("ToolTip"),
-        FloatingButton: rewireJs('menu/floating_button.js').__get__("FloatingButton"),
-        VersionController: rewireJs('controllers/version_controller.js').__get__("VersionController"),
-        SystemState: rewireJs('controllers/system_state_controller.js').__get__("SystemState"),
-        MemoryStash: rewireJs('controllers/version_controller.js').__get__("MemoryStash"),
-        ServerController: rewireJs('controllers/server_controller.js').__get__("ServerController"),
-        ModelController: snagConstructor(rewireJs('controllers/model_controller.js'), "ModelController"),
-        Data: rewireJs('data_structs.js').__get__("Data"),
-        DataModel: rewireJs('data_model.js').__get__("DataModel"),
-        ValUtil: rewireJs('utils/value_util.js').__get__("ValUtil"),
-        DataUtil: rewireJs('utils/data_util.js').__get__("DataUtil"),
-        StructureFairy: rewireJs('utils/structure_fairy.js').__get__("StructureFairy"),
-        VectorUtil: rewireJs('utils/vector_util.js').__get__("VectorUtil"),
-        ModelUtil: rewireJs('utils/model_util.js').__get__("ModelUtil"),
-        IdUtil: rewireJs('utils/id_util.js').__get__("IdUtil"),
-        TabDrawingUtil: rewireJs('utils/tab_drawing_util.js').__get__("TabDrawingUtil"),
-        CodeUtil: rewireJs('utils/interaction_code_util.js').__get__("CodeUtil"),
-        DrawingUtil: rewireJs('utils/drawing_util.js').__get__("DrawingUtil"),
-        ImageDrawingUtil: rewireJs('utils/image_drawing_util.js').__get__("ImageDrawingUtil"),
-        OverlayUtil: rewireJs('utils/overlay_util.js').__get__("OverlayUtil"),
-        FiltersUtil: rewireJs('utils/filters_util.js').__get__("FiltersUtil"),
-        CanvasController: rewireJs('controllers/canvas_controller.js').__get__("CanvasController"),
-        DashboardController: rewireJs('controllers/dashboard_controller.js').__get__("DashboardController"),
-        FdlViewController: rewireJs('controllers/fdl/fdl_view_controller.js').__get__("FdlViewController"),
-        FdlParentViewController: rewireJs('controllers/fdl/fdl_view_parent_controller.js').__get__("FdlParentViewController"),
-        FdlDimensionViewController: rewireJs('controllers/fdl/fdl_view_dimension_controller.js').__get__("FdlDimensionViewController"),
-        FdlLegendViewController: rewireJs('controllers/fdl/fdl_view_legend_controller.js').__get__("FdlLegendViewController"),
-        TableViewController: rewireJs('controllers/table_view_controller.js').__get__("TableViewController"),
-        TabController: rewireJs('controllers/tab_controller.js').__get__("TabController"),
-    };
-
-    main.__set__(integrationEnv);
-    // things with dependencies
-    integrationEnv.PathUtil = rewireJs('utils/path_util.js').__get__("PathUtil"),
-        main.__set__(integrationEnv);
+    let integrationEnv = {};
 
     integrationEnv.main = main;
     integrationEnv.documentLoad = documentLoad;
@@ -158,13 +37,10 @@ function getIntegrationEnviroment() {
         this.clearTimeouts();
         Object.keys(integrationEnv).forEach((key) => {
             delete global[key];
-        })
+        });
+        resetGlobals();
         done();
     }
 
     return integrationEnv;
-}
-
-module.exports = {
-    getIntegrationEnviroment,
 }

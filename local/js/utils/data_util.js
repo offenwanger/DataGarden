@@ -1,4 +1,11 @@
-let DataUtil = function () {
+import { ChannelType, DimensionType } from "../constants.js";
+import { Data } from "../data_structs.js";
+import { IdUtil } from "./id_util.js";
+import { PathUtil } from "./path_util.js";
+import { ValUtil } from "./value_util.js";
+import { VectorUtil } from "./vector_util.js";
+
+export let DataUtil = function () {
     function numToColor(num) {
         return "#" + Math.round(num).toString(16).padStart(6, "0");
     }

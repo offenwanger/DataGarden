@@ -1,6 +1,18 @@
+import { ChannelType, DimensionType } from "./constants.js";
 import { DashboardController } from "./controllers/dashboard_controller.js";
+import { ModelController } from "./controllers/model_controller.js";
+import { ServerController } from "./controllers/server_controller.js";
+import { MemoryStash, VersionController } from "./controllers/version_controller.js";
+import { DataModel } from "./data_model.js";
+import { Data } from "./data_structs.js";
+import { EventManager } from "./event_manager.js";
 import { FileHandler } from "./file_handler.js";
-import { ClassifierUtil } from "./utils/classifier_util.js";
+import { DataUtil } from "./utils/data_util.js";
+import { IdUtil } from "./utils/id_util.js";
+import { ModelUtil } from "./utils/model_util.js";
+import { PathUtil } from "./utils/path_util.js";
+import { StructureFairy } from "./utils/structure_fairy.js";
+import { VectorUtil } from "./utils/vector_util.js";
 
 document.addEventListener('DOMContentLoaded', function (e) {
     let mModelController = new ModelController();

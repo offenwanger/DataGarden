@@ -1,5 +1,5 @@
 
-function TabDrawingUtil(context, interactionContext) {
+export function TabDrawingUtil(context, interactionContext) {
     const INDENT_DEPTH = 0.1;
     const CLOSE_BUTTON_PADDING = 10;
 

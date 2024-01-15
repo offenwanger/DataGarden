@@ -1,4 +1,4 @@
-let ServerController = function () {
+export let ServerController = function () {
     async function getSpine(element) {
         try {
             let result = await fetch('/getspine', {

@@ -1,9 +1,10 @@
-let chai = require('chai');
+import * as  chai from 'chai';
 let assert = chai.assert;
 let expect = chai.expect;
 
-let suite = require("./test_utils/suite_enviroment.js")
-let utility = require("./test_utils/utility.js")
+import * as suite from "./test_utils/suite_enviroment.js";
+import * as utility from "./test_utils/utility.js";
+import { ContextButtons } from '../local/js/constants.js';
 
 describe('Canvas View Controller Test', function () {
     let integrationEnv;
@@ -16,10 +17,6 @@ describe('Canvas View Controller Test', function () {
         integrationEnv.cleanup(done);
     });
 
-    function model() {
-        return integrationEnv.instances.ModelController.getModel();
-    }
-
     describe('line drawing tests', function () {
         it('should draw a stroke', function () {
             // draw a line
@@ -31,7 +28,7 @@ describe('Canvas View Controller Test', function () {
             expect(model().getElements()[0].strokes[0].path).to.eql([{ x: 20, y: 20 }, { x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 20, y: 80 }]);
         });
 
-        
+
     })
 
     describe('element merge tests', function () {

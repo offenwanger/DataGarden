@@ -1,5 +1,9 @@
+import { DataModel } from "../data_model.js";
+import { Data } from "../data_structs.js";
+import { IdUtil } from "../utils/id_util.js";
+import { ValUtil } from "../utils/value_util.js";
 
-function ModelController() {
+export function ModelController() {
     let mDataModel = new DataModel();
 
     function addDimension(dimension) {

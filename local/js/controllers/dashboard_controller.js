@@ -1,5 +1,20 @@
+import { Buttons, ContextButtons, DimensionValueId, DropDown, FdlMode, Tab } from "../constants.js";
+import { DataModel } from "../data_model.js";
+import { Data } from "../data_structs.js";
 import { FileHandler } from "../file_handler.js";
+import { ContextMenu } from "../menu/context_menu.js";
+import { CursorTag } from "../menu/cursor_tag.js";
+import { DropdownInput } from "../menu/dropdown_input.js";
+import { FloatingButton } from "../menu/floating_button.js";
+import { TextInput } from "../menu/text_input.js";
+import { DataUtil } from "../utils/data_util.js";
+import { IdUtil } from "../utils/id_util.js";
+import { CanvasController } from "./canvas_controller.js";
+import { FdlViewController } from "./fdl/fdl_view_controller.js";
 import { MenuController } from "./menu_controller.js";
+import { SystemState } from "./system_state_controller.js";
+import { TabController } from "./tab_controller.js";
+import { TableViewController } from "./table_view_controller.js";
 
 export function DashboardController() {
     const TAB_HEIGHT = 60;

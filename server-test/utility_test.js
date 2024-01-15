@@ -1,10 +1,10 @@
-const os = require('os');
+import os from 'os';
 
-let chai = require('chai');
+import * as  chai from 'chai';
 let assert = chai.assert;
 let expect = chai.expect;
 
-let utility = require('../server/utility.js');
+import * as utility from '../server/utility.js';
 
 describe('Test Fairy Connector', function () {
     describe('test scap converstion', function () {

@@ -1,4 +1,7 @@
-let VectorUtil = function () {
+import { DataUtil } from "./data_util.js";
+import { ValUtil } from "./value_util.js";
+
+export let VectorUtil = function () {
     function add(v1, v2) {
         if (!ValUtil.isCoord(v1)) { console.error("Bad vector", v1); return { x: 0, y: 0 }; }
         if (!ValUtil.isCoord(v2)) { console.error("Bad vector", v2); return { x: 0, y: 0 }; }
@@ -86,6 +89,14 @@ let VectorUtil = function () {
         return { x: v.x * cos - v.y * sin, y: v.x * sin + v.y * cos };
     }
 
+    function rotateAroundPoint(v, p, angle) {
+        let cos = Math.cos(angle);
+        let sin = Math.sin(angle);
+        let x = (cos * (v.x - p.x)) + (sin * (v.y - p.y)) + p.x;
+        let y = (cos * (v.y - p.y)) - (sin * (v.x - p.x)) + p.y;
+        return { x, y };
+    }
+
     function projectToLine(p, p1, p2) {
         let p1p2 = { x: p2.x - p1.x, y: p2.y - p1.y };
         let p1p = { x: p.x - p1.x, y: p.y - p1.y }
@@ -107,6 +118,7 @@ let VectorUtil = function () {
         rotateLeft,
         rotateRight,
         rotate,
+        rotateAroundPoint,
         projectToLine,
     }
 }();

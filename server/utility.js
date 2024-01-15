@@ -1,6 +1,6 @@
-const os = require('os');
+import os from 'os';
 
-function elementToSpineScap(element) {
+export function elementToSpineScap(element) {
     let scap = "";
     let ids = 0;
 
@@ -25,7 +25,7 @@ function elementToSpineScap(element) {
     return scap;
 }
 
-function elementsToScap(elements, idMap) {
+export function elementsToScap(elements, idMap) {
     let strokes = elements.map(e => e.strokes).flat();
     let width = Math.max(...strokes.map(s => s.path.map(p => p.x)).flat());
     let height = Math.max(...strokes.map(s => s.path.map(p => p.y)).flat());
@@ -54,7 +54,7 @@ function elementsToScap(elements, idMap) {
     return scap;
 }
 
-function elementTopCorner(element) {
+export function elementTopCorner(element) {
     return element.strokes.map(s => s.path).flat().reduce((curr, point) => {
         if (point.x < curr.x) curr.x = point.x;
         if (point.y < curr.y) curr.y = point.y;
@@ -72,7 +72,7 @@ function samplePath(path, sampleRate) {
     return result;
 }
 
-function scapToPath(scap, topCorner) {
+export function scapToPath(scap, topCorner) {
     let lines = scap.split("{")[1].split("}")[0].split(os.EOL);
     return lines.slice(1, lines.length).map(line => {
         let x = line.split("\t")[1];
@@ -81,7 +81,7 @@ function scapToPath(scap, topCorner) {
     }).filter(p => !isNaN(p.x) && !isNaN(p.y));
 }
 
-function svgToPath(svg) {
+export function svgToPath(svg) {
     let values = svg.split("d=")[1].split("/>")[0].split(" ");
     let path = [];
     for (let i = 0; i < values.length; i += 3) {
@@ -94,7 +94,7 @@ function svgToPath(svg) {
     return path;
 }
 
-function alignSVGPath(path, element) {
+export function alignSVGPath(path, element) {
     let elementPoints = element.strokes.map(s => s.path).flat();
     let elementTopCorner = elementPoints.reduce((curr, point) => {
         if (point.x < curr.x) curr.x = point.x;
@@ -120,7 +120,7 @@ function alignSVGPath(path, element) {
     })
 }
 
-function scapToMerge(scap, idMap) {
+export function scapToMerge(scap, idMap) {
     let tags = scap.split("{" + os.EOL).slice(1).map(stroke => {
         return stroke.split(os.EOL)[0].split("\t").slice(1);
     })
@@ -132,11 +132,11 @@ function scapToMerge(scap, idMap) {
     return Object.values(groups);
 }
 
-function log() {
+export function log() {
     (console).log(...arguments);
 }
 
-function IdMap() {
+export function IdMap() {
     let counter = 0;
     let map = {};
     let reverseMap = {};
@@ -151,16 +151,4 @@ function IdMap() {
     this.getId = function (mapping) {
         return reverseMap[mapping];
     }
-}
-
-module.exports = {
-    elementToSpineScap,
-    elementsToScap,
-    elementTopCorner,
-    scapToPath,
-    scapToMerge,
-    svgToPath,
-    alignSVGPath,
-    IdMap,
-    log,
 }

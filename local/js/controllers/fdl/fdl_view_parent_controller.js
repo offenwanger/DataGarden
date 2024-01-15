@@ -1,4 +1,11 @@
-function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap) {
+import { Decay, FdlInteraction, Padding, Size } from "../../constants.js";
+import { DataModel } from "../../data_model.js";
+import { Data } from "../../data_structs.js";
+import { DataUtil } from "../../utils/data_util.js";
+import { IdUtil } from "../../utils/id_util.js";
+import { VectorUtil } from "../../utils/vector_util.js";
+
+export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap) {
     const TARGET_ELEMENT = 'element_target';
     const TARGET_BUBBLE = 'bubble_target'
     const TARGET_LOCK = "target_lock";

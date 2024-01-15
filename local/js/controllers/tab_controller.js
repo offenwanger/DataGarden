@@ -1,4 +1,10 @@
-function TabController() {
+import { IdUtil } from "../utils/id_util.js";
+import { CodeUtil } from "../utils/code_util.js";
+import { TabDrawingUtil } from "../utils/tab_drawing_util.js";
+import { Tab } from "../constants.js";
+import { Data } from "../data_structs.js";
+
+export function TabController() {
     let mCanvas = d3.select('#tabs-container').select('.canvas-container').append('canvas')
         .classed('view-canvas', true);
     let mInteractionCanvas = d3.select("#tabs-container").select('.canvas-container').append('canvas')

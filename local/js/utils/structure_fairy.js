@@ -1,4 +1,8 @@
-let StructureFairy = function () {
+import { DataUtil } from "./data_util.js";
+import { PathUtil } from "./path_util.js";
+import { VectorUtil } from "./vector_util.js";
+
+export let StructureFairy = function () {
     function getMerge(stroke, model) {
         let bb = DataUtil.getBoundingBox([stroke]);
         bb.x -= bb.width / 4
@@ -31,7 +35,7 @@ let StructureFairy = function () {
 
         let elementDists = nearElements.map(element => {
             let strokeDists = element.strokes.map(s => {
-                return closestDist = stroke.path.reduce((closestDist, p) => {
+                return stroke.path.reduce((closestDist, p) => {
                     let closestPoint = PathUtil.getClosestPointOnPath(p, s.path);
                     return Math.min(closestDist, VectorUtil.dist(closestPoint, p));
                 }, Infinity)

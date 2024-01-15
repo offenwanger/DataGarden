@@ -1,4 +1,4 @@
-let FiltersUtil = function () {
+export let FiltersUtil = function () {
     const DROP_SHADOW = 'dropshadow';
     const OUTLINE = 'outline';
 

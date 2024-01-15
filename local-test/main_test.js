@@ -1,9 +1,9 @@
-let chai = require('chai');
+import * as  chai from 'chai';
 let assert = chai.assert;
 let expect = chai.expect;
 
-let suite = require("./test_utils/suite_enviroment")
-let utility = require("./test_utils/utility.js")
+import * as suite from "./test_utils/suite_enviroment.js"
+import * as utility from "./test_utils/utility.js"
 
 describe('Test Main - Integration Test', function () {
     let integrationEnv;

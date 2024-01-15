@@ -1,7 +1,5 @@
-const { createCanvas } = require('./mock_canvas.js')
-const fs = require('fs')
-const RUN = Math.random();
-let fileCount = 0;
+import { VectorUtil } from '../../local/js/utils/vector_util.js';
+import { createCanvas } from './mock_canvas.js';
 
 let mJspreadsheet;
 
@@ -45,6 +43,9 @@ function MockElement(type) {
         }
     }
     this.attr = function (att, val = null) {
+        if (!att) {
+            return mAttrs;
+        }
         if (val !== null) {
             mAttrs[att] = val;
             if (mCanvas && (att == 'width' || att == 'height')) {
@@ -70,6 +71,7 @@ function MockElement(type) {
         return mStyles[style];
     };
     this.classed = function (name, isClass) {
+        if (!name) return mClasses;
         if (isClass) {
             mClasses.indexOf(name) === -1 ? mClasses.push(name) : null;
         } else {
@@ -110,16 +112,16 @@ function MockElement(type) {
     }
     this.getBoundingClientRect = function () {
         let x = 0, y = 0;
-        if (d3.getRoot().select("#canvas-view-container").select('.canvas-container').select('.interaction-canvas') == this ||
-            d3.getRoot().select("#canvas-view-container").select('.canvas-container').select('.interface-canvas') == this) {
+        if (d3.select("#canvas-view-container").select('.canvas-container').select('.interaction-canvas') == this ||
+            d3.select("#canvas-view-container").select('.canvas-container').select('.interface-canvas') == this) {
             // x and y are 0, that's fine
-        } else if (d3.getRoot().select("#fdl-view-container").select('.canvas-container').select('.interaction-canvas') == this ||
-            d3.getRoot().select("#fdl-view-container").select('.canvas-container').select('.interface-canvas') == this) {
-            x = d3.getRoot().select("#fdl-view-container").select('.canvas-container').select('.interface-canvas').attr('width')
-        } else if (d3.getRoot().select("#tabs-container").select('.canvas-container').select('.interaction-canvas') == this) {
-            x = d3.getRoot().select("#tabs-container").select('.canvas-container').select('.interaction-canvas').attr('width')
+        } else if (d3.select("#fdl-view-container").select('.canvas-container').select('.interaction-canvas') == this ||
+            d3.select("#fdl-view-container").select('.canvas-container').select('.interface-canvas') == this) {
+            x = d3.select("#fdl-view-container").select('.canvas-container').select('.interface-canvas').attr('width')
+        } else if (d3.select("#tabs-container").select('.canvas-container').select('.interaction-canvas') == this) {
+            x = d3.select("#tabs-container").select('.canvas-container').select('.interaction-canvas').attr('width')
         } else {
-            console.error("Unexpected!")
+            console.error("Unexpected!", this)
         }
 
         return { x, y, width: mAttrs['width'], height: mAttrs['height'] };
@@ -261,7 +263,7 @@ function mockQuadTree() {
 
 }
 
-module.exports = function (jspreadsheet) {
+export function mockD3(jspreadsheet) {
     mJspreadsheet = jspreadsheet;
     let rootNode = new MockElement();
     let forceSim = new mockForceSim();
@@ -293,7 +295,6 @@ module.exports = function (jspreadsheet) {
     this.polygonHull = polygonHull;
     this.zoomIdentity = new mockTransform();
     this.getCallbacks = () => documentCallbacks;
-    this.getRoot = () => rootNode;
     this.forceSimulation = () => forceSim;
     this.scaleOrdinal = () => ordinalScale;
     this.quadtree = () => new mockQuadTree();

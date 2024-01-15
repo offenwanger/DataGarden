@@ -1,9 +1,14 @@
-let chai = require('chai');
+import { DataModel } from '../local/js/data_model.js';
+import { Data } from '../local/js/data_structs.js';
+import { IdUtil } from '../local/js/utils/id_util.js';
+import { ChannelType, DimensionType } from '../local/js/constants.js';
+
+import * as  chai from 'chai';
 let assert = chai.assert;
 let expect = chai.expect;
 
-let suite = require("./test_utils/suite_enviroment")
-let utility = require("./test_utils/utility.js");
+import * as suite from "./test_utils/suite_enviroment.js"
+import * as utility from "./test_utils/utility.js";
 
 describe('Test Data Model', function () {
     let integrationEnv;
@@ -17,10 +22,6 @@ describe('Test Data Model', function () {
     });
 
     describe('intialization test', function () {
-        it('should be part of the enviroment', function () {
-            assert.exists(DataModel);
-        });
-
         it('should create a model', function () {
             let dataModel = new DataModel();
             expect(dataModel.getElements()).to.eql([]);

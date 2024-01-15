@@ -1,4 +1,7 @@
-function ContextMenu(svg) {
+import { ContextButtons } from "../constants.js";
+import { RadialContextMenu } from "./radial_context_menu.js";
+
+export function ContextMenu(svg) {
     let mContextMenuId = "context-menu";
     let mButtonData = {}
     let mSvg = svg;

@@ -1,4 +1,4 @@
-let ValUtil = function () {
+export let ValUtil = function () {
     function checkConvertionState(coords, boundingBox, zoomPan) {
         if (isNaN(parseInt(coords.x)) || isNaN(parseInt(coords.y))) {
             console.error('Bad conversion coords', coords);

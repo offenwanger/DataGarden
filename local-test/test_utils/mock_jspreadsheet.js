@@ -1,6 +1,4 @@
-
-
-module.exports = function () {
+export function mockJspreadsheet() {
     let tables = [];
 
     function removeTable(element) {

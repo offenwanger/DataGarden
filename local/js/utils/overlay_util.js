@@ -1,11 +1,17 @@
-let OverlayUtil = function () {
-    let mCanvas = document.createElement('canvas');
-    let ctx = mCanvas.getContext('2d');
+import { DataUtil } from "./data_util.js";
+
+export function OverlayUtil() {
+    let mCanvas, ctx;
     let mZoomTransform = { x: 0, y: 0, k: 0 };
 
     const OVERLAY_COLOR = 'white';
 
     function reset(zoomTransform) {
+        if (!mCanvas) {
+            mCanvas = document.createElement('canvas');
+            ctx = mCanvas.getContext('2d');
+        }
+
         mZoomTransform = zoomTransform;
         ctx.reset();
         ctx.translate(zoomTransform.x, zoomTransform.y)
@@ -14,6 +20,11 @@ let OverlayUtil = function () {
     }
 
     function onResize(width, height) {
+        if (!mCanvas) {
+            mCanvas = document.createElement('canvas');
+            ctx = mCanvas.getContext('2d');
+        }
+
         mCanvas.width = width;
         mCanvas.height = height;
     }

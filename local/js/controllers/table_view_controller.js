@@ -1,4 +1,4 @@
-function TableViewController() {
+export function TableViewController() {
     let mTableDiv = d3.select("#table-view-container");
 
     let mSelectionCallback = () => { };

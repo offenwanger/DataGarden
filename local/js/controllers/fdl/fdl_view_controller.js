@@ -1,5 +1,18 @@
+import { DataModel } from "../../data_model.js";
+import { DataUtil } from "../../utils/data_util.js";
+import { DrawingUtil } from "../../utils/drawing_util.js";
+import { IdUtil } from "../../utils/id_util.js";
+import { CodeUtil } from "../../utils/code_util.js";
+import { FdlDimensionViewController } from "./fdl_view_dimension_controller.js";
+import { FdlLegendViewController } from "./fdl_view_legend_controller.js";
+import { FdlParentViewController } from "./fdl_view_parent_controller.js";
+import { OverlayUtil } from "../../utils/overlay_util.js";
+import { ValUtil } from "../../utils/value_util.js";
+import { VectorUtil } from "../../utils/vector_util.js";
+import { AxisPositions, Buttons, ContextButtons, DimensionType, DimensionValueId, FdlInteraction, FdlMode, Size } from "../../constants.js";
+import { Data } from "../../data_structs.js";
 
-function FdlViewController(mColorMap) {
+export function FdlViewController(mColorMap) {
     const SELECTION_BUBBLE_COLOR = "#55555555";
 
     let mCodeUtil = new CodeUtil();

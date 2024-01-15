@@ -1,4 +1,7 @@
-let Data = function () {
+import { ChannelType, DimensionType } from "./constants.js";
+import { IdUtil } from "./utils/id_util.js";
+
+export let Data = function () {
     function Stroke(path, size, color) {
         this.id = IdUtil.getUniqueId(Stroke);
         this.creationTime = Date.now();

@@ -1,4 +1,7 @@
-function DropdownInput() {
+import { ChannelType, DimensionType, DropDown } from "../constants.js";
+import { DataUtil } from "../utils/data_util.js";
+
+export function DropdownInput() {
     let mSelectedCallback = (item) => { };
 
     let mShowingId = false;

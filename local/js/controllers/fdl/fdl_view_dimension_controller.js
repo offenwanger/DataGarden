@@ -1,4 +1,12 @@
-function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap) {
+import { AxisPositions, ChannelLabels, ChannelType, Decay, DimensionLabels, DimensionType, DimensionValueId, FdlInteraction, Padding, Size } from "../../constants.js";
+import { DataModel } from "../../data_model.js";
+import { Data } from "../../data_structs.js";
+import { DataUtil } from "../../utils/data_util.js";
+import { IdUtil } from "../../utils/id_util.js";
+import { PathUtil } from "../../utils/path_util.js";
+import { VectorUtil } from "../../utils/vector_util.js";
+
+export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap) {
     const ADD_BUTTON_ID = 'add_button';
     const TARGET_ELEMENT = "element_target";
     const TARGET_LABEL = "element_label";

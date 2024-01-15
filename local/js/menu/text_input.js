@@ -1,4 +1,4 @@
-function TextInput() {
+export function TextInput() {
     let mTextChangedCallback = (text) => { };
 
     let mShowingItem = false;

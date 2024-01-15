@@ -1,4 +1,9 @@
-function DataModel() {
+import { DimensionType } from "./constants.js";
+import { Data } from "./data_structs.js";
+import { DataUtil } from "./utils/data_util.js";
+import { IdUtil } from "./utils/id_util.js";
+
+export function DataModel() {
     let mElements = [];
     let mDimensions = [];
 

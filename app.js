@@ -1,10 +1,13 @@
-'use strict';
-const express = require('express');
-const bodyParser = require('body-parser');
-const utility = require('./server/utility.js');
-const fileHandler = require('./server/file_handler.js');
-const cppConnector = require('./server/cpp_connector.js');
-const config = require("./app_config.js");
+import express from 'express';
+import bodyParser from 'body-parser';
+import * as utility from './server/utility.js';
+import * as fileHandler from './server/file_handler.js';
+import * as cppConnector from './server/cpp_connector.js';
+import * as config from "./app_config.js";
+
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 // Required to send and recieve JSON

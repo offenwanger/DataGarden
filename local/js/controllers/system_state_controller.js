@@ -1,4 +1,6 @@
-let SystemState = function () {
+import { Buttons } from "../constants.js";
+
+export function SystemState() {
     let mStateArray = [
         [Buttons.BRUSH_BUTTON, "d"],
         [Buttons.SELECTION_BUTTON, "s"],

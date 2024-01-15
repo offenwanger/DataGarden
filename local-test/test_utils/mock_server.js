@@ -1,4 +1,4 @@
-module.exports = function () {
+export function mockServer() {
     let serverResult = { ok: false };
 
     return {

@@ -1,8 +1,12 @@
-const { spawn } = require('child_process');
-const utility = require("./utility.js");
-const config = require("../app_config.js");
+import { spawn } from 'child_process'
+import * as utility from "./utility.js"
+import * as config from "../app_config.js"
 
-function runStrokeStrip(scapFilename, outFolder) {
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+export function runStrokeStrip(scapFilename, outFolder) {
     return new Promise((resolve) => {
         utility.log("Spinning up StrokeStrip");
         try {
@@ -44,7 +48,7 @@ function runStrokeStrip(scapFilename, outFolder) {
     })
 }
 
-function runStripMaker(scapFilename) {
+export function runStripMaker(scapFilename) {
     return new Promise(resolve => {
         utility.log("Spinning up StripMaker");
         try {
@@ -84,9 +88,4 @@ function runStripMaker(scapFilename) {
             resolve();
         }
     })
-}
-
-module.exports = {
-    runStrokeStrip,
-    runStripMaker,
 }

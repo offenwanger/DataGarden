@@ -1,4 +1,4 @@
-let IdUtil = function () {
+export let IdUtil = function () {
     let idCounter = 0;
     let lastGet = Date.now();
     function getUniqueId(classFunction) {

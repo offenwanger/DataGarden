@@ -1,4 +1,4 @@
-function VersionController() {
+export function VersionController() {
     let mStack = [];
     let mRedoCache = [];
     let mModelStash = null;
@@ -51,7 +51,7 @@ function VersionController() {
     }
 }
 
-function MemoryStash() {
+export function MemoryStash() {
     let mStash = {};
     function getStack() {
         return Object.keys(mStash);

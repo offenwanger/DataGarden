@@ -1,9 +1,9 @@
-let chai = require('chai');
+import * as  chai from 'chai';
 let assert = chai.assert;
 let expect = chai.expect;
 
-let suite = require("./test_utils/suite_enviroment")
-let utility = require("./test_utils/utility.js")
+import * as suite from "./test_utils/suite_enviroment.js"
+import * as utility from "./test_utils/utility.js"
 
 describe('FDL View Controller Test', function () {
     let integrationEnv;
@@ -15,10 +15,6 @@ describe('FDL View Controller Test', function () {
     afterEach(function (done) {
         integrationEnv.cleanup(done);
     });
-
-    function model() {
-        return integrationEnv.instances.ModelController.getModel();
-    }
 
     describe('element parenting tests', function () {
         it('should parent two elements', function () {

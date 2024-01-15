@@ -1,4 +1,4 @@
-const Buttons = {
+export const Buttons = {
     BRUSH_BUTTON: "Brush",
     SELECTION_BUTTON: "Selection",
     PANNING_BUTTON: "Pan",
@@ -9,19 +9,19 @@ const Buttons = {
     UPLOAD: "Upload",
 }
 
-const Size = {
+export const Size = {
     ELEMENT_NODE_SIZE: 20,
     DIMENSION_SIZE: 40,
     LEVEL_SIZE: 30,
 }
 
-const Padding = {
+export const Padding = {
     NODE: 5,
     CLUSTER: 20,
     LEVEL: 5,
 }
 
-const ContextButtons = {
+export const ContextButtons = {
     CENTER: 'center',
     ADD_DIMENSION_FOR_FORM: 'add-dimension-for-form',
     ADD_DIMENSION_FOR_COLOR: 'add-dimension-for-color',
@@ -38,7 +38,7 @@ const ContextButtons = {
     COLOR: 'color'
 }
 
-const ChannelType = {
+export const ChannelType = {
     FORM: "form",
     COLOR: "color",
     SIZE: "size",
@@ -46,63 +46,56 @@ const ChannelType = {
     POSITION: "position",
 }
 
-const DimensionType = {
+export const DimensionType = {
     DISCRETE: 'discrete',
     CONTINUOUS: 'continuous',
 }
 
-const DimensionValueId = {
+export const DimensionValueId = {
     V1: "v1",
     V2: "v2",
 }
 
-const ContextButtonToChannelType = {};
-ContextButtonToChannelType[ContextButtons.ADD_DIMENSION_FOR_FORM] = ChannelType.FORM;
-ContextButtonToChannelType[ContextButtons.ADD_DIMENSION_FOR_COLOR] = ChannelType.COLOR;
-ContextButtonToChannelType[ContextButtons.ADD_DIMENSION_FOR_SIZE] = ChannelType.SIZE;
-ContextButtonToChannelType[ContextButtons.ADD_DIMENSION_FOR_ANGLE] = ChannelType.ANGLE;
-ContextButtonToChannelType[ContextButtons.ADD_DIMENSION_FOR_POSITION] = ChannelType.POSITION;
-
-const Tab = {
+export const Tab = {
     PARENT: "parent",
     LEGEND: "legend",
     TABLE: "table"
 }
 
-const FdlMode = {
+export const FdlMode = {
     DIMENSION: "dimension",
     PARENT: "parent",
     LEGEND: "legend",
 }
 
-const AxisPositions = {
+export const AxisPositions = {
     DIMENSION_X: 10,
     LEVEL_X: 20,
 }
 
-const DimensionLabels = {};
+export const DimensionLabels = {};
 DimensionLabels[DimensionType.DISCRETE] = 'disc';
 DimensionLabels[DimensionType.CONTINUOUS] = 'cont';
 
-const ChannelLabels = {};
+export const ChannelLabels = {};
 ChannelLabels[ChannelType.FORM] = 'form';
 ChannelLabels[ChannelType.COLOR] = 'color';
 ChannelLabels[ChannelType.SIZE] = 'size';
 ChannelLabels[ChannelType.ANGLE] = 'angle';
 ChannelLabels[ChannelType.POSITION] = 'pos';
 
-const Decay = {
+export const Decay = {
     ALPHA: .0005,
     VELOCITY: 0.7,
 }
 
-const DropDown = {
+export const DropDown = {
     TYPE: "type",
     CHANNEL: "channel",
     TIER: "tier",
 }
 
-const FdlInteraction = {
+export const FdlInteraction = {
     ZOOMING: 'zooming',
     PANNING: 'panning',
     SELECTION: 'selection',

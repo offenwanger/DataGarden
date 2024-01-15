@@ -1,4 +1,9 @@
-let PathUtil = function () {
+import { DataUtil } from "./data_util.js";
+import { OverlayUtil } from "./overlay_util.js";
+import { ValUtil } from "./value_util.js";
+import { VectorUtil } from "./vector_util.js";
+
+export let PathUtil = function () {
     let cache = {};
     const PATH_PRECISION = 10; // pixels
     let mOverlayUtil = new OverlayUtil();

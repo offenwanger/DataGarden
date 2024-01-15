@@ -1,4 +1,6 @@
-function MenuButton(id, svg, img, buttonSize, clickCallback, onLoad) {
+import { FiltersUtil } from "../utils/filters_util.js";
+
+export function MenuButton(id, svg, img, buttonSize, clickCallback, onLoad) {
     let mButton = svg.append('g')
         .attr("id", id);
     let mSvg = mButton.append('g')

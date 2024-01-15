@@ -1,9 +1,10 @@
-let chai = require('chai');
+import { EventManager } from '../local/js/event_manager.js';
+
+import * as  chai from 'chai';
 let assert = chai.assert;
 let expect = chai.expect;
 
-let suite = require("./test_utils/suite_enviroment")
-let utility = require("./test_utils/utility.js")
+import * as suite from "./test_utils/suite_enviroment.js"
 
 describe('EventManager Tests', function () {
     let integrationEnv;
@@ -17,10 +18,6 @@ describe('EventManager Tests', function () {
     });
 
     describe('intialization test', function () {
-        it('should be part of the enviroment', function () {
-            assert.exists(EventManager);
-        });
-
         it('should instantiate', function () {
             new EventManager({ onResize: () => { } });
         });

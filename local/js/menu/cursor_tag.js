@@ -1,4 +1,6 @@
-function CursorTag(svg) {
+import { ContextButtons } from "../constants.js";
+
+export function CursorTag(svg) {
     let mImageData = {}
     mImageData[ContextButtons.PARENT] = 'img/parent_icon.svg';
 
