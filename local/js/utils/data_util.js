@@ -179,22 +179,6 @@ export let DataUtil = function () {
         return location;
     }
 
-    function getValue(element, mapping, dimension) {
-        if (mapping.channel == ChannelTypes.NUMBER) {
-            let link = mapping.links.find(link => link.elementId == element.id);
-            if (!link) { return null; };
-            if (dimension.type == DimensionType.CATEGORICAL) {
-                let level = dimension.levels.find(level => level.id == link.levelId);
-                if (!level) { console.error("Bad parameters, level not found for link.", link.level); return null; };
-                return level.name;
-            } else {
-                console.error("unimplimented");
-            }
-        } else {
-            console.error("unimplimented");
-        }
-    }
-
     function getStrokesInLocalCoords(element) {
         let returnable = [];
         element.strokes.forEach(stroke => {
@@ -223,7 +207,7 @@ export let DataUtil = function () {
 
     function getMappedValue(model, dimensionId, elementId) {
         let dimension = model.getDimension(dimensionId);
-        if (dimension.channel == ChannelType.FORM || dimension.type == ChannelType.COLOR) {
+        if (dimension.channel == ChannelType.FORM || dimension.channel == ChannelType.COLOR) {
             let level = dimension.levels.find(level => level.elementIds.includes(elementId));
             return level ? level.name : null;
         } else if (dimension.channel == ChannelType.POSITION) {
@@ -425,7 +409,6 @@ export let DataUtil = function () {
         isDecendant,
         unique,
         findEmptyPlace,
-        getValue,
         getStrokesInLocalCoords,
         channelIsDiscrete,
         getTreeLevel,
