@@ -3,7 +3,10 @@ function MenuController() {
     let mColorPicker;
     let mColorPickerContainer;
 
+    let mColorPickerInternalOpen = true;
+
     let mColorChangeCallback = () => { };
+    let mColorPickedCallback = () => { };
     let mOnClickCallack = () => { };
 
     let mSvg = d3.select('#interface-svg');
@@ -17,7 +20,7 @@ function MenuController() {
     mButtons[Buttons.SELECTION_BUTTON] = new MenuButton("selection-button", mSvg, "img/selection_button.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.SELECTION_BUTTON));
     mButtons[Buttons.ZOOM_BUTTON] = new MenuButton("zoom-button", mSvg, "img/zoom_button.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.ZOOM_BUTTON));
     mButtons[Buttons.VIEW_BUTTON] = new MenuButton("view-button", mSvg, "img/eyecon_button.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.VIEW_BUTTON));
-    mButtons[Buttons.COLOR_BUTTON] = new MenuButton("color-button", mSvg, "img/color_selector.svg", BUTTON_SIZE, () => mColorPicker.openHandler(), () => {
+    mButtons[Buttons.COLOR_BUTTON] = new MenuButton("color-button", mSvg, "img/color_selector.svg", BUTTON_SIZE, () => openBrushColorPicker(), () => {
         // When loaded, set the color, this triggers on change
         mColorPicker.setColor("#33333300", false)
     });
@@ -29,9 +32,14 @@ function MenuController() {
     mColorPickerContainer = d3.select("#color-container");
     mColorPicker = new Picker({ parent: mColorPickerContainer.node(), popup: "right" });
     mColorPicker.onChange = function (color) {
-        mColorChangeCallback(color.hex);
-        d3.select("#color-selector-color").style("fill", color.hex)
+        mColorChangeCallback(color.hex, mColorPickerInternalOpen);
+        if (mColorPickerInternalOpen) {
+            d3.select("#color-selector-color").style("fill", color.hex)
+        }
     };
+    mColorPicker.onClose = function (color) {
+        mColorPickedCallback(color.hex, mColorPickerInternalOpen);
+    }
 
     function activateButton(buttonId) {
         // if the active button is not a menu button do nothing.
@@ -72,9 +80,24 @@ function MenuController() {
         mButtons[Buttons.SELECTION_BUTTON].setPosition(BUTTON_SIZE, buttonSpacing * 1.5);
         mButtons[Buttons.BRUSH_BUTTON].setPosition(BUTTON_SIZE, buttonSpacing * 2.5);
         mButtons[Buttons.COLOR_BUTTON].setPosition(BUTTON_SIZE, buttonSpacing * 3.5);
-        mColorPickerContainer.style("left", (BUTTON_SIZE * 1.5) + "px").style("top", (buttonSpacing * 3.5 - BUTTON_SIZE / 2) + "px");
         mButtons[Buttons.VIEW_BUTTON].setPosition(BUTTON_SIZE, buttonSpacing * 4.5);
 
+    }
+
+    function openBrushColorPicker() {
+        mColorPickerInternalOpen = true;
+        openColorPicker({ x: BUTTON_SIZE * 1.5, y: BUTTON_SIZE * 1.5 * 3.2 });
+    }
+
+    function showColorPicker(coords) {
+        mColorPickerInternalOpen = false;
+        openColorPicker(coords)
+    }
+
+    function openColorPicker(coords) {
+        console.log("here", coords)
+        mColorPickerContainer.style("left", coords.x + "px").style("top", coords.y + "px");
+        mColorPicker.openHandler();
     }
 
     return {
@@ -82,7 +105,9 @@ function MenuController() {
         activateButton,
         deactivateButton,
         deactivateAll,
+        showColorPicker,
         setColorChangeCallback: (func) => mColorChangeCallback = func,
+        setColorPickedCallback: (func) => mColorPickedCallback = func,
         setOnClickCallback: (func) => mOnClickCallack = func,
     }
 }

@@ -63,6 +63,11 @@ function ContextMenu(svg) {
         img: "img/parent_icon.svg",
         tooltip: "Set the parent for the selection",
     }
+    mButtonData[ContextButtons.COLOR] = {
+        id: ContextButtons.COLOR,
+        img: "img/color_selector_rainbow.png",
+        tooltip: "Set the color of all items in selection",
+    }
 
     function showContextMenu(pos, buttons, callback) {
         hideContextMenu();

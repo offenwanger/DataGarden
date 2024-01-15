@@ -33,6 +33,7 @@ const ContextButtons = {
     STYLE_STROKES: 'style-element-strokes',
     DELETE: 'delete-the-stuff',
     PARENT: 'parent-mode',
+    COLOR: 'color'
 }
 
 const ChannelType = {

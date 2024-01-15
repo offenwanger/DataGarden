@@ -279,6 +279,24 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
+    mDashboardController.setUpdateColorCallback((ids, color) => {
+        let model = mModelController.getModel();
+        ids.forEach(id => {
+            if (IdUtil.isType(id, Data.Element)) {
+                let element = model.getElement(id);
+                element.strokes.forEach(stroke => stroke.color = color);
+                mModelController.updateElement(element);
+            } else if (IdUtil.isType(id, Data.Stroke)) {
+                let stroke = model.getStroke(id);
+                stroke.color = color;
+                mModelController.updateStroke(stroke);
+            }
+        });
+
+        mVersionController.stack(mModelController.getModel().toObject());
+        mDashboardController.modelUpdate(mModelController.getModel());
+    })
+
     mDashboardController.setMergeElementCallback((selection, mergeElementId) => {
         ModelUtil.mergeElements(mModelController, selection, mergeElementId);
 

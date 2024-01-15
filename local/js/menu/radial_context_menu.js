@@ -79,10 +79,11 @@ function RadialContextMenu(svg, id, items, buttonSize) {
             }).on('pointerdown', function (event) {
                 d3.select(this).attr("filter", "");
                 mTooltip.hide();
+                event.stopPropagation();
+            }).on('pointerup', function (event) {
+                d3.select(this).attr("filter", FiltersUtil.DROP_SHADOW);
                 mClickCallback(items[i].id);
                 event.stopPropagation();
-            }).on('pointerup', function () {
-                d3.select(this).attr("filter", FiltersUtil.DROP_SHADOW);
             });
         tile.append("path")
             .attr("d", d)

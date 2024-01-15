@@ -46,6 +46,7 @@ function DashboardController() {
     let mUpdateDimensionTypeCallback = () => { };
     let mUpdateDimensionChannelCallback = () => { };
     let mUpdateDimensionTierCallback = () => { };
+    let mUpdateColorCallback = () => { };
 
     function modelUpdate(model) {
         mModel = model;
@@ -57,7 +58,12 @@ function DashboardController() {
         mTableViewController.onModelUpdate(model);
         // minor controllers
         mDropdownInput.onModelUpdate(model);
-        mSelection = mSelection.filter(id => !DataUtil.isDataId(id) || DataUtil.itemExists(id, model));
+        mSelection = mSelection.filter(id => {
+            // if it's not an id for a data item, then it won't have been deleted. 
+            if (!DataUtil.isDataId(id)) return true;
+            if (DataUtil.itemExists(id, model)) return true;
+            return false;
+        });
     }
 
     function onResize(width, height) {
@@ -224,6 +230,7 @@ function DashboardController() {
             buttons.push(ContextButtons.MERGE_TO_ELEMENT);
             buttons.push(ContextButtons.PARENT);
             buttons.push(ContextButtons.SPINE);
+            buttons.push(ContextButtons.COLOR)
         }
 
         mContextMenu.showContextMenu(screenCoords, buttons, (buttonId) => {
@@ -253,6 +260,8 @@ function DashboardController() {
                 mCursorTag.show(ContextButtons.PARENT)
             } else if (buttonId == ContextButtons.DELETE) {
                 mDeleteCallback(selection);
+            } else if (buttonId == ContextButtons.COLOR) {
+                mMenuController.showColorPicker(screenCoords);
             }
             mContextMenu.hideContextMenu();
         });
@@ -300,8 +309,25 @@ function DashboardController() {
         mDropdownInput.show(DropDown.TIER, dimensionId, dimension.tier, x, y, width, height);
     });
 
-    mMenuController.setColorChangeCallback((color) => {
-        mCanvasController.setColor(color);
+    mMenuController.setColorChangeCallback((color, interfaceOnly) => {
+        if (!interfaceOnly) {
+            let strokes = mSelection.filter(id => IdUtil.isType(id, Data.Stroke) || IdUtil.isType(id, Data.Element)).map(id =>
+                IdUtil.isType(id, Data.Stroke) ? mModel.getStroke(id) : mModel.getElement(id).strokes).flat();
+            strokes.forEach(stroke => {
+                stroke.color = color;
+            });
+            modelUpdate(mModel);
+        } else {
+            mCanvasController.setColor(color);
+        }
+    });
+
+    mMenuController.setColorPickedCallback((color, interfaceOnly) => {
+        if (!interfaceOnly) {
+            mUpdateColorCallback(mSelection.filter(id => IdUtil.isType(id, Data.Stroke) || IdUtil.isType(id, Data.Element)), color);
+        } else {
+            mCanvasController.setColor(color);
+        }
     });
 
     mMenuController.setOnClickCallback((button) => {
@@ -379,5 +405,6 @@ function DashboardController() {
         setUpdateDimensionTypeCallback: (func) => mUpdateDimensionTypeCallback = func,
         setUpdateDimensionChannelCallback: (func) => mUpdateDimensionChannelCallback = func,
         setUpdateDimensionTierCallback: (func) => mUpdateDimensionTierCallback = func,
+        setUpdateColorCallback: (func) => mUpdateColorCallback = func,
     }
 }
