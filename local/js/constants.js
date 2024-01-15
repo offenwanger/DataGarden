@@ -5,6 +5,8 @@ const Buttons = {
     ZOOM_BUTTON: "Zoom",
     VIEW_BUTTON: "View",
     COLOR_BUTTON: "Color",
+    DOWNLOAD: "Download",
+    UPLOAD: "Upload",
 }
 
 const Size = {

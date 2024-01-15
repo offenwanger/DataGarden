@@ -1,4 +1,4 @@
-function MenuController() {
+export function MenuController() {
     const BUTTON_SIZE = 40;
     let mColorPicker;
     let mColorPickerContainer;
@@ -24,6 +24,8 @@ function MenuController() {
         // When loaded, set the color, this triggers on change
         mColorPicker.setColor("#33333300", false)
     });
+    mButtons[Buttons.DOWNLOAD] = new MenuButton("download-button", mSvg, "img/download.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.DOWNLOAD));
+    mButtons[Buttons.UPLOAD] = new MenuButton("upload-button", mSvg, "img/upload.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.UPLOAD));
 
     let mParents = [
         [Buttons.PANNING_BUTTON, Buttons.ZOOM_BUTTON]
@@ -81,6 +83,8 @@ function MenuController() {
         mButtons[Buttons.BRUSH_BUTTON].setPosition(BUTTON_SIZE, buttonSpacing * 2.5);
         mButtons[Buttons.COLOR_BUTTON].setPosition(BUTTON_SIZE, buttonSpacing * 3.5);
         mButtons[Buttons.VIEW_BUTTON].setPosition(BUTTON_SIZE, buttonSpacing * 4.5);
+        mButtons[Buttons.DOWNLOAD].setPosition(BUTTON_SIZE, buttonSpacing * 5.5);
+        mButtons[Buttons.UPLOAD].setPosition(BUTTON_SIZE, buttonSpacing * 6.5);
 
     }
 

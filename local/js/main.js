@@ -1,3 +1,7 @@
+import { DashboardController } from "./controllers/dashboard_controller.js";
+import { FileHandler } from "./file_handler.js";
+import { ClassifierUtil } from "./utils/classifier_util.js";
+
 document.addEventListener('DOMContentLoaded', function (e) {
     let mModelController = new ModelController();
     let mDashboardController = new DashboardController();
@@ -434,4 +438,17 @@ document.addEventListener('DOMContentLoaded', function (e) {
             }
         });
     });
+
+    mDashboardController.setLoadModelCallback(async () => {
+        try {
+            let model = await FileHandler.getJSONModel();
+            if (model) {
+                mModelController.setModel(DataModel.fromObject(model));
+                mVersionController.stack(mModelController.getModel().toObject());
+                mDashboardController.modelUpdate(mModelController.getModel());
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    })
 });

@@ -1,5 +1,7 @@
+import { FileHandler } from "../file_handler.js";
+import { MenuController } from "./menu_controller.js";
 
-function DashboardController() {
+export function DashboardController() {
     const TAB_HEIGHT = 60;
 
     let mColorMap = d3.scaleOrdinal(d3.schemeCategory10);
@@ -47,6 +49,7 @@ function DashboardController() {
     let mUpdateDimensionChannelCallback = () => { };
     let mUpdateDimensionTierCallback = () => { };
     let mUpdateColorCallback = () => { };
+    let mLoadModelCallback = () => { };
 
     function modelUpdate(model) {
         mModel = model;
@@ -348,6 +351,13 @@ function DashboardController() {
                 mMenuController.deactivateButton(button);
             }
             mCanvasController.setStructureMode(mSystemState.isStructureViewActive());
+        } else if (button == Buttons.DOWNLOAD) {
+            FileHandler.downloadJSON(mModel.toObject());
+            FileHandler.downloadPNG(d3.select('#canvas-view-container')
+                .select('.canvas-container')
+                .select('canvas').node());
+        } else if (button == Buttons.UPLOAD) {
+            mLoadModelCallback();
         }
     })
 
@@ -406,5 +416,6 @@ function DashboardController() {
         setUpdateDimensionChannelCallback: (func) => mUpdateDimensionChannelCallback = func,
         setUpdateDimensionTierCallback: (func) => mUpdateDimensionTierCallback = func,
         setUpdateColorCallback: (func) => mUpdateColorCallback = func,
+        setLoadModelCallback: (func) => mLoadModelCallback = func,
     }
 }
