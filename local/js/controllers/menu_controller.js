@@ -103,7 +103,6 @@ export function MenuController() {
     }
 
     function openColorPicker(coords) {
-        console.log("here", coords)
         mColorPickerContainer.style("left", coords.x + "px").style("top", coords.y + "px");
         mColorPicker.openHandler();
     }
