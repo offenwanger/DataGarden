@@ -142,7 +142,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         if (!dimension) { console.error("Bad State! Dimension not found!"); return; }
 
         mDimension = data.find(node => node.id == mDimensionId);
-        mNodes = data.filter(node => IdUtil.isType(node.id, Data.Element) && DataUtil.getTreeLevel(mModel, node.id) == dimension.tier);
+        mNodes = data.filter(node => IdUtil.isType(node.id, Data.Element) && DataUtil.getTier(mModel, node.id) == dimension.tier);
         mLevels = data.filter(node => node.dimension == mDimensionId);
 
         // TODO: do this properly, i.e. measure all the stuff in that column
@@ -194,11 +194,14 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         }
 
         if (dimension.type == DimensionType.DISCRETE && (dimension.channel == ChannelType.FORM || dimension.channel == ChannelType.COLOR)) {
-            dimension.levels.forEach(level => {
-                level.elementIds.forEach(elementId => {
-                    mLinks.push({ source: elementId, target: level.id });
-                })
-            })
+            mNodes.forEach(node => {
+                if (!IdUtil.isType(node.id, Data.Element)) { console.error("Invalid node", node); return; }
+                let level = mModel.getLevelForElement(mDimensionId, node.id);
+                if (level) {
+                    if (!mLevels.find(l => l.id == level.id)) { console.error("Invalid level", level); return; }
+                    mLinks.push({ source: node.id, target: level.id });
+                }
+            });
         } else if (dimension.type == DimensionType.DISCRETE &&
             (dimension.channel == ChannelType.SIZE || dimension.channel == ChannelType.POSITION || dimension.channel == ChannelType.ANGLE)) {
             dimension.ranges.forEach((range, index) => {

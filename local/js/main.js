@@ -143,8 +143,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
         newDimension.type = DimensionType.DISCRETE;
         newDimension.channel = ChannelType.FORM;
         newDimension.tier = 0;
-
         mModelController.addDimension(newDimension);
+
+        let levels = StructureFairy.getCluster(newDimension.id, mModelController.getModel());
+        if (levels) {
+            newDimension.levels = levels;
+            mModelController.updateDimension(newDimension);
+        }
 
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
@@ -290,6 +295,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
         if (!dimension) { console.error("Invalid dimension id: ", dimensionId); return; }
         dimension.tier = tier;
         mModelController.updateDimension(dimension);
+
+        let levels = StructureFairy.getCluster(dimensionId, mModelController.getModel());
+        if (levels) {
+            dimension = mModelController.getModel().getDimension(dimensionId);
+            dimension.levels = levels;
+            mModelController.updateDimension(dimension);
+        }
 
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());

@@ -35,7 +35,7 @@ export function DropdownInput() {
     }
 
     function onModelUpdate(model) {
-        let maxTier = model.getElements().reduce((max, element) => Math.max(max, DataUtil.getTreeLevel(model, element.id)), 0);
+        let maxTier = model.getElements().reduce((max, element) => Math.max(max, DataUtil.getTier(model, element.id)), 0);
         mTierSelect.html("");
         for (let i = 0; i <= maxTier; i++) {
             mTierSelect.append("option").attr("value", i).html("Tier " + i);

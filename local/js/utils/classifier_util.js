@@ -1,3 +1,4 @@
+import silhouetteScore from "../../lib/silhouette.js";
 import { DataUtil } from "./data_util.js";
 import { DrawingUtil } from "./drawing_util.js";
 
@@ -69,8 +70,105 @@ export let ClassifierUtil = function () {
         return vector;
     }
 
+    function clusterElementForms(elements, levels) {
+        let vectors = elements.map(e => elementToImgVector(e));
+        let clusters = new Array(vectors.length).fill(-1);
+        levels.forEach((l, index) => l.elementIds
+            .forEach(eId => clusters[elements.findIndex(e => e.id == eId)] = index));
+
+        if (levels.length > elements.length) {
+            clusters = clusters.map((cluster, elementIndex) => {
+                if (cluster == -1) {
+                    let levelIndex = levels.findIndex(l => l.elementIds.length == 0);
+                    levels[levelIndex].elementIds.push(elements[elementIndex].id);
+                    return levelIndex;
+                } else return cluster;
+            });
+            return clusters;
+        } else {
+            return clusterVectors(vectors, clusters);
+        }
+    }
+
+    // returns an array of clusters assignments
+    function clusterVectors(vectors, clusters) {
+        let bestClusters = [];
+        let bestSilhouette = -2;
+        let bestK = -1;
+        let k = Math.max(1, ...clusters.map(c => c + 1));
+        let maxK = Math.max(Math.min(10, vectors.length), k);
+        for (k; k <= maxK; k++) {
+            let kClusters = kMeans(vectors, k, clusters);
+            let silhouette = silhouetteScore(vectors, kClusters);
+            if (silhouette > bestSilhouette) {
+                bestSilhouette = silhouette;
+                bestK = k;
+                bestClusters = kClusters;
+            }
+        }
+        return bestClusters;
+
+    }
+
+    function kMeans(vectors, k = 1, presetClusters) {
+        // take the first k vectors as starting centers
+        const centers = vectors.slice(0, k);
+        const distances = new Array(vectors.length).fill(new Array(k).fill(0));
+        const clusters = [...presetClusters];
+
+        let done = false;
+        let iteration = 0;
+        while (!done && iteration < 100) {
+            done = true;
+            vectors.forEach((vector, vectorindex) => {
+                for (let c = 0; c < k; c++) {
+                    let diff = vector.map((v, index) => v - centers[c][index]);
+                    distances[vectorindex][c] = Math.hypot(...diff);
+                }
+                let m = presetClusters[vectorindex];
+                if (m == -1) {
+                    m = distances[vectorindex].reduce((minData, curr, index) => {
+                        if (curr < minData.dist) {
+                            minData.dist = curr;
+                            minData.index = index;
+                        }
+                        return minData;
+                    }, { dist: Infinity, index: -1 }).index;
+                }
+                if (clusters[vectorindex] !== m) done = false;
+                clusters[vectorindex] = m;
+            });
+
+            for (let c = 0; c < k; c++) {
+                let newCenter = new Array(vectors[0].length).fill(0);
+                const vectorCount = vectors.reduce((count, vector, vectorindex) => {
+                    if (clusters[vectorindex] == c) {
+                        count++;
+                        // add this vector to the sum
+                        newCenter = newCenter.map((v, i) => v + vector[i]);
+                    }
+                    return count;
+                }, 0);
+                if (vectorCount > 0) {
+                    centers[c] = newCenter.map(v => v / vectorCount);
+                }
+            }
+
+            iteration++;
+        }
+
+        if (iteration == 100) {
+            console.error("it probably shouldn't take so long to stabalize...")
+        }
+
+        return clusters;
+    }
+
     return {
         elementToImg,
         elementToImgVector,
+        clusterElementForms,
+        clusterVectors,
+        kMeans,
     }
 }();

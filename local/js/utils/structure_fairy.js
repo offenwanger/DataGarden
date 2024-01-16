@@ -1,3 +1,6 @@
+import { ChannelType, DimensionType } from "../constants.js";
+import { Data } from "../data_structs.js";
+import { ClassifierUtil } from "./classifier_util.js";
 import { DataUtil } from "./data_util.js";
 import { PathUtil } from "./path_util.js";
 import { VectorUtil } from "./vector_util.js";
@@ -59,8 +62,56 @@ export let StructureFairy = function () {
 
     }
 
+    // adds all relevant elements to the levels. Creates the levels if they do not exist.
+    function getCluster(dimenId, model) {
+        let dimension = model.getDimension(dimenId);
+        if (!dimension) {
+            console.error("invalid dimension id.", dimenId);
+            return;
+        }
+
+        if (dimension.type != DimensionType.DISCRETE ||
+            (dimension.channel != ChannelType.FORM && dimension.channel != ChannelType.COLOR)) {
+            // not discrete, doesn't use levels.
+            return;
+        }
+
+        let elements = model.getElements()
+            .filter(e => dimension.tier == DataUtil.getTier(model, e.id));
+        let levels = dimension.levels;
+
+
+        let clusters = [];
+        if (dimension.channel == ChannelType.FORM) {
+            clusters = ClassifierUtil.clusterElementForms(elements, levels);
+        } else if (dimension.channel == ChannelType.COLOR) {
+            clusters = ClassifierUtil.clusterElementColors(elements, levels);
+        } else { console.error("Not dealing with a discrete channel.", dimension.channel); return; }
+        let clusterCount = Math.max(...clusters) + 1;
+
+        let updatedLevels = []
+        for (let i = 0; i < clusterCount; i++) {
+            let level;
+            if (i < levels.length) {
+                level = levels[i]
+            } else {
+                level = new Data.Level();
+                level.name = "Category" + (i + 1);
+            }
+            let clusterElementIds = clusters
+                .map((cluster, elementIndex) => cluster == i ? elementIndex : -1)
+                .filter(i => i != -1)
+                .map(i => elements[i].id);
+            level.elementIds = DataUtil.unique(level.elementIds.concat(clusterElementIds));
+            updatedLevels.push(level);
+        }
+
+        return updatedLevels;
+    }
+
     return {
         getMerge,
         getParent,
+        getCluster,
     }
 }();

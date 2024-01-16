@@ -72,7 +72,7 @@ export function FdlViewController(mColorMap) {
                 id: element.id,
                 parent: element.parentId,
                 radius: Size.ELEMENT_NODE_SIZE,
-                treeLevel: DataUtil.getTreeLevel(mModel, element.id),
+                treeLevel: DataUtil.getTier(mModel, element.id),
             }
             let oldNodeData = oldSimulationData.find(item => item.id == element.id);
             if (!oldNodeData) {

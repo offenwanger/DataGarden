@@ -114,7 +114,7 @@ export function DataModel() {
         leafs.forEach(leaf => {
             let row = {};
             let nextId = leaf.id;
-            let level = DataUtil.getTreeLevel(this, leaf.id);
+            let level = DataUtil.getTier(this, leaf.id);
             while (nextId) {
                 let element = getElement(nextId);
                 dimensions.filter(d => d.tier == level).forEach(dimension => {

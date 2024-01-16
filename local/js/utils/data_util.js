@@ -193,7 +193,7 @@ export let DataUtil = function () {
         return channelType == ChannelType.FORM || channelType == ChannelType.COLOR;
     }
 
-    function getTreeLevel(model, elementId) {
+    function getTier(model, elementId) {
         let level = -1;
         if (!IdUtil.isType(elementId, Data.Element)) { console.error("Invalid element id", elementId); return 0; }
         do {
@@ -229,7 +229,7 @@ export let DataUtil = function () {
                 return level ? level.name : null;
             }
         } else if (dimension.channel == ChannelType.SIZE) {
-            let elements = model.getElements().filter(e => DataUtil.getTreeLevel(model, e.id) == dimension.tier);
+            let elements = model.getElements().filter(e => DataUtil.getTier(model, e.id) == dimension.tier);
             let sizes = elements.map(e => PathUtil.getPathLength(e.spine));
             let min = Math.min(...sizes);
             let max = Math.max(...sizes)
@@ -411,7 +411,7 @@ export let DataUtil = function () {
         findEmptyPlace,
         getStrokesInLocalCoords,
         channelIsDiscrete,
-        getTreeLevel,
+        getTier,
         getMappedValue,
         getPaddedPoints,
         domainIsValid,
