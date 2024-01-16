@@ -59,6 +59,10 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 }
                 mModelController.updateElement(element);
             }
+
+            model = mModelController.getModel();
+            let tier = DataUtil.getTier(model, element.id);
+            ModelUtil.autoClusterTierDimensions(tier, mModelController);
         }
 
         mDashboardController.modelUpdate(mModelController.getModel());
@@ -117,6 +121,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             parent = mModelController.getModel().getElement(parentElementId);
             if (!parent) { console.error("Invalid element id", parentElementId); return; }
         }
+        let tiers = [];
         elementIds.forEach(elementId => {
             // update position
             let element = model.getElement(elementId);
@@ -128,7 +133,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 element.position = null;
             }
             mModelController.updateElement(element);
+
+            tiers.push(DataUtil.getTier(model, element.id));
         });
+
+        DataUtil.unique(tiers).forEach(tier => {
+            ModelUtil.autoClusterTierDimensions(tier, mModelController);
+        })
 
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
@@ -276,15 +287,33 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         mModelController.updateDimension(dimension);
 
+        let levels = StructureFairy.getCluster(dimensionId, mModelController.getModel());
+        if (levels) {
+            dimension = mModelController.getModel().getDimension(dimensionId);
+            dimension.levels = levels;
+            mModelController.updateDimension(dimension);
+        }
+
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
     mDashboardController.setUpdateDimensionChannelCallback((dimensionId, channel) => {
         let dimension = mModelController.getModel().getDimension(dimensionId);
+        if ((dimension.channel == ChannelType.FORM && channel == ChannelType.COLOR) ||
+            (dimension.channel == ChannelType.COLOR && channel == ChannelType.FORM)) {
+            dimension.levels.forEach(l => l.elementIds = []);
+        }
         if (!dimension) { console.error("Invalid dimension id: ", dimensionId); return; }
         dimension.channel = channel;
         mModelController.updateDimension(dimension);
+
+        let levels = StructureFairy.getCluster(dimensionId, mModelController.getModel());
+        if (levels) {
+            dimension = mModelController.getModel().getDimension(dimensionId);
+            dimension.levels = levels;
+            mModelController.updateDimension(dimension);
+        }
 
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
@@ -309,16 +338,28 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     mDashboardController.setUpdateColorCallback((ids, color) => {
         let model = mModelController.getModel();
+        let elementIds = [];
         ids.forEach(id => {
+            let element;
             if (IdUtil.isType(id, Data.Element)) {
-                let element = model.getElement(id);
+                element = model.getElement(id);
                 element.strokes.forEach(stroke => stroke.color = color);
                 mModelController.updateElement(element);
             } else if (IdUtil.isType(id, Data.Stroke)) {
                 let stroke = model.getStroke(id);
                 stroke.color = color;
                 mModelController.updateStroke(stroke);
+                element = model.getElementForStroke(stroke.id);
             }
+            elementIds.push(element.id);
+        });
+
+        model.getDimensions().filter(d => d.channel == ChannelType.COLOR).forEach(dimen => {
+            dimen.levels.forEach(l => l.elementIds = l.elementIds.filter(eId => !elementIds.includes(eId)));
+            mModelController.updateDimension(dimen);
+        })
+        DataUtil.unique(elementIds.map(eId => DataUtil.getTier(model, eId))).forEach(tier => {
+            ModelUtil.autoClusterTierDimensions(tier, mModelController);
         });
 
         mVersionController.stack(mModelController.getModel().toObject());

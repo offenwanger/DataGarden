@@ -2,6 +2,7 @@ import { Data } from "../data_structs.js";
 import { DataUtil } from "./data_util.js";
 import { IdUtil } from "./id_util.js";
 import { PathUtil } from "./path_util.js";
+import { StructureFairy } from "./structure_fairy.js";
 
 export let ModelUtil = function () {
     function updateParent(parentElementId, elementId, modelController) {
@@ -76,10 +77,24 @@ export let ModelUtil = function () {
         modelController.removeElement(elementId);
     }
 
+    function autoClusterTierDimensions(tier, modelController) {
+        let model = modelController.getModel();
+        model.getDimensions().filter(d => d.tier == tier).forEach(dimen => {
+            // TODO: Fix issue with classifying element that aren't meant to be 
+            // classified
+            let levels = StructureFairy.getCluster(dimen.id, model);
+            if (levels) {
+                dimen.levels = levels;
+                modelController.updateDimension(dimen);
+            }
+        });
+    }
+
     return {
         updateParent,
         mergeElements,
         clearEmptyElements,
         removeElement,
+        autoClusterTierDimensions,
     }
 }();
