@@ -70,8 +70,32 @@ export let ClassifierUtil = function () {
         return vector;
     }
 
+    function elementToColorVector(element) {
+        let colors = element.strokes.map(s => { return s.color.length == 9 ? DataUtil.hexToRGBA(s.color) : { r: 0, g: 0, b: 0, a: 0 }; });
+        let count = 0;
+        let sum = [0, 0, 0];
+        colors.forEach(color => {
+            if (color.a > 0) {
+                sum[0] += color.r;
+                sum[1] += color.g;
+                sum[2] += color.b;
+                count++;
+            }
+        });
+        return count == 0 ? sum : sum.map(c => c / count);
+    }
+
     function clusterElementForms(elements, levels) {
         let vectors = elements.map(e => elementToImgVector(e));
+        return clusterElementVectors(elements, vectors, levels);
+    }
+
+    function clusterElementColors(elements, levels) {
+        let vectors = elements.map(e => elementToColorVector(e));
+        return clusterElementVectors(elements, vectors, levels);
+    }
+
+    function clusterElementVectors(elements, vectors, levels) {
         let clusters = new Array(vectors.length).fill(-1);
         levels.forEach((l, index) => l.elementIds
             .forEach(eId => clusters[elements.findIndex(e => e.id == eId)] = index));
@@ -168,6 +192,7 @@ export let ClassifierUtil = function () {
         elementToImg,
         elementToImgVector,
         clusterElementForms,
+        clusterElementColors,
         clusterVectors,
         kMeans,
     }
