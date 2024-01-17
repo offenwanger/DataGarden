@@ -32,7 +32,7 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
         .force("x", d3.forceX(0).strength(0.01))
         .force("collide", d3.forceCollide((d) => d.radius + Padding.NODE * 2))
         .force("link", d3.forceLink().id(d => d.id))
-        .force("tree-level", d3.forceY((d => (d.treeLevel + 0.5) * DIVISION_SIZE)).strength(0.7))
+        .force("tree-level", d3.forceY((d => (d.tier + 0.5) * DIVISION_SIZE)).strength(0.7))
         .alpha(0.3)
         .on("tick", () => {
             mNodes.forEach(node => {
@@ -48,22 +48,21 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
     function draw() {
         mDrawingUtil.reset(mZoomTransform);
 
-        let levelCount = mNodes.reduce((max, n) => n.treeLevel > max ? n.treeLevel : max, 0) + 1;
-        for (let i = 1; i < levelCount; i += 2) {
-            let prevNodes = mNodes.filter(n => n.treeLevel == i - 1 && !n.interacting);
-            let levelNodes = mNodes.filter(n => n.treeLevel == i && !n.interacting);
-            let nextNodes = mNodes.filter(n => n.treeLevel == i + 1 && !n.interacting);
+        let prevBottom = -100;
+        let maxTier = Math.max(...mNodes.map(n => n.tier));
+        for (let tier = 0; tier <= maxTier; tier++) {
+            let levelYs = mNodes.filter(n => n.tier == tier && !n.interacting).map(n => n.y);
+            let nextYs = mNodes.filter(n => n.tier == tier + 1 && !n.interacting).map(n => n.y);
 
-            let prevMax = prevNodes.reduce((max, { y }) => Math.max(max, y), -Infinity);
-            let levelMin = levelNodes.reduce((min, { y }) => Math.min(min, y), Infinity);
-            let top = (levelMin + prevMax) / 2;
+            let top = Math.min(...levelYs)
+            let bottom = Math.max(...levelYs)
+            let nextTop = nextYs.length > 0 ? Math.min(...nextYs) : bottom;
 
-            let levelMax = levelNodes.reduce((max, { y }) => Math.max(max, y), -Infinity);
-            let nextMin = nextNodes.reduce((min, { y }) => Math.min(min, y), Infinity);
-            if (nextMin == Infinity) nextMin = levelMax + Size.ELEMENT_NODE_SIZE * 2;
-            let bottom = (nextMin + levelMax) / 2;
+            top = (top + prevBottom) / 2;
+            bottom = (bottom + nextTop) / 2;
 
-            mDrawingUtil.drawBand("lightgrey", top, bottom);
+            mDrawingUtil.drawBand(DataUtil.getTierColor(tier), top, bottom);
+            prevBottom = bottom;
         }
 
         if (mTargetLock) {
@@ -218,7 +217,7 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
             if (interaction.endTarget && IdUtil.isType(interaction.endTarget.id, Data.Element)) {
                 mParentUpdateCallback(mDraggedNodes.map(n => n.id), interaction.endTarget.id);
             } else if (!interaction.endTarget) {
-                if (modelCoords.y < Math.min(...mNodes.filter(n => n.treeLevel == 0).map(n => n.y))) {
+                if (modelCoords.y < Math.min(...mNodes.filter(n => n.tier == 0).map(n => n.y))) {
                     mParentUpdateCallback(mDraggedNodes.map(n => n.id), null);
                 }
             }

@@ -38,7 +38,7 @@ export function DropdownInput() {
         let maxTier = model.getElements().reduce((max, element) => Math.max(max, DataUtil.getTier(model, element.id)), 0);
         mTierSelect.html("");
         for (let i = 0; i <= maxTier; i++) {
-            mTierSelect.append("option").attr("value", i).html("Tier " + i);
+            mTierSelect.append("option").attr("value", i).html("Tier " + i).style("background", DataUtil.getTierColor(i));
         }
     }
 

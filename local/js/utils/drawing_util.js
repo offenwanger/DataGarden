@@ -592,6 +592,7 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
         ctx.scale(1 / mScale, 1);
         ctx.translate(-mXTranslate, 0)
 
+        ctx.beginPath()
         ctx.fillStyle = color;
         ctx.rect(0, y1, 3000, y2 - y1);
 

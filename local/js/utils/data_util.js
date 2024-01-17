@@ -403,7 +403,10 @@ export let DataUtil = function () {
             dimensionTierValid(dimension);
     }
 
-
+    function getTierColor(tier) {
+        tier = parseInt(tier);
+        return rgbToHex(255 - 20 * (tier + 1), 255 - 20 * (tier + 1), 255 - 20 * (tier + 1));
+    }
 
     return {
         numToColor,
@@ -439,5 +442,6 @@ export let DataUtil = function () {
         dimensionChannelValid,
         dimensionTierValid,
         dimensionValid,
+        getTierColor,
     }
 }();

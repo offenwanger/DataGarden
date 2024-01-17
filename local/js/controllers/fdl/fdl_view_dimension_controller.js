@@ -370,7 +370,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                 height: Size.DIMENSION_SIZE,
                 shadow: mHighlightIds.includes(mDimension.id),
                 code: mCodeUtil.getCode(mDimension.id, targets[index]),
-                background: valid[index] ? "white" : "#FF6865",
+                background: valid[index] ? DataUtil.getTierColor(mDimension.tier) : "#FF6865",
             });
         })
     }
