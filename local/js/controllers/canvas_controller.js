@@ -62,6 +62,7 @@ export function CanvasController(mColorMap) {
     function onModelUpdate(model) {
         mModel = model;
         mProjections = {};
+        mBoundingBoxes = [];
         let elements = model.getElements();
         elements.forEach(element => {
             if (element.parentId) {
@@ -134,7 +135,8 @@ export function CanvasController(mColorMap) {
         } else if (systemState.getToolState() == Buttons.BRUSH_BUTTON && !systemState.isShift() && !systemState.isCtrl()) {
             mInteraction = {
                 type: DRAWING,
-                currentStroke: [screenToModelCoords(screenCoords)]
+                currentStroke: [screenToModelCoords(screenCoords)],
+                screenStart: screenCoords,
             };
             if (mStructureMode) {
                 let coords = screenToModelCoords(screenCoords);
@@ -241,7 +243,7 @@ export function CanvasController(mColorMap) {
         let interaction = mInteraction;
         mInteraction = null;
 
-        if (interaction && interaction.type == DRAWING && interaction.currentStroke.length > 1) {
+        if (interaction && interaction.type == DRAWING && interaction.currentStroke.length > 1 && VectorUtil.dist(interaction.screenStart, screenCoords) > 10) {
             if (mStructureMode) {
                 if (interaction.targetElement) {
                     let root = interaction.currentStroke[0];
@@ -425,6 +427,7 @@ export function CanvasController(mColorMap) {
 
         let result = validIds.reduce((minData, currId) => {
             let element = mModel.getElement(currId)
+            if (!element) { console.error("invalid element id!", currId); return minData; }
             let dist = PathUtil.getDistanceMetric(element.strokes.map(s => s.path).flat(), [p1, p2]);
             if (dist < minData.dist) {
                 return { id: currId, dist };

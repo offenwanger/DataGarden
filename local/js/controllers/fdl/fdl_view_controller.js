@@ -488,8 +488,6 @@ export function FdlViewController(mColorMap) {
         setEditTypeCallback: (func) => mEditTypeCallback = func,
         setEditChannelCallback: (func) => mEditChannelCallback = func,
         setEditTierCallback: (func) => mEditTierCallback = func,
-        setMergeElementCallback: (func) => mMergeElementCallback = func,
-        setMoveElementCallback: (func) => mMoveElementCallback = func,
         setContextMenuCallback: (func) => mContextMenuCallback = func,
         setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,

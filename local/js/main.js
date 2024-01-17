@@ -366,13 +366,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mDashboardController.setMergeElementCallback((selection, mergeElementId) => {
-        ModelUtil.mergeElements(mModelController, selection, mergeElementId);
-
-        mVersionController.stack(mModelController.getModel().toObject());
-        mDashboardController.modelUpdate(mModelController.getModel());
-    })
-
     mDashboardController.setUndoCallback(async () => {
         let obj = await mVersionController.reverse();
         if (obj) {
@@ -442,66 +435,19 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mDashboardController.modelUpdate(mModelController.getModel());
     });
 
-    mDashboardController.setAutoMergeElements((strokeIds) => {
-        let elements = DataUtil.unique(strokeIds.map(s => mModelController.getModel().getElementForStroke(s)));
-        ServerController.suggestMerge(elements).then(merge => {
-            let elements = mModelController.getModel().getElements();
-
-            // reconcile the algorithm results with the curdrent state. 
-            let elementStrips = elements.map(element => {
-                return {
-                    id: element.id,
-                    strips: DataUtil.unique(element.strokes
-                        .map(s => merge.findIndex(g => g.includes(s.id)))
-                        .filter(index => index != -1))
-                }
-            }).filter(elementData => elementData.strips.length > 0);
-
-            let hasChanged = false;
-            let singletons = elementStrips.filter(s => s.strips.length == 1);
-            let nonSingletons = elementStrips.filter(s => s.strips.length > 1)
-
-            nonSingletons.forEach(elementData => {
-                elementData.strips.forEach(sId => {
-                    let mergies = singletons.filter(s => s.strips[0] == sId).map(ed => ed.id);
-                    singletons = singletons.filter(s => s.strips[0] != sId);
-                    ModelUtil.mergeElements(mModelController, mergies, elementData.id);
-                    hasChanged = true;
-                })
-            })
-
-            let merges = {};
-            singletons.forEach(elementData => {
-                if (!merges[elementData.strips[0]]) merges[elementData.strips[0]] = [];
-                merges[elementData.strips[0]].push(elementData.id);
-            });
-            Object.values(merges).forEach(merge => {
-                if (merge.length > 1) {
-                    let mergeElements = elements.filter(e => merge.includes(e.id));
-                    let oldestElement = mergeElements.reduce((prev, cur) => (cur.creationTime < prev.creationTime) ? cur : prev);
-                    ModelUtil.mergeElements(mModelController, mergeElements.map(e => e.id).filter(id => id != oldestElement.id), oldestElement.id);
-                    hasChanged = true;
-                }
-            });
-            if (hasChanged) {
-                mDashboardController.modelUpdate(mModelController.getModel());
-                mVersionController.stack(mModelController.getModel().toObject());
-            }
-        });
-    });
-
     mDashboardController.setCalculateSpineCallback((elementId) => {
         let element = mModelController.getModel().getElement(elementId);
         if (!element) { console.error("Invalid element id", elementId); return; }
         ServerController.getSpine(element).then(result => {
-            if (result) {
-                element = mModelController.getModel().getElement(elementId);
-                element.spine = result;
-                mModelController.updateElement(element);
-                mVersionController.stack(mModelController.getModel().toObject());
-                mDashboardController.modelUpdate(mModelController.getModel());
+            element = mModelController.getModel().getElement(elementId);
+            if (!result) {
+                result = DataUtil.getStupidSpine(element);
             }
-        });
+            element.spine = result;
+            mModelController.updateElement(element);
+            mVersionController.stack(mModelController.getModel().toObject());
+            mDashboardController.modelUpdate(mModelController.getModel());
+        })
     });
 
     mDashboardController.setLoadModelCallback(async () => {

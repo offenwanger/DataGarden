@@ -48,13 +48,8 @@ export function DashboardController() {
     let mFdlActive = true;
 
     let mAddDimensionCallback = () => { };
-    let mNewStrokeCallback = () => { };
-    let mMergeElementCallback = () => { };
-    let mMoveElementCallback = () => { };
     let mDeleteCallback = () => { };
-    let mNewDimensionCallback = () => { };
     let mMergeStrokesCallback = () => { };
-    let mAutoMergeElements = () => { };
     let mCalculateSpineCallback = () => { };
     let mUndoCallback = () => { };
     let mRedoCallback = () => { };
@@ -421,12 +416,8 @@ export function DashboardController() {
         setParentUpdateCallback: (func) => { mFdlViewController.setParentUpdateCallback(func); mCanvasController.setParentUpdateCallback(func); },
         setTranslateStrokesCallback: (func) => mCanvasController.setTranslateStrokesCallback(func),
         setUpdateAngleCallback: (func) => mCanvasController.setUpdateAngleCallback(func),
-        setMergeElementCallback: (func) => mMergeElementCallback = func,
-        setMoveElementCallback: (func) => mMoveElementCallback = func,
         setDeleteCallback: (func) => mDeleteCallback = func,
-        setNewDimensionCallback: (func) => mNewDimensionCallback = func,
         setMergeStrokesCallback: (func) => mMergeStrokesCallback = func,
-        setAutoMergeElements: (func) => mAutoMergeElements = func,
         setCalculateSpineCallback: (func) => mCalculateSpineCallback = func,
         setUndoCallback: (func) => mUndoCallback = func,
         setRedoCallback: (func) => mRedoCallback = func,

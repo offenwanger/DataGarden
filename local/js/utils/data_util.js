@@ -329,7 +329,34 @@ export let DataUtil = function () {
             return element.strokes[0].path;
         }
 
-        return getLongestAxis(element);
+        let longAxis = getLongestAxis(element);
+        let projectionData = [{ t: 0, offset: { x: 0, y: 0 } }, { t: 1, offset: { x: 0, y: 0 } }]
+        element.strokes.forEach(stroke => stroke.path.forEach(point => {
+            let projection = VectorUtil.projectToLine(point, longAxis[0], longAxis[1]);
+            projectionData.push({ t: projection.t, offset: VectorUtil.subtract(point, projection) });
+        }))
+        let len = VectorUtil.dist(longAxis[1], longAxis[0]);
+        let lineVector = VectorUtil.subtract(longAxis[1], longAxis[0]);
+        let result = [longAxis[0]];
+        let interval = len / 7
+        for (let i = interval; i < len; i += interval) {
+            let t1 = (i - interval / 2) / len;
+            let t2 = (i + interval / 2) / len;
+            let offsets = projectionData.filter(p => t1 <= p.t && p.t <= t2);
+            if (offsets.length > 0) {
+                let avgOffset = offsets.reduce((sum, { offset }) => {
+                    sum.x += offset.x;
+                    sum.y += offset.y;
+                    return sum;
+                }, { x: 0, y: 0 });
+                avgOffset.x /= offsets.length;
+                avgOffset.y /= offsets.length;
+                let pointAtT = VectorUtil.add(VectorUtil.scale(lineVector, i / len), longAxis[0]);
+                result.push(VectorUtil.add(pointAtT, avgOffset));
+            }
+        }
+        result.push(longAxis[1]);
+        return result;
     }
 
     function getLongestAxis(element) {
