@@ -243,7 +243,7 @@ export function CanvasController(mColorMap) {
         let interaction = mInteraction;
         mInteraction = null;
 
-        if (interaction && interaction.type == DRAWING && interaction.currentStroke.length > 10 || VectorUtil.dist(interaction.screenStart, screenCoords) > 10) {
+        if (interaction && interaction.type == DRAWING && (interaction.currentStroke.length > 10 || VectorUtil.dist(interaction.screenStart, screenCoords) > 10)) {
             if (mStructureMode) {
                 if (interaction.targetElement) {
                     let root = interaction.currentStroke[0];
