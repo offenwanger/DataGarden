@@ -32,7 +32,7 @@ export let ClassifierUtil = function () {
                 let a = imgData.data[3];
                 if (r != g || r != b) {
                     // set all colors to the same grey.
-                    r = 128;
+                    r = 255;
                 }
                 imgData.data.set([r, r, r, a])
                 context.putImageData(imgData, x, y);
