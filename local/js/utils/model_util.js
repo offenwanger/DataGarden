@@ -29,29 +29,6 @@ export let ModelUtil = function () {
         modelController.updateElement(element);
     }
 
-    function mergeElements(modelController, elements, target) {
-        elements.forEach(elementId => {
-            let element = modelController.getModel().getElement(elementId);
-            let children = modelController.getModel().getElementChildren(elementId);
-            children.forEach(child => {
-                if (child.id == target) {
-                    ModelUtil.updateParent(element.parentId, target, modelController);
-                } else {
-                    ModelUtil.updateParent(target, child.id, modelController);
-                }
-            })
-            // handle an edge case where the merge element is a grandchild of this element
-            // it might have been set to this element when updating this elements children
-            if (modelController.getModel().getElementChildren(elementId).length == 1) {
-                ModelUtil.updateParent(element.parentId, target, modelController);
-            }
-            let mergeElement = modelController.getModel().getElement(target);
-            mergeElement.strokes = mergeElement.strokes.concat(element.strokes);
-            removeElement(elementId);
-            modelController.updateElement(mergeElement);
-        });
-    }
-
     function clearEmptyElements(modelController) {
         modelController.getModel().getElements()
             .filter(e => e.strokes.length == 0)
@@ -92,7 +69,6 @@ export let ModelUtil = function () {
 
     return {
         updateParent,
-        mergeElements,
         clearEmptyElements,
         removeElement,
         autoClusterTierDimensions,

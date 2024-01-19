@@ -76,7 +76,7 @@ global.model = function () {
         console.error("No download button found!");
         return null;
     }
-    downloadButton.select('rect').getCallbacks().pointerup();
+    downloadButton.select('rect').getCallbacks()['pointerup']({ stopPropagation: () => { } });
     if (global.blobs.length != blobLength + 1) {
         console.error("Model fetch failed!");
     }

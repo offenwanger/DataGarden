@@ -5,6 +5,12 @@ import * as  chai from 'chai';
 let assert = chai.assert;
 let expect = chai.expect;
 
+function Event(clientX = 0, clientY = 0) {
+    this.clientX = clientX;
+    this.clientY = clientY;
+    this.stopPropagation = () => { };
+}
+
 export function deepEquals(original, obj) {
     if (original && typeof original == 'object') {
         Object.keys(original).forEach(key => {
@@ -81,39 +87,40 @@ export function drag(integrationEnv, id, path) {
     let offset = { x: 0, y: 0 }
     if (id == "#fdl-view-container") offset.x += window.innerWidth / 2;
 
-    let start = { clientX: path[0].x + offset.x, clientY: path[0].y + offset.y };
-    let end = { clientX: path[path.length - 1].x + offset.x, clientY: path[path.length - 1].y + offset.y };
-    d3.getCallbacks()['pointermove'](start);
-    d3.select('#interface-container').select('#interface-svg').getCallbacks()['pointerdown'](start);
+    let eventStart = new Event(path[0].x + offset.x, path[0].y + offset.y)
+    d3.getCallbacks()['pointermove'](eventStart);
+    d3.select('#interface-container').select('#interface-svg').getCallbacks()['pointerdown'](eventStart);
     path.forEach(p => {
-        d3.getCallbacks()['pointermove']({ clientX: p.x + offset.x, clientY: p.y + offset.y });
+        let event = new Event(p.x + offset.x, p.y + offset.y)
+        d3.getCallbacks()['pointermove'](event);
     })
-    d3.getCallbacks()['pointerup'](end);
+    let eventEnd = new Event(path[path.length - 1].x + offset.x, path[path.length - 1].y + offset.y);
+    d3.getCallbacks()['pointerup'](eventEnd);
     // this last simulates the actual input that a mouse would give
-    d3.getCallbacks()['pointermove'](end);
+    d3.getCallbacks()['pointermove'](eventEnd);
 }
 
 export function click(integrationEnv, id, pos) {
     let offset = { x: 0, y: 0 }
     if (id == "#fdl-view-container") offset.x += window.innerWidth / 2;
 
-    d3.select('#interface-container').select('#interface-svg').getCallbacks()['pointerdown']({ clientX: pos.x + offset.x, clientY: pos.y + offset.y });
-    d3.getCallbacks()['pointerup']({ clientX: pos.x + offset.x, clientY: pos.y + offset.y });
+    d3.select('#interface-container').select('#interface-svg').getCallbacks()['pointerdown'](new Event(pos.x + offset.x, pos.y + offset.y));
+    d3.getCallbacks()['pointerup'](new Event(pos.x + offset.x, pos.y + offset.y));
 }
 
 export function mouseOver(integrationEnv, id, point) {
     let offset = { x: 0, y: 0 }
     if (id == "#fdl-view-container") offset.x += window.innerWidth / 2;
 
-    d3.getCallbacks()['pointermove']({ clientX: point.x + offset.x, clientY: point.y + offset.y });
+    d3.getCallbacks()['pointermove'](new Event(point.x + offset.x, point.y + offset.y));
 }
 
 export function pan(integrationEnv, id, x, y) {
     let offset = { x: 0, y: 0 }
     if (id == "#vem-view") offset.y += window.innerHeight / 2;
     if (id == "#struct-view") offset.x += window.innerWidth / 2;
-    let start = { clientX: 10 + offset.x, clientY: 10 + offset.y };
-    let end = { clientX: 10 + offset.x - x, clientY: 10 + offset.y - y }
+    let start = new Event(10 + offset.x, 10 + offset.y);
+    let end = new Event(10 + offset.x - x, 10 + offset.y - y)
 
     d3.getCallbacks()['keydown']({ key: "a" });
     d3.getCallbacks()['pointermove'](start);
@@ -128,8 +135,8 @@ export function zoom(integrationEnv, id, zoomCenter, scale) {
     if (id == "#vem-view") offset.y += window.innerHeight / 2;
     if (id == "#struct-view") offset.y += window.innerHeight / 2;
 
-    let start = { clientX: zoomCenter.x + offset.x, clientY: zoomCenter.y + offset.y };
-    let end = { clientX: zoomCenter.x + offset.x, clientY: zoomCenter.y + offset.y + (scale - 1) * window.innerHeight / 2 }
+    let start = new Event(zoomCenter.x + offset.x, zoomCenter.y + offset.y);
+    let end = new Event(zoomCenter.x + offset.x, zoomCenter.y + offset.y + (scale - 1) * window.innerHeight / 2)
 
     d3.getCallbacks()['keydown']({ key: "a" });
     d3.getCallbacks()['keydown']({ key: "s" });
@@ -146,9 +153,9 @@ export function longPress(integrationEnv, id, x, y) {
     if (id == "#vem-view") offset.y += window.innerHeight / 2;
     if (id == "#struct-view") offset.x += window.innerWidth / 2;
     d3.select('#interface-container').select('#interface-svg')
-        .getCallbacks()['pointerdown']({ clientX: x + offset.x, clientY: y + offset.y });
+        .getCallbacks()['pointerdown'](new Event(x + offset.x, y + offset.y));
     integrationEnv.clearTimeouts();
-    d3.getCallbacks()['pointerup']({ clientX: x + offset.x, clientY: y + offset.y });
+    d3.getCallbacks()['pointerup'](new Event(x + offset.x, y + offset.y));
 }
 
 export function clickMenuButton(integrationEnv, id) {
@@ -159,8 +166,8 @@ export function clickContextMenuButton(integrationEnv, buttonId) {
     let button = d3.select("#context-menu").select(buttonId);
     let pointerdown = button.getCallbacks()['pointerdown'];
     let pointerup = button.getCallbacks()['pointerup'];
-    pointerdown.call(button, { stopPropagation: () => { } });
-    pointerup.call(button, { stopPropagation: () => { } });
+    pointerdown.call(button, new Event());
+    pointerup.call(button, new Event());
 }
 
 export async function undo(integrationEnv) {

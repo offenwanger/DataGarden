@@ -60,35 +60,5 @@ app.post('/getspine', function (req, res) {
         });
 });
 
-app.post('/suggestMerge', function (req, res) {
-    utility.log("Merge request recieved, starting processing.")
-    if (!req.body.elements) {
-        res.status(400).send("Error! Elements not provided!");
-        return;
-    }
-
-    let scap = utility.elementsToScap(req.body.elements, mIdMap);
-    let label = "elements" + req.body.elements.length + "_" + Date.now();
-    let filename = label + ".scap";
-    let outFilename = label + "_out.scap"
-    fileHandler.writeScap(filename, scap)
-        .then(() => cppConnector.runStripMaker(filename))
-        .then(() => {
-            // try to read the result, see if it's any good. 
-            return fileHandler.readOutput(outFilename);
-        }).then(outScap => {
-            let result = utility.scapToMerge(outScap, mIdMap);
-            res.status(200).json(result);
-        }).catch(error => {
-            console.error(error);
-            res.status(500).send();
-        }).then(() => {
-            if (!config.DEBUG) {
-                fileHandler.deleteScap(filename);
-                fileHandler.deleteScap(outFilename);
-            }
-        });
-});
-
 // Start the application
 app.listen(port);

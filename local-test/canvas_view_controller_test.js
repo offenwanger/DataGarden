@@ -41,7 +41,11 @@ describe('Canvas View Controller Test', function () {
 
             utility.drawSelection(integrationEnv, [{ x: 10, y: 10 }, { x: 10, y: 90 }, { x: 40, y: 90 }, { x: 40, y: 10 }]);
             utility.clickSelect(integrationEnv, "#canvas-view-container", { x: 20, y: 40 });
-            utility.clickContextMenuButton(integrationEnv, "#" + ContextButtons.MERGE_TO_ELEMENT);
+            utility.clickContextMenuButton(integrationEnv, "#" + ContextButtons.MERGE);
+
+            // avoid double click
+            Date.time = 1000;
+            utility.click(integrationEnv, "#canvas-view-container", { x: 20, y: 40 })
 
             assert.equal(model().getElements().length, 1);
             expect(model().getElements().map(e => e.strokes.length)).to.eql([2]);

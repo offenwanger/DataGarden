@@ -3,6 +3,7 @@ import { ContextButtons } from "../constants.js";
 export function CursorTag(svg) {
     let mImageData = {}
     mImageData[ContextButtons.PARENT] = 'img/parent_icon.svg';
+    mImageData[ContextButtons.MERGE] = 'img/merge_elements.svg';
 
     let mImage = svg.append('image')
         .attr('width', 40)

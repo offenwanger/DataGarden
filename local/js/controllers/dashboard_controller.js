@@ -49,7 +49,6 @@ export function DashboardController() {
 
     let mAddDimensionCallback = () => { };
     let mDeleteCallback = () => { };
-    let mMergeStrokesCallback = () => { };
     let mCalculateSpineCallback = () => { };
     let mUndoCallback = () => { };
     let mRedoCallback = () => { };
@@ -61,6 +60,7 @@ export function DashboardController() {
     let mUpdateDimensionTierCallback = () => { };
     let mUpdateColorCallback = () => { };
     let mLoadModelCallback = () => { };
+    let mMergeCallback = () => { };
 
     function modelUpdate(model) {
         mModel = model;
@@ -100,7 +100,8 @@ export function DashboardController() {
         } else {
             // The table is active and will handle it's own mouse events. I hope.
         }
-        if (mSystemState.getToolState() == ContextButtons.PARENT) {
+        if (mSystemState.getToolState() == ContextButtons.PARENT ||
+            mSystemState.getToolState() == ContextButtons.MERGE) {
             mSystemState.clearOverrideToolState();
             mCursorTag.hide()
         }
@@ -253,25 +254,16 @@ export function DashboardController() {
         }
         let buttons = [ContextButtons.DELETE];
         if (selection.some(id => IdUtil.isType(id, Data.Stroke) || IdUtil.isType(id, Data.Element))) {
-            buttons.push(ContextButtons.MERGE_TO_ELEMENT);
+            buttons.push(ContextButtons.MERGE);
             buttons.push(ContextButtons.PARENT);
             buttons.push(ContextButtons.SPINE);
             buttons.push(ContextButtons.COLOR)
         }
 
         mContextMenu.showContextMenu(screenCoords, buttons, (buttonId) => {
-            if (buttonId == ContextButtons.MERGE_TO_ELEMENT) {
-                let strokes = [];
-                selection.forEach(id => {
-                    if (IdUtil.isType(id, Data.Stroke)) {
-                        strokes.push(id);
-                    } else if (IdUtil.isType(id, Data.Element)) {
-                        let element = mModel.getElement(id);
-                        if (!element) console.error("Invalid element id", id);
-                        strokes.push(...element.strokes.map(s => s.id));
-                    }
-                })
-                mMergeStrokesCallback(strokes);
+            if (buttonId == ContextButtons.MERGE) {
+                mSystemState.setOverrideToolState(ContextButtons.MERGE);
+                mCursorTag.show(ContextButtons.MERGE)
             } else if (buttonId == ContextButtons.SPINE) {
                 let element;
                 if (IdUtil.isType(target, Data.Stroke)) {
@@ -334,6 +326,29 @@ export function DashboardController() {
         let dimension = mModel.getDimension(dimensionId);
         mDropdownInput.show(DropDown.TIER, dimensionId, dimension.tier, x, y, width, height);
     });
+
+    mCanvasController.setMergeCallback((strokeIds, elementId) => {
+        mMergeCallback(strokeIds, elementId);
+    });
+
+    mFdlViewController.setMergeCallback((elementIds, elementId) => {
+        let targetElement = mModel.getElement(elementId);
+        if (!targetElement) { console.error("Invalid element id", elementId); return; }
+        let targetStrokes = targetElement.strokes.map(s => s.id);
+        let strokeIds = mSelection.filter(id => IdUtil.isType(id, Data.Stroke) || IdUtil.isType(id, Data.Element))
+            .map(id => {
+                if (IdUtil.isType(id, Data.Stroke)) {
+                    return [id]
+                } else {
+                    let element = mModel.getElement(id);
+                    if (!element) { console.error("Invalid element Id", id); return []; }
+                    return element.strokes.map(s => s.id);
+                }
+            }).flat().filter(sId => !targetStrokes.includes(sId));
+        if (strokeIds.length > 0) {
+            mMergeCallback(strokeIds, elementId);
+        }
+    })
 
     mMenuController.setColorChangeCallback((color, interfaceOnly) => {
         if (!interfaceOnly) {
@@ -417,7 +432,7 @@ export function DashboardController() {
         setTranslateStrokesCallback: (func) => mCanvasController.setTranslateStrokesCallback(func),
         setUpdateAngleCallback: (func) => mCanvasController.setUpdateAngleCallback(func),
         setDeleteCallback: (func) => mDeleteCallback = func,
-        setMergeStrokesCallback: (func) => mMergeStrokesCallback = func,
+        setMergeCallback: (func) => mMergeCallback = func,
         setCalculateSpineCallback: (func) => mCalculateSpineCallback = func,
         setUndoCallback: (func) => mUndoCallback = func,
         setRedoCallback: (func) => mRedoCallback = func,

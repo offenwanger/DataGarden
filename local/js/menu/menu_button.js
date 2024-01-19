@@ -10,7 +10,12 @@ export function MenuButton(id, svg, img, buttonSize, clickCallback, onLoad) {
         .attr("height", buttonSize)
         .attr("width", buttonSize)
         .attr("opacity", 0)
-        .on('pointerup', () => { clickCallback(); });
+        .on('pointerdown', (event) => {
+            event.stopPropagation();
+        }).on('pointerup', (event) => {
+            event.stopPropagation();
+            clickCallback();
+        });
 
     d3.xml(img).then(data => {
         let width = data.documentElement.getAttribute('width');

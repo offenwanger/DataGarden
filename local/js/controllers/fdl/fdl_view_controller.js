@@ -26,6 +26,7 @@ export function FdlViewController(mColorMap) {
     let mEditChannelCallback = () => { };
     let mEditTierCallback = () => { };
     let mParentUpdateCallback = () => { }
+    let mMergeCallback = () => { }
 
     let mModel = new DataModel();
     let mSimulationData = [];
@@ -249,7 +250,8 @@ export function FdlViewController(mColorMap) {
                     path: [modelCoords]
                 }
             }
-        } else if (systemState.getToolState() == ContextButtons.PARENT) {
+        } else if (systemState.getToolState() == ContextButtons.PARENT ||
+            systemState.getToolState() == ContextButtons.MERGE) {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             let elementId;
             if (target && IdUtil.isType(target.id, Data.Element)) {
@@ -260,7 +262,11 @@ export function FdlViewController(mColorMap) {
             if (elementId) {
                 let ids = mSelectionIds.filter(id => id != elementId);
                 if (ids.length > 0) {
-                    mParentUpdateCallback(ids, elementId)
+                    if (systemState.getToolState() == ContextButtons.PARENT) {
+                        mParentUpdateCallback(ids, elementId)
+                    } else {
+                        mMergeCallback(ids, elementId)
+                    }
                 }
             }
 
@@ -492,5 +498,6 @@ export function FdlViewController(mColorMap) {
         setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,
         setParentUpdateCallback: (func) => mParentUpdateCallback = func,
+        setMergeCallback: (func) => mMergeCallback = func,
     }
 }

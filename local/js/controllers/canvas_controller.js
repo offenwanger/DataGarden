@@ -39,6 +39,7 @@ export function CanvasController(mColorMap) {
     let mSelectionCallback = () => { };
     let mContextMenuCallback = () => { };
     let mParentUpdateCallback = () => { };
+    let mMergeCallback = () => { };
     let mTranslateStrokesCallback = () => { };
     let mUpdateAngleCallback = () => { }
 
@@ -171,15 +172,21 @@ export function CanvasController(mColorMap) {
                 };
             }
             return true;
-        } else if (systemState.getToolState() == ContextButtons.PARENT) {
+        } else if (systemState.getToolState() == ContextButtons.PARENT || systemState.getToolState() == ContextButtons.MERGE) {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target && IdUtil.isType(target.id, Data.Stroke)) {
                 let targetElement = mModel.getElementForStroke(target.id);
                 if (!targetElement) { console.error("Invalid stroke id", target.id); return; }
-                let elementIds = getSelectedElementIds().filter(id => id != targetElement.id);
-                if (elementIds.length > 0) {
-                    mParentUpdateCallback(elementIds, targetElement.id);
+                if (systemState.getToolState() == ContextButtons.PARENT) {
+                    let elementIds = getSelectedElementIds().filter(id => id != targetElement.id);
+                    if (elementIds.length > 0) {
+                        mParentUpdateCallback(elementIds, targetElement.id);
+                    }
+                } else {
+                    mMergeCallback(mSelectionIds.filter(id => IdUtil.isType(id, Data.Stroke)), targetElement.id);
                 }
+            } else if (systemState.getToolState() == ContextButtons.MERGE) {
+                mMergeCallback(mSelectionIds.filter(id => IdUtil.isType(id, Data.Stroke)));
             }
         } else {
             console.error('State not handled', systemState.getToolState())
@@ -217,7 +224,9 @@ export function CanvasController(mColorMap) {
             mBrushActivePosition = [screenToModelCoords(screenCoords)];
         }
 
-        if (systemState.getToolState() == Buttons.SELECTION_BUTTON || systemState.getToolState() == ContextButtons.PARENT) {
+        if (systemState.getToolState() == Buttons.SELECTION_BUTTON ||
+            systemState.getToolState() == ContextButtons.PARENT ||
+            systemState.getToolState() == ContextButtons.MERGE) {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target) {
                 let element = mModel.getElementForStroke(target.id);
@@ -468,6 +477,7 @@ export function CanvasController(mColorMap) {
         setSelectionCallback: (func) => mSelectionCallback = func,
         setContextMenuCallback: (func) => mContextMenuCallback = func,
         setParentUpdateCallback: (func) => mParentUpdateCallback = func,
+        setMergeCallback: (func) => mMergeCallback = func,
         setTranslateStrokesCallback: (func) => mTranslateStrokesCallback = func,
         setUpdateAngleCallback: (func) => mUpdateAngleCallback = func,
     }

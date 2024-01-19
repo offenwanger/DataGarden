@@ -31,15 +31,10 @@ export function ContextMenu(svg) {
         img: "img/bind_position_button.svg",
         tooltip: "Bind a new dimension to the position channel",
     }
-    mButtonData[ContextButtons.MERGE_TO_ELEMENT] = {
-        id: ContextButtons.MERGE_TO_ELEMENT,
+    mButtonData[ContextButtons.MERGE] = {
+        id: ContextButtons.MERGE,
         img: "img/merge_elements.svg",
         tooltip: "Merge these strokes into a new element",
-    }
-    mButtonData[ContextButtons.AUTO_MERGE_ELEMENTS] = {
-        id: ContextButtons.AUTO_MERGE_ELEMENTS,
-        img: "img/smart_merge.svg",
-        tooltip: "Automatically detect elements and merge strokes",
     }
     mButtonData[ContextButtons.SPINE] = {
         id: ContextButtons.SPINE,

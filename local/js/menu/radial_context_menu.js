@@ -113,6 +113,7 @@ export function RadialContextMenu(svg, id, items, buttonSize) {
 
     function hide() {
         mMenuContainer.style('display', 'none');
+        mTooltip.hide();
     }
 
     this.setPosition = setPosition;

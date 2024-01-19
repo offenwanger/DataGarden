@@ -405,31 +405,55 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mDashboardController.setMergeStrokesCallback((strokeIds) => {
+    mDashboardController.setMergeCallback((strokeIds, elementTarget = null) => {
         let model = mModelController.getModel();
-        let strokes = strokeIds.map(s => model.getStroke(s));
 
-        let newElement = new Data.Element();
-        newElement.strokes.push(...strokes);
-        newElement.spine = DataUtil.getStupidSpine(newElement);
-        newElement.root = newElement.spine[0];
-        newElement.angle = VectorUtil.normalize(VectorUtil.subtract(newElement.spine[1], newElement.spine[0]));
+        let element;
+        if (elementTarget) {
+            element = model.getElement(elementTarget);
+            if (!element) { console.error("Invalid element id!", elementTarget); return; }
+        } else {
+            element = new Data.Element();
+        }
 
-        // count the elements, if most of the strokes belong to one, make the new element
-        // a sibling of that element
-        let elements = strokeIds.map(s => model.getElementForStroke(s));
-        let elementCounts = elements.reduce((count, element) => {
-            count[element.id] ? ++count[element.id] : count[element.id] = 1;
-            return count;
-        }, {});
-        let topElement = Object.entries(elementCounts).sort((a, b) => a[1] - b[1])[0];
-        if (topElement[1] / strokes.length > 0.5) {
-            newElement.parentId = elements.find(e => e.id == topElement[0]).parentId;
+        let elementStrokes = element.strokes.map(s => s.id);
+        let strokes = strokeIds.filter(sId => !elementStrokes.includes(sId)).map(s => model.getStroke(s));
+        element.strokes.push(...strokes);
+
+        if (!elementTarget) {
+            // new element, set all the things
+            element.spine = DataUtil.getStupidSpine(element);
+            element.root = element.spine[0];
+            element.angle = VectorUtil.normalize(VectorUtil.subtract(element.spine[1], element.spine[0]));
+            // count the elements, if most of the strokes belong to one, make the new element
+            // a sibling of that element
+            let elements = strokeIds.map(s => model.getElementForStroke(s));
+            let elementCounts = elements.reduce((count, element) => {
+                count[element.id] ? ++count[element.id] : count[element.id] = 1;
+                return count;
+            }, {});
+            let topElement = Object.entries(elementCounts).sort((a, b) => a[1] - b[1])[0];
+            if (topElement[1] / strokes.length > 0.5) {
+                element.parentId = elements.find(e => e.id == topElement[0]).parentId;
+            }
         }
 
         strokeIds.forEach(s => mModelController.removeStroke(s));
+
+        if (!elementTarget) {
+            mModelController.addElement(element);
+        } else {
+            mModelController.updateElement(element);
+        }
+
+        // if we just stole all the strokes of an element, steal it's children to. 
+        model = mModelController.getModel();
+        let emptyElements = model.getElements().filter(e => e.strokes.length == 0).map(e => e.id);
+        let emptyElementsChildren = model.getElements().filter(e => e.strokes.length > 0 && e.id != element.id && emptyElements.includes(e.parentId));
+        emptyElementsChildren.forEach(child => {
+            ModelUtil.updateParent(element.id, child.id, mModelController);
+        });
         ModelUtil.clearEmptyElements(mModelController);
-        mModelController.addElement(newElement);
 
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
