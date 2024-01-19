@@ -30,7 +30,7 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
         .alphaDecay(Decay.ALPHA)
         .velocityDecay(Decay.VELOCITY)
         .force("x", d3.forceX(0).strength(0.01))
-        .force("collide", d3.forceCollide((d) => d.radius + Padding.NODE * 2))
+        .force("collide", d3.forceCollide((d) => d.radius + Padding.NODE * 5))
         .force("link", d3.forceLink().id(d => d.id))
         .force("tree-level", d3.forceY((d => (d.tier + 0.5) * DIVISION_SIZE)).strength(0.7))
         .alpha(0.3)
