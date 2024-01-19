@@ -344,6 +344,50 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
         }
     }
 
+    function drawTreeBubble({ x1, x2, y1, y2, pointer, color, alpha, shadow, code }) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(x1, y1, x2 - x1, y2 - y1, (y2 - y1) / 2);
+
+        let middle, p1, p2, midpoint;
+        if (pointer) {
+            middle = { x: (x2 - x1) / 2 + x1, y: (y2 - y1) / 2 + y1 };
+            p1 = { x: x1 + (y2 - y1) / 2, y: (y2 - y1) / 2 + y1 };
+            p2 = { x: x2 - (y2 - y1) / 2, y: (y2 - y1) / 2 + y1 };
+            midpoint = { x: middle.x * 0.9 + pointer.x * 0.1, y: middle.y * 0.9 + pointer.y * 0.1 };
+
+            ctx.moveTo(middle.x, middle.y);
+            ctx.bezierCurveTo(p1.x, p1.y, midpoint.x, midpoint.y, pointer.x, pointer.y);
+            ctx.bezierCurveTo(midpoint.x, midpoint.y, p2.x, p2.y, middle.x, middle.y);
+        }
+
+        if (shadow) {
+            ctx.shadowColor = "black";
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+            ctx.shadowBlur = 3;
+        }
+        ctx.fill('nonzero');
+        ctx.restore();
+
+        // Interaction //
+        if (code) {
+            intCtx.save();
+            intCtx.fillStyle = code;
+            intCtx.beginPath();
+            intCtx.roundRect(x1, y1, x2 - x1, y2 - y1, (y2 - y1) / 2);
+            if (pointer) {
+                intCtx.moveTo(middle.x, middle.y);
+                intCtx.bezierCurveTo(p1.x, p1.y, midpoint.x, midpoint.y, pointer.x, pointer.y);
+                intCtx.bezierCurveTo(midpoint.x, midpoint.y, p2.x, p2.y, middle.x, middle.y);
+            }
+            intCtx.fill();
+            intCtx.restore();
+        }
+    }
+
     function highlightBubble(outline, color) {
         intfCtx.save();
 
@@ -716,6 +760,7 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
         drawConnector,
         drawLink,
         drawBubble,
+        drawTreeBubble,
         highlightBubble,
         highlightLink,
         getTrianglePointer,

@@ -171,6 +171,19 @@ export function DataModel() {
         return tables;
     }
 
+    function getTree() {
+        let elements = getElements();
+        let addChildren = function (container) {
+            container.children = elements.filter(e => e.parentId == container.id).map(e => { return { id: e.id } });
+            container.children.forEach(child => addChildren(child));
+        }
+
+        let root = { children: getElements().filter(e => !e.parentId).map(e => { return { id: e.id } }) };
+        root.children.forEach(child => addChildren(child));
+
+        return root;
+    }
+
     return {
         clone,
         toObject,
@@ -191,6 +204,7 @@ export function DataModel() {
         getLevels,
         getLevelForElement,
         getTables,
+        getTree,
     }
 }
 

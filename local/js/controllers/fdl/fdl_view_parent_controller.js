@@ -10,14 +10,14 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
     const TARGET_BUBBLE = 'bubble_target'
     const TARGET_LOCK = "target_lock";
 
-    const DIVISION_SIZE = Size.ELEMENT_NODE_SIZE * 10;
+    const DIVISION_SIZE = Size.ELEMENT_NODE_SIZE * 6;
 
     let mHighlightIds = [];
     let mSelectionIds = [];
 
     let mModel = new DataModel();
     // TODO: Actually check screen size on this
-    let mZoomTransform = d3.zoomIdentity.translate(500, 300);
+    let mZoomTransform = d3.zoomIdentity.translate(500, 50);
 
     let mTargetLock = null;
     let mDraggedNodes = [];
@@ -25,20 +25,19 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
     let mParentUpdateCallback = () => { };
 
     let mNodes = [];
-    let mLinks = [];
+    let mSimluationTree = null;
     let mSimulation = d3.forceSimulation()
         .alphaDecay(Decay.ALPHA)
         .velocityDecay(Decay.VELOCITY)
-        .force("x", d3.forceX(0).strength(0.01))
-        .force("collide", d3.forceCollide((d) => d.radius + Padding.NODE * 5))
-        .force("link", d3.forceLink().id(d => d.id))
-        .force("tree-level", d3.forceY((d => (d.tier + 0.5) * DIVISION_SIZE)).strength(0.7))
         .alpha(0.3)
         .on("tick", () => {
             mNodes.forEach(node => {
                 if (node.targetX && node.targetY) {
                     node.x += (node.targetX - node.x) * mSimulation.alpha();
                     node.y += (node.targetY - node.y) * mSimulation.alpha();
+                } else {
+                    node.x += (node.treeX - node.x) * mSimulation.alpha();
+                    node.y += (node.treeY - node.y) * mSimulation.alpha();
                 }
             })
             draw();
@@ -56,7 +55,7 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
 
             let top = Math.min(...levelYs)
             let bottom = Math.max(...levelYs)
-            let nextTop = nextYs.length > 0 ? Math.min(...nextYs) : bottom;
+            let nextTop = nextYs.length > 0 ? Math.min(...nextYs) : bottom + Size.ELEMENT_NODE_SIZE * 3;
 
             top = (top + prevBottom) / 2;
             bottom = (bottom + nextTop) / 2;
@@ -83,10 +82,13 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
             if (clusterNodes.length == 0) { console.error("Invalid cluster, no nodes", c); return; }
             clusterNodes = clusterNodes.filter(n => !draggedIds.includes(n.id))
             if (clusterNodes.length == 0) return;
-            let hull = d3.polygonHull(DataUtil.getPaddedPoints(clusterNodes, Padding.NODE)).map(p => { return { x: p[0], y: p[1] } });
+            let y = DataUtil.median(clusterNodes.map(c => c.y));
             let parentNode = mNodes.find(n => n.id == parentId);
-            mDrawingUtil.drawBubble({
-                outline: hull,
+            mDrawingUtil.drawTreeBubble({
+                x1: Math.min(...clusterNodes.map(c => c.x)) - Size.ELEMENT_NODE_SIZE * 2 + Padding.NODE,
+                x2: Math.max(...clusterNodes.map(c => c.x)) + Size.ELEMENT_NODE_SIZE * 2 - Padding.NODE,
+                y1: y - Size.ELEMENT_NODE_SIZE - Padding.NODE,
+                y2: y + Size.ELEMENT_NODE_SIZE + Padding.NODE,
                 pointer: parentNode,
                 color: mColorMap(parentId),
                 alpha: 0.4,
@@ -122,13 +124,17 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
         mNodes = data.filter(i => IdUtil.isType(i.id, Data.Element));
         mSimulation.nodes(mNodes, (d) => d.id)
 
-        mLinks = [];
-        let elements = mNodes.map(n => mModel.getElement(n.id));
-        elements.forEach(element => {
-            if (element.parentId) mLinks.push({ source: element.id, target: element.parentId });
-        });
+        let hierarchy = d3.hierarchy(mModel.getTree())
+        mSimluationTree = d3.tree().nodeSize([(Size.ELEMENT_NODE_SIZE + Padding.NODE) * 2, DIVISION_SIZE])(hierarchy);
 
-        mSimulation.force("link").links(mLinks);
+        mNodes.forEach(node => {
+            mSimluationTree.each((n) => {
+                if (n.data.id == node.id) {
+                    node.treeX = n.x;
+                    node.treeY = n.y;
+                }
+            })
+        })
         mSimulation.alphaTarget(0.3).restart();
     }
 

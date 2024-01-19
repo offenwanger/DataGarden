@@ -435,6 +435,13 @@ export let DataUtil = function () {
         return rgbToHex(255 - 20 * (tier + 1), 255 - 20 * (tier + 1), 255 - 20 * (tier + 1));
     }
 
+    function median(arr) {
+        if (arr.length == 0) { return 0 }
+        arr = [...arr].sort((a, b) => a - b);
+        let half = Math.floor(arr.length / 2);
+        return arr.length % 2 ? arr[half] : (arr[half - 1] + arr[half]) / 2;
+    }
+
     return {
         numToColor,
         rgbToHex,
@@ -470,5 +477,6 @@ export let DataUtil = function () {
         dimensionTierValid,
         dimensionValid,
         getTierColor,
+        median,
     }
 }();
