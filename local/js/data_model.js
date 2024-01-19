@@ -75,6 +75,11 @@ export function DataModel() {
         return mDimensions;
     }
 
+    function getDimenstionForLevel(levelId) {
+        if (!IdUtil.isType(levelId, Data.Level)) { console.error("Not a level id! " + levelId); return null; };
+        return getDimensions().find(d => d.levels.some(l => l.id == levelId))
+    }
+
     function setDimensions(dimensions) {
         mDimensions = dimensions;
     }
@@ -179,6 +184,7 @@ export function DataModel() {
         getElementChildren,
         getDimension,
         getDimensions,
+        getDimenstionForLevel,
         setDimensions,
         getDimensionForLevel,
         getLevel,

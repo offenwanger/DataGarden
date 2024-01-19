@@ -396,7 +396,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         selection.filter(id => IdUtil.isType(id, Data.Level)).forEach(levelId => {
             let model = mModelController.getModel();
             let dimen = model.getDimenstionForLevel(levelId);
-            let index = dimen.findIndex(l => l.id == levelId);
+            let index = dimen.levels.findIndex(l => l.id == levelId);
             dimen.levels.splice(index, 1);
             dimen.ranges.splice(index, 1);
             mModelController.updateDimension(dimen);

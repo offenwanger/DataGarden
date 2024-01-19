@@ -81,7 +81,6 @@ export let StructureFairy = function () {
         if (elements.length == 0) return;
         let levels = dimension.levels;
 
-
         let clusters = [];
         if (dimension.channel == ChannelType.FORM) {
             clusters = ClassifierUtil.clusterElementForms(elements, levels);
@@ -90,24 +89,22 @@ export let StructureFairy = function () {
         } else { console.error("Not dealing with a discrete channel.", dimension.channel); return; }
         let clusterCount = Math.max(...clusters) + 1;
 
-        let updatedLevels = []
         for (let i = 0; i < clusterCount; i++) {
-            let level;
-            if (i < levels.length) {
-                level = levels[i]
-            } else {
-                level = new Data.Level();
+            if (!levels[i]) {
+                let level = new Data.Level();
                 level.name = "Category" + (i + 1);
+                levels.push(level)
             }
             let clusterElementIds = clusters
                 .map((cluster, elementIndex) => cluster == i ? elementIndex : -1)
                 .filter(i => i != -1)
                 .map(i => elements[i].id);
-            level.elementIds = DataUtil.unique(level.elementIds.concat(clusterElementIds));
-            updatedLevels.push(level);
+            levels[i].elementIds = DataUtil.unique(levels[i].elementIds.concat(clusterElementIds));
         }
-
-        return updatedLevels;
+        for (let i = clusterCount; i < levels.length; i++) {
+            levels[i].elementIds = [];
+        }
+        return levels;
     }
 
     return {
