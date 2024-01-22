@@ -346,13 +346,13 @@ export function CanvasController(mColorMap) {
         if (mInteraction && mInteraction.type == DRAWING) {
             if (mStructureMode) {
                 if (!mInteraction.targetElement) {
-                    mDrawingUtil.drawRoot(mInteraction.currentStroke[0])
+                    mDrawingUtil.drawRoot({ root: mInteraction.currentStroke[0] })
                     if (mInteraction.currentStroke.length > 1) {
                         let angle = VectorUtil.normalize(
                             VectorUtil.subtract(
                                 mInteraction.currentStroke[mInteraction.currentStroke.length - 1],
                                 mInteraction.currentStroke[0]));
-                        mDrawingUtil.drawAngle(mInteraction.currentStroke[0], angle);
+                        mDrawingUtil.drawAngle({ root: mInteraction.currentStroke[0], angle });
                     }
                 }
             } else {
@@ -381,8 +381,8 @@ export function CanvasController(mColorMap) {
                     angle = VectorUtil.normalize(VectorUtil.subtract(mInteraction.currentStroke[mInteraction.currentStroke.length - 1], mInteraction.currentStroke[0]));
                 }
                 mDrawingUtil.drawSpine(elem.spine)
-                mDrawingUtil.drawRoot(root, mProjections[elem.id])
-                mDrawingUtil.drawAngle(root, angle)
+                mDrawingUtil.drawRoot({ root, origin: mProjections[elem.id], color: mColorMap(elem.id) })
+                mDrawingUtil.drawAngle({ root, angle, color: mColorMap(elem.id) })
             });
         }
     }

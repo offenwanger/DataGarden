@@ -560,22 +560,22 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
         intfCtx.restore();
     }
 
-    function drawRoot(root, position) {
+    function drawRoot({ root, origin = null, color = "green" }) {
         intfCtx.save();
         intfCtx.beginPath();
         intfCtx.arc(root.x, root.y, 5, 0, 2 * Math.PI);
         intfCtx.strokeStyle = "white";
         intfCtx.lineWidth = 4 / mScale;
         intfCtx.stroke();
-        intfCtx.strokeStyle = "green";
+        intfCtx.strokeStyle = color;
         intfCtx.lineWidth = 2 / mScale;
         intfCtx.stroke();
 
-        if (position) {
+        if (origin) {
             intfCtx.setLineDash([5 / mScale, 5 / mScale]);
             intfCtx.beginPath();
             intfCtx.moveTo(root.x, root.y)
-            intfCtx.lineTo(position.x, position.y)
+            intfCtx.lineTo(origin.x, origin.y)
             intfCtx.strokeStyle = "white";
             intfCtx.lineWidth = 2 / mScale;
             intfCtx.stroke();
@@ -587,7 +587,7 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
         intfCtx.restore();
     }
 
-    function drawAngle(root, angle) {
+    function drawAngle({ root, angle, color = "red" }) {
         let length = 20;
         let arrowLength = 5;
         let point = VectorUtil.add(root, VectorUtil.scale(angle, length));
@@ -607,7 +607,7 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
         intfCtx.strokeStyle = "white";
         intfCtx.lineWidth = 4 / mScale;
         intfCtx.stroke();
-        intfCtx.strokeStyle = "red";
+        intfCtx.strokeStyle = color;
         intfCtx.lineWidth = 2 / mScale;
         intfCtx.stroke();
         intfCtx.restore();
