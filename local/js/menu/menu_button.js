@@ -1,6 +1,8 @@
 import { FiltersUtil } from "../utils/filters_util.js";
 
 export function MenuButton(id, svg, img, buttonSize, clickCallback, onLoad) {
+    let mPosition = { x: 0, y: 0 };
+
     let mButton = svg.append('g')
         .attr("id", id);
     let mSvg = mButton.append('g')
@@ -31,18 +33,13 @@ export function MenuButton(id, svg, img, buttonSize, clickCallback, onLoad) {
             .attr("width", buttonSize);
     });
 
-    let mOffsetX = 0;
-    let mOffsetY = 0;
-
     function setPosition(x, y) {
-        mButton.attr("transform", "translate(" + (x - buttonSize / 2 + mOffsetX) + "," + (y - buttonSize / 2 + mOffsetY) + ")");
+        mPosition = { x, y };
+        mButton.attr("transform", "translate(" + (x - buttonSize / 2) + "," + (y - buttonSize / 2) + ")");
     }
 
-    function isSubButton(offsetX, offsetY) {
-        mButton.lower();
-        mOffsetX = offsetX;
-        mOffsetY = offsetY;
-        hide();
+    function getPosition() {
+        return mPosition;
     }
 
     function setActive(active) {
@@ -63,7 +60,7 @@ export function MenuButton(id, svg, img, buttonSize, clickCallback, onLoad) {
     }
 
     this.setPosition = setPosition;
-    this.isSubButton = isSubButton;
+    this.getPosition = getPosition;
     this.hide = hide;
     this.show = show;
     this.setActive = setActive;

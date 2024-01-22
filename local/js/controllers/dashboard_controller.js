@@ -374,6 +374,7 @@ export function DashboardController() {
     mMenuController.setOnClickCallback((button) => {
         if (button == Buttons.BRUSH_BUTTON ||
             button == Buttons.SELECTION_BUTTON ||
+            button == Buttons.CURSOR_BUTTON ||
             button == Buttons.PANNING_BUTTON ||
             button == Buttons.ZOOM_BUTTON) {
             if (mSystemState.isDefaultToolState()) {

@@ -205,8 +205,10 @@ export function FdlViewController(mColorMap) {
         if (ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
             console.error("Bad event state", screenCoords, systemState.getToolState()); return;
         };
+        let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
 
-        if (systemState.getToolState() == Buttons.PANNING_BUTTON) {
+        if (systemState.getToolState() == Buttons.PANNING_BUTTON ||
+            (!target && !systemState.isShift() && !systemState.isCtrl() && systemState.getToolState() == Buttons.CURSOR_BUTTON)) {
             mInteraction = {
                 type: FdlInteraction.PANNING,
                 start: screenCoords,
@@ -219,8 +221,9 @@ export function FdlViewController(mColorMap) {
                 startTransform: mActiveViewController.getTranslate(),
                 scale: mActiveViewController.getScale(),
             }
-        } else if (systemState.getToolState() == Buttons.SELECTION_BUTTON || systemState.getToolState() == Buttons.BRUSH_BUTTON) {
-            let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
+        } else if (systemState.getToolState() == Buttons.SELECTION_BUTTON ||
+            systemState.getToolState() == Buttons.BRUSH_BUTTON ||
+            systemState.getToolState() == Buttons.CURSOR_BUTTON) {
             if (target) {
                 if (systemState.isCtrl()) {
                     mSelectionIds.splice(mSelectionIds.indexOf(target.id), 1);
@@ -252,7 +255,6 @@ export function FdlViewController(mColorMap) {
             }
         } else if (systemState.getToolState() == ContextButtons.PARENT ||
             systemState.getToolState() == ContextButtons.MERGE) {
-            let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             let elementId;
             if (target && IdUtil.isType(target.id, Data.Element)) {
                 elementId = target.id;

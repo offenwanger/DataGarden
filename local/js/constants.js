@@ -1,4 +1,5 @@
 export const Buttons = {
+    CURSOR_BUTTON: "Cursor",
     BRUSH_BUTTON: "Brush",
     SELECTION_BUTTON: "Selection",
     PANNING_BUTTON: "Pan",

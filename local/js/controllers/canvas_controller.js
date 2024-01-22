@@ -113,8 +113,10 @@ export function CanvasController(mColorMap) {
 
     function onPointerDown(screenCoords, systemState) {
         if (ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) return;
+        let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
 
-        if (systemState.getToolState() == Buttons.PANNING_BUTTON) {
+        if (systemState.getToolState() == Buttons.PANNING_BUTTON ||
+            (!target && !systemState.isShift() && !systemState.isCtrl() && systemState.getToolState() == Buttons.CURSOR_BUTTON)) {
             mInteraction = {
                 type: PANNING,
                 x: mZoomTransform.x,
@@ -144,8 +146,8 @@ export function CanvasController(mColorMap) {
                 mInteraction.targetElement = getIntendedElementId(coords, coords);
             }
         } else if (systemState.getToolState() == Buttons.SELECTION_BUTTON ||
-            (systemState.getToolState() == Buttons.BRUSH_BUTTON && (systemState.isShift() || systemState.isCtrl()))) {
-            let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
+            systemState.getToolState() == Buttons.CURSOR_BUTTON ||
+            ((systemState.isShift() || systemState.isCtrl()))) {
             if (target) {
                 if (systemState.isShift()) {
                     mSelectionIds.push(target.id);
@@ -166,6 +168,7 @@ export function CanvasController(mColorMap) {
                 };
             } else {
                 // we didn't mouse down on anything start a lasso. 
+                // Cursor panning is handled above
                 mInteraction = {
                     type: LASSO,
                     line: [screenToModelCoords(screenCoords)]
@@ -173,7 +176,6 @@ export function CanvasController(mColorMap) {
             }
             return true;
         } else if (systemState.getToolState() == ContextButtons.PARENT || systemState.getToolState() == ContextButtons.MERGE) {
-            let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target && IdUtil.isType(target.id, Data.Stroke)) {
                 let targetElement = mModel.getElementForStroke(target.id);
                 if (!targetElement) { console.error("Invalid stroke id", target.id); return; }
@@ -224,9 +226,7 @@ export function CanvasController(mColorMap) {
             mBrushActivePosition = [screenToModelCoords(screenCoords)];
         }
 
-        if (systemState.getToolState() == Buttons.SELECTION_BUTTON ||
-            systemState.getToolState() == ContextButtons.PARENT ||
-            systemState.getToolState() == ContextButtons.MERGE) {
+        if (!mInteraction || mInteraction.type != DRAWING) {
             let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target) {
                 let element = mModel.getElementForStroke(target.id);
@@ -236,9 +236,6 @@ export function CanvasController(mColorMap) {
                 mHighlightIds = [];
                 mHighlightCallback([]);
             }
-        } else if (mHighlightIds) {
-            mHighlightIds = [];
-            mHighlightCallback([]);
         }
 
         if (mBrushActivePosition && systemState.getToolState() != Buttons.BRUSH_BUTTON) {
@@ -266,6 +263,7 @@ export function CanvasController(mColorMap) {
         } else if (interaction && interaction.type == LASSO) {
             if (!systemState.isShift() && !systemState.isCtrl()) {
                 mSelectionIds = [];
+                mSelectionCallback(mSelectionIds);
             }
             mModel.getStrokes().forEach(stroke => {
                 let coveredPoints = stroke.path.reduce((count, p) => {
@@ -289,6 +287,11 @@ export function CanvasController(mColorMap) {
             } else {
                 mTranslateStrokesCallback(mSelectionIds, VectorUtil.subtract(screenCoords, interaction.start));
             }
+        } else if (interaction && interaction.type == PANNING &&
+            systemState.getToolState() == Buttons.CURSOR_BUTTON &&
+            VectorUtil.dist(interaction.start, screenCoords) < 3) {
+            mSelectionIds = [];
+            mSelectionCallback(mSelectionIds);
         }
 
         draw();
