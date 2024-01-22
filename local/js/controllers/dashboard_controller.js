@@ -42,8 +42,7 @@ export function DashboardController() {
     let mCanvasPercent = 0.5;
     let mWidth = 0;
 
-    mMenuController.deactivateAll();
-    mMenuController.activateButton(mSystemState.getToolState());
+    activateStateButtons();
 
     let mFdlActive = true;
 
@@ -130,8 +129,7 @@ export function DashboardController() {
 
     function onKeyStateChange(keysDown) {
         mSystemState.setKeys(keysDown);
-        mMenuController.deactivateAll();
-        mMenuController.activateButton(mSystemState.getToolState());
+        activateStateButtons();
     }
 
     function onUndo() {
@@ -377,24 +375,16 @@ export function DashboardController() {
             button == Buttons.CURSOR_BUTTON ||
             button == Buttons.PANNING_BUTTON ||
             button == Buttons.ZOOM_BUTTON) {
-            if (mSystemState.isDefaultToolState()) {
-                mMenuController.deactivateButton(mSystemState.getToolState());
-                mMenuController.activateButton(button);
-            }
             mSystemState.setDefaultToolState(button)
         } else if (button == Buttons.VIEW_BUTTON) {
             mSystemState.toggleStructureViewActive();
-            if (mSystemState.isStructureViewActive()) {
-                mMenuController.activateButton(button);
-            } else {
-                mMenuController.deactivateButton(button);
-            }
             mCanvasController.setStructureMode(mSystemState.isStructureViewActive());
         } else if (button == Buttons.DOWNLOAD) {
             FileHandler.downloadJSON(mModel.toObject());
         } else if (button == Buttons.UPLOAD) {
             mLoadModelCallback();
         }
+        activateStateButtons();
     })
 
     mDimentionViewBackButton.setOnClickCallback(() => {
@@ -411,6 +401,12 @@ export function DashboardController() {
         mFdlViewController.setMode(FdlMode.DIMENSION, dimenId);
         let tabBB = mTabController.getTabBB(dimenId);
         mDimentionViewBackButton.show(tabBB.x + 1, tabBB.y + 3 + tabBB.height, "<- Back to All Dimentions");
+    }
+
+    function activateStateButtons() {
+        mMenuController.deactivateAll()
+        mMenuController.activateButton(mSystemState.getToolState());
+        if (mSystemState.isStructureViewActive()) mMenuController.activateButton(Buttons.VIEW_BUTTON);
     }
 
     return {
