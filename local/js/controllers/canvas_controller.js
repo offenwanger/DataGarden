@@ -280,7 +280,6 @@ export function CanvasController(mColorMap) {
         } else if (interaction && interaction.type == LASSO) {
             if (!systemState.isShift() && !systemState.isCtrl()) {
                 mSelectionIds = [];
-                mSelectionCallback(mSelectionIds);
             }
             mModel.getStrokes().forEach(stroke => {
                 let coveredPoints = stroke.path.reduce((count, p) => {
@@ -294,7 +293,7 @@ export function CanvasController(mColorMap) {
                         mSelectionIds.push(stroke.id);
                     }
                 }
-            })
+            });
             mSelectionCallback(mSelectionIds);
         } else if (interaction && interaction.type == DRAGGING && !systemState.isShift() && !systemState.isCtrl()) {
             let moveDist = VectorUtil.dist(interaction.start, screenCoords);
