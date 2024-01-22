@@ -23,23 +23,33 @@ export function MenuController() {
         // When loaded, set the color, this triggers on change
         mColorPicker.setColor("#33333300", false)
     });
+    mButtons[Buttons.BRUSH_BUTTON] = new MenuButton("brush-button", mSvg, "img/color_brush_button.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.BRUSH_BUTTON));
+
+    mButtons[Buttons.PANNING_BUTTON] = new MenuButton("pan-button", mSvg, "img/panning_button.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.PANNING_BUTTON));
     mButtons[Buttons.ZOOM_BUTTON] = new MenuButton("zoom-button", mSvg, "img/zoom_button.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.ZOOM_BUTTON));
 
 
-    mButtons[Buttons.PANNING_BUTTON] = new MenuButton("pan-button", mSvg, "img/panning_button.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.PANNING_BUTTON));
-    mButtons[Buttons.BRUSH_BUTTON] = new MenuButton("brush-button", mSvg, "img/color_brush_button.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.BRUSH_BUTTON));
     mButtons[Buttons.SELECTION_BUTTON] = new MenuButton("selection-button", mSvg, "img/selection_button.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.SELECTION_BUTTON));
     mButtons[Buttons.CURSOR_BUTTON] = new MenuButton("cursor-button", mSvg, "img/cursor_button.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.CURSOR_BUTTON));
+
     mButtons[Buttons.VIEW_BUTTON] = new MenuButton("view-button", mSvg, "img/eyecon_button.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.VIEW_BUTTON));
+    mButtons[Buttons.SPINE_BRUSH_BUTTON] = new MenuButton("spine-button", mSvg, "img/spine_brush_button.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.SPINE_BRUSH_BUTTON));
+    mButtons[Buttons.ANGLE_BRUSH_BUTTON] = new MenuButton("angle-button", mSvg, "img/angle_brush_button.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.ANGLE_BRUSH_BUTTON));
+
     mButtons[Buttons.DOWNLOAD] = new MenuButton("download-button", mSvg, "img/download.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.DOWNLOAD));
     mButtons[Buttons.UPLOAD] = new MenuButton("upload-button", mSvg, "img/upload.svg", BUTTON_SIZE, () => mOnClickCallack(Buttons.UPLOAD));
+
+
 
     let mParents = [
         [Buttons.PANNING_BUTTON, Buttons.ZOOM_BUTTON],
         [Buttons.BRUSH_BUTTON, Buttons.COLOR_BUTTON],
+        [Buttons.VIEW_BUTTON, Buttons.SPINE_BRUSH_BUTTON],
+        [Buttons.VIEW_BUTTON, Buttons.ANGLE_BRUSH_BUTTON],
     ]
 
     let buttonSpacing = BUTTON_SIZE * 1.5;
+    let subButtonSpacing = BUTTON_SIZE * 1.1;
     [
         Buttons.CURSOR_BUTTON,
         Buttons.SELECTION_BUTTON,
@@ -51,7 +61,7 @@ export function MenuController() {
     ].forEach((id, index) => {
         mButtons[id].setPosition(BUTTON_SIZE, buttonSpacing * (0.5 + index));
         mParents.filter(row => row[0] == id).forEach(([parentId, childId], subIndex) => {
-            mButtons[childId].setPosition(BUTTON_SIZE + buttonSpacing * (0.5 + subIndex), buttonSpacing * (0.25 + index) + buttonSpacing * 0.5)
+            mButtons[childId].setPosition(BUTTON_SIZE + subButtonSpacing * (0.7 + subIndex), buttonSpacing * (0.25 + index) + buttonSpacing * 0.5)
         });
     });
 

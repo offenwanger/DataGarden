@@ -544,17 +544,17 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
         intfCtx.restore();
     }
 
-    function drawSpine(spine) {
+    function drawSpine({ path, color = "blue" }) {
         intfCtx.save();
         intfCtx.setLineDash([5 / mScale, 10 / mScale]);
         intfCtx.beginPath();
-        spine.forEach(p => {
+        path.forEach(p => {
             intfCtx.lineTo(p.x, p.y)
         });
         intfCtx.strokeStyle = "white";
         intfCtx.lineWidth = 4 / mScale;
         intfCtx.stroke();
-        intfCtx.strokeStyle = "blue";
+        intfCtx.strokeStyle = color;
         intfCtx.lineWidth = 2 / mScale;
         intfCtx.stroke();
         intfCtx.restore();

@@ -8,6 +8,8 @@ export const Buttons = {
     COLOR_BUTTON: "Color",
     DOWNLOAD: "Download",
     UPLOAD: "Upload",
+    SPINE_BRUSH_BUTTON: "Spine",
+    ANGLE_BRUSH_BUTTON: "Angle",
 }
 
 export const Size = {

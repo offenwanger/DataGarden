@@ -371,6 +371,8 @@ export function DashboardController() {
 
     mMenuController.setOnClickCallback((button) => {
         if (button == Buttons.BRUSH_BUTTON ||
+            button == Buttons.SPINE_BRUSH_BUTTON ||
+            button == Buttons.ANGLE_BRUSH_BUTTON ||
             button == Buttons.SELECTION_BUTTON ||
             button == Buttons.CURSOR_BUTTON ||
             button == Buttons.PANNING_BUTTON ||
@@ -379,6 +381,10 @@ export function DashboardController() {
         } else if (button == Buttons.VIEW_BUTTON) {
             mSystemState.toggleStructureViewActive();
             mCanvasController.setStructureMode(mSystemState.isStructureViewActive());
+            if (!mSystemState.isStructureViewActive() &&
+                (mSystemState.getToolState() == Buttons.SPINE_BRUSH_BUTTON || mSystemState.getToolState() == Buttons.ANGLE_BRUSH_BUTTON)) {
+                mSystemState.setDefaultToolState(Buttons.CURSOR_BUTTON);
+            }
         } else if (button == Buttons.DOWNLOAD) {
             FileHandler.downloadJSON(mModel.toObject());
         } else if (button == Buttons.UPLOAD) {
@@ -428,6 +434,7 @@ export function DashboardController() {
         setParentUpdateCallback: (func) => { mFdlViewController.setParentUpdateCallback(func); mCanvasController.setParentUpdateCallback(func); },
         setTranslateStrokesCallback: (func) => mCanvasController.setTranslateStrokesCallback(func),
         setUpdateAngleCallback: (func) => mCanvasController.setUpdateAngleCallback(func),
+        setUpdateSpineCallback: (func) => mCanvasController.setUpdateSpineCallback(func),
         setDeleteCallback: (func) => mDeleteCallback = func,
         setMergeCallback: (func) => mMergeCallback = func,
         setCalculateSpineCallback: (func) => mCalculateSpineCallback = func,

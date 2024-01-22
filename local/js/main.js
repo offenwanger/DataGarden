@@ -109,6 +109,15 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mDashboardController.modelUpdate(mModelController.getModel());
     });
 
+    mDashboardController.setUpdateSpineCallback((elementId, spine) => {
+        let element = mModelController.getModel().getElement(elementId);
+        if (!element) { console.error("invalid element id", elementId); return; }
+        element.spine = spine;
+        mModelController.updateElement(element);
+        mVersionController.stack(mModelController.getModel().toObject());
+        mDashboardController.modelUpdate(mModelController.getModel());
+    });
+
     mDashboardController.setParentUpdateCallback((elementIds, parentElementId) => {
         elementIds.forEach(elementId => {
             ModelUtil.updateParent(parentElementId, elementId, mModelController);

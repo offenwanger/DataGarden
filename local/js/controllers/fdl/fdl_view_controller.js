@@ -221,9 +221,7 @@ export function FdlViewController(mColorMap) {
                 startTransform: mActiveViewController.getTranslate(),
                 scale: mActiveViewController.getScale(),
             }
-        } else if (systemState.getToolState() == Buttons.SELECTION_BUTTON ||
-            systemState.getToolState() == Buttons.BRUSH_BUTTON ||
-            systemState.getToolState() == Buttons.CURSOR_BUTTON) {
+        } else if (isSelectionState(systemState.getToolState())) {
             if (target) {
                 if (systemState.isCtrl()) {
                     mSelectionIds.splice(mSelectionIds.indexOf(target.id), 1);
@@ -271,8 +269,6 @@ export function FdlViewController(mColorMap) {
                     }
                 }
             }
-
-
         } else {
             console.error("Unhandled state!", systemState.getToolState());
         }
@@ -464,6 +460,14 @@ export function FdlViewController(mColorMap) {
 
     function show() {
         d3.select('#fdl-view-container').style("display", "");
+    }
+
+    function isSelectionState(state) {
+        return state == Buttons.SELECTION_BUTTON ||
+            state == Buttons.BRUSH_BUTTON ||
+            state == Buttons.SPINE_BRUSH_BUTTON ||
+            state == Buttons.ANGLE_BRUSH_BUTTON ||
+            state == Buttons.CURSOR_BUTTON;
     }
 
     //////////// Useful TESTING FUNCTION ////////////

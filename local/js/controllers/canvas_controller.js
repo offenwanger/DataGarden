@@ -11,6 +11,8 @@ import { Data } from "../data_structs.js";
 
 export function CanvasController(mColorMap) {
     const DRAWING = 'drawing';
+    const ANGLING = 'angling';
+    const SPINING = 'spining';
     const LASSO = 'lasso';
     const PANNING = 'panning';
     const ZOOMING = 'zooming';
@@ -42,6 +44,7 @@ export function CanvasController(mColorMap) {
     let mMergeCallback = () => { };
     let mTranslateStrokesCallback = () => { };
     let mUpdateAngleCallback = () => { }
+    let mUpdateSpineCallback = () => { }
 
     let mZoomTransform = d3.zoomIdentity;
     let mBrushActivePosition = false;
@@ -141,10 +144,22 @@ export function CanvasController(mColorMap) {
                 currentStroke: [screenToModelCoords(screenCoords)],
                 screenStart: screenCoords,
             };
-            if (mStructureMode) {
-                let coords = screenToModelCoords(screenCoords);
-                mInteraction.targetElement = getIntendedElementId(coords, coords);
-            }
+        } else if (systemState.getToolState() == Buttons.ANGLE_BRUSH_BUTTON && !systemState.isShift() && !systemState.isCtrl()) {
+            let coords = screenToModelCoords(screenCoords);
+            mInteraction = {
+                type: ANGLING,
+                currentStroke: [screenToModelCoords(screenCoords)],
+                screenStart: screenCoords,
+                targetElement: getIntendedElementId(coords, coords),
+            };
+        } else if (systemState.getToolState() == Buttons.SPINE_BRUSH_BUTTON && !systemState.isShift() && !systemState.isCtrl()) {
+            let coords = screenToModelCoords(screenCoords);
+            mInteraction = {
+                type: SPINING,
+                currentStroke: [screenToModelCoords(screenCoords)],
+                screenStart: screenCoords,
+                targetElement: getIntendedElementId(coords, coords),
+            };
         } else if (systemState.getToolState() == Buttons.SELECTION_BUTTON ||
             systemState.getToolState() == Buttons.CURSOR_BUTTON ||
             ((systemState.isShift() || systemState.isCtrl()))) {
@@ -211,11 +226,11 @@ export function CanvasController(mColorMap) {
             mZoomTransform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
         } else if (mInteraction && mInteraction.type == DRAWING) {
             mInteraction.currentStroke.push(screenToModelCoords(screenCoords));
-            if (mStructureMode) {
-                mInteraction.targetElement = getIntendedElementId(
-                    mInteraction.currentStroke[0],
-                    mInteraction.currentStroke[mInteraction.currentStroke.length - 1]);
-            }
+        } else if (mInteraction && mInteraction.type == ANGLING || mInteraction && mInteraction.type == SPINING) {
+            mInteraction.currentStroke.push(screenToModelCoords(screenCoords));
+            mInteraction.targetElement = getIntendedElementId(
+                mInteraction.currentStroke[0],
+                mInteraction.currentStroke[mInteraction.currentStroke.length - 1]);
         } else if (mInteraction && mInteraction.type == LASSO) {
             mInteraction.line.push(screenToModelCoords(screenCoords));
         } else if (mInteraction && mInteraction.type == DRAGGING) {
@@ -250,15 +265,17 @@ export function CanvasController(mColorMap) {
         mInteraction = null;
 
         if (interaction && interaction.type == DRAWING && (interaction.currentStroke.length > 10 || VectorUtil.dist(interaction.screenStart, screenCoords) > 10)) {
-            if (mStructureMode) {
-                if (interaction.targetElement) {
-                    let root = interaction.currentStroke[0];
-                    let angle = VectorUtil.normalize(VectorUtil.subtract(interaction.currentStroke[interaction.currentStroke.length - 1], interaction.currentStroke[0]));
-                    mUpdateAngleCallback(interaction.targetElement, root, angle);
-                }
-            } else {
-                let storke = new Data.Stroke(interaction.currentStroke, mBrushOptions.size, mBrushOptions.color);
-                mNewStrokeCallback(storke);
+            let storke = new Data.Stroke(interaction.currentStroke, mBrushOptions.size, mBrushOptions.color);
+            mNewStrokeCallback(storke);
+        } else if (interaction && interaction.type == ANGLING) {
+            if (interaction.targetElement && (interaction.currentStroke.length > 10 || VectorUtil.dist(interaction.screenStart, screenCoords) > 10)) {
+                let root = interaction.currentStroke[0];
+                let angle = VectorUtil.normalize(VectorUtil.subtract(interaction.currentStroke[interaction.currentStroke.length - 1], interaction.currentStroke[0]));
+                mUpdateAngleCallback(interaction.targetElement, root, angle);
+            }
+        } else if (interaction && interaction.type == SPINING) {
+            if (interaction.targetElement && (interaction.currentStroke.length > 10 || VectorUtil.dist(interaction.screenStart, screenCoords) > 10)) {
+                mUpdateSpineCallback(interaction.targetElement, interaction.currentStroke);
             }
         } else if (interaction && interaction.type == LASSO) {
             if (!systemState.isShift() && !systemState.isCtrl()) {
@@ -344,23 +361,21 @@ export function CanvasController(mColorMap) {
         mDrawingUtil.resetInterface(mZoomTransform);
 
         if (mInteraction && mInteraction.type == DRAWING) {
-            if (mStructureMode) {
-                if (!mInteraction.targetElement) {
-                    mDrawingUtil.drawRoot({ root: mInteraction.currentStroke[0] })
-                    if (mInteraction.currentStroke.length > 1) {
-                        let angle = VectorUtil.normalize(
-                            VectorUtil.subtract(
-                                mInteraction.currentStroke[mInteraction.currentStroke.length - 1],
-                                mInteraction.currentStroke[0]));
-                        mDrawingUtil.drawAngle({ root: mInteraction.currentStroke[0], angle });
-                    }
+            mDrawingUtil.drawStroke({
+                path: mInteraction.currentStroke,
+                color: mBrushOptions.color,
+                width: mBrushOptions.size
+            });
+        } else if (mInteraction && mInteraction.type == ANGLING) {
+            if (!mInteraction.targetElement) {
+                mDrawingUtil.drawRoot({ root: mInteraction.currentStroke[0] })
+                if (mInteraction.currentStroke.length > 1) {
+                    let angle = VectorUtil.normalize(
+                        VectorUtil.subtract(
+                            mInteraction.currentStroke[mInteraction.currentStroke.length - 1],
+                            mInteraction.currentStroke[0]));
+                    mDrawingUtil.drawAngle({ root: mInteraction.currentStroke[0], angle });
                 }
-            } else {
-                mDrawingUtil.drawStroke({
-                    path: mInteraction.currentStroke,
-                    color: mBrushOptions.color,
-                    width: mBrushOptions.size
-                });
             }
         } else if (mBrushActivePosition) {
             mDrawingUtil.drawStroke({
@@ -376,11 +391,15 @@ export function CanvasController(mColorMap) {
             mModel.getElements().forEach(elem => {
                 let root = elem.root;
                 let angle = elem.angle;
-                if (mInteraction && mInteraction.type == DRAWING && mStructureMode && mInteraction.targetElement == elem.id && mInteraction.currentStroke.length > 1) {
+                let spine = elem.spine;
+                if (mInteraction && mInteraction.type == ANGLING && mStructureMode && mInteraction.targetElement == elem.id && mInteraction.currentStroke.length > 1) {
                     root = mInteraction.currentStroke[0];
                     angle = VectorUtil.normalize(VectorUtil.subtract(mInteraction.currentStroke[mInteraction.currentStroke.length - 1], mInteraction.currentStroke[0]));
                 }
-                mDrawingUtil.drawSpine(elem.spine)
+                if (mInteraction && mInteraction.type == SPINING && mStructureMode && mInteraction.targetElement == elem.id && mInteraction.currentStroke.length > 1) {
+                    spine = mInteraction.currentStroke;
+                }
+                mDrawingUtil.drawSpine({ path: spine, color: mColorMap(elem.id) });
                 mDrawingUtil.drawRoot({ root, origin: mProjections[elem.id], color: mColorMap(elem.id) })
                 mDrawingUtil.drawAngle({ root, angle, color: mColorMap(elem.id) })
             });
@@ -483,5 +502,6 @@ export function CanvasController(mColorMap) {
         setMergeCallback: (func) => mMergeCallback = func,
         setTranslateStrokesCallback: (func) => mTranslateStrokesCallback = func,
         setUpdateAngleCallback: (func) => mUpdateAngleCallback = func,
+        setUpdateSpineCallback: (func) => mUpdateSpineCallback = func,
     }
 }
