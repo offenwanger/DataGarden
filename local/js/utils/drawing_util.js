@@ -743,6 +743,17 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
         intCtx.restore();
     }
 
+    function drawText({ x, y, height, text, color = "black" }) {
+        ctx.save();
+        ctx.fillStyle = 'black';
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'left'
+        ctx.fillStyle = color
+        ctx.font = Math.round(height) + TEXT_FONT_STRING;
+        ctx.fillText(text, x, y);
+        ctx.restore();
+    }
+
     return {
         reset,
         resetInterface,
@@ -775,5 +786,6 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
         drawAxis,
         drawLinkLine,
         drawCircleTarget,
+        drawText,
     }
 }

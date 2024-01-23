@@ -61,6 +61,14 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
             bottom = (bottom + nextTop) / 2;
 
             mDrawingUtil.drawBand(DataUtil.getTierColor(tier), top, bottom);
+            mDrawingUtil.drawText({
+                x: (10 - mZoomTransform.x) / mZoomTransform.k,
+                y: bottom - Math.min(68, (bottom - top)),
+                height: Math.min(60, (bottom - top)),
+                text: "Level " + tier,
+                color: DataUtil.getTierColor(tier - 1)
+            })
+
             prevBottom = bottom;
         }
 
