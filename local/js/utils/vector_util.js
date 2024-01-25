@@ -47,6 +47,8 @@ export let VectorUtil = function () {
     // }
 
     function normalize(v) {
+        if (v.x == 0 && v.y == 0) return { x: 0, y: 0 };
+
         let len = length(v);
         return { x: v.x / len, y: v.y / len }
     }
