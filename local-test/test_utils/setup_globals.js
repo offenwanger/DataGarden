@@ -10,6 +10,7 @@ import { DataModel } from "../../local/js/data_model.js";
 // this must import before main so that the document is set.
 
 import * as  chai from 'chai';
+import { registerFont } from "canvas";
 let assert = chai.assert;
 
 global.document = {
@@ -85,6 +86,10 @@ global.model = function () {
 
 global.jspreadsheet = new mockJspreadsheet()
 global.d3 = new mockD3(jspreadsheet);
+
+registerFont('./local/lib/fonts/IndieFlower-Regular.ttf', {
+    family: 'DefaultFont',
+});
 
 export function resetGlobals() {
     global.jspreadsheet = new mockJspreadsheet()

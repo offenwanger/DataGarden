@@ -13,13 +13,6 @@ export function getIntegrationEnviroment() {
     let documentLoad = document.load;
 
     let instances = {};
-    function snagConstructor(source, constructor) {
-        return function () {
-            instances[constructor] = source.__get__(constructor).call(this, ...arguments);
-            return instances[constructor];
-        }
-    };
-
     let integrationEnv = {};
 
     integrationEnv.main = main;
