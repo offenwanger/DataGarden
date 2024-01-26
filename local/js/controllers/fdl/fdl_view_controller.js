@@ -1,3 +1,4 @@
+import { Buttons, ContextButtons, DIMENSION_RANGE_V1, DIMENSION_RANGE_V2, DimensionType, FdlInteraction, FdlMode, Size } from "../../constants.js";
 import { DataModel } from "../../data_model.js";
 import { DataUtil } from "../../utils/data_util.js";
 import { DrawingUtil } from "../../utils/drawing_util.js";
@@ -9,7 +10,6 @@ import { FdlParentViewController } from "./fdl_view_parent_controller.js";
 import { OverlayUtil } from "../../utils/overlay_util.js";
 import { ValUtil } from "../../utils/value_util.js";
 import { VectorUtil } from "../../utils/vector_util.js";
-import { AxisPositions, Buttons, ContextButtons, DimensionType, DimensionValueId, FdlInteraction, FdlMode, Size } from "../../constants.js";
 import { Data } from "../../data_structs.js";
 
 export function FdlViewController(mColorMap) {
@@ -31,6 +31,9 @@ export function FdlViewController(mColorMap) {
     let mModel = new DataModel();
     let mSimulationData = [];
     let mInteraction = null;
+
+    let mWidth = 100;
+    let mHeight = 100;
 
     let mHighlightIds = [];
     let mSelectionIds = [];
@@ -94,7 +97,6 @@ export function FdlViewController(mColorMap) {
                 type: dimension.type,
                 channel: dimension.channel,
                 tier: dimension.tier,
-                fx: AxisPositions.DIMENSION_X,
             }
             let oldData = oldSimulationData.find(item => item.id == dimension.id);
             if (!oldData) {
@@ -113,7 +115,6 @@ export function FdlViewController(mColorMap) {
                         id: level.id,
                         name: level.name,
                         dimension: dimension.id,
-                        fx: AxisPositions.LEVEL_X,
                     }
                     let oldData = oldSimulationData.find(item => item.id == level.id);
                     if (oldData) {
@@ -127,33 +128,28 @@ export function FdlViewController(mColorMap) {
                 })
             } else {
                 let v1Data = {
-                    id: DimensionValueId.V1,
+                    id: DIMENSION_RANGE_V1,
                     name: dimension.domain[0],
                     dimension: dimension.id,
                     invalid: !DataUtil.isNumeric(dimension.domain[0]),
                 };
-                let oldV1Data = oldSimulationData.find(item => item.dimension == dimension.id && item.id == DimensionValueId.V1);
+                let oldV1Data = oldSimulationData.find(item => item.dimension == dimension.id && item.id == DIMENSION_RANGE_V1);
                 if (oldV1Data) {
-                    v1Data.fx = oldV1Data.fx;
                     v1Data.y = oldV1Data.y;
                 } else {
-                    v1Data.fx = AxisPositions.LEVEL_X;
                     v1Data.y = 0;
                 }
 
                 let v2Data = {
-                    id: DimensionValueId.V2,
+                    id: DIMENSION_RANGE_V2,
                     name: dimension.domain[1],
                     dimension: dimension.id,
                     invalid: !DataUtil.isNumeric(dimension.domain[1]),
-                    fx: AxisPositions.LEVEL_X,
                 };
-                let oldV2Data = oldSimulationData.find(item => item.dimension == dimension.id && item.id == DimensionValueId.V2);
+                let oldV2Data = oldSimulationData.find(item => item.dimension == dimension.id && item.id == DIMENSION_RANGE_V2);
                 if (oldV2Data) {
-                    v2Data.fx = oldV2Data.fx;
                     v2Data.y = oldV2Data.y;
                 } else {
-                    v2Data.fx = AxisPositions.LEVEL_X;
                     v2Data.y = 0;
                 }
                 mSimulationData.push(v1Data, v2Data);
@@ -180,11 +176,15 @@ export function FdlViewController(mColorMap) {
         convertCoordinateSystem(mSimulationData, oldActiveViewController, mActiveViewController);
 
         mActiveViewController.updateSimulationData(mSimulationData, mModel);
+        mActiveViewController.onResize(mWidth, mHeight);
         mActiveViewController.onHighlight(mHighlightIds);
         mActiveViewController.onSelection(mSelectionIds);
     }
 
     function onResize(width, height) {
+        mWidth = width;
+        mHeight = height;
+
         d3.select("#fdl-view-container")
             .style('width', width + "px")
             .style('height', height + "px");
@@ -199,6 +199,7 @@ export function FdlViewController(mColorMap) {
             .attr('height', height);
 
         mOverlayUtil.onResize(width, height);
+        mActiveViewController.onResize(width, height);
     }
 
     function onPointerDown(screenCoords, systemState) {

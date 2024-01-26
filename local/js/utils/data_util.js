@@ -216,6 +216,7 @@ export let DataUtil = function () {
 
     function getMappedValue(model, dimensionId, elementId) {
         let dimension = model.getDimension(dimensionId);
+        if (dimension.unmappedIds.includes(elementId)) return null;
         if (dimension.channel == ChannelType.FORM || dimension.channel == ChannelType.COLOR) {
             let level = dimension.levels.find(level => level.elementIds.includes(elementId));
             return level ? level.name : null;
@@ -442,6 +443,12 @@ export let DataUtil = function () {
         return arr.length % 2 ? arr[half] : (arr[half - 1] + arr[half]) / 2;
     }
 
+    function limit(num, v1, v2) {
+        let min, max;
+        if (v1 < v2) { min = v1; max = v2 } else { min = v2; max = v1 };
+        return Math.max(Math.min(num, max), min);
+    }
+
     return {
         numToColor,
         rgbToHex,
@@ -478,5 +485,6 @@ export let DataUtil = function () {
         dimensionValid,
         getTierColor,
         median,
+        limit,
     }
 }();

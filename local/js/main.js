@@ -1,4 +1,4 @@
-import { ChannelType, DimensionType } from "./constants.js";
+import { ChannelType, DIMENSION_RANGE_V1, DIMENSION_RANGE_V2, DimensionType, NO_LEVEL_ID } from "./constants.js";
 import { DashboardController } from "./controllers/dashboard_controller.js";
 import { ModelController } from "./controllers/model_controller.js";
 import { ServerController } from "./controllers/server_controller.js";
@@ -216,8 +216,15 @@ document.addEventListener('DOMContentLoaded', function (e) {
             } else {
                 level.elementIds = level.elementIds.filter(e => !elementIds.includes(e));
             }
-            mModelController.updateLevel(level);
         });
+
+        if (levelId == NO_LEVEL_ID) {
+            dimension.unmappedIds = DataUtil.unique(dimension.unmappedIds.concat(elementIds));
+        } else {
+            dimension.unmappedIds = dimension.unmappedIds.filter(e => !elementIds.includes(e));
+        }
+
+        mModelController.updateDimension(dimension);
 
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
@@ -246,11 +253,17 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let model = mModelController.getModel();
         let dimension = model.getDimension(dimenId);
 
-        dimension.ranges = dimension.ranges.map((range, index) => {
-            if (index == rangeIndex) return percent;
-            if (index < rangeIndex) return range > percent ? percent : range;
-            if (index > rangeIndex) return range < percent ? percent : range;
-        })
+        if (rangeIndex == DIMENSION_RANGE_V1) {
+            dimension.domainRange = [percent, dimension.domainRange[1]].sort();
+        } else if (rangeIndex == DIMENSION_RANGE_V2) {
+            dimension.domainRange = [percent, dimension.domainRange[0]].sort();
+        } else {
+            dimension.ranges = dimension.ranges.map((range, index) => {
+                if (index == rangeIndex) return percent;
+                if (index < rangeIndex) return range > percent ? percent : range;
+                if (index > rangeIndex) return range < percent ? percent : range;
+            })
+        }
 
         mModelController.updateDimension(dimension);
 

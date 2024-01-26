@@ -1,3 +1,9 @@
+export const NO_LEVEL_ID = "no_level";
+export const DIMENSION_RANGE_V1 = 'range_top';
+export const DIMENSION_RANGE_V2 = 'range_bottom';
+
+export const DIMENSION_SETTINGS_HEIGHT = 100;
+
 export const Buttons = {
     CURSOR_BUTTON: "Cursor",
     BRUSH_BUTTON: "Brush",
@@ -10,6 +16,10 @@ export const Buttons = {
     UPLOAD: "Upload",
     SPINE_BRUSH_BUTTON: "Spine",
     ANGLE_BRUSH_BUTTON: "Angle",
+}
+
+export const FdlButtons = {
+    ADD: "Add",
 }
 
 export const Size = {
@@ -53,11 +63,6 @@ export const DimensionType = {
     CONTINUOUS: 'continuous',
 }
 
-export const DimensionValueId = {
-    V1: "v1",
-    V2: "v2",
-}
-
 export const Tab = {
     PARENT: "parent",
     LEGEND: "legend",
@@ -70,25 +75,22 @@ export const FdlMode = {
     LEGEND: "legend",
 }
 
-export const AxisPositions = {
-    DIMENSION_X: 10,
-    LEVEL_X: 20,
-}
-
 export const DimensionLabels = {};
-DimensionLabels[DimensionType.DISCRETE] = 'disc';
-DimensionLabels[DimensionType.CONTINUOUS] = 'cont';
+DimensionLabels[DimensionType.DISCRETE] = 'Discrete';
+DimensionLabels[DimensionType.CONTINUOUS] = 'Continuous';
 
 export const ChannelLabels = {};
-ChannelLabels[ChannelType.FORM] = 'form';
-ChannelLabels[ChannelType.COLOR] = 'color';
-ChannelLabels[ChannelType.SIZE] = 'size';
-ChannelLabels[ChannelType.ANGLE] = 'angle';
-ChannelLabels[ChannelType.POSITION] = 'pos';
+ChannelLabels[ChannelType.FORM] = 'Form';
+ChannelLabels[ChannelType.COLOR] = 'Color';
+ChannelLabels[ChannelType.SIZE] = 'Size';
+ChannelLabels[ChannelType.ANGLE] = 'Angle';
+ChannelLabels[ChannelType.POSITION] = 'Position';
 
-export const Decay = {
+export const SimulationValues = {
     ALPHA: .0005,
     VELOCITY: 0.7,
+    STRENGTH_X: 0.05,
+    STRENGTH_COLLIDE: 1,
 }
 
 export const DropDown = {

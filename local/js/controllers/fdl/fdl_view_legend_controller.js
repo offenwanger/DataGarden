@@ -1,71 +1,91 @@
-import { AxisPositions, ChannelLabels, Decay, DimensionLabels, DimensionType, DimensionValueId, FdlInteraction, Size } from "../../constants.js";
+import { DIMENSION_RANGE_V1, DIMENSION_RANGE_V2, SimulationValues, DimensionType, FdlButtons, FdlInteraction, Padding, Size } from "../../constants.js";
 import { Data } from "../../data_structs.js";
 import { DataUtil } from "../../utils/data_util.js";
 import { IdUtil } from "../../utils/id_util.js";
 import { VectorUtil } from "../../utils/vector_util.js";
 
 export function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, mColorMap) {
-    const PADDING = 10;
-
-    const ADD_BUTTON_ID = 'add_button';
-
     let mAddDimensionCallback = () => { };
     let mClickDimensionCallback = () => { };
 
-    let mZoomTransform = d3.zoomIdentity.translate(0, 300);
+    let mZoomTransform = d3.zoomIdentity.translate(0, 0);
 
     let mHighlightIds = [];
     let mSelectionIds = [];
 
     let mDimensions = [];
     let mLevels = [];
-    let mAddButton = { id: ADD_BUTTON_ID, x: 0, y: 0 };
+    let mAddButton = { id: FdlButtons.ADD, x: 0, y: 0 };
 
     let mYPositions = [];
 
     let mSimulation = d3.forceSimulation()
-        .alphaDecay(Decay.ALPHA)
-        .velocityDecay(Decay.VELOCITY)
+        .alphaDecay(SimulationValues.ALPHA)
+        .velocityDecay(SimulationValues.VELOCITY)
         .alpha(0.3)
         .on("tick", () => {
-            mSimulation.nodes().forEach(n => {
-                let id = n.id;
-                if (id == DimensionValueId.V1 || id == DimensionValueId.V2) id = n.dimension + n.id;
-                n.y += (mYPositions[id] - n.y) * mSimulation.alpha();
+            allItems().forEach(n => {
+                if (!n.x) n.x = 0;
+                if (!n.y) n.y = 0;
+
+                if (n.yTarget === 0 || n.yTarget) {
+                    n.y += (n.yTarget - n.y) * mSimulation.alpha();
+                }
+
+                if (n.xTarget === 0 || n.xTarget) {
+                    n.x += (n.xTarget - n.x) * mSimulation.alpha();
+                }
             });
             draw();
-        })
-        .stop();
+        }).stop();
 
     function updateSimulationData(data, model) {
         mDimensions = data.filter(d => IdUtil.isType(d.id, Data.Dimension));
         mLevels = data.filter(d => IdUtil.isType(d.id, Data.Level) ||
-            d.id == DimensionValueId.V2 ||
-            d.id == DimensionValueId.V1);
-        mSimulation.nodes(mDimensions.concat(mLevels).concat([mAddButton]), (d) => d.id);
+            d.id == DIMENSION_RANGE_V2 ||
+            d.id == DIMENSION_RANGE_V1);
 
+        setYPositions(model);
+        resetTargets();
+
+        mSimulation.alphaTarget(0.3).restart();
+    }
+
+
+    function setYPositions(model) {
         mYPositions = [];
-        let curYPos = 0;
+        let curYPos = 10;
         let dimensions = model.getDimensions();
         dimensions.forEach(dimension => {
             mYPositions[dimension.id] = curYPos;
-            curYPos += Size.DIMENSION_SIZE + PADDING;
+            curYPos += Size.DIMENSION_SIZE + Padding.LEVEL;
             if (dimension.type == DimensionType.DISCRETE) {
                 dimension.levels.forEach(level => {
                     mYPositions[level.id] = curYPos;
-                    curYPos += Size.LEVEL_SIZE + PADDING;
+                    curYPos += Size.LEVEL_SIZE + Padding.LEVEL;
                 });
             } else if (dimension.type == DimensionType.CONTINUOUS) {
-                mYPositions[dimension.id + DimensionValueId.V1] = curYPos;
-                curYPos += Size.LEVEL_SIZE + PADDING;
-                mYPositions[dimension.id + DimensionValueId.V2] = curYPos;
-                curYPos += Size.LEVEL_SIZE + PADDING;
+                mYPositions[dimension.id + DIMENSION_RANGE_V1] = curYPos;
+                curYPos += Size.LEVEL_SIZE + Padding.LEVEL;
+                mYPositions[dimension.id + DIMENSION_RANGE_V2] = curYPos;
+                curYPos += Size.LEVEL_SIZE + Padding.LEVEL;
             }
         });
+        mYPositions[FdlButtons.ADD] = curYPos;
+    }
 
-        mYPositions[ADD_BUTTON_ID] = curYPos;
+    function resetTargets() {
+        allItems().forEach(item => {
+            let id = item.id;
+            if (item.id == DIMENSION_RANGE_V1 || item.id == DIMENSION_RANGE_V2) id = item.dimension + item.id;
+            item.yTarget = mYPositions[id];
 
-        mSimulation.alphaTarget(0.3).restart();
+            if (IdUtil.isType(id, Data.Level) || item.id == DIMENSION_RANGE_V1 || item.id == DIMENSION_RANGE_V2) {
+                item.xTarget = 20;
+            } else if (IdUtil.isType(id, Data.Dimension)) {
+                item.xTarget = 10;
+            }
+        });
     }
 
     function onHighlight(highlightedIds) {
@@ -82,9 +102,7 @@ export function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
         mDrawingUtil.reset(mZoomTransform);
 
         mDimensions.forEach(dimension => {
-            let dimensionString = dimension.name +
-                " [" + DimensionLabels[dimension.type] + "][" +
-                ChannelLabels[dimension.channel] + "][T" + dimension.tier + "]";
+            let dimensionString = dimension.name;
             mDrawingUtil.drawStringNode({
                 x: dimension.x,
                 y: dimension.y,
@@ -110,13 +128,13 @@ export function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
         })
 
         mDrawingUtil.drawStringNode({
-            x: AxisPositions.DIMENSION_X,
+            x: Padding.LEVEL,
             y: mAddButton.y,
             label: "Add Dimension +",
             height: Size.DIMENSION_SIZE,
-            shadow: mHighlightIds.includes(ADD_BUTTON_ID),
-            code: mCodeUtil.getCode(ADD_BUTTON_ID),
-            outline: mSelectionIds.includes(ADD_BUTTON_ID) ? mColorMap(ADD_BUTTON_ID) : null,
+            shadow: mHighlightIds.includes(FdlButtons.ADD),
+            code: mCodeUtil.getCode(FdlButtons.ADD),
+            outline: mSelectionIds.includes(FdlButtons.ADD) ? mColorMap(FdlButtons.ADD) : null,
         });
 
     }
@@ -134,14 +152,10 @@ export function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
         let target = (Array.isArray(interaction.target) ? interaction.target : [interaction.target])
             .map(target => target.id ? target.id : target);
         let targetTiles = mDimensions.concat(mLevels).filter(n => target.includes(n.id));
-        let remainingTiles = mDimensions.concat(mLevels).filter(n => !target.includes(n.id));
         targetTiles.forEach(tile => {
             tile.startY = tile.y;
             tile.interacting = true;
         });
-
-        mSimulation.nodes(remainingTiles);
-
     }
 
     function interactionDrag(interaction, modelCoords) {
@@ -151,7 +165,7 @@ export function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
         let targetTiles = mDimensions.concat(mLevels).filter(n => target.includes(n.id));
         let dist = VectorUtil.subtract(modelCoords, interaction.start);
         targetTiles.forEach(tile => {
-            tile.y = tile.startY + dist.y;
+            tile.targetY = tile.startY + dist.y;
         });
     }
 
@@ -159,7 +173,7 @@ export function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
         if (interaction.type == FdlInteraction.SELECTION) {
             if (VectorUtil.dist(interaction.start, modelCoords) < 5) {
                 // Handle Click
-                if (interaction.endTarget.id == ADD_BUTTON_ID) {
+                if (interaction.endTarget.id == FdlButtons.ADD) {
                     mAddDimensionCallback();
                 } else if (IdUtil.isType(interaction.endTarget.id, Data.Dimension)) {
                     mClickDimensionCallback(interaction.endTarget.id)
@@ -172,8 +186,6 @@ export function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
                     tile.startY = null;
                     tile.interacting = null;
                 });
-
-                mSimulation.nodes(mDimensions.concat(mLevels).concat([mAddButton]));
             }
         } else if (interaction.type == FdlInteraction.LASSO) {
             mOverlayUtil.reset(mZoomTransform);
@@ -181,6 +193,8 @@ export function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
             let selectedIds = mDimensions.concat(mLevels).filter(obj => mOverlayUtil.covered(obj)).map(n => n.id);
             return selectedIds;
         } else { console.error("Interaction not supported!"); return; }
+
+        resetTargets();
     }
 
     function pan(x, y) {
@@ -210,6 +224,10 @@ export function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
         }
     }
 
+    function allItems() {
+        return mDimensions.concat(mLevels).concat([mAddButton]);
+    }
+
     return {
         updateSimulationData,
         start,
@@ -221,6 +239,7 @@ export function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
         zoom,
         onHighlight,
         onSelection,
+        onResize: () => { },
         getTranslate,
         getScale,
         getZoomTransform,

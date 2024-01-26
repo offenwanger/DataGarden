@@ -32,7 +32,7 @@ describe('Test Main - Integration Test', function () {
 
         it('should the right level for a deep element', function () {
             let model = utility.makeModel();
-            expect(model.getElements().map(e => DataUtil.getElementLevel(e, model))).to.eql([0, 0, 0, 1, 1, 1, 1, 2, 2]);
+            expect(model.getElements().map(e => DataUtil.getElementLevel(e, model))).to.eql([0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2]);
         });
     })
 

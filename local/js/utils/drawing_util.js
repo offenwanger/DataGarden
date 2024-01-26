@@ -57,19 +57,6 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
         ctx.restore();
     }
 
-    function drawTextContainerRect(x, y, width, height, lines, code = null) {
-        drawContainerRect(x, y, width, height, code);
-
-        ctx.save();
-        ctx.fillStyle = "black";
-        let fontSize = height / lines.length - 2 * lines.length;
-        ctx.font = fontSize + "px DefaultFont";
-        lines.forEach((line, index) => {
-            ctx.fillText(line, x + 10, y + (fontSize + 2) * (index + 1));
-        })
-        ctx.restore();
-    }
-
     function highlightContainerRect(x, y, width, height) {
         intfCtx.save();
         intfCtx.translate(x, y);
@@ -245,46 +232,19 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
         }
     }
 
-    function drawLines(lines, color, alpha) {
+    function drawLine({ x1, y1, x2, y2, width, color, dash = false, }) {
         ctx.save();
 
-        ctx.globalAlpha = alpha;
-        ctx.strokeStyle = color;
         ctx.beginPath();
-        lines.forEach((line) => {
-            ctx.moveTo(line[0].x, line[0].y);
-            ctx.lineTo(line[1].x, line[1].y);
-        });
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+
+        if (dash) ctx.setLineDash([dash / mScale, (dash * 2) / mScale]);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
         ctx.stroke();
 
         ctx.restore();
-    }
-
-    function drawLink(start, end, r, color, alpha, code) {
-        let triangle = getTrianglePointer(start, end, r, 10);
-        ctx.save();
-
-        ctx.globalAlpha = alpha;
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.moveTo(triangle[0].x, triangle[0].y);
-        ctx.lineTo(triangle[1].x, triangle[1].y);
-        ctx.lineTo(triangle[2].x, triangle[2].y);
-        ctx.fill();
-
-        ctx.restore();
-
-        // Interaction //
-        if (code) {
-            intCtx.save();
-            intCtx.fillStyle = code;
-            intCtx.beginPath();
-            intCtx.moveTo(triangle[0].x, triangle[0].y);
-            intCtx.lineTo(triangle[1].x, triangle[1].y);
-            intCtx.lineTo(triangle[2].x, triangle[2].y);
-            intCtx.fill();
-            intCtx.restore();
-        }
     }
 
     function drawBubble({ outline, pointer, color, alpha, shadow, code }) {
@@ -645,35 +605,81 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
         ctx.restore();
     }
 
-    const TEXT_HORIZONTAL_PADDING = 10;
-    const TEXT_FONT_STRING = "px DefaultFont";
-    const TEXT_SHRINK = 0.8;
-    function drawStringNode({ x, y, label, height, shadow = false, outline = null, code = null, background = 'white' }) {
+    function drawRect({ x, y, height, width, color, shadow = false, code = null }) {
         ctx.save();
-        ctx.beginPath();
-        ctx.rect(x, y, measureStringNode(label, height), height);
+        ctx.beginPath()
+        ctx.rect(x, y, width, height);
 
-        if (outline) {
-            ctx.lineWidth = 5;
-            ctx.strokeStyle = outline;
-            ctx.stroke();
-        }
-
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = 'black';
-        ctx.stroke();
         if (shadow) {
             ctx.shadowColor = "black";
             ctx.shadowOffsetX = 1;
             ctx.shadowOffsetY = 1;
             ctx.shadowBlur = 3;
         }
-        ctx.fillStyle = background;
+
+        ctx.fillStyle = color;
         ctx.fill();
         ctx.restore();
 
+        if (code) {
+            intCtx.save();
+            intCtx.fillStyle = code;
+            intCtx.beginPath();
+            intCtx.rect(x, y, width, height);
+            intCtx.fill();
+            intCtx.restore();
+        }
+    }
+
+    const TEXT_HORIZONTAL_PADDING = 10;
+    const TEXT_FONT_STRING = "px DefaultFont";
+    const TEXT_SHRINK = 0.8;
+    function drawStringNode({ label, x, y, height, color = 'black', shadow = false, outline = null, box = true, background = 'white', code = null }) {
+        let width = measureStringNode(label, height);
+        if (box) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(x, y, width, height);
+
+            if (outline) {
+                ctx.lineWidth = 5;
+                ctx.strokeStyle = outline;
+                ctx.stroke();
+            }
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'black';
+            ctx.stroke();
+
+            if (shadow) {
+                ctx.shadowColor = "black";
+                ctx.shadowOffsetX = 1;
+                ctx.shadowOffsetY = 1;
+                ctx.shadowBlur = 3;
+            }
+            ctx.fillStyle = background;
+            ctx.fill();
+            ctx.restore();
+        }
+
         ctx.save();
-        ctx.fillStyle = 'black';
+        if (!box) {
+            if (outline) {
+                ctx.save();
+                ctx.strokeStyle = outline;
+                ctx.lineWidth = 4;
+                ctx.strokeText(label, x + TEXT_HORIZONTAL_PADDING, y + height / 2);
+                ctx.restore();
+            }
+
+            if (shadow) {
+                ctx.shadowColor = "black";
+                ctx.shadowOffsetX = 1;
+                ctx.shadowOffsetY = 1;
+                ctx.shadowBlur = 3;
+            }
+        }
+
+        ctx.fillStyle = color;
         ctx.textBaseline = 'middle';
         ctx.textAlign = 'left'
         ctx.font = Math.round(height * TEXT_SHRINK) + TEXT_FONT_STRING;
@@ -685,62 +691,10 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
             intCtx.save();
             intCtx.fillStyle = code;
             intCtx.beginPath();
-            intCtx.rect(x, y, measureStringNode(label, height), height);
+            intCtx.rect(x, y, width, height);
             intCtx.fill();
             intCtx.restore();
         }
-    }
-
-    function measureStringNode(text, height) {
-        ctx.save();
-        ctx.font = Math.round(height * TEXT_SHRINK) + TEXT_FONT_STRING;
-        let width = ctx.measureText(text).width + TEXT_HORIZONTAL_PADDING * 2;
-        ctx.restore();
-        return width;
-    }
-
-    const LABEL_FONT_HEIGHT = 10;
-    function drawAxis({ start, end, startLabel, endLabel }) {
-        ctx.save();
-        ctx.strokeStyle = "black";
-        ctx.beginPath();
-        ctx.moveTo(start.x, start.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.stroke();
-        ctx.restore();
-
-        ctx.save();
-        ctx.fillStyle = 'black';
-        ctx.textBaseline = 'middle';
-        ctx.textAlign = 'left'
-        ctx.font = LABEL_FONT_HEIGHT + TEXT_FONT_STRING;
-        ctx.fillText(startLabel, start.x, start.y);
-        ctx.fillText(endLabel, end.x, end.y);
-        ctx.restore();
-    }
-
-    function drawLinkLine({ start, end }) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(start.x, start.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.setLineDash([5 / mScale, 10 / mScale]);
-        ctx.strokeStyle = "white";
-        ctx.lineWidth = 2 / mScale;
-        ctx.stroke();
-        ctx.strokeStyle = "black";
-        ctx.lineWidth = 1 / mScale;
-        ctx.stroke();
-        ctx.restore();
-    }
-
-    function drawCircleTarget({ cx, cy, r, code }) {
-        intCtx.save();
-        intCtx.fillStyle = code;
-        intCtx.beginPath();
-        intCtx.arc(cx, cy, r, 0, 2 * Math.PI);
-        intCtx.fill();
-        intCtx.restore();
     }
 
     function drawText({ x, y, height, text, color = "black" }) {
@@ -754,11 +708,32 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
         ctx.restore();
     }
 
+    function measureStringNode(text, height) {
+        ctx.save();
+        ctx.font = Math.round(height * TEXT_SHRINK) + TEXT_FONT_STRING;
+        let width = ctx.measureText(text).width + TEXT_HORIZONTAL_PADDING * 2;
+        ctx.restore();
+        return width;
+    }
+
+    function drawCircleTarget({ cx, cy, r, code }) {
+        intCtx.save();
+        intCtx.fillStyle = code;
+        intCtx.beginPath();
+        intCtx.arc(cx, cy, r, 0, 2 * Math.PI);
+        intCtx.fill();
+        intCtx.restore();
+    }
+
+    function drawImage({ x, y, height, width, url }) {
+        if (!ImageHelper[url]) { console.error("Image not preloaded"); return; }
+        ctx.drawImage(ImageHelper[url], x, y, width, height);
+    }
+
     return {
         reset,
         resetInterface,
         drawContainerRect,
-        drawTextContainerRect,
         highlightContainerRect,
         highlightCircle,
         drawContainerRectSplitInteraction,
@@ -766,10 +741,9 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
         drawColorCircle,
         drawThumbnail,
         drawThumbnailCircle,
-        drawLines,
+        drawLine,
         drawStroke,
         drawConnector,
-        drawLink,
         drawBubble,
         drawTreeBubble,
         highlightBubble,
@@ -781,11 +755,23 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
         drawAngle,
         drawInterfaceSelectionBubble,
         drawBand,
+        drawRect,
         drawStringNode,
         measureStringNode,
-        drawAxis,
-        drawLinkLine,
         drawCircleTarget,
         drawText,
+        drawImage,
     }
 }
+
+const ImageHelper = {}
+function loadImage(url) {
+    ImageHelper[url] = new Image();
+    ImageHelper[url].src = url;
+}
+loadImage("img/deg45_neg.png")
+loadImage("img/deg45_pos.png")
+loadImage("img/deg90_neg.png")
+loadImage("img/deg90_pos.png")
+loadImage("img/deg135_neg.png")
+loadImage("img/deg135_pos.png")

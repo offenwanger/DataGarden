@@ -1,4 +1,4 @@
-import { Buttons, ContextButtons, DimensionValueId, DropDown, FdlMode, Tab } from "../constants.js";
+import { Buttons, ContextButtons, DIMENSION_RANGE_V1, DIMENSION_RANGE_V2, DropDown, FdlMode, Tab } from "../constants.js";
 import { DataModel } from "../data_model.js";
 import { Data } from "../data_structs.js";
 import { FileHandler } from "../file_handler.js";
@@ -24,8 +24,11 @@ export function DashboardController() {
 
     let mCanvasController = new CanvasController(mColorMap);
     let mFdlViewController = new FdlViewController(mColorMap);
-    let mTableViewController = new TableViewController(mColorMap); mTableViewController.hide();
+    let mTableViewController = new TableViewController(mColorMap);
     let mTabController = new TabController();
+
+    let mActiveTab = mFdlViewController;
+    mTableViewController.hide();
 
     let mMenuController = new MenuController();
     let mContextMenu = new ContextMenu(d3.select('#interface-svg'));
@@ -40,11 +43,10 @@ export function DashboardController() {
     let mModel = new DataModel();
 
     let mCanvasPercent = 0.5;
-    let mWidth = 0;
+    let mWidth = 1;
+    let mHeight = 1;
 
     activateStateButtons();
-
-    let mFdlActive = true;
 
     let mAddDimensionCallback = () => { };
     let mDeleteCallback = () => { };
@@ -67,8 +69,7 @@ export function DashboardController() {
         mTabController.onModelUpdate(model);
         // main controllers
         mCanvasController.onModelUpdate(model);
-        mFdlViewController.onModelUpdate(model);
-        mTableViewController.onModelUpdate(model);
+        mActiveTab.onModelUpdate(model);
         // minor controllers
         mDropdownInput.onModelUpdate(model);
         mSelection = mSelection.filter(id => {
@@ -80,12 +81,13 @@ export function DashboardController() {
     }
 
     function onResize(width, height) {
+        mMenuController.onResize(width, height);
         mCanvasController.onResize(mCanvasPercent * width, height);
         mTabController.onResize((1 - mCanvasPercent) * width, TAB_HEIGHT);
-        mFdlViewController.onResize((1 - mCanvasPercent) * width, height - TAB_HEIGHT);
-        mMenuController.onResize(width, height);
-        mTableViewController.onResize((1 - mCanvasPercent) * width, TAB_HEIGHT, height);
+        mActiveTab.onResize((1 - mCanvasPercent) * width, height - TAB_HEIGHT);
+
         mWidth = width;
+        mHeight = height;
     }
 
     function onPointerDown(screenCoords) {
@@ -94,7 +96,7 @@ export function DashboardController() {
             mCanvasController.onPointerDown(screenCoords, mSystemState);
         } else if (screenCoords.y < TAB_HEIGHT) {
             mTabController.onPointerDown(screenCoords, mSystemState)
-        } else if (mFdlActive) {
+        } else if (mActiveTab == mFdlViewController) {
             mFdlViewController.onPointerDown(screenCoords, mSystemState)
         } else {
             // The table is active and will handle it's own mouse events. I hope.
@@ -171,9 +173,9 @@ export function DashboardController() {
         if (itemId.dimension) {
             let dimension = mModel.getDimension(itemId.dimension);
             let domain = dimension.domain;
-            if (itemId.id == DimensionValueId.V2) {
+            if (itemId.id == DIMENSION_RANGE_V2) {
                 domain[1] = text;
-            } else if (itemId.id == DimensionValueId.V1) {
+            } else if (itemId.id == DIMENSION_RANGE_V1) {
                 domain[0] = text;
             } else { console.error("Invalid id", itemId); return; }
             mUpdateDimensionDomainCallback(itemId.dimension, domain);
@@ -201,14 +203,18 @@ export function DashboardController() {
     mTabController.setSetTabCallback(tabId => {
         mTabController.setActiveTab(tabId);
         mDimentionViewBackButton.hide();
+        mActiveTab.hide();
 
         if (tabId == Tab.TABLE) {
-            mFdlViewController.hide();
-            mTableViewController.show();
+            mActiveTab = mTableViewController;
         } else {
-            mFdlViewController.show();
-            mTableViewController.hide();
+            mActiveTab = mFdlViewController;
         }
+
+        mActiveTab.onModelUpdate(mModel);
+        mActiveTab.onResize((1 - mCanvasPercent) * mWidth, mHeight - TAB_HEIGHT);
+        mActiveTab.onSelection(mSelection);
+        mActiveTab.show();
 
         if (tabId == Tab.PARENT) {
             mFdlViewController.setMode(FdlMode.PARENT);
@@ -224,8 +230,7 @@ export function DashboardController() {
     mTableViewController.setHighlightCallback(onHighlight)
     function onHighlight(highlightedIds) {
         mCanvasController.onHighlight(highlightedIds);
-        mFdlViewController.onHighlight(highlightedIds);
-        mTableViewController.onHighlight(highlightedIds);
+        mActiveTab.onHighlight(highlightedIds);
     }
 
     mCanvasController.setSelectionCallback(onSelection)
@@ -234,8 +239,7 @@ export function DashboardController() {
     function onSelection(selectedIds) {
         mSelection = selectedIds;
         mCanvasController.onSelection(selectedIds);
-        mFdlViewController.onSelection(selectedIds);
-        mTableViewController.onSelection(selectedIds);
+        mActiveTab.onSelection(selectedIds);
     }
 
     mCanvasController.setContextMenuCallback(onContextMenu);
@@ -245,8 +249,7 @@ export function DashboardController() {
         if (!selection.some(id =>
             IdUtil.isType(id, Data.Stroke)
             || IdUtil.isType(id, Data.Element)
-            || IdUtil.isType(id, Data.Level)
-            || IdUtil.isType(id, Data.Dimension))) {
+            || IdUtil.isType(id, Data.Level))) {
             // if it's not one of the above, there's no context menu.  
             return;
         }
@@ -306,7 +309,7 @@ export function DashboardController() {
     mFdlViewController.setEditDomainCallback((dimensionId, minMax, x, y, width, height) => {
         let dimension = mModel.getDimension(dimensionId);
         mTextInput.show({ dimension: dimensionId, id: minMax },
-            minMax == DimensionValueId.V1 ? dimension.domain[0] : dimension.domain[1],
+            minMax == DIMENSION_RANGE_V1 ? dimension.domain[0] : dimension.domain[1],
             x, y, width, height);
     });
 

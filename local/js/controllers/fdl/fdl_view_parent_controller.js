@@ -1,4 +1,4 @@
-import { Decay, FdlInteraction, Padding, Size } from "../../constants.js";
+import { SimulationValues, FdlInteraction, Padding, Size } from "../../constants.js";
 import { DataModel } from "../../data_model.js";
 import { Data } from "../../data_structs.js";
 import { DataUtil } from "../../utils/data_util.js";
@@ -27,18 +27,16 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
     let mNodes = [];
     let mSimluationTree = null;
     let mSimulation = d3.forceSimulation()
-        .alphaDecay(Decay.ALPHA)
-        .velocityDecay(Decay.VELOCITY)
+        .alphaDecay(SimulationValues.ALPHA)
+        .velocityDecay(SimulationValues.VELOCITY)
         .alpha(0.3)
         .on("tick", () => {
             mNodes.forEach(node => {
-                if (node.targetX && node.targetY) {
-                    node.x += (node.targetX - node.x) * mSimulation.alpha();
-                    node.y += (node.targetY - node.y) * mSimulation.alpha();
-                } else {
-                    node.x += (node.treeX - node.x) * mSimulation.alpha();
-                    node.y += (node.treeY - node.y) * mSimulation.alpha();
-                }
+                if (!node.x) node.x = 0;
+                if (!node.y) node.y = 0;
+
+                if (node.targetX) node.x += (node.targetX - node.x) * mSimulation.alpha();
+                if (node.targetY) node.y += (node.targetY - node.y) * mSimulation.alpha();
             })
             draw();
         })
@@ -130,20 +128,23 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
         mModel = model;
 
         mNodes = data.filter(i => IdUtil.isType(i.id, Data.Element));
-        mSimulation.nodes(mNodes, (d) => d.id)
 
         let hierarchy = d3.hierarchy(mModel.getTree())
         mSimluationTree = d3.tree().nodeSize([(Size.ELEMENT_NODE_SIZE + Padding.NODE) * 2, DIVISION_SIZE])(hierarchy);
+        resetTargets();
 
+        mSimulation.alphaTarget(0.3).restart();
+    }
+
+    function resetTargets() {
         mNodes.forEach(node => {
             mSimluationTree.each((n) => {
                 if (n.data.id == node.id) {
-                    node.treeX = n.x;
-                    node.treeY = n.y;
+                    node.targetX = n.x;
+                    node.targetY = n.y;
                 }
             })
         })
-        mSimulation.alphaTarget(0.3).restart();
     }
 
     function onHighlight(highlightedIds) {
@@ -182,9 +183,6 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
             node.startY = node.y;
             node.interacting = true;
         });
-
-        let remainingNodes = mNodes.filter(n => !interaction.target.includes(n.id));
-        mSimulation.nodes(remainingNodes);
     }
 
     function interactionDrag(interaction, modelCoords) {
@@ -215,19 +213,6 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
 
     function interactionEnd(interaction, modelCoords) {
         if (interaction.type == FdlInteraction.SELECTION) {
-            let dist = VectorUtil.subtract(modelCoords, interaction.start);
-            mDraggedNodes.forEach(node => {
-                if (!interaction.endTarget) {
-                    node.x = node.startX + dist.x;
-                    node.y = node.startY + dist.y;
-                }
-                node.startX = null;
-                node.startY = null;
-                node.targetX = null;
-                node.targetY = null;
-                node.interacting = null;
-            });
-
             if (interaction.endTarget && IdUtil.isType(interaction.endTarget.id, Data.Element)) {
                 mParentUpdateCallback(mDraggedNodes.map(n => n.id), interaction.endTarget.id);
             } else if (!interaction.endTarget) {
@@ -236,9 +221,14 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
                 }
             }
 
+            mDraggedNodes.forEach(node => {
+                node.startX = null;
+                node.startY = null;
+                node.interacting = null;
+            });
             mDraggedNodes = [];
+            resetTargets();
             mTargetLock = null;
-            mSimulation.nodes(mNodes);
         } else if (interaction.type == FdlInteraction.LASSO) {
             mOverlayUtil.reset(mZoomTransform);
             mOverlayUtil.drawBubble(interaction.path);
@@ -281,6 +271,7 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
         interactionEnd,
         onHighlight,
         onSelection,
+        onResize: () => { },
         getScale,
         getTranslate,
         getZoomTransform,

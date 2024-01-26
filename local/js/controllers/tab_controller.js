@@ -187,6 +187,7 @@ export function TabController() {
         onPointerMove,
         onPointerUp,
         setActiveTab,
+        getActiveTab: () => mActiveTab,
         setDimensionTab,
         resetDimensionTab,
         getTabBB: getTabBBExternal,

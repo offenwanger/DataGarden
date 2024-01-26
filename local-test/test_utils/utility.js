@@ -1,3 +1,4 @@
+import { Tab } from '../../local/js/constants.js';
 import { DataModel } from '../../local/js/data_model.js';
 import { Data } from '../../local/js/data_structs.js';
 
@@ -71,41 +72,46 @@ export function makeModel() {
     return dataModel;
 }
 
-export function drawStroke(integrationEnv, path) {
+export function drawStroke(path) {
     d3.getCallbacks()['keydown']({ key: "d" });
-    drag(integrationEnv, "#canvas-view-container", path);
+    drag("#canvas-view-container", path);
     d3.getCallbacks()['keyup']({ key: "d" });
 }
 
-export function drawSelection(integrationEnv, path) {
+export function drawSelection(path) {
     d3.getCallbacks()['keydown']({ key: "s" });
-    drag(integrationEnv, "#canvas-view-container", path);
+    drag("#canvas-view-container", path);
     d3.getCallbacks()['keyup']({ key: "s" });
 }
 
-export function drag(integrationEnv, id, path) {
-    let offset = { x: 0, y: 0 }
-    if (id == "#fdl-view-container") offset.x += window.innerWidth / 2;
-
+export function drag(id, path) {
+    let offset = getOffset(id);
     let eventStart = new Event(path[0].x + offset.x, path[0].y + offset.y)
     d3.getCallbacks()['pointermove'](eventStart);
+    d3.tick();
     d3.select('#interface-container').select('#interface-svg').getCallbacks()['pointerdown'](eventStart);
+    d3.tick();
     path.forEach(p => {
         let event = new Event(p.x + offset.x, p.y + offset.y)
         d3.getCallbacks()['pointermove'](event);
+        d3.tick();
     })
     let eventEnd = new Event(path[path.length - 1].x + offset.x, path[path.length - 1].y + offset.y);
     d3.getCallbacks()['pointerup'](eventEnd);
+    d3.tick();
     // this last simulates the actual input that a mouse would give
     d3.getCallbacks()['pointermove'](eventEnd);
+    d3.tick();
+
 }
 
-export function click(integrationEnv, id, pos) {
-    let offset = { x: 0, y: 0 }
-    if (id == "#fdl-view-container") offset.x += window.innerWidth / 2;
-
+export function click(id, pos) {
+    let offset = getOffset(id);
     d3.select('#interface-container').select('#interface-svg').getCallbacks()['pointerdown'](new Event(pos.x + offset.x, pos.y + offset.y));
     d3.getCallbacks()['pointerup'](new Event(pos.x + offset.x, pos.y + offset.y));
+    // make time pass
+    Date.time += 501;
+    for (let i = 0; i < 3; i++) { d3.tick() }
 }
 
 export function mouseOver(integrationEnv, id, point) {
@@ -158,11 +164,11 @@ export function longPress(integrationEnv, id, x, y) {
     d3.getCallbacks()['pointerup'](new Event(x + offset.x, y + offset.y));
 }
 
-export function clickMenuButton(integrationEnv, id) {
+export function clickMenuButton(id) {
     d3.select('#interface-container').select('#interface-svg').select(id).select('.button-overlay').getCallbacks()['pointerup']()
 }
 
-export function clickContextMenuButton(integrationEnv, buttonId) {
+export function clickContextMenuButton(buttonId) {
     let button = d3.select("#context-menu").select(buttonId);
     let pointerdown = button.getCallbacks()['pointerdown'];
     let pointerup = button.getCallbacks()['pointerup'];
@@ -170,12 +176,12 @@ export function clickContextMenuButton(integrationEnv, buttonId) {
     pointerup.call(button, new Event());
 }
 
-export async function undo(integrationEnv) {
+export async function undo() {
     await d3.getCallbacks()['keydown']({ ctrlKey: true, key: "z" });
     d3.getCallbacks()['keyup']({ ctrlKey: true, key: "z" });
 }
 
-export async function redo(integrationEnv) {
+export async function redo() {
     await d3.getCallbacks()['keydown']({ ctrlKey: true, key: "y" });
     d3.getCallbacks()['keyup']({ ctrlKey: true, key: "y" });
 }
@@ -186,8 +192,33 @@ export function getCanvas(view, layer) {
     return d3.select("#" + view + "-view").select('.canvas-container').select('.' + layer + '-canvas');
 }
 
-export function clickSelect(integrationEnv, id, pos) {
+export function clickSelect(id, pos) {
     d3.getCallbacks()['keydown']({ key: "s" });
-    click(integrationEnv, id, pos);
+    click(id, pos);
     d3.getCallbacks()['keyup']({ key: "s" });
+}
+
+export function clickTab(id) {
+    let tabWidth = window.innerWidth / 2;
+    let tabOrder = [Tab.PARENT, Tab.LEGEND, Tab.TABLE]
+    click("#tab-view-container", { x: 50 + (tabOrder.indexOf(id) * tabWidth / tabOrder.length), y: 30 });
+}
+
+export function enterText(text) {
+    d3.select('#input-box').property('value', text);
+    d3.select('#input-box').getCallbacks()['change']();
+    d3.select('#input-box').getCallbacks()['blur']();
+}
+
+export function selectOption(value) {
+    d3.select('#dropdown-container').select('select').property('value', value);
+    let changeCallback = d3.select('#dropdown-container').select('select').getCallbacks()['change'];
+    changeCallback.call(d3.select('#dropdown-container').select('select'))
+}
+
+function getOffset(id) {
+    let offset = { x: 0, y: 0 }
+    if (id == "#fdl-view-container" || id == "#tab-view-container") offset.x += window.innerWidth / 2;
+    if (id == "#fdl-view-container") offset.y = 60;
+    return offset;
 }

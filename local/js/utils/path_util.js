@@ -8,10 +8,10 @@ export let PathUtil = function () {
     const PATH_PRECISION = 10; // pixels
     let mOverlayUtil = new OverlayUtil();
 
-    function translate(path, v) {
-        if (!ValUtil.isPath(path)) { console.error("Bad path", path); return path; }
-        if (!ValUtil.isCoord(v)) { console.error("Bad vector", v); return path; }
-        return path.map(p => {
+    function translate(points, v) {
+        if (!ValUtil.isPath(points)) { console.error("Bad path", points); return points; }
+        if (!ValUtil.isCoord(v)) { console.error("Bad vector", v); return points; }
+        return points.map(p => {
             return {
                 x: p.x + v.x,
                 y: p.y + v.y
@@ -27,14 +27,14 @@ export let PathUtil = function () {
         if (ValUtil.isPath(paths)) {
             paths = [paths];
         }
-        paths = paths.filter(path => {
-            if (ValUtil.isPath(path)) return true;
-            else { console.error("Bad Path", path); return false; }
+        paths = paths.filter(points => {
+            if (ValUtil.isPath(points)) return true;
+            else { console.error("Bad Path", points); return false; }
         })
         if (paths.length == 0) { console.error("No valid paths input"); return null };
 
-        let xs = paths.map(path => path.map(point => point.x)).flat();
-        let ys = paths.map(path => path.map(point => point.y)).flat();
+        let xs = paths.map(points => points.map(point => point.x)).flat();
+        let ys = paths.map(points => points.map(point => point.y)).flat();
         let x = Math.min(...xs);
         let y = Math.min(...ys);
         let width = Math.max(1, (Math.max(...xs) - x));
@@ -43,43 +43,12 @@ export let PathUtil = function () {
         return { x, y, height, width };
     }
 
-    let mLineGenerator;
-    function getLineGenerator() {
-        if (!mLineGenerator) {
-            mLineGenerator = d3.line()
-                .x((p) => p.x)
-                .y((p) => p.y);
-        }
-        return mLineGenerator;
-    }
-
-
-    function getPathD(points) {
-        if (!Array.isArray(points)) {
-            console.error("Bad point array for getPathD: ", points);
-            return "";
-        };
-
-        return getLineGenerator()(points);
-    }
-
     function getPathLength(points) {
-        let pathData = getPathData(points);
-        pathData.accessed = Date.now();
-
-        if (!pathData.length) {
-            let path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            path.setAttribute('d', getPathD(points));
-            pathData.length = path.getTotalLength();
+        let sum = 0;
+        for (let i = 1; i < points.length; i++) {
+            sum += VectorUtil.dist(points[i - 1], points[i]);
         }
-
-        return pathData.length;
-    }
-
-    function getSubpathLength(points) {
-        let path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute('d', getPathD(points));
-        return path.getTotalLength();
+        return sum;
     }
 
     function equalsPath(points1, points2) {
@@ -309,8 +278,8 @@ export let PathUtil = function () {
         }
     }
 
-    function getDistanceMetric(path, line) {
-        let distVal = path.map(p => {
+    function getDistanceMetric(points, line) {
+        let distVal = points.map(p => {
             let projection = VectorUtil.projectToLine(p, line[0], line[1]);
             let dist = VectorUtil.dist(projection, p);
             if (projection.t < 0) projection.t = Math.abs(projection.t) + 1;
@@ -318,7 +287,7 @@ export let PathUtil = function () {
                 dist *= projection.t;
             }
             return dist * dist;
-        }).reduce((sum, v) => sum + v, 0) / path.length;
+        }).reduce((sum, v) => sum + v, 0) / points.length;
         return distVal;
     }
 
@@ -369,10 +338,24 @@ export let PathUtil = function () {
         return pathData.metaPoints;
     }
 
-    function createMetaPoints(points) {
-        let path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute('d', getPathD(points));
+    function getPointAtLength(points, length) {
+        let sum = 0;
+        for (let i = 1; i < points.length; i++) {
+            let dist = VectorUtil.dist(points[i], points[i - 1]);
+            // doubled point, just ignore it.
+            if (dist == 0) continue;
+            if (length >= sum && length <= sum + dist) {
+                let p1 = points[i - 1];
+                let p2 = points[i];
+                let percent = (length - sum) / dist;
+                return VectorUtil.add(VectorUtil.scale(p1, 1 - percent), VectorUtil.scale(p2, percent));
+            } else {
+                sum += dist;
+            }
+        }
+    }
 
+    function createMetaPoints(points) {
         let pathLength = getPathLength(points);
 
         let metaPoints = [];
@@ -380,11 +363,11 @@ export let PathUtil = function () {
             let currLen = Math.min(scanLength, pathLength);
 
             // get the point
-            let point = path.getPointAtLength(currLen);
+            let point = getPointAtLength(points, currLen);
             metaPoints.push({
                 point: { x: point.x, y: point.y },
                 percent: currLen / pathLength,
-                normal: getNormal(point, currLen, pathLength, path)
+                normal: getNormal(point, currLen, pathLength, points)
             });
         }
 
@@ -395,12 +378,12 @@ export let PathUtil = function () {
             if (VectorUtil.dist(prevPointsStructure[i - 1].point, prevPointsStructure[i].point) < 0.75 * PATH_PRECISION) {
                 let percent = (prevPointsStructure[i - 1].percent + prevPointsStructure[i].percent) / 2;
                 let currLen = pathLength * percent;
-                let point = path.getPointAtLength(currLen);
+                let point = getPointAtLength(points, currLen);
 
                 metaPoints.push({
                     point: { x: point.x, y: point.y },
                     percent,
-                    normal: getNormal(point, currLen, pathLength, path)
+                    normal: getNormal(point, currLen, pathLength, points)
                 });
             }
 
@@ -410,11 +393,11 @@ export let PathUtil = function () {
         let originalPoints = [];
         for (let i = 0; i < points.length; i++) {
             let point = points[i];
-            let currLen = getSubpathLength(points.slice(0, i + 1));
+            let currLen = getPathLength(points.slice(0, i + 1));
             originalPoints.push({
                 point: { x: point.x, y: point.y },
                 percent: currLen / pathLength,
-                normal: getNormal(point, currLen, pathLength, path),
+                normal: getNormal(point, currLen, pathLength, points),
                 isOriginal: true
             });
         }
@@ -440,29 +423,18 @@ export let PathUtil = function () {
         return metaPoints;
     }
 
-    function getNormal(point, pointLen, pathLength, path) {
+    function getNormal(point, pointLen, pathLength, points) {
         let point1 = point;
         let point2;
         if (pointLen + 1 > pathLength) {
-            point1 = path.getPointAtLength(pointLen - 1);
+            point1 = getPointAtLength(points, pointLen - 1);
             point2 = point;
         } else {
-            point2 = path.getPointAtLength(pointLen + 1);
+            point2 = getPointAtLength(points, pointLen + 1);
         }
         let normal = VectorUtil.rotateRight(VectorUtil.normalize(VectorUtil.subtract(point2, point1)));
 
         return normal;
-    }
-
-
-    function getPointAtDistanceAlongVector(distance, vector, origin = { x: 0, y: 0 }) {
-        if (!origin || !DataUtil.isNumeric(origin.x) || !DataUtil.isNumeric(origin.y) || !DataUtil.isNumeric(distance)) {
-            console.error("Invalid values for getPointAtDistanceAlongVector: ", origin, distance);
-            return { x: 0, y: 0 };
-        }
-
-        let normalVector = VectorUtil.normalize(vector);
-        return { x: normalVector.x * distance + origin.x, y: normalVector.y * distance + origin.y };
     }
 
     function projectPointOntoLine(coords, point1, point2) {
@@ -507,7 +479,6 @@ export let PathUtil = function () {
         translate,
         getBoundingBox,
         getPathLength,
-        getSubpathLength,
         equalsPath,
         getPositionForPercent,
         getNormalForPercent,

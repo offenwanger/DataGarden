@@ -4,6 +4,7 @@ import { mockD3 } from "./mock_d3.js";
 import { mockJspreadsheet } from "./mock_jspreadsheet.js"
 import { mockServer } from "./mock_server.js"
 import { mockPicker } from "./mock_color_picker.js"
+import { createCanvas } from './mock_canvas.js';
 
 import { DataModel } from "../../local/js/data_model.js";
 
@@ -24,7 +25,7 @@ global.document = {
     },
     createElement(tag) {
         if (tag == 'canvas') {
-            return mockCanvas.createCanvas();
+            return createCanvas();
         } if (tag == 'a') {
             return { click: () => { } };
         } else if (tag == 'http://www.w3.org/2000/svg') {

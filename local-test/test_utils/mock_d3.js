@@ -1,3 +1,4 @@
+import { Size } from '../../local/js/constants.js';
 import { VectorUtil } from '../../local/js/utils/vector_util.js';
 import { createCanvas } from './mock_canvas.js';
 
@@ -55,6 +56,15 @@ function MockElement(type) {
         };
         return mAttrs[att];
     };
+    this.text = function (val = null) {
+        if (!val) {
+            return mAttrs['text'];
+        }
+        if (val !== null) {
+            mAttrs['text'] = val;
+            return this;
+        };
+    };
     this.html = function (html) {
         if (html) {
             this.innerHtml = html;
@@ -69,6 +79,13 @@ function MockElement(type) {
             return this;
         };
         return mStyles[style];
+    };
+    this.property = function (property, val = null) {
+        if (val !== null) {
+            mAttrs[property] = val
+            return this;
+        };
+        return mAttrs[property];
     };
     this.classed = function (name, isClass) {
         if (!name) return mClasses;
@@ -88,6 +105,9 @@ function MockElement(type) {
         return this;
     }
     this.lower = function () {
+        return this;
+    }
+    this.focus = function () {
         return this;
     }
     this.matches = function (selector) {
@@ -112,20 +132,24 @@ function MockElement(type) {
     }
     this.getBoundingClientRect = function () {
         let x = 0, y = 0;
-        if (d3.select("#canvas-view-container").select('.canvas-container').select('.interaction-canvas') == this ||
-            d3.select("#canvas-view-container").select('.canvas-container').select('.interface-canvas') == this) {
+        let canvasContainer = d3.select("#canvas-view-container").select('.canvas-container');
+        let fdlContainer = d3.select("#fdl-view-container").select('.canvas-container');
+        let tabsContainer = d3.select("#tabs-container").select('.canvas-container');
+        if (canvasContainer.select('.interaction-canvas') == this || canvasContainer.select('.interface-canvas') == this) {
             // x and y are 0, that's fine
-        } else if (d3.select("#fdl-view-container").select('.canvas-container').select('.interaction-canvas') == this ||
-            d3.select("#fdl-view-container").select('.canvas-container').select('.interface-canvas') == this) {
-            x = d3.select("#fdl-view-container").select('.canvas-container').select('.interface-canvas').attr('width')
-        } else if (d3.select("#tabs-container").select('.canvas-container').select('.interaction-canvas') == this) {
-            x = d3.select("#tabs-container").select('.canvas-container').select('.interaction-canvas').attr('width')
+        } else if (fdlContainer.select('.interaction-canvas') == this || fdlContainer.select('.interface-canvas') == this) {
+            x = fdlContainer.select('.interface-canvas').attr('width')
+            y = tabsContainer.select('.interaction-canvas').attr('height')
+        } else if (tabsContainer.select('.interaction-canvas') == this || tabsContainer.select('.view-canvas') == this) {
+            x = tabsContainer.select('.interaction-canvas').attr('width')
+            // y is 0
         } else {
             console.error("Unexpected!", this)
         }
 
         return { x, y, width: mAttrs['width'], height: mAttrs['height'] };
     }
+    this.getBBox = function () { return { x: mAttrs['x'], y: mAttrs['y'], height: 50, width: 100 } }
     this.getCallbacks = () => mCallBacks;
     this.call = function (something, newZoomTransform) {
         transform = newZoomTransform;
@@ -172,55 +196,68 @@ function mockTransform(x = 0, y = 0, k = 1) {
 function mockForceSim() {
     let tickCallback = () => { };
     let nodes = [];
-    let links = [];
+    this.stopped = false;
 
     this.tick = function () {
-        nodes.forEach((node, index) => {
-            let y = Math.round(index / 10);
-            let x = index % 10;
-            node.x = x * Size.ELEMENT_NODE_SIZE * 4 + Size.ELEMENT_NODE_SIZE * 2;
-            node.y = y * Size.ELEMENT_NODE_SIZE * 4 + Size.ELEMENT_NODE_SIZE * 2;
-        })
+        if (this.stopped) return;
 
-        links.forEach((link) => {
-            if (typeof link.source == "string") {
-                link.source = nodes.find(node => node.id == link.source);
-            }
-            if (typeof link.target == "string") {
-                link.target = nodes.find(node => node.id == link.target);
-            }
+        if (this.forceFunc) {
+            nodes.forEach((node, index) => {
+                let rad = this.forceFunc(node);
+                nodes.forEach(otherNode => {
+                    if (otherNode != node) {
+                        if (VectorUtil.dist(node, otherNode) < rad * 2) {
+                            let dir = VectorUtil.normalize(VectorUtil.subtract(node, otherNode))
+                            if (VectorUtil.length(dir) == 0) dir = { x: 0, y: 1 };
+                            node.x += dir.x * rad;
+                            node.y += dir.y * rad;
+                        }
+                    }
+                })
+            })
+        }
 
-            link.source.x = nodes.find(n => n.id == link.source.id).x;
-            link.source.y = nodes.find(n => n.id == link.source.id).y;
-            link.target.x = nodes.find(n => n.id == link.target.id).x;
-            link.target.y = nodes.find(n => n.id == link.target.id).y;
-        })
         tickCallback();
     }
 
     this.getPosition = (nodeId) => {
         let result = nodes.find(n => n.id == nodeId);
         if (result) {
-            return { x: result.x, y: result.y }
+            return { x: result.x + 1, y: result.y + 1 }
         } else console.error("Item not in view", nodeId);
     }
 
-    this.getLinkPosition = (nodeId) => {
-        let node = nodes.find(n => n.id == nodeId);
-        let link = links.find(l => l.target.id == nodeId);
-        let parent = link ? link.source : null;
-        return VectorUtil.scale(new DrawingUtil().getTrianglePointer(parent, node, Size.ELEMENT_NODE_SIZE, 10)
-            .reduce((prev, curr) => VectorUtil.add(prev, curr)), 1 / 3);
-    }
+    this.alpha = (val) => {
+        if (val) {
+            this.stopped = false;
+            return this;
+        } else {
+            return 0.1;
+        }
+    };
 
-    this.force = function () { return this };
+    this.restart = () => {
+        this.stopped = false;
+        tickCallback();
+        return this;
+    };
+
+    this.stop = () => {
+        this.stopped = true;
+        return this;
+    };
+
+    this.force = function (name, force) {
+        if (name == 'collide') {
+            this.forceFunc = force.func;
+        }
+        return this
+    };
+
     this.nodes = (n) => { if (n) { nodes = n; return this; } else return nodes; };
-    this.alpha = () => { return this };
     this.alphaDecay = () => { return this };
     this.velocityDecay = () => { return this };
     this.alphaTarget = () => { return this };
-    this.restart = () => { return this };
-    this.links = (l) => { links = l; return this };
     this.on = function (event, func) {
         if (event == 'tick') {
             tickCallback = func;
@@ -229,15 +266,17 @@ function mockForceSim() {
         };
         return this;
     };
-    this.stop = () => { return this; };
     this.getNodes = () => nodes;
 }
 
-function mockForce() {
-    this.x = () => { return this };
-    this.y = () => { return this };
-    this.id = () => { return this };
-    this.strength = () => { return this };
+function mockForceCollide(func) {
+    this.func = func;
+    this.strength = () => { return this; };
+}
+
+function mockForceX(val) {
+    this.val = val;
+    this.strength = () => { return this; };
 }
 
 function mockXMLPromise(img) {
@@ -266,7 +305,6 @@ function mockQuadTree() {
 export function mockD3(jspreadsheet) {
     mJspreadsheet = jspreadsheet;
     let rootNode = new MockElement();
-    let forceSim = new mockForceSim();
     rootNode.append('div').attr("id", "canvas-view-container").append(new MockElement().classed("canvas-container", true));
     rootNode.append('div').attr("id", "fdl-view-container").append(new MockElement().classed("canvas-container", true));
     rootNode.append('div').attr("id", "tabs-container").append(new MockElement().classed("canvas-container", true));
@@ -290,21 +328,47 @@ export function mockD3(jspreadsheet) {
         }
     }
 
+    function tree() {
+        function treeFunc(heirarchy) {
+            let nodes = []
+            function getChildren(data, index, startX) {
+                let x = startX;
+                data.children.forEach(child => {
+                    x += Size.ELEMENT_NODE_SIZE * 10 / index;
+                    nodes.push({ x, y: Size.ELEMENT_NODE_SIZE * index, data: child });
+                    getChildren(child, index + 1, x);
+                })
+            }
+            getChildren(heirarchy, 0);
 
+            let tree = {
+                each: func => nodes.forEach(func),
+            }
+
+            return tree;
+        }
+        treeFunc.nodeSize = function () { return this; };
+        return treeFunc;
+    }
+
+    function hierarchy(tree) {
+        return tree;
+    }
+
+    this.forceSims = [];
+    this.tick = () => this.forceSims.forEach(sim => sim.tick())
+    this.getSimulationNodePosition = (id) => this.forceSims.find(sim => !sim.stopped).getPosition(id);
     this.select = select;
+    this.tree = tree;
+    this.hierarchy = hierarchy;
     this.polygonHull = polygonHull;
     this.zoomIdentity = new mockTransform();
     this.getCallbacks = () => documentCallbacks;
-    this.forceSimulation = () => forceSim;
+    this.forceSimulation = () => { this.forceSims.push(new mockForceSim()); return this.forceSims[this.forceSims.length - 1] };
     this.scaleOrdinal = () => ordinalScale;
-    this.quadtree = () => new mockQuadTree();
-    this.forceCenter = () => new mockForce();
-    this.forceCollide = () => new mockForce();
-    this.forceX = () => new mockForce();
-    this.forceY = () => new mockForce();
-    this.forceLink = () => new mockForce();
+    this.forceCollide = (func) => new mockForceCollide(func);
+    this.forceX = (val) => new mockForceX(val);
     this.xml = (img) => new mockXMLPromise(img);
-    this.tick = () => forceSim.tick();
     this.getPosition = (id) => forceSim.getPosition(id);
     this.getLinkPosition = (id) => forceSim.getLinkPosition(id);
     this.getNodes = () => forceSim.getNodes();

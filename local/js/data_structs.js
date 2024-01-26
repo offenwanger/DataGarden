@@ -90,13 +90,15 @@ export let Data = function () {
         this.type = DimensionType.DISCRETE;
         this.channel = ChannelType.FORM;
         this.tier = 0;
+        this.unmappedIds = []
         // discrete dimensions
         this.levels = [];
-        // continuous dimensions
-        this.domain = [0, 1]
         // discrete dimensions to continuous channels
         // length = levels - 1
         this.ranges = []
+        // continuous dimensions
+        this.domain = [0, 1]
+        this.domainRange = [0, 1]
 
         this.clone = function () {
             let clone = new Dimension();
@@ -106,9 +108,11 @@ export let Data = function () {
             clone.type = this.type;
             clone.channel = this.channel;
             clone.tier = this.tier;
+            clone.unmappedIds = [...this.unmappedIds];
             clone.levels = this.levels.map(l => l.clone());
-            clone.domain = [...this.domain];
             clone.ranges = [...this.ranges];
+            clone.domain = [...this.domain];
+            clone.domainRange = [...this.domainRange];
             return clone;
         };
 
@@ -119,9 +123,11 @@ export let Data = function () {
             this.type = dimension.type;
             this.channel = dimension.channel;
             this.tier = dimension.tier;
+            this.unmappedIds = [...dimension.unmappedIds];
             this.levels = dimension.levels.map(l => l.clone());
-            this.domain = [...dimension.domain];
             this.ranges = [...dimension.ranges];
+            this.domain = [...dimension.domain];
+            this.domainRange = [...dimension.domainRange];
         };
     }
     Dimension.fromObject = function (obj) {
@@ -132,9 +138,11 @@ export let Data = function () {
         dimension.type = obj.type;
         dimension.channel = obj.channel;
         dimension.tier = obj.tier;
+        dimension.unmappedIds = obj.unmappedIds ? [...obj.unmappedIds] : [];
         dimension.levels = obj.levels ? obj.levels.map(l => Level.fromObject(l)) : [];
-        dimension.domain = obj.domain ? [...obj.domain] : [0, 1];
         dimension.ranges = obj.ranges ? [...obj.ranges] : [];
+        dimension.domain = obj.domain ? [...obj.domain] : [0, 1];
+        dimension.domainRange = obj.domainRange ? [...obj.domainRange] : [0, 1];
         return dimension;
     }
 
