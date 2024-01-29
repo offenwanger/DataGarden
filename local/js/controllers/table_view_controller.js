@@ -12,16 +12,19 @@ export function TableViewController() {
             let tableDiv = mTableDiv.append("div");
             mTableDiv.append("br");
 
-            let header = table.cols.map(id => {
-                let dimen = model.getDimension(id);
-                if (!dimen) { console.error("invalid dimen id", id); return ""; }
-                return dimen.name;
-            });
-            let columns = header.map(header => {
-                return { type: 'text', title: header, width: 200 };
+            let dimens = table.cols
+                .map(id => model.getDimension(id))
+                .filter((d, index) => {
+                    if (!d) { console.error("invalid dimen id", table.cols[index]); return false; }
+                    return true;
+                })
+            dimens.sort((a, b) => a.tier != b.tier ? a.tier - b.tier : a.id.localeCompare(b.id, 'en', { numeric: true }));
+
+            let columns = dimens.map(dimen => {
+                return { type: 'text', title: dimen.name, width: 200 };
             })
-            let data = table.rows.map(r => table.cols.map(c => r[c] ? r[c].value : null));
-            jspreadsheet(tableDiv.node(), { header, data, columns });
+            let data = table.rows.map(r => dimens.map(d => r[d.id] ? r[d.id].value : null));
+            jspreadsheet(tableDiv.node(), { data, columns });
         })
     }
 

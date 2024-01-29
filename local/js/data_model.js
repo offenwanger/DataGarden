@@ -134,41 +134,32 @@ export function DataModel() {
             rows.push(row);
         })
 
-        let colsQueue = [dimensions[0].id];
-        let uncheckedCols = dimensions.slice(1).map(d => d.id);
-        let rowsQueue = [];
-        let uncheckedRows = rows.map((r, i) => i);
-        let tables = [];
-        let curTable = { cols: [], rows: [] };
-        while (uncheckedCols.length > 0 || colsQueue.length > 0) {
-            while (colsQueue.length > 0) {
-                let col = colsQueue.pop();
-                curTable.cols.push(col);
-                let colRows = uncheckedRows.filter((index) => rows[index][col]);
-                rowsQueue.push(...colRows);
-                uncheckedRows = uncheckedRows.filter((index) => !rows[index][col]);
-            }
-
-            while (rowsQueue.length > 0) {
-                let row = rows[rowsQueue.pop()];
-                curTable.rows.push(row);
-                let rowCols = uncheckedCols.filter((col) => row[col]);
-                colsQueue.push(...rowCols);
-                uncheckedCols = uncheckedCols.filter((col) => !row[col]);
-            }
-
-            if (rowsQueue.length == 0 && colsQueue.length == 0 && uncheckedCols.length > 0) {
-                if (curTable.rows.length > 0) {
-                    tables.push(curTable);
-                    curTable = { cols: [], rows: [] };
-                }
-                colsQueue.push(uncheckedCols.pop());
-            }
-        }
-
-        if (curTable.rows.length > 0) tables.push(curTable)
-
+        let tables = splitTable(dimensions, rows);
         return tables;
+    }
+
+    function splitTable(dimensions, rows) {
+        let dimenTiers = {}
+        dimensions.forEach(dimen => dimenTiers[dimen.id] = dimen.tier);
+
+        let tables = {}
+        rows.forEach(row => {
+            let key = getRowKey(row, dimenTiers);
+            if (!tables[key]) tables[key] = { cols: Object.keys(row), rows: [] };;
+            tables[key].rows.push(row);
+        });
+
+        return Object.values(tables);
+    }
+
+    function getRowKey(row, dimensionsTiers) {
+        return Object.keys(row).sort((a, b) => {
+            if (dimensionsTiers[a] == dimensionsTiers[b]) {
+                return a.localeCompare(b, 'en', { numeric: true });
+            } else {
+                return dimensionsTiers[a] - dimensionsTiers[b];
+            }
+        }).concat(',');
     }
 
     function getTree() {

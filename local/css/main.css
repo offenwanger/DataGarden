@@ -58,6 +58,13 @@ body {
     left: 0;
 }
 
+#table-view-container {
+    position: absolute;
+    overflow: scroll;
+    bottom: 0;
+    right: 0;
+}
+
 #interface-container {
     position: absolute;
     top: 0;
