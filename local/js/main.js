@@ -1,4 +1,4 @@
-import { ChannelType, DIMENSION_RANGE_V1, DIMENSION_RANGE_V2, DimensionType, NO_LEVEL_ID } from "./constants.js";
+import { ChannelType, DIMENSION_RANGE_V1, DIMENSION_RANGE_V2, DimensionType, MAP_ELEMENTS, NO_LEVEL_ID } from "./constants.js";
 import { DashboardController } from "./controllers/dashboard_controller.js";
 import { ModelController } from "./controllers/model_controller.js";
 import { ServerController } from "./controllers/server_controller.js";
@@ -167,7 +167,10 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         let levels = StructureFairy.getCluster(newDimension.id, mModelController.getModel());
         if (levels) {
-            newDimension.levels = levels;
+            let noMapping = levels.find(l => l.id == NO_LEVEL_ID).elementIds;
+            newDimension.unmappedIds = noMapping;
+            newDimension.levels = levels.filter(l => l.id != NO_LEVEL_ID);
+
             mModelController.updateDimension(newDimension);
         }
 
@@ -210,18 +213,28 @@ document.addEventListener('DOMContentLoaded', function (e) {
             return e;
         }).filter(e => e).map(e => e.id);
 
-        dimension.levels.forEach(level => {
-            if (level.id == levelId) {
-                level.elementIds = DataUtil.unique(level.elementIds.concat(elementIds));
-            } else {
-                level.elementIds = level.elementIds.filter(e => !elementIds.includes(e));
-            }
-        });
-
         if (levelId == NO_LEVEL_ID) {
             dimension.unmappedIds = DataUtil.unique(dimension.unmappedIds.concat(elementIds));
         } else {
             dimension.unmappedIds = dimension.unmappedIds.filter(e => !elementIds.includes(e));
+            if (levelId == MAP_ELEMENTS) {
+                let setIds = dimension.levels.map(l => l.elementIds).flat();
+                let unsetIds = elementIds.filter(eId => !setIds.includes(eId));
+                if (dimension.levels.length == 0) {
+                    let newLevel = new Data.Level();
+                    newLevel.name = "Category1";
+                    dimension.levels.push(newLevel)
+                }
+                dimension.levels[0].elementIds = DataUtil.unique(dimension.levels[0].elementIds.concat(unsetIds));
+            } else {
+                dimension.levels.forEach(level => {
+                    if (level.id == levelId) {
+                        level.elementIds = DataUtil.unique(level.elementIds.concat(elementIds));
+                    } else {
+                        level.elementIds = level.elementIds.filter(e => !elementIds.includes(e));
+                    }
+                });
+            }
         }
 
         mModelController.updateDimension(dimension);
@@ -312,7 +325,11 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let levels = StructureFairy.getCluster(dimensionId, mModelController.getModel());
         if (levels) {
             dimension = mModelController.getModel().getDimension(dimensionId);
-            dimension.levels = levels;
+
+            let noMapping = levels.find(l => l.id == NO_LEVEL_ID).elementIds;
+            dimension.unmappedIds = noMapping;
+            dimension.levels = levels.filter(l => l.id != NO_LEVEL_ID);
+
             mModelController.updateDimension(dimension);
         }
 
@@ -333,7 +350,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let levels = StructureFairy.getCluster(dimensionId, mModelController.getModel());
         if (levels) {
             dimension = mModelController.getModel().getDimension(dimensionId);
-            dimension.levels = levels;
+            let noMapping = levels.find(l => l.id == NO_LEVEL_ID).elementIds;
+            dimension.unmappedIds = noMapping;
+            dimension.levels = levels.filter(l => l.id != NO_LEVEL_ID);
             mModelController.updateDimension(dimension);
         }
 
@@ -350,9 +369,31 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let levels = StructureFairy.getCluster(dimensionId, mModelController.getModel());
         if (levels) {
             dimension = mModelController.getModel().getDimension(dimensionId);
-            dimension.levels = levels;
+            let noMapping = levels.find(l => l.id == NO_LEVEL_ID).elementIds;
+            dimension.unmappedIds = noMapping;
+            dimension.levels = levels.filter(l => l.id != NO_LEVEL_ID);
             mModelController.updateDimension(dimension);
         }
+
+        mVersionController.stack(mModelController.getModel().toObject());
+        mDashboardController.modelUpdate(mModelController.getModel());
+    })
+
+    mDashboardController.setUpdateAngleTypeCallback((dimensionId, type) => {
+        let dimension = mModelController.getModel().getDimension(dimensionId);
+        if (!dimension) { console.error("Invalid dimension id: ", dimensionId); return; }
+        dimension.angleType = type;
+        mModelController.updateDimension(dimension);
+
+        mVersionController.stack(mModelController.getModel().toObject());
+        mDashboardController.modelUpdate(mModelController.getModel());
+    })
+
+    mDashboardController.setUpdateSizeTypeCallback((dimensionId, type) => {
+        let dimension = mModelController.getModel().getDimension(dimensionId);
+        if (!dimension) { console.error("Invalid dimension id: ", dimensionId); return; }
+        dimension.sizeType = type;
+        mModelController.updateDimension(dimension);
 
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());

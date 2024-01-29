@@ -1,3 +1,4 @@
+import { NO_LEVEL_ID } from "../constants.js";
 import { Data } from "../data_structs.js";
 import { DataUtil } from "./data_util.js";
 import { IdUtil } from "./id_util.js";
@@ -57,11 +58,11 @@ export let ModelUtil = function () {
     function autoClusterTierDimensions(tier, modelController) {
         let model = modelController.getModel();
         model.getDimensions().filter(d => d.tier == tier).forEach(dimen => {
-            // TODO: Fix issue with classifying element that aren't meant to be 
-            // classified
             let levels = StructureFairy.getCluster(dimen.id, model);
             if (levels) {
-                dimen.levels = levels;
+                let noMapping = levels.find(l => l.id == NO_LEVEL_ID).elementIds;
+                dimen.unmappedIds = noMapping;
+                dimen.levels = levels.filter(l => l.id != NO_LEVEL_ID);
                 modelController.updateDimension(dimen);
             }
         });

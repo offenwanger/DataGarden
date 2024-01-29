@@ -59,6 +59,8 @@ export function DashboardController() {
     let mUpdateDimensionTypeCallback = () => { };
     let mUpdateDimensionChannelCallback = () => { };
     let mUpdateDimensionTierCallback = () => { };
+    let mUpdateAngleTypeCallback = () => { };
+    let mUpdateSizeTypeCallback = () => { };
     let mUpdateColorCallback = () => { };
     let mLoadModelCallback = () => { };
     let mMergeCallback = () => { };
@@ -195,6 +197,10 @@ export function DashboardController() {
             mUpdateDimensionChannelCallback(dimensionId, value);
         } else if (dropdownType == DropDown.TIER) {
             mUpdateDimensionTierCallback(dimensionId, value);
+        } else if (dropdownType == DropDown.ANGLE) {
+            mUpdateAngleTypeCallback(dimensionId, value);
+        } else if (dropdownType == DropDown.SIZE) {
+            mUpdateSizeTypeCallback(dimensionId, value);
         } else {
             console.error("Invalid type");
         }
@@ -328,6 +334,16 @@ export function DashboardController() {
         mDropdownInput.show(DropDown.TIER, dimensionId, dimension.tier, x, y, width, height);
     });
 
+    mFdlViewController.setAngleTypeCallback((dimensionId, x, y, width, height) => {
+        let dimension = mModel.getDimension(dimensionId);
+        mDropdownInput.show(DropDown.ANGLE, dimensionId, dimension.angleType, x, y, width, height);
+    });
+
+    mFdlViewController.setSizeTypeCallback((dimensionId, x, y, width, height) => {
+        let dimension = mModel.getDimension(dimensionId);
+        mDropdownInput.show(DropDown.SIZE, dimensionId, dimension.sizeType, x, y, width, height);
+    });
+
     mCanvasController.setMergeCallback((strokeIds, elementId) => {
         mMergeCallback(strokeIds, elementId);
     });
@@ -454,6 +470,8 @@ export function DashboardController() {
         setUpdateDimensionTypeCallback: (func) => mUpdateDimensionTypeCallback = func,
         setUpdateDimensionChannelCallback: (func) => mUpdateDimensionChannelCallback = func,
         setUpdateDimensionTierCallback: (func) => mUpdateDimensionTierCallback = func,
+        setUpdateAngleTypeCallback: (func) => mUpdateAngleTypeCallback = func,
+        setUpdateSizeTypeCallback: (func) => mUpdateSizeTypeCallback = func,
         setUpdateColorCallback: (func) => mUpdateColorCallback = func,
         setLoadModelCallback: (func) => mLoadModelCallback = func,
     }

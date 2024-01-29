@@ -1,4 +1,5 @@
 export const NO_LEVEL_ID = "no_level";
+export const MAP_ELEMENTS = "apply_mapping";
 export const DIMENSION_RANGE_V1 = 'range_top';
 export const DIMENSION_RANGE_V2 = 'range_bottom';
 
@@ -63,6 +64,17 @@ export const DimensionType = {
     CONTINUOUS: 'continuous',
 }
 
+export const AngleType = {
+    RELATIVE: 'Relative',
+    ABSOLUTE: 'Absolute',
+}
+
+export const SizeType = {
+    LENGTH: 'Length',
+    AREA: 'Area',
+}
+
+
 export const Tab = {
     PARENT: "parent",
     LEGEND: "legend",
@@ -97,6 +109,8 @@ export const DropDown = {
     TYPE: "type",
     CHANNEL: "channel",
     TIER: "tier",
+    ANGLE: "angle",
+    SIZE: "size",
 }
 
 export const FdlInteraction = {

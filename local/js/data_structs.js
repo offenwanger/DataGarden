@@ -1,4 +1,4 @@
-import { ChannelType, DimensionType } from "./constants.js";
+import { AngleType, ChannelType, DimensionType, SizeType } from "./constants.js";
 import { IdUtil } from "./utils/id_util.js";
 
 export let Data = function () {
@@ -89,6 +89,9 @@ export let Data = function () {
         this.name = "Dimension";
         this.type = DimensionType.DISCRETE;
         this.channel = ChannelType.FORM;
+        this.angleType = AngleType.RELATIVE;
+        this.sizeType = SizeType.AREA;
+        this.channel = ChannelType.FORM;
         this.tier = 0;
         this.unmappedIds = []
         // discrete dimensions
@@ -108,6 +111,8 @@ export let Data = function () {
             clone.type = this.type;
             clone.channel = this.channel;
             clone.tier = this.tier;
+            clone.angleType = this.angleType;
+            clone.sizeType = this.sizeType;
             clone.unmappedIds = [...this.unmappedIds];
             clone.levels = this.levels.map(l => l.clone());
             clone.ranges = [...this.ranges];
@@ -123,6 +128,8 @@ export let Data = function () {
             this.type = dimension.type;
             this.channel = dimension.channel;
             this.tier = dimension.tier;
+            this.angleType = dimension.angleType;
+            this.sizeType = dimension.sizeType;
             this.unmappedIds = [...dimension.unmappedIds];
             this.levels = dimension.levels.map(l => l.clone());
             this.ranges = [...dimension.ranges];
@@ -138,6 +145,8 @@ export let Data = function () {
         dimension.type = obj.type;
         dimension.channel = obj.channel;
         dimension.tier = obj.tier;
+        dimension.angleType = obj.angleType ? obj.angleType : AngleType.RELATIVE;
+        dimension.sizeType = obj.sizeType ? obj.sizeType : SizeType.AREA;
         dimension.unmappedIds = obj.unmappedIds ? [...obj.unmappedIds] : [];
         dimension.levels = obj.levels ? obj.levels.map(l => Level.fromObject(l)) : [];
         dimension.ranges = obj.ranges ? [...obj.ranges] : [];

@@ -1,4 +1,4 @@
-import { ChannelLabels, ChannelType, DIMENSION_RANGE_V1, DIMENSION_RANGE_V2, DIMENSION_SETTINGS_HEIGHT, SimulationValues, DimensionLabels, DimensionType, FdlButtons, FdlInteraction, NO_LEVEL_ID, Padding, Size } from "../../constants.js";
+import { ChannelLabels, ChannelType, DIMENSION_RANGE_V1, DIMENSION_RANGE_V2, DIMENSION_SETTINGS_HEIGHT, SimulationValues, DimensionLabels, DimensionType, FdlButtons, FdlInteraction, NO_LEVEL_ID, Padding, Size, AngleType, SizeType, MAP_ELEMENTS } from "../../constants.js";
 import { DataModel } from "../../data_model.js";
 import { Data } from "../../data_structs.js";
 import { DataUtil } from "../../utils/data_util.js";
@@ -13,14 +13,16 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     const CONTAINER_COLOR = "#55555530";
 
     const TARGET_ELEMENT = "element_target";
-    const TARGET_LABEL = "element_label";
-    const TARGET_TYPE = "element_type";
-    const TARGET_CHANNEL = "element_channel";
-    const TARGET_TIER = "element_tier";
+    const TARGET_LABEL = "dimention_name_target";
+    const TARGET_TYPE = "dimention_type_target";
+    const TARGET_CHANNEL = "dimention_channel_target";
+    const TARGET_TIER = "dimention_tier_target";
+    const TARGET_ANGLE = "dimention_angle_setting_target";
+    const TARGET_SIZE = "dimention_size_setting_target";
     const TARGET_BUBBLE = "level_bubble";
     const TARGET_CONTROL = "axis_control";
-    const TARGET_NONE = "none_target"
-    const TARGET_SETTING = "extra_setting"
+    const TARGET_NONE = "none_target";
+    const TARGET_NOT_NONE = "not_none_target";
 
     const ADD_LEVEL_LABEL = "Add Category +";
 
@@ -29,9 +31,11 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     let mAddLevelCallback = () => { };
     let mEditNameCallback = () => { };
     let mEditDomainCallback = () => { };
-    let mEditTypeCallback = () => { }
-    let mEditChannelCallback = () => { }
-    let mEditTierCallback = () => { }
+    let mEditTypeCallback = () => { };
+    let mEditChannelCallback = () => { };
+    let mEditTierCallback = () => { };
+    let mAngleTypeCallback = () => { };
+    let mSizeTypeCallback = () => { };
     let mUpdateLevelCallback = () => { };
     let mLevelOrderUpdateCallback = () => { };
     let mUpdateRangeControlCallback = () => { };
@@ -161,7 +165,12 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             mNodes.forEach(n => {
                 if (mDimension.unmappedIds.includes(n.id)) return;
                 let element = mModel.getElement(n.id);
-                n.size = PathUtil.getPathLength(element.spine);
+                if (mDimension.sizeType == SizeType.LENGTH) {
+                    n.size = PathUtil.getPathLength(element.spine);
+                } else {
+                    let bb = DataUtil.getBoundingBox(element);
+                    n.size = bb.height * bb.width;
+                }
             });
 
             minSize = Math.min(Infinity, ...mNodes.filter(n => n.size).map(n => n.size));
@@ -177,7 +186,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             let yPercent = 0;
             if (mDimension.channel == ChannelType.ANGLE) {
                 let element = mModel.getElement(node.id);
-                let angle = DataUtil.getRelativeAngle(element, element.parentId ? mModel.getElement(element.parentId) : null)
+                let angle = DataUtil.getRelativeAngle(element, mDimension.angleType == AngleType.RELATIVE ? mModel.getElement(element.parentId) : null)
                 yPercent = DataUtil.angleToPercent(angle);
             } else if (mDimension.channel == ChannelType.SIZE) {
                 yPercent = (node.size - minSize) / sizeRange
@@ -392,11 +401,22 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             // Draw dragged nodes after non-dragged nodes
             let draggedIds = mDraggedNodes.map(n => n.id);
 
-            if ((mDimension.channel == ChannelType.ANGLE || mDimension.channel == ChannelType.POSITION || mDimension.channel == ChannelType.SIZE)) {
+            if (mDimension.channel == ChannelType.ANGLE || mDimension.channel == ChannelType.POSITION || mDimension.channel == ChannelType.SIZE) {
                 mNodes.filter(node => !mDimension.unmappedIds.includes(node.id) && !node.interacting).forEach(node => drawNodeLinkLine(node))
             }
             mNodes.filter(n => !draggedIds.includes(n.id)).forEach(node => drawNode(node, elements.find(e => e.id == node.id)));
             mNodes.filter(n => draggedIds.includes(n.id)).forEach(node => drawNode(node, elements.find(e => e.id == node.id)))
+
+            if (mDraggedNodes.length > 0 && (mDimension.channel == ChannelType.ANGLE || mDimension.channel == ChannelType.POSITION || mDimension.channel == ChannelType.SIZE)) {
+                mDrawingUtil.drawRect({
+                    x: mControls[0].x,
+                    y: mControls[0].y,
+                    width: mScreenEdge - mControls[0].x,
+                    height: mControls[mControls.length - 1].y - mControls[0].y,
+                    color: "#00000000",
+                    code: mCodeUtil.getCode(MAP_ELEMENTS, TARGET_NOT_NONE),
+                })
+            }
         }
 
         drawSettings();
@@ -586,12 +606,12 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             strings.push("Absolute");
             labels.push("Dependency");
             valid.push(true);
-            mSettingsTargets.push(TARGET_SETTING);
+            mSettingsTargets.push(TARGET_ANGLE);
         } else if (mDimensionNode.channel == ChannelType.SIZE) {
             strings.push("Length");
             labels.push("Metric");
             valid.push(true);
-            mSettingsTargets.push(TARGET_SETTING);
+            mSettingsTargets.push(TARGET_SIZE);
         }
 
         mSettingsWidths = strings.map((s, i) => Math.max(
@@ -716,6 +736,10 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                         mEditChannelCallback(interaction.startTarget.id, targetBB.x, targetBB.y, targetBB.width, targetBB.height);
                     } else if (interaction.startTarget.type == TARGET_TIER) {
                         mEditTierCallback(interaction.startTarget.id, targetBB.x, targetBB.y, targetBB.width, targetBB.height);
+                    } else if (interaction.startTarget.type == TARGET_ANGLE) {
+                        mAngleTypeCallback(interaction.startTarget.id, targetBB.x, targetBB.y, targetBB.width, targetBB.height);
+                    } else if (interaction.startTarget.type == TARGET_SIZE) {
+                        mSizeTypeCallback(interaction.startTarget.id, targetBB.x, targetBB.y, targetBB.width, targetBB.height);
                     } else {
                         console.error("Unsupported Target Type", interaction.startTarget.type);
                     }
@@ -746,6 +770,8 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                         mUpdateLevelCallback(mDimension.id, levelTarget, elementTargetIds);
                     } else if (interaction.endTarget && interaction.endTarget.id == NO_LEVEL_ID) {
                         mUpdateLevelCallback(mDimension.id, NO_LEVEL_ID, elementTargetIds);
+                    } else if (interaction.endTarget && interaction.endTarget.id == MAP_ELEMENTS) {
+                        mUpdateLevelCallback(mDimension.id, MAP_ELEMENTS, elementTargetIds);
                     }
                 }
 
@@ -842,6 +868,8 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         setEditTypeCallback: (func) => mEditTypeCallback = func,
         setEditChannelCallback: (func) => mEditChannelCallback = func,
         setEditTierCallback: (func) => mEditTierCallback = func,
+        setAngleTypeCallback: (func) => mAngleTypeCallback = func,
+        setSizeTypeCallback: (func) => mSizeTypeCallback = func,
         setUpdateLevelCallback: (func) => mUpdateLevelCallback = func,
         setLevelOrderUpdateCallback: (func) => mLevelOrderUpdateCallback = func,
         setUpdateRangeControlCallback: (func) => mUpdateRangeControlCallback = func,

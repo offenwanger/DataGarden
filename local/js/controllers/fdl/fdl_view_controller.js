@@ -25,6 +25,8 @@ export function FdlViewController(mColorMap) {
     let mEditTypeCallback = () => { };
     let mEditChannelCallback = () => { };
     let mEditTierCallback = () => { };
+    let mAngleTypeCallback = () => { };
+    let mSizeTypeCallback = () => { };
     let mParentUpdateCallback = () => { }
     let mMergeCallback = () => { }
 
@@ -405,6 +407,24 @@ export function FdlViewController(mColorMap) {
         mEditTierCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
     })
 
+    mFdlDimensionViewController.setAngleTypeCallback((dimensionId, x, y, width, height) => {
+        let bb = modelBoundingBoxToScreenBoundingBox(
+            { x, y, height, width },
+            mActiveViewController.getTranslate(),
+            mActiveViewController.getScale())
+
+        mAngleTypeCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
+    })
+
+    mFdlDimensionViewController.setSizeTypeCallback((dimensionId, x, y, width, height) => {
+        let bb = modelBoundingBoxToScreenBoundingBox(
+            { x, y, height, width },
+            mActiveViewController.getTranslate(),
+            mActiveViewController.getScale())
+
+        mSizeTypeCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
+    })
+
     function screenToModelCoords(screenCoords, translate, scale) {
         let boundingBox = mInterfaceCanvas.node().getBoundingClientRect();
         if (ValUtil.checkConvertionState(screenCoords, boundingBox, { x: translate.x, y: translate.y, k: scale })) {
@@ -501,6 +521,8 @@ export function FdlViewController(mColorMap) {
         setEditTypeCallback: (func) => mEditTypeCallback = func,
         setEditChannelCallback: (func) => mEditChannelCallback = func,
         setEditTierCallback: (func) => mEditTierCallback = func,
+        setAngleTypeCallback: (func) => mAngleTypeCallback = func,
+        setSizeTypeCallback: (func) => mSizeTypeCallback = func,
         setContextMenuCallback: (func) => mContextMenuCallback = func,
         setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,
