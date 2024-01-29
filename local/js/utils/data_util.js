@@ -221,9 +221,9 @@ export let DataUtil = function () {
             let level = dimension.levels.find(level => level.elementIds.includes(elementId));
             return level ? level.name : null;
         } else {
-            let percent;
             let element = model.getElement(elementId);
 
+            let percent;
             if (dimension.channel == ChannelType.POSITION) {
                 percent = element.position;
             } else if (dimension.channel == ChannelType.ANGLE) {
@@ -231,7 +231,6 @@ export let DataUtil = function () {
                 percent = DataUtil.angleToPercent(DataUtil.getRelativeAngle(element, parent));
             } else if (dimension.channel == ChannelType.SIZE) {
                 let elements = model.getElements().filter(e => DataUtil.getTier(model, e.id) == dimension.tier && !dimension.unmappedIds.includes(e.id));
-
                 let sizes, eSize;
                 if (dimension.sizeType == SizeType.LENGTH) {
                     sizes = elements.map(e => PathUtil.getPathLength(e.spine));
@@ -244,12 +243,20 @@ export let DataUtil = function () {
 
                 let min = Math.min(...sizes);
                 let max = Math.max(...sizes)
-                percent = (eSize - min) / (max - min);
+                if (min == max) {
+                    percent = 0;
+                } else {
+                    percent = (eSize - min) / (max - min);
+                }
+
             }
-            percent = dimension.domainRange[1] - dimension.domainRange[0] == 0 ? 0 :
-                (percent - dimension.domainRange[0]) / dimension.domainRange[1] - dimension.domainRange[0];
-            percent = limit(percent, 0, 1);
             if (dimension.type == DimensionType.CONTINUOUS) {
+                if (dimension.domainRange[1] - dimension.domainRange[0] == 0) {
+                    percent = 0;
+                } else {
+                    percent = (percent - dimension.domainRange[0]) / (dimension.domainRange[1] - dimension.domainRange[0]);
+                }
+                percent = limit(percent, 0, 1);
                 return (parseFloat(dimension.domain[1]) - parseFloat(dimension.domain[0])) * percent + parseFloat(dimension.domain[0]);
             } else {
                 let level = getLevelForPercent(dimension, percent);

@@ -121,7 +121,7 @@ export function DataModel() {
             dimensions.filter(d => d.tier == tier).forEach(dimension => {
                 let value = DataUtil.getMappedValue(this, dimension.id, element.id);
                 if (typeof value == "number") { value = Math.round(value * 100) / 100 }
-                if (value) values[element.id][dimension.id] = value;
+                if (value || value === 0) values[element.id][dimension.id] = value;
             })
         })
 
