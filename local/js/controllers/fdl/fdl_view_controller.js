@@ -11,6 +11,7 @@ import { OverlayUtil } from "../../utils/overlay_util.js";
 import { ValUtil } from "../../utils/value_util.js";
 import { VectorUtil } from "../../utils/vector_util.js";
 import { Data } from "../../data_structs.js";
+import { PathUtil } from "../../utils/path_util.js";
 
 export function FdlViewController(mColorMap) {
     const SELECTION_BUBBLE_COLOR = "#55555555";
@@ -74,11 +75,13 @@ export function FdlViewController(mColorMap) {
         mSimulationData = [];
 
         mModel.getElements().forEach(element => {
+            let parent = element.parentId ? mModel.getElement(element.parentId) : null;
             let nodeData = {
                 id: element.id,
                 parent: element.parentId,
                 radius: Size.ELEMENT_NODE_SIZE,
                 tier: DataUtil.getTier(mModel, element.id),
+                parentProjection: parent ? PathUtil.getClosestPointOnPath(element.root, parent.spine) : null,
             }
             let oldNodeData = oldSimulationData.find(item => item.id == element.id);
             if (!oldNodeData) {

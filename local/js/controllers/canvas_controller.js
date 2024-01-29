@@ -72,7 +72,7 @@ export function CanvasController(mColorMap) {
             if (element.parentId) {
                 let parent = elements.find(e => e.id == element.parentId);
                 if (!parent) { console.error("Invalid parent id!", element.parentId); return; }
-                mProjections[element.id] = PathUtil.getPositionForPercent(parent.spine, element.position);
+                mProjections[element.id] = PathUtil.getClosestPointOnPath(element.root, parent.spine);
             }
 
             mBoundingBoxes.push({ id: element.id, box: DataUtil.getBoundingBox(element) });

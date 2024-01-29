@@ -180,7 +180,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             sizeRange = maxSize - minSize;
         }
 
-        mNodes.forEach((node, index) => {
+        mNodes.forEach((node) => {
             if (mDimension.unmappedIds.includes(node.id)) return;
 
             let yPercent = 0;
@@ -191,8 +191,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             } else if (mDimension.channel == ChannelType.SIZE) {
                 yPercent = (node.size - minSize) / sizeRange
             } else if (mDimension.channel == ChannelType.POSITION) {
-                let element = mModel.getElement(node.id);
-                yPercent = element.position;
+                yPercent = node.parentProjection ? node.parentProjection.percent : 0;
             }
 
             mNodeLayout[node.id] = {

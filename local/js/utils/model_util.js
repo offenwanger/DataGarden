@@ -21,11 +21,6 @@ export let ModelUtil = function () {
             model = modelController.getModel();
         }
 
-        if (parentElement) {
-            let closestPosition = PathUtil.getClosestPointOnPath(element.root, parentElement.spine);
-            element.position = closestPosition.percent;
-        }
-
         element.parentId = parentElementId;
         modelController.updateElement(element);
     }

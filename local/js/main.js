@@ -83,13 +83,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
             if (element.strokes.every(s => strokeIds.includes(s.id))) {
                 element.spine = element.spine.map(p => VectorUtil.add(p, translation));
                 element.root = VectorUtil.add(element.root, translation);
-                if (element.parentId) {
-                    let parentElement = mModelController.getModel().getElement(element.parentId)
-                    if (parentElement) {
-                        let closestPosition = PathUtil.getClosestPointOnPath(element.root, parentElement.spine);
-                        element.position = closestPosition.percent;
-                    }
-                }
                 mModelController.updateElement(element);
             }
         });
@@ -104,6 +97,10 @@ document.addEventListener('DOMContentLoaded', function (e) {
         if (!element) { console.error("invalid element id", elementId); return; }
         element.root = root;
         element.angle = angle;
+        if (VectorUtil.dist(root, element.spine[0]) > VectorUtil.dist(root, element.spine[element.spine.length - 1])) {
+            element.spine = element.spine.reverse();
+        }
+
         mModelController.updateElement(element);
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
@@ -135,12 +132,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
             // update position
             let element = model.getElement(elementId);
             if (!element) { console.error("Invalid element id", elementId); return; }
-            if (parent) {
-                let projection = PathUtil.getClosestPointOnPath(element.root, parent.spine);
-                element.position = projection.percent;
-            } else {
-                element.position = null;
-            }
             mModelController.updateElement(element);
 
             tiers.push(DataUtil.getTier(model, element.id));

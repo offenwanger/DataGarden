@@ -7,6 +7,7 @@ let expect = chai.expect;
 
 import * as suite from "./test_utils/suite_enviroment.js"
 import * as utility from "./test_utils/utility.js"
+import { VectorUtil } from '../local/js/utils/vector_util.js';
 
 describe('Test Main - Integration Test', function () {
     let integrationEnv;
@@ -59,5 +60,37 @@ describe('Test Main - Integration Test', function () {
             });
             expect(spine).to.eql([{ x: 3, y: 3 }, { x: 2.14, y: 2.14 }, { x: 1.86, y: 1.86 }, { x: 1, y: 1 }]);
         });
+    })
+
+    describe('relative angle tests', function () {
+        it('showuld return angles for no parent', function () {
+            let element = new Data.Element();
+
+            element.angle = { x: 1, y: 0 };
+            expect(DataUtil.getRelativeAngle(element)).to.be.closeTo(-Math.PI / 2, 0.00001);
+
+            element.angle = { x: -1, y: 0 };
+            expect(DataUtil.getRelativeAngle(element)).to.be.closeTo(Math.PI / 2, 0.00001);
+
+            element.angle = VectorUtil.normalize({ x: 1, y: 1 });
+            expect(DataUtil.getRelativeAngle(element)).to.be.closeTo(-Math.PI / 4, 0.00001);
+        });
+
+        it('showuld return angles for parented element', function () {
+            let element = new Data.Element();
+            element.root = { x: 5, y: 5 };
+            let parent = new Data.Element();
+            parent.spine = ([{ x: 0, y: 0 }, { x: 10, y: 10 }])
+
+            element.angle = { x: 1, y: 0 };
+            expect(DataUtil.getRelativeAngle(element, parent)).to.be.closeTo(-Math.PI / 4, 0.00001);
+
+            element.angle = { x: -1, y: 0 };
+            expect(DataUtil.getRelativeAngle(element, parent)).to.be.closeTo(Math.PI * 3 / 4, 0.00001);
+
+            element.angle = VectorUtil.normalize({ x: 1, y: 1 });
+            expect(DataUtil.getRelativeAngle(element, parent)).to.be.closeTo(0, 0.00001);
+        });
+
     })
 });

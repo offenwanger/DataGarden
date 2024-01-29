@@ -222,10 +222,11 @@ export let DataUtil = function () {
             return level ? level.name : null;
         } else {
             let element = model.getElement(elementId);
-
             let percent;
             if (dimension.channel == ChannelType.POSITION) {
-                percent = element.position;
+                let parent = model.getElement(element.parentId)
+                if (!parent) { console.error("Inavlid position element", element); return null }
+                percent = PathUtil.getClosestPointOnPath(element.root, parent.spine).percent;
             } else if (dimension.channel == ChannelType.ANGLE) {
                 let parent = dimension.angleType == AngleType.RELATIVE ? model.getElement(element.parentId) : null;
                 percent = DataUtil.angleToPercent(DataUtil.getRelativeAngle(element, parent));
@@ -315,15 +316,19 @@ export let DataUtil = function () {
     function getRelativeAngle(element, parent) {
         let tangent;
         if (parent) {
-            tangent = PathUtil.getTangentForPercent(parent.spine, element.position);
+            tangent = PathUtil.getTangentForPercent(parent.spine, PathUtil.getClosestPointOnPath(element.root, parent.spine).percent);
         } else {
-            tangent = { x: 0, y: -1 };
+            tangent = { x: 0, y: 1 };
         }
 
-        let angle = VectorUtil.toRotation(element.angle) - VectorUtil.toRotation(tangent);
-        if (angle > Math.PI) angle = Math.PI * 2 - angle;
-        return angle;
+        let angle = Math.atan2(element.angle.y, element.angle.x) - Math.atan2(tangent.y, tangent.x);
+        if (angle > Math.PI) {
+            angle -= 2 * Math.PI;
+        } else if (angle <= -Math.PI) {
+            angle += 2 * Math.PI;
+        }
 
+        return angle;
     }
 
     function getStraightenedStrokes(element) {

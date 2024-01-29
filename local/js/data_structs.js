@@ -41,9 +41,6 @@ export let Data = function () {
         this.angle = null;
         this.root = null;
 
-        // Position in percent of parent
-        this.position = null;
-
         this.parentId = null;
 
         this.clone = function () {
@@ -55,7 +52,6 @@ export let Data = function () {
             clone.spine = this.spine ? this.spine.map(p => { return { x: p.x, y: p.y } }) : null;
             clone.angle = this.angle ? { x: this.angle.x, y: this.angle.y } : { x: 0, y: 0 };
             clone.root = this.root ? { x: this.root.x, y: this.root.y } : { x: 0, y: 0 };
-            clone.position = this.position;
             return clone;
         };
 
@@ -67,7 +63,6 @@ export let Data = function () {
             this.spine = element.spine.map(p => { return { x: p.x, y: p.y } });
             this.angle = element.angle ? { x: element.angle.x, y: element.angle.y } : { x: 0, y: 0 };
             this.root = element.root ? { x: element.root.x, y: element.root.y } : { x: 0, y: 0 };
-            this.position = element.position;
         };
     }
     Element.fromObject = function (obj) {
@@ -79,7 +74,6 @@ export let Data = function () {
         element.spine = obj.spine ? obj.spine.map(p => { return { x: p.x, y: p.y } }) : null;
         element.angle = obj.angle ? { x: obj.angle.x, y: obj.angle.y } : { x: 0, y: 0 };
         element.root = obj.root ? { x: obj.root.x, y: obj.root.y } : { x: 0, y: 0 };
-        element.position = obj.position;
         return element;
     }
 
