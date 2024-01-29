@@ -104,7 +104,7 @@ describe('Test Data Model', function () {
             dataModel.getDimensions()[1].channel = ChannelType.COLOR;
             dataModel.getDimensions()[1].levels.push(new Data.Level());
 
-            assert.equal(dataModel.getTables().length, 2);
+            assert.equal(dataModel.getTables().length, 1);
             expect(dataModel.getTables()[0].cols).to.eql([dataModel.getDimensions()[0].id]);
             expect(dataModel.getTables()[0].rows.map(r => r[dataModel.getDimensions()[0].id].id).sort())
                 .to.eql([dataModel.getElements()[0].id, dataModel.getElements()[1].id].sort());
@@ -186,7 +186,7 @@ describe('Test Data Model', function () {
                     }
                 }
             }
-            assert.equal(dataModel.getTables().length, 3);
+            assert.equal(dataModel.getTables().length, 2);
         })
     })
 });

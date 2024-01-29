@@ -113,8 +113,22 @@ export function DataModel() {
     function getTables() {
         let dimensions = mDimensions.filter(d => DataUtil.dimensionValid(d));
         if (dimensions.length == 0) return [];
-        let parents = DataUtil.unique(mElements.map(e => e.parentId).filter(p => p));
-        let leafs = mElements.filter(e => !parents.includes(e.id));
+
+        let values = {}
+        mElements.forEach(element => {
+            let tier = DataUtil.getTier(this, element.id)
+            values[element.id] = {}
+            dimensions.filter(d => d.tier == tier).forEach(dimension => {
+                let value = DataUtil.getMappedValue(this, dimension.id, element.id);
+                if (typeof value == "number") { value = Math.round(value * 100) / 100 }
+                if (value) values[element.id][dimension.id] = value;
+            })
+        })
+
+        let tableElements = mElements.filter(e => Object.keys(values[e.id]).length > 0);
+        let parents = DataUtil.unique(tableElements.map(e => e.parentId).filter(p => p));
+        let leafs = tableElements.filter(e => !parents.includes(e.id));
+
         let rows = []
         leafs.forEach(leaf => {
             let row = {};
@@ -122,12 +136,9 @@ export function DataModel() {
             let level = DataUtil.getTier(this, leaf.id);
             while (nextId) {
                 let element = getElement(nextId);
-                dimensions.filter(d => d.tier == level).forEach(dimension => {
-                    let value = DataUtil.getMappedValue(this, dimension.id, nextId);
-                    if (typeof value == "number") { value = Math.round(value * 100) / 100 }
-                    if (value) row[dimension.id] = { id: nextId, value };
-                })
-
+                Object.entries(values[nextId]).forEach(([dimenId, value]) => {
+                    row[dimenId] = { id: nextId, value };
+                });
                 level--;
                 nextId = element.parentId;
             }
