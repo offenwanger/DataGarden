@@ -19,6 +19,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     const TARGET_TIER = "dimention_tier_target";
     const TARGET_ANGLE = "dimention_angle_setting_target";
     const TARGET_SIZE = "dimention_size_setting_target";
+    const TARGET_DELETE = "delete_target";
     const TARGET_BUBBLE = "level_bubble";
     const TARGET_CONTROL = "axis_control";
     const TARGET_NONE = "none_target";
@@ -34,8 +35,9 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     let mEditTypeCallback = () => { };
     let mEditChannelCallback = () => { };
     let mEditTierCallback = () => { };
-    let mAngleTypeCallback = () => { };
-    let mSizeTypeCallback = () => { };
+    let mEditAngleTypeCallback = () => { };
+    let mEditSizeTypeCallback = () => { };
+    let mDeleteDimensionCallback = () => { };
     let mUpdateLevelCallback = () => { };
     let mLevelOrderUpdateCallback = () => { };
     let mUpdateRangeControlCallback = () => { };
@@ -600,7 +602,6 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         let strings = [mDimensionNode.name, DimensionLabels[mDimensionNode.type], "Level " + mDimensionNode.tier, ChannelLabels[mDimensionNode.channel]];
         let valid = [true, DataUtil.dimensionTypeValid(mDimensionNode), DataUtil.dimensionTierValid(mDimensionNode), DataUtil.dimensionChannelValid(mDimensionNode)];
         mSettingsTargets = [TARGET_LABEL, TARGET_TYPE, TARGET_TIER, TARGET_CHANNEL];
-
         if (mDimensionNode.channel == ChannelType.ANGLE) {
             strings.push("Absolute");
             labels.push("Dependency");
@@ -612,6 +613,10 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             valid.push(true);
             mSettingsTargets.push(TARGET_SIZE);
         }
+        strings.push("❌");
+        labels.push("");
+        valid.push(true);
+        mSettingsTargets.push(TARGET_DELETE);
 
         mSettingsWidths = strings.map((s, i) => Math.max(
             mDrawingUtil.measureStringNode(s, Size.LEVEL_SIZE),
@@ -627,13 +632,15 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         mSettingsY = canvasCoordsToLocal({ x: 0, y: DIMENSION_SETTINGS_HEIGHT - Size.LEVEL_SIZE * mSettingsScale - Padding.LEVEL }).y;
 
         strings.forEach((string, index) => {
-            mDrawingUtil.drawStringNode({
-                x: mSettingsXs[index],
-                y: labelY,
-                label: labels[index],
-                height: Size.LEVEL_SIZE * mSettingsScale,
-                box: false
-            });
+            if (labels[index]) {
+                mDrawingUtil.drawStringNode({
+                    x: mSettingsXs[index],
+                    y: labelY,
+                    label: labels[index],
+                    height: Size.LEVEL_SIZE * mSettingsScale,
+                    box: false
+                });
+            }
 
             mDrawingUtil.drawStringNode({
                 x: mSettingsXs[index],
@@ -736,9 +743,11 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                     } else if (interaction.startTarget.type == TARGET_TIER) {
                         mEditTierCallback(interaction.startTarget.id, targetBB.x, targetBB.y, targetBB.width, targetBB.height);
                     } else if (interaction.startTarget.type == TARGET_ANGLE) {
-                        mAngleTypeCallback(interaction.startTarget.id, targetBB.x, targetBB.y, targetBB.width, targetBB.height);
+                        mEditAngleTypeCallback(interaction.startTarget.id, targetBB.x, targetBB.y, targetBB.width, targetBB.height);
                     } else if (interaction.startTarget.type == TARGET_SIZE) {
-                        mSizeTypeCallback(interaction.startTarget.id, targetBB.x, targetBB.y, targetBB.width, targetBB.height);
+                        mEditSizeTypeCallback(interaction.startTarget.id, targetBB.x, targetBB.y, targetBB.width, targetBB.height);
+                    } else if (interaction.startTarget.type == TARGET_DELETE) {
+                        mDeleteDimensionCallback(interaction.startTarget.id);
                     } else {
                         console.error("Unsupported Target Type", interaction.startTarget.type);
                     }
@@ -867,9 +876,10 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         setEditTypeCallback: (func) => mEditTypeCallback = func,
         setEditChannelCallback: (func) => mEditChannelCallback = func,
         setEditTierCallback: (func) => mEditTierCallback = func,
-        setAngleTypeCallback: (func) => mAngleTypeCallback = func,
-        setSizeTypeCallback: (func) => mSizeTypeCallback = func,
+        setEditAngleTypeCallback: (func) => mEditAngleTypeCallback = func,
+        setEditSizeTypeCallback: (func) => mEditSizeTypeCallback = func,
         setUpdateLevelCallback: (func) => mUpdateLevelCallback = func,
+        setDeleteDimensionCallback: (func) => mDeleteDimensionCallback = func,
         setLevelOrderUpdateCallback: (func) => mLevelOrderUpdateCallback = func,
         setUpdateRangeControlCallback: (func) => mUpdateRangeControlCallback = func,
     }

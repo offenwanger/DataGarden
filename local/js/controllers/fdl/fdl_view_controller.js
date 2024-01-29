@@ -26,8 +26,8 @@ export function FdlViewController(mColorMap) {
     let mEditTypeCallback = () => { };
     let mEditChannelCallback = () => { };
     let mEditTierCallback = () => { };
-    let mAngleTypeCallback = () => { };
-    let mSizeTypeCallback = () => { };
+    let mEditAngleTypeCallback = () => { };
+    let mEditSizeTypeCallback = () => { };
     let mParentUpdateCallback = () => { }
     let mMergeCallback = () => { }
 
@@ -410,22 +410,22 @@ export function FdlViewController(mColorMap) {
         mEditTierCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
     })
 
-    mFdlDimensionViewController.setAngleTypeCallback((dimensionId, x, y, width, height) => {
+    mFdlDimensionViewController.setEditAngleTypeCallback((dimensionId, x, y, width, height) => {
         let bb = modelBoundingBoxToScreenBoundingBox(
             { x, y, height, width },
             mActiveViewController.getTranslate(),
             mActiveViewController.getScale())
 
-        mAngleTypeCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
+        mEditAngleTypeCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
     })
 
-    mFdlDimensionViewController.setSizeTypeCallback((dimensionId, x, y, width, height) => {
+    mFdlDimensionViewController.setEditSizeTypeCallback((dimensionId, x, y, width, height) => {
         let bb = modelBoundingBoxToScreenBoundingBox(
             { x, y, height, width },
             mActiveViewController.getTranslate(),
             mActiveViewController.getScale())
 
-        mSizeTypeCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
+        mEditSizeTypeCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
     })
 
     function screenToModelCoords(screenCoords, translate, scale) {
@@ -519,13 +519,14 @@ export function FdlViewController(mColorMap) {
         setUpdateLevelCallback: (func) => mFdlDimensionViewController.setUpdateLevelCallback(func),
         setLevelOrderUpdateCallback: (func) => mFdlDimensionViewController.setLevelOrderUpdateCallback(func),
         setUpdateRangeControlCallback: (func) => mFdlDimensionViewController.setUpdateRangeControlCallback(func),
+        setDeleteDimensionCallback: (func) => mFdlDimensionViewController.setDeleteDimensionCallback(func),
         setEditNameCallback: (func) => mEditNameCallback = func,
         setEditDomainCallback: (func) => mEditDomainCallback = func,
         setEditTypeCallback: (func) => mEditTypeCallback = func,
         setEditChannelCallback: (func) => mEditChannelCallback = func,
         setEditTierCallback: (func) => mEditTierCallback = func,
-        setAngleTypeCallback: (func) => mAngleTypeCallback = func,
-        setSizeTypeCallback: (func) => mSizeTypeCallback = func,
+        setEditAngleTypeCallback: (func) => mEditAngleTypeCallback = func,
+        setEditSizeTypeCallback: (func) => mEditSizeTypeCallback = func,
         setContextMenuCallback: (func) => mContextMenuCallback = func,
         setHighlightCallback: (func) => mHighlightCallback = func,
         setSelectionCallback: (func) => mSelectionCallback = func,

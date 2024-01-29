@@ -334,12 +334,12 @@ export function DashboardController() {
         mDropdownInput.show(DropDown.TIER, dimensionId, dimension.tier, x, y, width, height);
     });
 
-    mFdlViewController.setAngleTypeCallback((dimensionId, x, y, width, height) => {
+    mFdlViewController.setEditAngleTypeCallback((dimensionId, x, y, width, height) => {
         let dimension = mModel.getDimension(dimensionId);
         mDropdownInput.show(DropDown.ANGLE, dimensionId, dimension.angleType, x, y, width, height);
     });
 
-    mFdlViewController.setSizeTypeCallback((dimensionId, x, y, width, height) => {
+    mFdlViewController.setEditSizeTypeCallback((dimensionId, x, y, width, height) => {
         let dimension = mModel.getDimension(dimensionId);
         mDropdownInput.show(DropDown.SIZE, dimensionId, dimension.sizeType, x, y, width, height);
     });
@@ -366,6 +366,14 @@ export function DashboardController() {
             mMergeCallback(strokeIds, elementId);
         }
     })
+
+    mFdlViewController.setDeleteDimensionCallback((dimenId) => {
+        mDimentionViewBackButton.hide();
+        mTabController.resetDimensionTab();
+        mTabController.setActiveTab(Tab.LEGEND);
+        mFdlViewController.setMode(FdlMode.LEGEND);
+        mDeleteCallback([dimenId]);
+    });
 
     mMenuController.setColorChangeCallback((color, interfaceOnly) => {
         if (!interfaceOnly) {
