@@ -465,6 +465,14 @@ export let DataUtil = function () {
         return Math.max(Math.min(num, max), min);
     }
 
+    function compareDimensions(d1, d2) {
+        if (d1.tier != d2.tier) {
+            return d1.tier - d2.tier;
+        } else {
+            return d1.id.localeCompare(d2.id, 'en', { numeric: true });
+        }
+    }
+
     return {
         numToColor,
         rgbToHex,
@@ -502,5 +510,6 @@ export let DataUtil = function () {
         getTierColor,
         median,
         limit,
+        compareDimensions,
     }
 }();

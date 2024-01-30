@@ -92,24 +92,28 @@ describe('Test Data Model', function () {
                 dataModel.getElements().push(new Data.Element());
                 dataModel.getElements()[i].strokes.push(new Data.Stroke([{ x: 0, y: i * 10 }, { x: 10, y: i * 10 }], 3, "#000000"))
             }
+
+            const levelName1 = "Name1";
+            let elId1 = dataModel.getElements()[0].id;
+            let elId2 = dataModel.getElements()[1].id;
+
             dataModel.getDimensions().push(new Data.Dimension());
             dataModel.getDimensions()[0].type = DimensionType.DISCRETE;
             dataModel.getDimensions()[0].channel = ChannelType.FORM;
             dataModel.getDimensions()[0].levels.push(new Data.Level());
-            dataModel.getDimensions()[0].levels[0].elementIds
-                .push(dataModel.getElements()[0].id, dataModel.getElements()[1].id);
+            dataModel.getDimensions()[0].levels[0].name = levelName1;
+            dataModel.getDimensions()[0].levels[0].elementIds = [elId1, elId2];
 
             dataModel.getDimensions().push(new Data.Dimension());
             dataModel.getDimensions()[1].type = DimensionType.DISCRETE;
             dataModel.getDimensions()[1].channel = ChannelType.COLOR;
             dataModel.getDimensions()[1].levels.push(new Data.Level());
+            dataModel.getDimensions()[1].levels[0].name = "Name2";
 
             assert.equal(dataModel.getTables().length, 1);
-            expect(dataModel.getTables()[0].cols).to.eql([dataModel.getDimensions()[0].id]);
-            expect(dataModel.getTables()[0].rows.map(r => r[dataModel.getDimensions()[0].id].id).sort())
-                .to.eql([dataModel.getElements()[0].id, dataModel.getElements()[1].id].sort());
-            expect(dataModel.getTables()[0].rows.map(r => r[dataModel.getDimensions()[0].id].value))
-                .to.eql([dataModel.getDimensions()[0].levels[0].name, dataModel.getDimensions()[0].levels[0].name]);
+            expect(dataModel.getTables()[0].getColumns().map(c => c.id)).to.eql([dataModel.getDimensions()[0].id]);
+            expect(dataModel.getTables()[0].getDataArray().flat().map(c => c.value)).to.eql([levelName1, levelName1]);
+            expect(dataModel.getTables()[0].getDataArray().flat().map(c => c.id).sort()).to.eql([elId1, elId2].sort());
         })
 
         it("should get a table with multiple rows and dimensions", function () {
@@ -149,13 +153,13 @@ describe('Test Data Model', function () {
                 .push(dataModel.getElements()[8].id, dataModel.getElements()[9].id);
 
             assert.equal(dataModel.getTables().length, 1);
-            assert.equal(dataModel.getTables()[0].cols.length, 2);
-            expect(dataModel.getTables()[0].rows.map(r => Object.values(r).map(i => i.value))).to.eql([
-                ["Level3", "Level1"],
-                ["Level3", "Level1"],
-                ["Level3", "Level2"],
-                ["Level4", "Level1"],
-                ["Level4", "Level2"],
+            assert.equal(dataModel.getTables()[0].getColumns().length, 2);
+            expect(dataModel.getTables()[0].getDataArray().map(r => r.map(c => c.value))).to.eql([
+                ["Level1", "Level3"],
+                ["Level1", "Level3"],
+                ["Level2", "Level3"],
+                ["Level1", "Level4"],
+                ["Level2", "Level4"],
             ]);
         })
 

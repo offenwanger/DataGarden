@@ -5,17 +5,33 @@ import { IdUtil } from "../utils/id_util.js";
 export function TableViewController(mColorMap) {
     const TABLE_ID = "data-table-"
 
+    const GENERATE_MODEL_LABEL = 'Generator Mode';
+    const CLEAR_MODEL_LABEL = 'Clear Generated Model';
+
+    let mSelectionCallback = () => { };
+    let mHighlightCallback = () => { };
+    let mModelGeneratedCallback = () => { }
+    let mClearGeneratedModelCallback = () => { }
+
+    let mEditingMode = false;
+    let mPasting = false;
+
     let mModel = new DataModel();
 
-    let mTablesContainer = d3.select("#table-view-container");
+    let mViewContainer = d3.select("#table-view-container")
+    let mGenerateButton = mViewContainer.append('button')
+        .attr('id', 'generate-button')
+        .html(GENERATE_MODEL_LABEL)
+        .on('click', modelGenerationMode)
+        .style("display", "none");
+    let mTablesContainer = mViewContainer.append('div').attr('id', 'tables-container');
+
     let mJTables = []
     let mDataTables = [];
 
     let mSelection = []
     let mHighlight = [];
 
-    let mSelectionCallback = () => { };
-    let mHighlightCallback = () => { };
 
     function onModelUpdate(model) {
         mModel = model;
@@ -25,12 +41,6 @@ export function TableViewController(mColorMap) {
         mDataTables = [];
 
         model.getTables().forEach((modelTable, index) => {
-            let dimens = modelTable.cols.map(id => model.getDimension(id));
-            // error checking
-            dimens = dimens.filter((d, index) => { if (d) { return true; } else { console.error("invalid dimen id", modelTable.cols[index]); return false; } });
-            dimens.sort((a, b) => a.tier != b.tier ? a.tier - b.tier : a.id.localeCompare(b.id, 'en', { numeric: true }));
-
-            modelTable.cols = dimens;
             mDataTables.push(modelTable)
 
             if (index > 0) mTablesContainer.append("br");
@@ -38,28 +48,27 @@ export function TableViewController(mColorMap) {
                 .attr('id', TABLE_ID + index)
                 .attr('tableIndex', index)
             let jtable = jspreadsheet(tableDiv.node(), {
-                data: modelTable.rows.map(r => dimens
-                    .map(d => r[d.id])
-                    .map(data => data ? data.value : "")),
-                columns: dimens.map(dimen => {
+                data: modelTable.getDataArray().map(r => r.map(c => c.value)),
+                columns: modelTable.getColumns().map(col => {
                     return {
                         type: 'text',
-                        title: dimen.name,
+                        title: col.name,
                         width: 200,
-                        // readOnly: true,
                     };
                 }),
-                meta: modelTable.rows.reduce((obj, rowData, rowIndex) => {
-                    dimens.forEach((dimen, colIndex) => {
-                        if (rowData[dimen.id]) {
-                            let cellIndex = jspreadsheet.helpers.getColumnNameFromCoords(colIndex, rowIndex);
-                            obj[cellIndex] = rowData[dimen.id]
-                        }
+                meta: modelTable.getDataArray().reduce((obj, rowData, rowIndex) => {
+                    rowData.forEach((cellData, colIndex) => {
+                        let cellIndex = jspreadsheet.helpers.getColumnNameFromCoords(colIndex, rowIndex);
+                        obj[cellIndex] = cellData
                     })
                     return obj;
                 }, {}),
                 contextMenu: () => { },
                 onselection,
+                onbeforechange,
+                onchange,
+                onbeforepaste,
+                onpaste,
             });
             mJTables.push(jtable);
         })
@@ -79,11 +88,42 @@ export function TableViewController(mColorMap) {
         mSelectionCallback(mSelection);
     }
 
+    function onbeforechange(instance, cell, x, y, value) {
+        if (mEditingMode) {
+            return value;
+        } else {
+            let index = d3.select(instance).attr('tableindex');
+            let cellIndex = jspreadsheet.helpers.getColumnNameFromCoords(x, y);
+            let meta = mJTables[index].getMeta(cellIndex)
+            return meta.value;
+        }
+    }
+
+    function onchange(instance, cell, x, y, value) {
+        if (mEditingMode && !mPasting) {
+            parseTables();
+        }
+    }
+
+    function onbeforepaste(instance, data, x, y) {
+        if (mEditingMode) {
+            mPasting = true;
+        } else return false;
+    }
+
+    function onpaste(instance, data) {
+        mPasting = false;
+        if (mEditingMode) {
+            parseTables();
+        }
+    }
+
+
     function restyle() {
         mDataTables.forEach((dataTable, index) => {
             let cellIndexes = []
-            for (let col = 0; col < dataTable.cols.length; col++) {
-                for (let row = 0; row < dataTable.rows.length; row++) {
+            for (let col = 0; col < dataTable.getColumns().length; col++) {
+                for (let row = 0; row < dataTable.getDataArray().length; row++) {
                     cellIndexes.push(jspreadsheet.helpers.getColumnNameFromCoords(col, row))
                 }
             }
@@ -104,17 +144,36 @@ export function TableViewController(mColorMap) {
         })
     }
 
+    function modelGenerationMode() {
+        mEditingMode = true;
+        mGenerateButton.html(CLEAR_MODEL_LABEL);
+        mGenerateButton.on('click', clearModelMode);
+        parseTables();
+    }
+
+    function clearModelMode() {
+        mEditingMode = false;
+        mGenerateButton.html(GENERATE_MODEL_LABEL);
+        mGenerateButton.on('click', modelGenerationMode);
+        mClearGeneratedModelCallback();
+    }
+
+    function parseTables() {
+        let model = new DataModel();
+        mModelGeneratedCallback();
+    }
+
     function onResize(width, height) {
-        mTablesContainer.style("height", height + "px")
+        mViewContainer.style("height", height + "px")
             .style("width", width + "px");
     }
 
     function hide() {
-        mTablesContainer.style("display", "none");
+        mViewContainer.style("display", "none");
     }
 
     function show() {
-        mTablesContainer.style("display", "");
+        mViewContainer.style("display", "");
     }
 
     function onSelection(selection) {
@@ -142,6 +201,8 @@ export function TableViewController(mColorMap) {
         onHighlight,
         setSelectionCallback: (func) => mSelectionCallback = func,
         setHighlightCallback: (func) => mHighlightCallback = func,
+        setModelGeneratedCallback: (func) => mModelGeneratedCallback = func,
+        setClearGeneratedModelCallback: (func) => mClearGeneratedModelCallback = func,
         hide,
         show,
     }

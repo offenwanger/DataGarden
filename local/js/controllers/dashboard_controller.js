@@ -375,6 +375,15 @@ export function DashboardController() {
         mDeleteCallback([dimenId]);
     });
 
+    mTableViewController.setModelGeneratedCallback((model) => {
+        console.log("Need to shut off the editing controls");
+        modelUpdate(model);
+    })
+
+    mTableViewController.setClearGeneratedModelCallback(() => {
+        modelUpdate(mModel);
+    })
+
     mMenuController.setColorChangeCallback((color, interfaceOnly) => {
         if (!interfaceOnly) {
             let strokes = mSelection.filter(id => IdUtil.isType(id, Data.Stroke) || IdUtil.isType(id, Data.Element)).map(id =>

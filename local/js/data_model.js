@@ -114,63 +114,63 @@ export function DataModel() {
         let dimensions = mDimensions.filter(d => DataUtil.dimensionValid(d));
         if (dimensions.length == 0) return [];
 
-        let values = {}
+        let tableCells = []
         mElements.forEach(element => {
             let tier = DataUtil.getTier(this, element.id)
-            values[element.id] = {}
             dimensions.filter(d => d.tier == tier).forEach(dimension => {
                 let value = DataUtil.getMappedValue(this, dimension.id, element.id);
                 if (typeof value == "number") { value = Math.round(value * 100) / 100 }
-                if (value || value === 0) values[element.id][dimension.id] = value;
+                if (value || value === 0) {
+                    tableCells.push({
+                        elementId: element.id,
+                        dimensionId: dimension.id,
+                        value: value,
+                        tier: tier,
+                    })
+                }
             })
-        })
+        });
 
-        let tableElements = mElements.filter(e => Object.keys(values[e.id]).length > 0);
-        let parents = DataUtil.unique(tableElements.map(e => e.parentId).filter(p => p));
-        let leafs = tableElements.filter(e => !parents.includes(e.id));
+        let parents = DataUtil.unique(mElements.map(e => e.parentId).filter(p => p));
+        let tableElements = DataUtil.unique(tableCells.map(c => c.elementId));
+        let leafs = mElements.filter(e => tableElements.includes(e.id) && !parents.includes(e.id));
 
         let rows = []
         leafs.forEach(leaf => {
-            let row = {};
+            let rowData = [];
             let nextId = leaf.id;
-            let level = DataUtil.getTier(this, leaf.id);
             while (nextId) {
+                rowData.push(...tableCells.filter(c => c.elementId == nextId))
                 let element = getElement(nextId);
-                Object.entries(values[nextId]).forEach(([dimenId, value]) => {
-                    row[dimenId] = { id: nextId, value };
-                });
-                level--;
                 nextId = element.parentId;
             }
-            rows.push(row);
+            let key = rowData.map(c => { return { id: c.dimensionId, tier: c.tier } })
+                .sort(DataUtil.compareDimensions)
+                .map(c => c.id).join(",");
+            rows.push({ key, rowData });
         })
 
-        let tables = splitTable(dimensions, rows);
-        return tables;
-    }
+        let tables = {};
+        rows.forEach(({ key, rowData }) => {
+            if (!tables[key]) {
+                tables[key] = new DataTable();
+                rowData.map(c => c.dimensionId).forEach(id => {
+                    let dimension = dimensions.find(d => d.id == id);
+                    tables[key].addColumn(id, dimension.name, dimension.tier);
+                })
+            }
+        })
 
-    function splitTable(dimensions, rows) {
-        let dimenTiers = {}
-        dimensions.forEach(dimen => dimenTiers[dimen.id] = dimen.tier);
-
-        let tables = {}
-        rows.forEach(row => {
-            let key = getRowKey(row, dimenTiers);
-            if (!tables[key]) tables[key] = { cols: Object.keys(row), rows: [] };;
-            tables[key].rows.push(row);
-        });
+        // do this by table so we get good indexes for the rows
+        Object.keys(tables).forEach(tableKey => {
+            rows.filter(r => r.key == tableKey).forEach(({ key, rowData }, index) => {
+                rowData.forEach(tableCell => {
+                    tables[key].addCell(tableCell.dimensionId, index, tableCell.elementId, tableCell.value)
+                })
+            });
+        })
 
         return Object.values(tables);
-    }
-
-    function getRowKey(row, dimensionsTiers) {
-        return Object.keys(row).sort((a, b) => {
-            if (dimensionsTiers[a] == dimensionsTiers[b]) {
-                return a.localeCompare(b, 'en', { numeric: true });
-            } else {
-                return dimensionsTiers[a] - dimensionsTiers[b];
-            }
-        }).concat(',');
     }
 
     function getTree() {
@@ -219,4 +219,41 @@ DataModel.fromObject = function (obj) {
     model.setElements(obj.elements.map(g => Data.Element.fromObject(g)));
     model.setDimensions(obj.dimensions.map(d => Data.Dimension.fromObject(d)));
     return model;
+}
+
+export function DataTable() {
+    let mColumns = []
+    let mRows = []
+
+    function addColumn(colId, name, tier) {
+        if (mColumns.find(c => c.id == colId)) return;
+        mColumns.push({ id: colId, name, tier });
+        mColumns.sort(DataUtil.compareDimensions)
+    }
+
+    function addCell(colId, rowIndex, id, value) {
+        let colIndex = mColumns.findIndex(c => c.id == colId)
+        if (colIndex == -1) { console.error("Invalid column id, cell not added", colId); return; }
+        if (!mRows[rowIndex]) mRows[rowIndex] = [];
+        mRows[rowIndex].push({ id, value, colId });
+    }
+
+    function getColumns() {
+        return [...mColumns]
+    }
+
+    function getDataArray() {
+        return mRows.map(row => mColumns.map(col => {
+            let cell = row.find(cell => cell.colId == col.id)
+            return {
+                id: cell.id,
+                value: cell.value
+            }
+        }));
+    }
+
+    this.getColumns = getColumns;
+    this.addColumn = addColumn;
+    this.addCell = addCell;
+    this.getDataArray = getDataArray;
 }
