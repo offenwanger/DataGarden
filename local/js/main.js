@@ -146,14 +146,16 @@ document.addEventListener('DOMContentLoaded', function (e) {
     })
 
     mDashboardController.setAddDimensionCallback(() => {
-        let maxNum = Math.max(0, ...mModelController.getModel().getDimensions()
+        let model = mModelController.getModel();
+        let maxNum = Math.max(0, ...model.getDimensions()
             .map(d => d.name.startsWith("Dimension") ? parseInt(d.name.slice(9)) : 0)
             .filter(n => !isNaN(n)))
+        let maxTier = Math.max(0, ...model.getElements().map(e => DataUtil.getTier(model, e.id)));
         let newDimension = new Data.Dimension();
         newDimension.name = "Dimension" + (maxNum + 1);
         newDimension.type = DimensionType.DISCRETE;
         newDimension.channel = ChannelType.FORM;
-        newDimension.tier = 0;
+        newDimension.tier = maxTier;
         mModelController.addDimension(newDimension);
 
         let levels = StructureFairy.getCluster(newDimension.id, mModelController.getModel());
