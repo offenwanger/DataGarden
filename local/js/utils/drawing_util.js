@@ -727,7 +727,11 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
 
     function drawImage({ x, y, height, width, url }) {
         if (!ImageHelper[url]) { console.error("Image not preloaded"); return; }
-        ctx.drawImage(ImageHelper[url], x, y, width, height);
+        try {
+            ctx.drawImage(ImageHelper[url], x, y, width, height);
+        } catch (e) {
+            console.error("Failed to draw " + url);
+        }
     }
 
     return {
