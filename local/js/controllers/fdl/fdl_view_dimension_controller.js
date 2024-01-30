@@ -603,18 +603,18 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         let valid = [true, DataUtil.dimensionTypeValid(mDimensionNode), DataUtil.dimensionLevelValid(mDimensionNode), DataUtil.dimensionChannelValid(mDimensionNode)];
         mSettingsTargets = [TARGET_LABEL, TARGET_TYPE, TARGET_LEVEL, TARGET_CHANNEL];
         if (mDimensionNode.channel == ChannelType.ANGLE) {
-            strings.push("Absolute");
             labels.push("Dependency");
+            strings.push(mDimension.angleType);
             valid.push(true);
             mSettingsTargets.push(TARGET_ANGLE);
         } else if (mDimensionNode.channel == ChannelType.SIZE) {
-            strings.push("Length");
             labels.push("Metric");
+            strings.push(mDimension.sizeType);
             valid.push(true);
             mSettingsTargets.push(TARGET_SIZE);
         }
-        strings.push("❌");
         labels.push("");
+        strings.push("❌");
         valid.push(true);
         mSettingsTargets.push(TARGET_DELETE);
 
