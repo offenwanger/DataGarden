@@ -22,11 +22,11 @@ export function DropdownInput() {
     let mSizeSelect = mDropdownContainer.append("select").attr('id', 'size-select');
     mSizeSelect.append("option").attr("value", SizeType.LENGTH).html("Length");
     mSizeSelect.append("option").attr("value", SizeType.AREA).html("Area");
-    let mTierSelect = mDropdownContainer.append("select").attr('id', 'tier-select');
+    let mLevelSelect = mDropdownContainer.append("select").attr('id', 'level-select');
 
     mTypeSelect.on('change', onChange).on('blur', onBlur);
     mChannelSelect.on('change', onChange).on('blur', onBlur);
-    mTierSelect.on('change', onChange).on('blur', onBlur);
+    mLevelSelect.on('change', onChange).on('blur', onBlur);
     mAngleSelect.on('change', onChange).on('blur', onBlur);
     mSizeSelect.on('change', onChange).on('blur', onBlur);
 
@@ -43,17 +43,17 @@ export function DropdownInput() {
     }
 
     function onModelUpdate(model) {
-        let maxTier = model.getElements().reduce((max, element) => Math.max(max, DataUtil.getTier(model, element.id)), 0);
-        mTierSelect.html("");
-        for (let i = 0; i <= maxTier; i++) {
-            mTierSelect.append("option").attr("value", i).html("Tier " + i).style("background", DataUtil.getTierColor(i));
+        let maxLevel = model.getElements().reduce((max, element) => Math.max(max, DataUtil.getLevelForElement(element.id, model)), 0);
+        mLevelSelect.html("");
+        for (let i = 0; i <= maxLevel; i++) {
+            mLevelSelect.append("option").attr("value", i).html("Level " + i).style("background", DataUtil.getLevelColor(i));
         }
     }
 
     function show(dropdownType, itemId, value, x, y, width, height) {
         mTypeSelect.style("display", "none");
         mChannelSelect.style("display", "none");
-        mTierSelect.style("display", "none");
+        mLevelSelect.style("display", "none");
         mAngleSelect.style("display", "none");
         mSizeSelect.style("display", "none");
         mDropdownContainer.style('top', y + 'px')
@@ -65,8 +65,8 @@ export function DropdownInput() {
             selectedDropdown = mTypeSelect;
         } else if (dropdownType == DropDown.CHANNEL) {
             selectedDropdown = mChannelSelect;
-        } else if (dropdownType == DropDown.TIER) {
-            selectedDropdown = mTierSelect;
+        } else if (dropdownType == DropDown.LEVEL) {
+            selectedDropdown = mLevelSelect;
         } else if (dropdownType == DropDown.ANGLE) {
             selectedDropdown = mAngleSelect;
         } else if (dropdownType == DropDown.SIZE) {

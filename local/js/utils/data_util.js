@@ -108,12 +108,7 @@ export let DataUtil = function () {
         return distMetric;
     }
 
-    function getElementSize(element) {
-        console.error("impliment me!")
-        return 1;
-    }
-
-    function getTier(model, elementId) {
+    function getLevelForElement(elementId, model) {
         let element = model.getElement(elementId);
         if (!element) { console.error("invalid element id", elementId); return -1; }
 
@@ -220,7 +215,7 @@ export let DataUtil = function () {
                 let parent = dimension.angleType == AngleType.RELATIVE ? model.getElement(element.parentId) : null;
                 percent = DataUtil.angleToPercent(DataUtil.getRelativeAngle(element, parent));
             } else if (dimension.channel == ChannelType.SIZE) {
-                let elements = model.getElements().filter(e => DataUtil.getTier(model, e.id) == dimension.tier && !dimension.unmappedIds.includes(e.id));
+                let elements = model.getElements().filter(e => DataUtil.getLevelForElement(e.id, model) == dimension.level && !dimension.unmappedIds.includes(e.id));
                 let sizes, eSize;
                 if (dimension.sizeType == SizeType.LENGTH) {
                     sizes = elements.map(e => PathUtil.getPathLength(e.spine));
@@ -422,9 +417,9 @@ export let DataUtil = function () {
         return dimensionTypeValid(dimension);
     }
 
-    function dimensionTierValid(dimension) {
+    function dimensionLevelValid(dimension) {
         if (dimension.channel == ChannelType.POSITION) {
-            return dimension.tier > 0;
+            return dimension.level > 0;
         } else {
             return true;
         }
@@ -433,12 +428,12 @@ export let DataUtil = function () {
     function dimensionValid(dimension) {
         return dimensionTypeValid(dimension) &&
             dimensionChannelValid(dimension) &&
-            dimensionTierValid(dimension);
+            dimensionLevelValid(dimension);
     }
 
-    function getTierColor(tier) {
-        tier = parseInt(tier);
-        return rgbToHex(255 - 20 * (tier + 1), 255 - 20 * (tier + 1), 255 - 20 * (tier + 1));
+    function getLevelColor(level) {
+        level = parseInt(level);
+        return rgbToHex(255 - 20 * (level + 1), 255 - 20 * (level + 1), 255 - 20 * (level + 1));
     }
 
     function median(arr) {
@@ -455,8 +450,8 @@ export let DataUtil = function () {
     }
 
     function compareDimensions(d1, d2) {
-        if (d1.tier != d2.tier) {
-            return d1.tier - d2.tier;
+        if (d1.level != d2.level) {
+            return d1.level - d2.level;
         } else {
             return d1.id.localeCompare(d2.id, 'en', { numeric: true });
         }
@@ -471,8 +466,7 @@ export let DataUtil = function () {
         getBoundingBox,
         overlap,
         getDifferenceMetric,
-        getElementSize,
-        getTier,
+        getLevelForElement,
         isDecendant,
         unique,
         findEmptyPlace,
@@ -493,9 +487,9 @@ export let DataUtil = function () {
         itemExists,
         dimensionTypeValid,
         dimensionChannelValid,
-        dimensionTierValid,
+        dimensionLevelValid,
         dimensionValid,
-        getTierColor,
+        getLevelColor,
         median,
         limit,
         compareDimensions,

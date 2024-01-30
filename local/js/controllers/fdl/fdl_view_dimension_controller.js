@@ -16,7 +16,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     const TARGET_LABEL = "dimention_name_target";
     const TARGET_TYPE = "dimention_type_target";
     const TARGET_CHANNEL = "dimention_channel_target";
-    const TARGET_TIER = "dimention_tier_target";
+    const TARGET_LEVEL = "dimention_level_target";
     const TARGET_ANGLE = "dimention_angle_setting_target";
     const TARGET_SIZE = "dimention_size_setting_target";
     const TARGET_DELETE = "delete_target";
@@ -34,7 +34,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     let mEditDomainCallback = () => { };
     let mEditTypeCallback = () => { };
     let mEditChannelCallback = () => { };
-    let mEditTierCallback = () => { };
+    let mEditLevelCallback = () => { };
     let mEditAngleTypeCallback = () => { };
     let mEditSizeTypeCallback = () => { };
     let mDeleteDimensionCallback = () => { };
@@ -120,7 +120,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         if (!mDimension) { console.error("Invalid dimension id", mDimensionId); mDimensionId = null; mDimension = null; draw(); return; }
 
         mDimensionNode = data.find(node => node.id == mDimension.id);
-        mNodes = data.filter(node => IdUtil.isType(node.id, Data.Element) && DataUtil.getTier(mModel, node.id) == mDimension.tier);
+        mNodes = data.filter(node => IdUtil.isType(node.id, Data.Element) && DataUtil.getLevelForElement(node.id, mModel) == mDimension.level);
         mCategories = data.filter(node => node.dimension == mDimension.id);
 
         calculateLayoutValues();
@@ -599,9 +599,9 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         mDrawingUtil.drawLine({ x1: 0, x2: mScreenEdge, y1: mSettingsBottom, y2: mSettingsBottom });
 
         let labels = ["Name", "Type", "Level", "Channel"];
-        let strings = [mDimensionNode.name, DimensionLabels[mDimensionNode.type], "Level " + mDimensionNode.tier, ChannelLabels[mDimensionNode.channel]];
-        let valid = [true, DataUtil.dimensionTypeValid(mDimensionNode), DataUtil.dimensionTierValid(mDimensionNode), DataUtil.dimensionChannelValid(mDimensionNode)];
-        mSettingsTargets = [TARGET_LABEL, TARGET_TYPE, TARGET_TIER, TARGET_CHANNEL];
+        let strings = [mDimensionNode.name, DimensionLabels[mDimensionNode.type], "Level " + mDimensionNode.level, ChannelLabels[mDimensionNode.channel]];
+        let valid = [true, DataUtil.dimensionTypeValid(mDimensionNode), DataUtil.dimensionLevelValid(mDimensionNode), DataUtil.dimensionChannelValid(mDimensionNode)];
+        mSettingsTargets = [TARGET_LABEL, TARGET_TYPE, TARGET_LEVEL, TARGET_CHANNEL];
         if (mDimensionNode.channel == ChannelType.ANGLE) {
             strings.push("Absolute");
             labels.push("Dependency");
@@ -649,7 +649,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                 height: Size.CATEGORY_SIZE * mSettingsScale,
                 shadow: mHighlightIds.includes(mDimensionNode.id),
                 code: mCodeUtil.getCode(mDimensionNode.id, mSettingsTargets[index]),
-                background: valid[index] ? DataUtil.getTierColor(mDimensionNode.tier) : "#FF6865",
+                background: valid[index] ? DataUtil.getLevelColor(mDimensionNode.level) : "#FF6865",
             });
         })
     }
@@ -740,8 +740,8 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                         mEditTypeCallback(interaction.startTarget.id, targetBB.x, targetBB.y, targetBB.width, targetBB.height);
                     } else if (interaction.startTarget.type == TARGET_CHANNEL) {
                         mEditChannelCallback(interaction.startTarget.id, targetBB.x, targetBB.y, targetBB.width, targetBB.height);
-                    } else if (interaction.startTarget.type == TARGET_TIER) {
-                        mEditTierCallback(interaction.startTarget.id, targetBB.x, targetBB.y, targetBB.width, targetBB.height);
+                    } else if (interaction.startTarget.type == TARGET_LEVEL) {
+                        mEditLevelCallback(interaction.startTarget.id, targetBB.x, targetBB.y, targetBB.width, targetBB.height);
                     } else if (interaction.startTarget.type == TARGET_ANGLE) {
                         mEditAngleTypeCallback(interaction.startTarget.id, targetBB.x, targetBB.y, targetBB.width, targetBB.height);
                     } else if (interaction.startTarget.type == TARGET_SIZE) {
@@ -875,7 +875,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         setEditDomainCallback: (func) => mEditDomainCallback = func,
         setEditTypeCallback: (func) => mEditTypeCallback = func,
         setEditChannelCallback: (func) => mEditChannelCallback = func,
-        setEditTierCallback: (func) => mEditTierCallback = func,
+        setEditLevelCallback: (func) => mEditLevelCallback = func,
         setEditAngleTypeCallback: (func) => mEditAngleTypeCallback = func,
         setEditSizeTypeCallback: (func) => mEditSizeTypeCallback = func,
         setUpdateCategoryCallback: (func) => mUpdateCategoryCallback = func,

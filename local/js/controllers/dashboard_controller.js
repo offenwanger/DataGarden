@@ -58,7 +58,7 @@ export function DashboardController() {
     let mUpdateDimensionDomainCallback = () => { };
     let mUpdateDimensionTypeCallback = () => { };
     let mUpdateDimensionChannelCallback = () => { };
-    let mUpdateDimensionTierCallback = () => { };
+    let mUpdateDimensionLevelCallback = () => { };
     let mUpdateAngleTypeCallback = () => { };
     let mUpdateSizeTypeCallback = () => { };
     let mUpdateColorCallback = () => { };
@@ -195,8 +195,8 @@ export function DashboardController() {
             mUpdateDimensionTypeCallback(dimensionId, value);
         } else if (dropdownType == DropDown.CHANNEL) {
             mUpdateDimensionChannelCallback(dimensionId, value);
-        } else if (dropdownType == DropDown.TIER) {
-            mUpdateDimensionTierCallback(dimensionId, value);
+        } else if (dropdownType == DropDown.LEVEL) {
+            mUpdateDimensionLevelCallback(dimensionId, value);
         } else if (dropdownType == DropDown.ANGLE) {
             mUpdateAngleTypeCallback(dimensionId, value);
         } else if (dropdownType == DropDown.SIZE) {
@@ -329,9 +329,9 @@ export function DashboardController() {
         mDropdownInput.show(DropDown.CHANNEL, dimensionId, dimension.channel, x, y, width, height);
     });
 
-    mFdlViewController.setEditTierCallback((dimensionId, x, y, width, height) => {
+    mFdlViewController.setEditLevelCallback((dimensionId, x, y, width, height) => {
         let dimension = mModel.getDimension(dimensionId);
-        mDropdownInput.show(DropDown.TIER, dimensionId, dimension.tier, x, y, width, height);
+        mDropdownInput.show(DropDown.LEVEL, dimensionId, dimension.level, x, y, width, height);
     });
 
     mFdlViewController.setEditAngleTypeCallback((dimensionId, x, y, width, height) => {
@@ -486,7 +486,7 @@ export function DashboardController() {
         setUpdateDimensionDomainCallback: (func) => mUpdateDimensionDomainCallback = func,
         setUpdateDimensionTypeCallback: (func) => mUpdateDimensionTypeCallback = func,
         setUpdateDimensionChannelCallback: (func) => mUpdateDimensionChannelCallback = func,
-        setUpdateDimensionTierCallback: (func) => mUpdateDimensionTierCallback = func,
+        setUpdateDimensionLevelCallback: (func) => mUpdateDimensionLevelCallback = func,
         setUpdateAngleTypeCallback: (func) => mUpdateAngleTypeCallback = func,
         setUpdateSizeTypeCallback: (func) => mUpdateSizeTypeCallback = func,
         setUpdateColorCallback: (func) => mUpdateColorCallback = func,

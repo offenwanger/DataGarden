@@ -111,7 +111,7 @@ export function FdlLegendViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
                 shadow: mHighlightIds.includes(dimension.id),
                 code: mCodeUtil.getCode(dimension.id),
                 outline: mSelectionIds.includes(dimension.id) ? mColorMap(dimension.id) : null,
-                background: DataUtil.dimensionValid(dimension) ? DataUtil.getTierColor(dimension.tier) : "#FF6865",
+                background: DataUtil.dimensionValid(dimension) ? DataUtil.getLevelColor(dimension.level) : "#FF6865",
             })
         })
 

@@ -65,7 +65,7 @@ describe('Canvas View Controller Test', function () {
 
             assert.equal(model().getElements().length, 2);
             expect(model().getElements().map(e => e.strokes.length)).to.eql([1, 1]);
-            expect(model().getElements().map(e => DataUtil.getTier(model(), e.id)).sort()).to.eql([0, 1]);
+            expect(model().getElements().map(e => DataUtil.getLevelForElement(e.id, model())).sort()).to.eql([0, 1]);
         });
     })
 });

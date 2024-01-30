@@ -108,7 +108,7 @@ export const SimulationValues = {
 export const DropDown = {
     TYPE: "type",
     CHANNEL: "channel",
-    TIER: "tier",
+    LEVEL: "level",
     ANGLE: "angle",
     SIZE: "size",
 }

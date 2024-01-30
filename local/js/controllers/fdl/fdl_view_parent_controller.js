@@ -46,10 +46,10 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
         mDrawingUtil.reset(mZoomTransform);
 
         let prevBottom = -100;
-        let maxTier = Math.max(...mNodes.map(n => n.tier));
-        for (let tier = 0; tier <= maxTier; tier++) {
-            let categoryYs = mNodes.filter(n => n.tier == tier && !n.interacting).map(n => n.y);
-            let nextYs = mNodes.filter(n => n.tier == tier + 1 && !n.interacting).map(n => n.y);
+        let maxLevel = Math.max(...mNodes.map(n => n.level));
+        for (let level = 0; level <= maxLevel; level++) {
+            let categoryYs = mNodes.filter(n => n.level == level && !n.interacting).map(n => n.y);
+            let nextYs = mNodes.filter(n => n.level == level + 1 && !n.interacting).map(n => n.y);
 
             let top = Math.min(...categoryYs)
             let bottom = Math.max(...categoryYs)
@@ -58,13 +58,13 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
             top = (top + prevBottom) / 2;
             bottom = (bottom + nextTop) / 2;
 
-            mDrawingUtil.drawBand(DataUtil.getTierColor(tier), top, bottom);
+            mDrawingUtil.drawBand(DataUtil.getLevelColor(level), top, bottom);
             mDrawingUtil.drawText({
                 x: (10 - mZoomTransform.x) / mZoomTransform.k,
                 y: bottom - Math.min(68, (bottom - top)),
                 height: Math.min(60, (bottom - top)),
-                text: "Level " + tier,
-                color: DataUtil.getTierColor(tier - 1)
+                text: "Level " + level,
+                color: DataUtil.getLevelColor(level - 1)
             })
 
             prevBottom = bottom;
@@ -216,7 +216,7 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
             if (interaction.endTarget && IdUtil.isType(interaction.endTarget.id, Data.Element)) {
                 mParentUpdateCallback(mDraggedNodes.map(n => n.id), interaction.endTarget.id);
             } else if (!interaction.endTarget) {
-                if (modelCoords.y < Math.min(...mNodes.filter(n => n.tier == 0).map(n => n.y))) {
+                if (modelCoords.y < Math.min(...mNodes.filter(n => n.level == 0).map(n => n.y))) {
                     mParentUpdateCallback(mDraggedNodes.map(n => n.id), null);
                 }
             }

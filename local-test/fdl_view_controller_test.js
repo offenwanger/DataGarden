@@ -161,20 +161,20 @@ describe('FDL View Controller Test', function () {
             utility.selectOption(ChannelType.POSITION);
             assert.equal(model().getDimensions().length, 1)
             assert.equal(model().getDimensions()[0].channel, ChannelType.POSITION);
-            assert.equal(model().getDimensions()[0].tier, 0);
+            assert.equal(model().getDimensions()[0].level, 0);
 
             utility.drawStroke([{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 20, y: 80 }])
             utility.drawStroke([{ x: 20, y: 50 }, { x: 40, y: 55 }, { x: 50, y: 45 }, { x: 60, y: 50 }])
 
             assert.equal(model().getElements().length, 2);
             expect(model().getElements().map(e => e.strokes.length)).to.eql([1, 1]);
-            expect(model().getElements().map(e => DataUtil.getTier(model(), e.id)).sort()).to.eql([0, 1]);
+            expect(model().getElements().map(e => DataUtil.getLevelForElement(e.id, model())).sort()).to.eql([0, 1]);
 
             utility.click('#fdl-view-container', { x: 285, y: DIMENSION_SETTINGS_HEIGHT - 20 });
             utility.selectOption(1);
 
             assert.equal(model().getDimensions().length, 1)
-            assert.equal(model().getDimensions()[0].tier, 1);
+            assert.equal(model().getDimensions()[0].level, 1);
         });
 
         it('should change dimension type to cont and channel to size', function () {

@@ -61,8 +61,8 @@ document.addEventListener('DOMContentLoaded', function (e) {
             }
 
             model = mModelController.getModel();
-            let tier = DataUtil.getTier(model, element.id);
-            ModelUtil.autoClusterTierDimensions(tier, mModelController);
+            let level = DataUtil.getLevelForElement(element.id, model);
+            ModelUtil.autoClusterLevelDimensions(level, mModelController);
         }
 
         mDashboardController.modelUpdate(mModelController.getModel());
@@ -127,18 +127,18 @@ document.addEventListener('DOMContentLoaded', function (e) {
             parent = mModelController.getModel().getElement(parentElementId);
             if (!parent) { console.error("Invalid element id", parentElementId); return; }
         }
-        let tiers = [];
+        let levels = [];
         elementIds.forEach(elementId => {
             // update position
             let element = model.getElement(elementId);
             if (!element) { console.error("Invalid element id", elementId); return; }
             mModelController.updateElement(element);
 
-            tiers.push(DataUtil.getTier(model, element.id));
+            levels.push(DataUtil.getLevelForElement(element.id, model));
         });
 
-        DataUtil.unique(tiers).forEach(tier => {
-            ModelUtil.autoClusterTierDimensions(tier, mModelController);
+        DataUtil.unique(levels).forEach(level => {
+            ModelUtil.autoClusterLevelDimensions(level, mModelController);
         })
 
         mVersionController.stack(mModelController.getModel().toObject());
@@ -150,12 +150,12 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let maxNum = Math.max(0, ...model.getDimensions()
             .map(d => d.name.startsWith("Dimension") ? parseInt(d.name.slice(9)) : 0)
             .filter(n => !isNaN(n)))
-        let maxTier = Math.max(0, ...model.getElements().map(e => DataUtil.getTier(model, e.id)));
+        let maxLevel = Math.max(0, ...model.getElements().map(e => DataUtil.getLevelForElement(e.id, model)));
         let newDimension = new Data.Dimension();
         newDimension.name = "Dimension" + (maxNum + 1);
         newDimension.type = DimensionType.DISCRETE;
         newDimension.channel = ChannelType.FORM;
-        newDimension.tier = maxTier;
+        newDimension.level = maxLevel;
         mModelController.addDimension(newDimension);
 
         let categories = StructureFairy.getCluster(newDimension.id, mModelController.getModel());
@@ -353,10 +353,10 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mDashboardController.setUpdateDimensionTierCallback((dimensionId, tier) => {
+    mDashboardController.setUpdateDimensionLevelCallback((dimensionId, level) => {
         let dimension = mModelController.getModel().getDimension(dimensionId);
         if (!dimension) { console.error("Invalid dimension id: ", dimensionId); return; }
-        dimension.tier = tier;
+        dimension.level = level;
         mModelController.updateDimension(dimension);
 
         let categories = StructureFairy.getCluster(dimensionId, mModelController.getModel());
@@ -414,8 +414,8 @@ document.addEventListener('DOMContentLoaded', function (e) {
             dimen.categories.forEach(l => l.elementIds = l.elementIds.filter(eId => !elementIds.includes(eId)));
             mModelController.updateDimension(dimen);
         })
-        DataUtil.unique(elementIds.map(eId => DataUtil.getTier(model, eId))).forEach(tier => {
-            ModelUtil.autoClusterTierDimensions(tier, mModelController);
+        DataUtil.unique(elementIds.map(eId => DataUtil.getLevelForElement(eId, model))).forEach(level => {
+            ModelUtil.autoClusterLevelDimensions(level, mModelController);
         });
 
         mVersionController.stack(mModelController.getModel().toObject());

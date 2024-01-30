@@ -116,8 +116,8 @@ export function DataModel() {
 
         let tableCells = []
         mElements.forEach(element => {
-            let tier = DataUtil.getTier(this, element.id)
-            dimensions.filter(d => d.tier == tier).forEach(dimension => {
+            let level = DataUtil.getLevelForElement(element.id, this)
+            dimensions.filter(d => d.level == level).forEach(dimension => {
                 let value = DataUtil.getMappedValue(this, dimension.id, element.id);
                 if (typeof value == "number") { value = Math.round(value * 100) / 100 }
                 if (value || value === 0) {
@@ -125,7 +125,7 @@ export function DataModel() {
                         elementId: element.id,
                         dimensionId: dimension.id,
                         value: value,
-                        tier: tier,
+                        level: level,
                     })
                 }
             })
@@ -144,7 +144,7 @@ export function DataModel() {
                 let element = getElement(nextId);
                 nextId = element.parentId;
             }
-            let key = rowData.map(c => { return { id: c.dimensionId, tier: c.tier } })
+            let key = rowData.map(c => { return { id: c.dimensionId, level: c.level } })
                 .sort(DataUtil.compareDimensions)
                 .map(c => c.id).join(",");
             rows.push({ key, rowData });
@@ -156,7 +156,7 @@ export function DataModel() {
                 tables[key] = new DataTable();
                 rowData.map(c => c.dimensionId).forEach(id => {
                     let dimension = dimensions.find(d => d.id == id);
-                    tables[key].addColumn(id, dimension.name, dimension.tier);
+                    tables[key].addColumn(id, dimension.name, dimension.level);
                 })
             }
         })
@@ -225,9 +225,9 @@ export function DataTable() {
     let mColumns = []
     let mRows = []
 
-    function addColumn(colId, name, tier) {
+    function addColumn(colId, name, level) {
         if (mColumns.find(c => c.id == colId)) return;
-        mColumns.push({ id: colId, name, tier });
+        mColumns.push({ id: colId, name, level });
         mColumns.sort(DataUtil.compareDimensions)
     }
 

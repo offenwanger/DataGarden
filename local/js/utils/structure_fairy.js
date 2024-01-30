@@ -71,7 +71,7 @@ export let StructureFairy = function () {
             return;
         }
         let elements = model.getElements()
-            .filter(e => dimension.tier == DataUtil.getTier(model, e.id));
+            .filter(e => dimension.level == DataUtil.getLevelForElement(e.id, model));
         if (elements.length == 0) return;
 
         if (dimension.type == DimensionType.DISCRETE) {

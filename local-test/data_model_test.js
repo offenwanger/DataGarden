@@ -129,7 +129,7 @@ describe('Test Data Model', function () {
             dataModel.getDimensions().push(new Data.Dimension());
             dataModel.getDimensions()[0].type = DimensionType.DISCRETE;
             dataModel.getDimensions()[0].channel = ChannelType.FORM;
-            dataModel.getDimensions()[0].tier = 0;
+            dataModel.getDimensions()[0].level = 0;
             dataModel.getDimensions()[0].categories.push(new Data.Category());
             dataModel.getDimensions()[0].categories[0].name = "Category1";
             dataModel.getDimensions()[0].categories[0].elementIds
@@ -142,7 +142,7 @@ describe('Test Data Model', function () {
             dataModel.getDimensions().push(new Data.Dimension());
             dataModel.getDimensions()[1].type = DimensionType.DISCRETE;
             dataModel.getDimensions()[1].channel = ChannelType.FORM;
-            dataModel.getDimensions()[1].tier = 1;
+            dataModel.getDimensions()[1].level = 1;
             dataModel.getDimensions()[1].categories.push(new Data.Category());
             dataModel.getDimensions()[1].categories[0].name = "Category3";
             dataModel.getDimensions()[1].categories[0].elementIds
@@ -169,11 +169,11 @@ describe('Test Data Model', function () {
                 dataModel.getElements().push(new Data.Element());
                 dataModel.getElements()[i].strokes.push(new Data.Stroke([{ x: 0, y: i * 10 }, { x: 10, y: i * 10 }], 3, "#000000"))
             }
-            let elementsTiers = [[], []];
+            let elementsLevels = [[], []];
             for (let i = 10; i < 20; i++) {
                 dataModel.getElements()[i].parentId = dataModel.getElements()[i - 10].id;
-                elementsTiers[0].push(dataModel.getElements()[i - 10].id);
-                elementsTiers[1].push(dataModel.getElements()[i].id);
+                elementsLevels[0].push(dataModel.getElements()[i - 10].id);
+                elementsLevels[1].push(dataModel.getElements()[i].id);
             }
 
 
@@ -181,12 +181,12 @@ describe('Test Data Model', function () {
                 dataModel.getDimensions().push(new Data.Dimension());
                 dataModel.getDimensions()[i].type = DimensionType.DISCRETE;
                 dataModel.getDimensions()[i].channel = ChannelType.FORM;
-                dataModel.getDimensions()[i].tier = i % 2;
+                dataModel.getDimensions()[i].level = i % 2;
                 for (let j = 0; j < 2; j++) {
                     dataModel.getDimensions()[i].categories.push(new Data.Category());
                     dataModel.getDimensions()[i].categories[j].name = "Category" + (i * 10 + j);
                     for (let k = 0; k < 2; k++) {
-                        dataModel.getDimensions()[i].categories[j].elementIds.push(elementsTiers[i % 2].pop());
+                        dataModel.getDimensions()[i].categories[j].elementIds.push(elementsLevels[i % 2].pop());
                     }
                 }
             }

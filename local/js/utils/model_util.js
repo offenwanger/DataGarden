@@ -50,9 +50,9 @@ export let ModelUtil = function () {
         modelController.removeElement(elementId);
     }
 
-    function autoClusterTierDimensions(tier, modelController) {
+    function autoClusterLevelDimensions(level, modelController) {
         let model = modelController.getModel();
-        model.getDimensions().filter(d => d.tier == tier).forEach(dimen => {
+        model.getDimensions().filter(d => d.level == level).forEach(dimen => {
             let categories = StructureFairy.getCluster(dimen.id, model);
             if (categories) {
                 let noMapping = categories.find(l => l.id == NO_CATEGORY_ID).elementIds;
@@ -67,6 +67,6 @@ export let ModelUtil = function () {
         updateParent,
         clearEmptyElements,
         removeElement,
-        autoClusterTierDimensions,
+        autoClusterLevelDimensions,
     }
 }();

@@ -25,7 +25,7 @@ export function FdlViewController(mColorMap) {
     let mEditDomainCallback = () => { };
     let mEditTypeCallback = () => { };
     let mEditChannelCallback = () => { };
-    let mEditTierCallback = () => { };
+    let mEditLevelCallback = () => { };
     let mEditAngleTypeCallback = () => { };
     let mEditSizeTypeCallback = () => { };
     let mParentUpdateCallback = () => { }
@@ -80,7 +80,7 @@ export function FdlViewController(mColorMap) {
                 id: element.id,
                 parent: element.parentId,
                 radius: Size.ELEMENT_NODE_SIZE,
-                tier: DataUtil.getTier(mModel, element.id),
+                level: DataUtil.getLevelForElement(element.id, mModel),
                 parentProjection: parent ? PathUtil.getClosestPointOnPath(element.root, parent.spine) : null,
             }
             let oldNodeData = oldSimulationData.find(item => item.id == element.id);
@@ -101,7 +101,7 @@ export function FdlViewController(mColorMap) {
                 name: dimension.name,
                 type: dimension.type,
                 channel: dimension.channel,
-                tier: dimension.tier,
+                level: dimension.level,
             }
             let oldData = oldSimulationData.find(item => item.id == dimension.id);
             if (!oldData) {
@@ -401,13 +401,13 @@ export function FdlViewController(mColorMap) {
         mEditChannelCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
     })
 
-    mFdlDimensionViewController.setEditTierCallback((dimensionId, x, y, width, height) => {
+    mFdlDimensionViewController.setEditLevelCallback((dimensionId, x, y, width, height) => {
         let bb = modelBoundingBoxToScreenBoundingBox(
             { x, y, height, width },
             mActiveViewController.getTranslate(),
             mActiveViewController.getScale())
 
-        mEditTierCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
+        mEditLevelCallback(dimensionId, bb.x, bb.y, bb.width, bb.height);
     })
 
     mFdlDimensionViewController.setEditAngleTypeCallback((dimensionId, x, y, width, height) => {
@@ -524,7 +524,7 @@ export function FdlViewController(mColorMap) {
         setEditDomainCallback: (func) => mEditDomainCallback = func,
         setEditTypeCallback: (func) => mEditTypeCallback = func,
         setEditChannelCallback: (func) => mEditChannelCallback = func,
-        setEditTierCallback: (func) => mEditTierCallback = func,
+        setEditLevelCallback: (func) => mEditLevelCallback = func,
         setEditAngleTypeCallback: (func) => mEditAngleTypeCallback = func,
         setEditSizeTypeCallback: (func) => mEditSizeTypeCallback = func,
         setContextMenuCallback: (func) => mContextMenuCallback = func,
