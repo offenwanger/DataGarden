@@ -1,4 +1,4 @@
-import { ChannelType, DIMENSION_RANGE_V1, DIMENSION_RANGE_V2, DimensionType, MAP_ELEMENTS, NO_LEVEL_ID } from "./constants.js";
+import { ChannelType, DIMENSION_RANGE_V1, DIMENSION_RANGE_V2, DimensionType, MAP_ELEMENTS, NO_CATEGORY_ID } from "./constants.js";
 import { DashboardController } from "./controllers/dashboard_controller.js";
 import { ModelController } from "./controllers/model_controller.js";
 import { ServerController } from "./controllers/server_controller.js";
@@ -158,11 +158,11 @@ document.addEventListener('DOMContentLoaded', function (e) {
         newDimension.tier = maxTier;
         mModelController.addDimension(newDimension);
 
-        let levels = StructureFairy.getCluster(newDimension.id, mModelController.getModel());
-        if (levels) {
-            let noMapping = levels.find(l => l.id == NO_LEVEL_ID).elementIds;
+        let categories = StructureFairy.getCluster(newDimension.id, mModelController.getModel());
+        if (categories) {
+            let noMapping = categories.find(l => l.id == NO_CATEGORY_ID).elementIds;
             newDimension.unmappedIds = noMapping;
-            newDimension.levels = levels.filter(l => l.id != NO_LEVEL_ID);
+            newDimension.categories = categories.filter(l => l.id != NO_CATEGORY_ID);
 
             mModelController.updateDimension(newDimension);
         }
@@ -173,18 +173,18 @@ document.addEventListener('DOMContentLoaded', function (e) {
         return newDimension;
     })
 
-    mDashboardController.setAddLevelCallback((dimenId) => {
+    mDashboardController.setAddCategoryCallback((dimenId) => {
         let model = mModelController.getModel();
         let dimension = model.getDimension(dimenId);
         if (!dimension) { console.error("Invalid dimension id", dimenId); return; }
 
-        let newLevel = new Data.Level();
-        newLevel.name = "Category" + (Math.max(0, ...dimension.levels
+        let newCategory = new Data.Category();
+        newCategory.name = "Category" + (Math.max(0, ...dimension.categories
             .map(l => l.name.startsWith("Category") ? parseInt(l.name.slice(8)) : 0)
             .filter(n => !isNaN(n))) + 1);
-        dimension.levels.push(newLevel)
+        dimension.categories.push(newCategory)
 
-        if (dimension.levels.length > 1) {
+        if (dimension.categories.length > 1) {
             let lastRange = dimension.ranges.length ? dimension.ranges[dimension.ranges.length - 1] : 0;
             dimension.ranges.push((1 - lastRange) / 2 + lastRange)
         }
@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mDashboardController.modelUpdate(mModelController.getModel());
     });
 
-    mDashboardController.setUpdateLevelCallback((dimenId, levelId, elementIds) => {
+    mDashboardController.setUpdateCategoryCallback((dimenId, categoryId, elementIds) => {
         let model = mModelController.getModel();
         let dimension = model.getDimension(dimenId);
 
@@ -206,25 +206,25 @@ document.addEventListener('DOMContentLoaded', function (e) {
             return e;
         }).filter(e => e).map(e => e.id);
 
-        if (levelId == NO_LEVEL_ID) {
+        if (categoryId == NO_CATEGORY_ID) {
             dimension.unmappedIds = DataUtil.unique(dimension.unmappedIds.concat(elementIds));
         } else {
             dimension.unmappedIds = dimension.unmappedIds.filter(e => !elementIds.includes(e));
-            if (levelId == MAP_ELEMENTS) {
-                let setIds = dimension.levels.map(l => l.elementIds).flat();
+            if (categoryId == MAP_ELEMENTS) {
+                let setIds = dimension.categories.map(l => l.elementIds).flat();
                 let unsetIds = elementIds.filter(eId => !setIds.includes(eId));
-                if (dimension.levels.length == 0) {
-                    let newLevel = new Data.Level();
-                    newLevel.name = "Category1";
-                    dimension.levels.push(newLevel)
+                if (dimension.categories.length == 0) {
+                    let newCategory = new Data.Category();
+                    newCategory.name = "Category1";
+                    dimension.categories.push(newCategory)
                 }
-                dimension.levels[0].elementIds = DataUtil.unique(dimension.levels[0].elementIds.concat(unsetIds));
+                dimension.categories[0].elementIds = DataUtil.unique(dimension.categories[0].elementIds.concat(unsetIds));
             } else {
-                dimension.levels.forEach(level => {
-                    if (level.id == levelId) {
-                        level.elementIds = DataUtil.unique(level.elementIds.concat(elementIds));
+                dimension.categories.forEach(category => {
+                    if (category.id == categoryId) {
+                        category.elementIds = DataUtil.unique(category.elementIds.concat(elementIds));
                     } else {
-                        level.elementIds = level.elementIds.filter(e => !elementIds.includes(e));
+                        category.elementIds = category.elementIds.filter(e => !elementIds.includes(e));
                     }
                 });
             }
@@ -236,18 +236,18 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mDashboardController.modelUpdate(mModelController.getModel());
     });
 
-    mDashboardController.setLevelOrderUpdateCallback((dimenId, newOrder) => {
+    mDashboardController.setCategoryOrderUpdateCallback((dimenId, newOrder) => {
         let model = mModelController.getModel();
         let dimension = model.getDimension(dimenId);
 
-        let levels = dimension.levels;
-        dimension.levels = [];
-        newOrder.forEach(levelId => {
-            dimension.levels.push(levels.find(l => l.id == levelId));
+        let categories = dimension.categories;
+        dimension.categories = [];
+        newOrder.forEach(categoryId => {
+            dimension.categories.push(categories.find(l => l.id == categoryId));
         });
 
-        dimension.levels = dimension.levels.filter(l => l);
-        if (dimension.levels.length != levels.length) { console.error("Inavalid order!"); return; }
+        dimension.categories = dimension.categories.filter(l => l);
+        if (dimension.categories.length != categories.length) { console.error("Inavalid order!"); return; }
 
         mModelController.updateDimension(dimension);
 
@@ -277,11 +277,11 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mDashboardController.modelUpdate(mModelController.getModel());
     })
 
-    mDashboardController.setUpdateLevelNameCallback((levelId, name) => {
-        let level = mModelController.getModel().getLevel(levelId);
-        if (!level) { console.error("Invalid level id: ", levelId); return; }
-        level.name = name;
-        mModelController.updateLevel(level);
+    mDashboardController.setUpdateCategoryNameCallback((categoryId, name) => {
+        let category = mModelController.getModel().getCategory(categoryId);
+        if (!category) { console.error("Invalid category id: ", categoryId); return; }
+        category.name = name;
+        mModelController.updateCategory(category);
 
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
@@ -315,13 +315,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         mModelController.updateDimension(dimension);
 
-        let levels = StructureFairy.getCluster(dimensionId, mModelController.getModel());
-        if (levels) {
+        let categories = StructureFairy.getCluster(dimensionId, mModelController.getModel());
+        if (categories) {
             dimension = mModelController.getModel().getDimension(dimensionId);
 
-            let noMapping = levels.find(l => l.id == NO_LEVEL_ID).elementIds;
+            let noMapping = categories.find(l => l.id == NO_CATEGORY_ID).elementIds;
             dimension.unmappedIds = noMapping;
-            dimension.levels = levels.filter(l => l.id != NO_LEVEL_ID);
+            dimension.categories = categories.filter(l => l.id != NO_CATEGORY_ID);
 
             mModelController.updateDimension(dimension);
         }
@@ -334,18 +334,18 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let dimension = mModelController.getModel().getDimension(dimensionId);
         if ((dimension.channel == ChannelType.FORM && channel == ChannelType.COLOR) ||
             (dimension.channel == ChannelType.COLOR && channel == ChannelType.FORM)) {
-            dimension.levels.forEach(l => l.elementIds = []);
+            dimension.categories.forEach(l => l.elementIds = []);
         }
         if (!dimension) { console.error("Invalid dimension id: ", dimensionId); return; }
         dimension.channel = channel;
         mModelController.updateDimension(dimension);
 
-        let levels = StructureFairy.getCluster(dimensionId, mModelController.getModel());
-        if (levels) {
+        let categories = StructureFairy.getCluster(dimensionId, mModelController.getModel());
+        if (categories) {
             dimension = mModelController.getModel().getDimension(dimensionId);
-            let noMapping = levels.find(l => l.id == NO_LEVEL_ID).elementIds;
+            let noMapping = categories.find(l => l.id == NO_CATEGORY_ID).elementIds;
             dimension.unmappedIds = noMapping;
-            dimension.levels = levels.filter(l => l.id != NO_LEVEL_ID);
+            dimension.categories = categories.filter(l => l.id != NO_CATEGORY_ID);
             mModelController.updateDimension(dimension);
         }
 
@@ -359,12 +359,12 @@ document.addEventListener('DOMContentLoaded', function (e) {
         dimension.tier = tier;
         mModelController.updateDimension(dimension);
 
-        let levels = StructureFairy.getCluster(dimensionId, mModelController.getModel());
-        if (levels) {
+        let categories = StructureFairy.getCluster(dimensionId, mModelController.getModel());
+        if (categories) {
             dimension = mModelController.getModel().getDimension(dimensionId);
-            let noMapping = levels.find(l => l.id == NO_LEVEL_ID).elementIds;
+            let noMapping = categories.find(l => l.id == NO_CATEGORY_ID).elementIds;
             dimension.unmappedIds = noMapping;
-            dimension.levels = levels.filter(l => l.id != NO_LEVEL_ID);
+            dimension.categories = categories.filter(l => l.id != NO_CATEGORY_ID);
             mModelController.updateDimension(dimension);
         }
 
@@ -411,7 +411,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         });
 
         model.getDimensions().filter(d => d.channel == ChannelType.COLOR).forEach(dimen => {
-            dimen.levels.forEach(l => l.elementIds = l.elementIds.filter(eId => !elementIds.includes(eId)));
+            dimen.categories.forEach(l => l.elementIds = l.elementIds.filter(eId => !elementIds.includes(eId)));
             mModelController.updateDimension(dimen);
         })
         DataUtil.unique(elementIds.map(eId => DataUtil.getTier(model, eId))).forEach(tier => {
@@ -449,11 +449,11 @@ document.addEventListener('DOMContentLoaded', function (e) {
         selection.filter(id => IdUtil.isType(id, Data.Dimension)).forEach(dimensionId => {
             mModelController.removeDimension(dimensionId);
         })
-        selection.filter(id => IdUtil.isType(id, Data.Level)).forEach(levelId => {
+        selection.filter(id => IdUtil.isType(id, Data.Category)).forEach(categoryId => {
             let model = mModelController.getModel();
-            let dimen = model.getDimenstionForLevel(levelId);
-            let index = dimen.levels.findIndex(l => l.id == levelId);
-            dimen.levels.splice(index, 1);
+            let dimen = model.getDimenstionForCategory(categoryId);
+            let index = dimen.categories.findIndex(l => l.id == categoryId);
+            dimen.categories.splice(index, 1);
             dimen.ranges.splice(index, 1);
             mModelController.updateDimension(dimen);
         })

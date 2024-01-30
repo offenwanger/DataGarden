@@ -47,11 +47,11 @@ export function ModelController() {
         currStroke.update(stroke);
     }
 
-    function updateLevel(level) {
-        if (!ValUtil.isType(level, Data.Level)) { console.error("Invalid level", level); return; }
-        let currLevel = mDataModel.getLevel(level.id);
-        if (!currLevel) { console.error("Level not found for id", level.id); return; }
-        currLevel.update(level);
+    function updateCategory(category) {
+        if (!ValUtil.isType(category, Data.Category)) { console.error("Invalid category", category); return; }
+        let currCategory = mDataModel.getCategory(category.id);
+        if (!currCategory) { console.error("Category not found for id", category.id); return; }
+        currCategory.update(category);
     }
 
     function addStroke(elementId, stroke) {
@@ -85,7 +85,7 @@ export function ModelController() {
         removeElement,
         updateElement,
         updateStroke,
-        updateLevel,
+        updateCategory,
         addStroke,
         removeStroke,
         getModel,

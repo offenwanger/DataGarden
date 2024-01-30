@@ -75,39 +75,39 @@ export function DataModel() {
         return mDimensions;
     }
 
-    function getDimenstionForLevel(levelId) {
-        if (!IdUtil.isType(levelId, Data.Level)) { console.error("Not a level id! " + levelId); return null; };
-        return getDimensions().find(d => d.levels.some(l => l.id == levelId))
+    function getDimenstionForCategory(categoryId) {
+        if (!IdUtil.isType(categoryId, Data.Category)) { console.error("Not a category id! " + categoryId); return null; };
+        return getDimensions().find(d => d.categories.some(l => l.id == categoryId))
     }
 
     function setDimensions(dimensions) {
         mDimensions = dimensions;
     }
 
-    function getDimensionForLevel(levelId) {
-        if (!IdUtil.isType(levelId, Data.Level)) { console.error("Not an level id! " + levelId); return null; };
-        return getDimensions().find(d => d.levels.some(l => l.id == levelId));
+    function getDimensionForCategory(categoryId) {
+        if (!IdUtil.isType(categoryId, Data.Category)) { console.error("Not an category id! " + categoryId); return null; };
+        return getDimensions().find(d => d.categories.some(l => l.id == categoryId));
     }
 
-    function getLevel(levelId) {
-        if (!IdUtil.isType(levelId, Data.Level)) { console.error("Not an level id! " + levelId); return null; };
-        return getDimensions().map(d => d.levels).flat().find(l => l.id == levelId);
+    function getCategory(categoryId) {
+        if (!IdUtil.isType(categoryId, Data.Category)) { console.error("Not an category id! " + categoryId); return null; };
+        return getDimensions().map(d => d.categories).flat().find(l => l.id == categoryId);
     }
 
-    function getLevels() {
+    function getCategories() {
         return getDimensions().map(d => {
             if (d.type == DimensionType.DISCRETE) {
-                return d.levels;
+                return d.categories;
             } else {
                 return []
             }
         }).flat();
     }
 
-    function getLevelForElement(dimensionId, elementId) {
+    function getCategoryForElement(dimensionId, elementId) {
         let dimension = getDimension(dimensionId);
         if (!dimension) return null;
-        return dimension.levels.find(l => l.elementIds.includes(elementId));
+        return dimension.categories.find(l => l.elementIds.includes(elementId));
     }
 
     function getTables() {
@@ -199,12 +199,12 @@ export function DataModel() {
         getElementChildren,
         getDimension,
         getDimensions,
-        getDimenstionForLevel,
+        getDimenstionForCategory,
         setDimensions,
-        getDimensionForLevel,
-        getLevel,
-        getLevels,
-        getLevelForElement,
+        getDimensionForCategory,
+        getCategory,
+        getCategories,
+        getCategoryForElement,
         getTables,
         getTree,
     }

@@ -113,11 +113,12 @@ export let DataUtil = function () {
         return 1;
     }
 
-    function getElementLevel(element, model) {
-        if (!ValUtil.isType(element, Data.Element)) { console.error("invalid element", element); return -1; }
+    function getTier(model, elementId) {
+        let element = model.getElement(elementId);
+        if (!element) { console.error("invalid element id", elementId); return -1; }
 
         let level = 0;
-        let touched = [element.id];
+        let touched = [elementId];
         let curr = element;
         while (curr.parentId) {
             let parent = model.getElement(curr.parentId)
@@ -202,24 +203,12 @@ export let DataUtil = function () {
         return channelType == ChannelType.FORM || channelType == ChannelType.COLOR;
     }
 
-    function getTier(model, elementId) {
-        let level = -1;
-        if (!IdUtil.isType(elementId, Data.Element)) { console.error("Invalid element id", elementId); return 0; }
-        do {
-            level++;
-            let element = model.getElement(elementId);
-            if (!element) { console.error("Bad model state! Element id not found", elementId); return 0; }
-            elementId = element.parentId;
-        } while (elementId);
-        return level;
-    }
-
     function getMappedValue(model, dimensionId, elementId) {
         let dimension = model.getDimension(dimensionId);
         if (dimension.unmappedIds.includes(elementId)) return null;
         if (dimension.channel == ChannelType.FORM || dimension.channel == ChannelType.COLOR) {
-            let level = dimension.levels.find(level => level.elementIds.includes(elementId));
-            return level ? level.name : null;
+            let category = dimension.categories.find(category => category.elementIds.includes(elementId));
+            return category ? category.name : null;
         } else {
             let element = model.getElement(elementId);
             let percent;
@@ -260,23 +249,23 @@ export let DataUtil = function () {
                 percent = limit(percent, 0, 1);
                 return (parseFloat(dimension.domain[1]) - parseFloat(dimension.domain[0])) * percent + parseFloat(dimension.domain[0]);
             } else {
-                let level = getLevelForPercent(dimension, percent);
-                return level ? level.name : null;
+                let category = getCategoryForPercent(dimension, percent);
+                return category ? category.name : null;
             }
         }
     }
 
-    function getLevelForPercent(dimension, percent) {
-        if (dimension.levels.length == 0) return null
-        if (dimension.levels.length == 1) return dimension.levels[0];
+    function getCategoryForPercent(dimension, percent) {
+        if (dimension.categories.length == 0) return null
+        if (dimension.categories.length == 1) return dimension.categories[0];
         for (let i = 0; i < dimension.ranges.length; i++) {
-            if (percent <= dimension.ranges[i]) return dimension.levels[i];
+            if (percent <= dimension.ranges[i]) return dimension.categories[i];
         }
         if (percent > dimension.ranges[dimension.ranges.length - 1]) {
-            return dimension.levels[dimension.levels.length - 1];
+            return dimension.categories[dimension.categories.length - 1];
         }
 
-        console.error("No valid level found for percent", percent);
+        console.error("No valid category found for percent", percent);
         return null;
     }
 
@@ -409,8 +398,8 @@ export let DataUtil = function () {
             return model.getStroke(id) ? true : false;
         } else if (IdUtil.isType(id, Data.Element)) {
             return model.getElement(id) ? true : false;
-        } else if (IdUtil.isType(id, Data.Level)) {
-            return model.getLevel(id) ? true : false;
+        } else if (IdUtil.isType(id, Data.Category)) {
+            return model.getCategory(id) ? true : false;
         } else if (IdUtil.isType(id, Data.Dimension)) {
             return model.getDimension(id) ? true : false;
         } else {
@@ -483,13 +472,12 @@ export let DataUtil = function () {
         overlap,
         getDifferenceMetric,
         getElementSize,
-        getElementLevel,
+        getTier,
         isDecendant,
         unique,
         findEmptyPlace,
         getStrokesInLocalCoords,
         channelIsDiscrete,
-        getTier,
         getMappedValue,
         getPaddedPoints,
         domainIsValid,

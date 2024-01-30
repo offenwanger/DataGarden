@@ -48,11 +48,11 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
         let prevBottom = -100;
         let maxTier = Math.max(...mNodes.map(n => n.tier));
         for (let tier = 0; tier <= maxTier; tier++) {
-            let levelYs = mNodes.filter(n => n.tier == tier && !n.interacting).map(n => n.y);
+            let categoryYs = mNodes.filter(n => n.tier == tier && !n.interacting).map(n => n.y);
             let nextYs = mNodes.filter(n => n.tier == tier + 1 && !n.interacting).map(n => n.y);
 
-            let top = Math.min(...levelYs)
-            let bottom = Math.max(...levelYs)
+            let top = Math.min(...categoryYs)
+            let bottom = Math.max(...categoryYs)
             let nextTop = nextYs.length > 0 ? Math.min(...nextYs) : bottom + Size.ELEMENT_NODE_SIZE * 3;
 
             top = (top + prevBottom) / 2;

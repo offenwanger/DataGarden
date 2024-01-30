@@ -53,7 +53,7 @@ export function DashboardController() {
     let mCalculateSpineCallback = () => { };
     let mUndoCallback = () => { };
     let mRedoCallback = () => { };
-    let mUpdateLevelNameCallback = () => { };
+    let mUpdateCategoryNameCallback = () => { };
     let mUpdateDimensionNameCallback = () => { };
     let mUpdateDimensionDomainCallback = () => { };
     let mUpdateDimensionTypeCallback = () => { };
@@ -181,8 +181,8 @@ export function DashboardController() {
                 domain[0] = text;
             } else { console.error("Invalid id", itemId); return; }
             mUpdateDimensionDomainCallback(itemId.dimension, domain);
-        } else if (IdUtil.isType(itemId, Data.Level)) {
-            mUpdateLevelNameCallback(itemId, text);
+        } else if (IdUtil.isType(itemId, Data.Category)) {
+            mUpdateCategoryNameCallback(itemId, text);
         } else if (IdUtil.isType(itemId, Data.Dimension)) {
             mUpdateDimensionNameCallback(itemId, text);
         } else {
@@ -255,7 +255,7 @@ export function DashboardController() {
         if (!selection.some(id =>
             IdUtil.isType(id, Data.Stroke)
             || IdUtil.isType(id, Data.Element)
-            || IdUtil.isType(id, Data.Level))) {
+            || IdUtil.isType(id, Data.Category))) {
             // if it's not one of the above, there's no context menu.  
             return;
         }
@@ -304,8 +304,8 @@ export function DashboardController() {
 
     mFdlViewController.setEditNameCallback((itemId, x, y, width, height) => {
         let item;
-        if (IdUtil.isType(itemId, Data.Level)) {
-            item = mModel.getLevel(itemId);
+        if (IdUtil.isType(itemId, Data.Category)) {
+            item = mModel.getCategory(itemId);
         } else {
             item = mModel.getDimension(itemId);
         }
@@ -477,11 +477,11 @@ export function DashboardController() {
         setUndoCallback: (func) => mUndoCallback = func,
         setRedoCallback: (func) => mRedoCallback = func,
         setAddDimensionCallback: (func) => mAddDimensionCallback = func,
-        setAddLevelCallback: (func) => mFdlViewController.setAddLevelCallback(func),
-        setUpdateLevelCallback: (func) => mFdlViewController.setUpdateLevelCallback(func),
-        setLevelOrderUpdateCallback: (func) => mFdlViewController.setLevelOrderUpdateCallback(func),
+        setAddCategoryCallback: (func) => mFdlViewController.setAddCategoryCallback(func),
+        setUpdateCategoryCallback: (func) => mFdlViewController.setUpdateCategoryCallback(func),
+        setCategoryOrderUpdateCallback: (func) => mFdlViewController.setCategoryOrderUpdateCallback(func),
         setUpdateRangeControlCallback: (func) => mFdlViewController.setUpdateRangeControlCallback(func),
-        setUpdateLevelNameCallback: (func) => mUpdateLevelNameCallback = func,
+        setUpdateCategoryNameCallback: (func) => mUpdateCategoryNameCallback = func,
         setUpdateDimensionNameCallback: (func) => mUpdateDimensionNameCallback = func,
         setUpdateDimensionDomainCallback: (func) => mUpdateDimensionDomainCallback = func,
         setUpdateDimensionTypeCallback: (func) => mUpdateDimensionTypeCallback = func,

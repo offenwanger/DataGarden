@@ -115,21 +115,21 @@ export function FdlViewController(mColorMap) {
             mSimulationData.push(dimensionData);
 
             if (dimension.type == DimensionType.DISCRETE) {
-                dimension.levels.forEach(level => {
-                    let levelData = {
-                        id: level.id,
-                        name: level.name,
+                dimension.categories.forEach(category => {
+                    let categoryData = {
+                        id: category.id,
+                        name: category.name,
                         dimension: dimension.id,
                     }
-                    let oldData = oldSimulationData.find(item => item.id == level.id);
+                    let oldData = oldSimulationData.find(item => item.id == category.id);
                     if (oldData) {
-                        levelData.x = oldData.x;
-                        levelData.y = oldData.y;
+                        categoryData.x = oldData.x;
+                        categoryData.y = oldData.y;
                     } else {
-                        levelData.x = 0;
-                        levelData.y = 0;
+                        categoryData.x = 0;
+                        categoryData.y = 0;
                     }
-                    mSimulationData.push(levelData);
+                    mSimulationData.push(categoryData);
                 })
             } else {
                 let v1Data = {
@@ -515,9 +515,9 @@ export function FdlViewController(mColorMap) {
         show,
         setAddDimensionCallback: (func) => mFdlLegendViewController.setAddDimensionCallback(func),
         setClickDimensionCallback: (func) => mFdlLegendViewController.setClickDimensionCallback(func),
-        setAddLevelCallback: (func) => mFdlDimensionViewController.setAddLevelCallback(func),
-        setUpdateLevelCallback: (func) => mFdlDimensionViewController.setUpdateLevelCallback(func),
-        setLevelOrderUpdateCallback: (func) => mFdlDimensionViewController.setLevelOrderUpdateCallback(func),
+        setAddCategoryCallback: (func) => mFdlDimensionViewController.setAddCategoryCallback(func),
+        setUpdateCategoryCallback: (func) => mFdlDimensionViewController.setUpdateCategoryCallback(func),
+        setCategoryOrderUpdateCallback: (func) => mFdlDimensionViewController.setCategoryOrderUpdateCallback(func),
         setUpdateRangeControlCallback: (func) => mFdlDimensionViewController.setUpdateRangeControlCallback(func),
         setDeleteDimensionCallback: (func) => mFdlDimensionViewController.setDeleteDimensionCallback(func),
         setEditNameCallback: (func) => mEditNameCallback = func,

@@ -1,4 +1,4 @@
-export const NO_LEVEL_ID = "no_level";
+export const NO_CATEGORY_ID = "no_category";
 export const MAP_ELEMENTS = "apply_mapping";
 export const DIMENSION_RANGE_V1 = 'range_top';
 export const DIMENSION_RANGE_V2 = 'range_bottom';
@@ -26,13 +26,13 @@ export const FdlButtons = {
 export const Size = {
     ELEMENT_NODE_SIZE: 20,
     DIMENSION_SIZE: 40,
-    LEVEL_SIZE: 30,
+    CATEGORY_SIZE: 30,
 }
 
 export const Padding = {
     NODE: 5,
     CLUSTER: 20,
-    LEVEL: 5,
+    CATEGORY: 5,
 }
 
 export const ContextButtons = {

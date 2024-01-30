@@ -1,4 +1,4 @@
-import { NO_LEVEL_ID } from "../constants.js";
+import { NO_CATEGORY_ID } from "../constants.js";
 import { Data } from "../data_structs.js";
 import { DataUtil } from "./data_util.js";
 import { IdUtil } from "./id_util.js";
@@ -41,10 +41,10 @@ export let ModelUtil = function () {
             child.parentId = element.parentId;
             modelController.updateElement(child);
         })
-        model.getLevels().forEach(level => {
-            if (level.elementIds.includes(elementId)) {
-                level.elementIds = level.elementIds.filter(id => id != elementId);
-                modelController.updateLevel(level);
+        model.getCategories().forEach(category => {
+            if (category.elementIds.includes(elementId)) {
+                category.elementIds = category.elementIds.filter(id => id != elementId);
+                modelController.updateCategory(category);
             }
         })
         modelController.removeElement(elementId);
@@ -53,11 +53,11 @@ export let ModelUtil = function () {
     function autoClusterTierDimensions(tier, modelController) {
         let model = modelController.getModel();
         model.getDimensions().filter(d => d.tier == tier).forEach(dimen => {
-            let levels = StructureFairy.getCluster(dimen.id, model);
-            if (levels) {
-                let noMapping = levels.find(l => l.id == NO_LEVEL_ID).elementIds;
+            let categories = StructureFairy.getCluster(dimen.id, model);
+            if (categories) {
+                let noMapping = categories.find(l => l.id == NO_CATEGORY_ID).elementIds;
                 dimen.unmappedIds = noMapping;
-                dimen.levels = levels.filter(l => l.id != NO_LEVEL_ID);
+                dimen.categories = categories.filter(l => l.id != NO_CATEGORY_ID);
                 modelController.updateDimension(dimen);
             }
         });

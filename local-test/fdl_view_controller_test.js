@@ -46,7 +46,7 @@ describe('FDL View Controller Test', function () {
             assert.equal('implimented', true)
         });
 
-        it('should delete a level', function () {
+        it('should delete a category', function () {
             assert.equal('implimented', true)
         });
 
@@ -62,7 +62,7 @@ describe('FDL View Controller Test', function () {
             assert.equal('implimented', true)
         });
 
-        it('should only delete levels and dimensions when on an appropriate tab', function () {
+        it('should only delete categories and dimensions when on an appropriate tab', function () {
             assert.equal('implimented', true)
         });
     })
@@ -193,34 +193,34 @@ describe('FDL View Controller Test', function () {
             assert.equal(model().getDimensions()[0].channel, ChannelType.POSITION);
         });
 
-        it('should create a level', function () {
+        it('should create a category', function () {
             utility.clickTab(Tab.LEGEND);
             assert.equal(model().getDimensions().length, 0);
             utility.click('#fdl-view-container', { x: 15, y: 15 });
             assert.equal(model().getDimensions().length, 1)
 
-            assert.equal(model().getDimensions()[0].levels.length, 0);
+            assert.equal(model().getDimensions()[0].categories.length, 0);
             utility.click('#fdl-view-container', { x: 15, y: DIMENSION_SETTINGS_HEIGHT + 60 });
-            assert.equal(model().getDimensions()[0].levels.length, 1);
+            assert.equal(model().getDimensions()[0].categories.length, 1);
         });
 
-        it('should change a level name', function () {
+        it('should change a category name', function () {
             utility.clickTab(Tab.LEGEND);
             assert.equal(model().getDimensions().length, 0);
             utility.click('#fdl-view-container', { x: 15, y: 15 });
             assert.equal(model().getDimensions().length, 1)
 
-            assert.equal(model().getDimensions()[0].levels.length, 0);
+            assert.equal(model().getDimensions()[0].categories.length, 0);
             utility.click('#fdl-view-container', { x: 15, y: DIMENSION_SETTINGS_HEIGHT + 60 });
-            assert.equal(model().getDimensions()[0].levels.length, 1);
+            assert.equal(model().getDimensions()[0].categories.length, 1);
 
             utility.click('#fdl-view-container', { x: 15, y: 285 });
             utility.enterText("new name");
-            assert.equal(model().getDimensions()[0].levels.length, 1);
-            assert.equal(model().getDimensions()[0].levels[0].name, "new name");
+            assert.equal(model().getDimensions()[0].categories.length, 1);
+            assert.equal(model().getDimensions()[0].categories[0].name, "new name");
         });
 
-        it('should assign elements to level on drop', function () {
+        it('should assign elements to category on drop', function () {
             utility.drawStroke([{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 20, y: 80 }])
             utility.drawStroke([{ x: 30, y: 20 }, { x: 30, y: 40 }, { x: 30, y: 60 }, { x: 30, y: 80 }])
 
@@ -235,16 +235,16 @@ describe('FDL View Controller Test', function () {
             for (let i = 0; i < 30; i++) d3.tick();
 
             utility.click('#fdl-view-container', { x: 15, y: 430 });
-            assert.equal(model().getDimensions()[0].levels.length, 2);
-            assert.equal(model().getDimensions()[0].levels[0].elementIds.length, 2);
-            assert.equal(model().getDimensions()[0].levels[1].elementIds.length, 0);
+            assert.equal(model().getDimensions()[0].categories.length, 2);
+            assert.equal(model().getDimensions()[0].categories[0].elementIds.length, 2);
+            assert.equal(model().getDimensions()[0].categories[1].elementIds.length, 0);
             for (let i = 0; i < 30; i++) d3.tick();
 
             utility.drag('#fdl-view-container', [{ x: 475, y: 175 }, { x: 250, y: 200 }, { x: 300, y: 500 }]);
 
-            assert.equal(model().getDimensions()[0].levels.length, 2);
-            assert.equal(model().getDimensions()[0].levels[0].elementIds.length, 1);
-            assert.equal(model().getDimensions()[0].levels[1].elementIds.length, 1);
+            assert.equal(model().getDimensions()[0].categories.length, 2);
+            assert.equal(model().getDimensions()[0].categories[0].elementIds.length, 1);
+            assert.equal(model().getDimensions()[0].categories[1].elementIds.length, 1);
         });
 
         it('should change dimension mapping on control drag', function () {
@@ -258,7 +258,7 @@ describe('FDL View Controller Test', function () {
             for (let i = 0; i < 30; i++) d3.tick();
             utility.click('#fdl-view-container', { x: 15, y: 430 });
             for (let i = 0; i < 30; i++) d3.tick();
-            assert.equal(model().getDimensions()[0].levels.length, 2);
+            assert.equal(model().getDimensions()[0].categories.length, 2);
 
             utility.drawStroke([{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 20, y: 80 }])
             utility.drawStroke([{ x: 30, y: 20 }, { x: 30, y: 40 }, { x: 30, y: 60 }, { x: 30, y: 80 }])

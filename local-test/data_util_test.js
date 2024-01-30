@@ -23,17 +23,17 @@ describe('Test Main - Integration Test', function () {
     describe('level tests', function () {
         it('should get 0 for a parentless element', function () {
             let model = utility.makeModel();
-            assert.equal(DataUtil.getElementLevel(model.getElements().find(e => !e.parentId), model), 0);
+            assert.equal(DataUtil.getTier(model, model.getElements().find(e => !e.parentId).id), 0);
         });
 
         it('should get more than 0 for a parented element', function () {
             let model = utility.makeModel();
-            assert(DataUtil.getElementLevel(model.getElements().find(e => e.parentId), model) > 0);
+            assert(DataUtil.getTier(model, model.getElements().find(e => e.parentId).id,) > 0);
         });
 
-        it('should the right level for a deep element', function () {
+        it('should the right category for a deep element', function () {
             let model = utility.makeModel();
-            expect(model.getElements().map(e => DataUtil.getElementLevel(e, model))).to.eql([0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2]);
+            expect(model.getElements().map(e => DataUtil.getTier(model, e.id))).to.eql([0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2]);
         });
     })
 

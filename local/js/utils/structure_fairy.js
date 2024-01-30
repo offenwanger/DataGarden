@@ -1,4 +1,4 @@
-import { ChannelType, DimensionType, MAP_ELEMENTS, NO_LEVEL_ID } from "../constants.js";
+import { ChannelType, DimensionType, MAP_ELEMENTS, NO_CATEGORY_ID } from "../constants.js";
 import { Data } from "../data_structs.js";
 import { ClassifierUtil } from "./classifier_util.js";
 import { DataUtil } from "./data_util.js";
@@ -62,7 +62,8 @@ export let StructureFairy = function () {
 
     }
 
-    // adds all relevant elements to the levels. Creates the levels if they do not exist.
+    // Adds all relevant elements to the categories. 
+    // Creates the categories if they do not exist.
     function getCluster(dimenId, model) {
         let dimension = model.getDimension(dimenId);
         if (!dimension) {
@@ -74,57 +75,57 @@ export let StructureFairy = function () {
         if (elements.length == 0) return;
 
         if (dimension.type == DimensionType.DISCRETE) {
-            let levels = dimension.levels;
+            let categories = dimension.categories;
             if (dimension.unmappedIds.length > 0) {
-                levels.push({ id: NO_LEVEL_ID, elementIds: dimension.unmappedIds });
+                categories.push({ id: NO_CATEGORY_ID, elementIds: dimension.unmappedIds });
             }
 
             let clusters = [];
             if (dimension.channel == ChannelType.COLOR) {
-                clusters = ClassifierUtil.clusterElementColors(elements, levels);
+                clusters = ClassifierUtil.clusterElementColors(elements, categories);
             } else {
-                clusters = ClassifierUtil.clusterElementForms(elements, levels);
+                clusters = ClassifierUtil.clusterElementForms(elements, categories);
             }
             let clusterCount = Math.max(...clusters) + 1;
 
             for (let i = 0; i < clusterCount; i++) {
-                let level = levels[i];
-                if (!level) {
+                let category = categories[i];
+                if (!category) {
                     if (i == 0 || dimension.channel == ChannelType.COLOR || dimension.channel == ChannelType.FORM) {
-                        level = new Data.Level();
-                        level.name = "Category" + (i + 1);
-                        levels.push(level)
+                        category = new Data.Category();
+                        category.name = "Category" + (i + 1);
+                        categories.push(category)
                     } else {
                         // don't make new categories unless we are using a discrete channel.
-                        level = levels[0];
+                        category = categories[0];
                     }
                 }
                 let clusterElementIds = clusters
                     .map((cluster, elementIndex) => cluster == i ? elementIndex : -1)
                     .filter(i => i != -1)
                     .map(i => elements[i].id);
-                level.elementIds = DataUtil.unique(level.elementIds.concat(clusterElementIds));
+                category.elementIds = DataUtil.unique(category.elementIds.concat(clusterElementIds));
             }
-            for (let i = clusterCount; i < levels.length; i++) {
-                levels[i].elementIds = [];
+            for (let i = clusterCount; i < categories.length; i++) {
+                categories[i].elementIds = [];
             }
 
             if (dimension.unmappedIds.length == 0) {
-                // we always return this level, but we don't map there unless the user already is using it
-                levels.push({ id: NO_LEVEL_ID, elementIds: [] });
+                // we always return this category, but we don't map there unless the user already is using it
+                categories.push({ id: NO_CATEGORY_ID, elementIds: [] });
             }
 
-            return levels;
+            return categories;
         } else {
-            let levels = [
-                { id: NO_LEVEL_ID, elementIds: dimension.unmappedIds },
+            let categories = [
+                { id: NO_CATEGORY_ID, elementIds: dimension.unmappedIds },
                 { id: MAP_ELEMENTS, elementIds: elements.map(e => e.id).filter(eId => !dimension.unmappedIds.includes(eId)) },
             ];
 
-            let clusters = ClassifierUtil.clusterElementForms(elements, levels);
+            let clusters = ClassifierUtil.clusterElementForms(elements, categories);
             let unmappedIds = clusters.map((c, index) => c == 0 ? elements[index].id : null).filter(id => id);
 
-            return dimension.levels.concat([{ id: NO_LEVEL_ID, elementIds: unmappedIds }]);
+            return dimension.categories.concat([{ id: NO_CATEGORY_ID, elementIds: unmappedIds }]);
         }
     }
 

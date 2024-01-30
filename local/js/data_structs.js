@@ -89,9 +89,9 @@ export let Data = function () {
         this.tier = 0;
         this.unmappedIds = []
         // discrete dimensions
-        this.levels = [];
+        this.categories = [];
         // discrete dimensions to continuous channels
-        // length = levels - 1
+        // length = categories - 1
         this.ranges = []
         // continuous dimensions
         this.domain = [0, 1]
@@ -108,7 +108,7 @@ export let Data = function () {
             clone.angleType = this.angleType;
             clone.sizeType = this.sizeType;
             clone.unmappedIds = [...this.unmappedIds];
-            clone.levels = this.levels.map(l => l.clone());
+            clone.categories = this.categories.map(c => c.clone());
             clone.ranges = [...this.ranges];
             clone.domain = [...this.domain];
             clone.domainRange = [...this.domainRange];
@@ -125,7 +125,7 @@ export let Data = function () {
             this.angleType = dimension.angleType;
             this.sizeType = dimension.sizeType;
             this.unmappedIds = [...dimension.unmappedIds];
-            this.levels = dimension.levels.map(l => l.clone());
+            this.categories = dimension.categories.map(l => l.clone());
             this.ranges = [...dimension.ranges];
             this.domain = [...dimension.domain];
             this.domainRange = [...dimension.domainRange];
@@ -142,7 +142,7 @@ export let Data = function () {
         dimension.angleType = obj.angleType ? obj.angleType : AngleType.RELATIVE;
         dimension.sizeType = obj.sizeType ? obj.sizeType : SizeType.AREA;
         dimension.unmappedIds = obj.unmappedIds ? [...obj.unmappedIds] : [];
-        dimension.levels = obj.levels ? obj.levels.map(l => Level.fromObject(l)) : [];
+        dimension.categories = obj.categories ? obj.categories.map(c => Category.fromObject(c)) : [];
         dimension.ranges = obj.ranges ? [...obj.ranges] : [];
         dimension.domain = obj.domain ? [...obj.domain] : [0, 1];
         dimension.domainRange = obj.domainRange ? [...obj.domainRange] : [0, 1];
@@ -150,14 +150,14 @@ export let Data = function () {
     }
 
 
-    function Level() {
-        this.id = IdUtil.getUniqueId(Level);
+    function Category() {
+        this.id = IdUtil.getUniqueId(Category);
         this.creationTime = Date.now();
         this.name = "Category";
         this.elementIds = [];
 
         this.clone = function () {
-            let clone = new Level();
+            let clone = new Category();
             clone.id = this.id;
             clone.creationTime = this.creationTime;
             clone.name = this.name;
@@ -165,26 +165,26 @@ export let Data = function () {
             return clone;
         };
 
-        this.update = function (level) {
-            this.id = level.id;
-            this.creationTime = level.creationTime;
-            this.name = level.name;
-            this.elementIds = [...level.elementIds];
+        this.update = function (category) {
+            this.id = category.id;
+            this.creationTime = category.creationTime;
+            this.name = category.name;
+            this.elementIds = [...category.elementIds];
         };
     }
-    Level.fromObject = function (obj) {
-        let level = new Level();
-        level.id = obj.id;
-        level.creationTime = obj.creationTime;
-        level.name = obj.name;
-        level.elementIds = [...obj.elementIds];
-        return level;
+    Category.fromObject = function (obj) {
+        let category = new Category();
+        category.id = obj.id;
+        category.creationTime = obj.creationTime;
+        category.name = obj.name;
+        category.elementIds = [...obj.elementIds];
+        return category;
     }
 
     return {
         Stroke,
         Element,
         Dimension,
-        Level,
+        Category,
     }
 }();

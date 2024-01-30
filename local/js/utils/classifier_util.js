@@ -85,27 +85,27 @@ export let ClassifierUtil = function () {
         return count == 0 ? sum : sum.map(c => c / count);
     }
 
-    function clusterElementForms(elements, levels) {
+    function clusterElementForms(elements, categories) {
         let vectors = elements.map(e => elementToImgVector(e));
-        return clusterElementVectors(elements, vectors, levels);
+        return clusterElementVectors(elements, vectors, categories);
     }
 
-    function clusterElementColors(elements, levels) {
+    function clusterElementColors(elements, categories) {
         let vectors = elements.map(e => elementToColorVector(e));
-        return clusterElementVectors(elements, vectors, levels);
+        return clusterElementVectors(elements, vectors, categories);
     }
 
-    function clusterElementVectors(elements, vectors, levels) {
+    function clusterElementVectors(elements, vectors, categories) {
         let clusters = new Array(vectors.length).fill(-1);
-        levels.forEach((l, index) => l.elementIds
+        categories.forEach((l, index) => l.elementIds
             .forEach(eId => clusters[elements.findIndex(e => e.id == eId)] = index));
 
-        if (levels.length > elements.length) {
+        if (categories.length > elements.length) {
             clusters = clusters.map((cluster, elementIndex) => {
                 if (cluster == -1) {
-                    let levelIndex = levels.findIndex(l => l.elementIds.length == 0);
-                    levels[levelIndex].elementIds.push(elements[elementIndex].id);
-                    return levelIndex;
+                    let categoryIndex = categories.findIndex(l => l.elementIds.length == 0);
+                    categories[categoryIndex].elementIds.push(elements[elementIndex].id);
+                    return categoryIndex;
                 } else return cluster;
             });
             return clusters;

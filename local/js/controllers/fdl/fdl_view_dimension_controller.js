@@ -1,4 +1,4 @@
-import { ChannelLabels, ChannelType, DIMENSION_RANGE_V1, DIMENSION_RANGE_V2, DIMENSION_SETTINGS_HEIGHT, SimulationValues, DimensionLabels, DimensionType, FdlButtons, FdlInteraction, NO_LEVEL_ID, Padding, Size, AngleType, SizeType, MAP_ELEMENTS } from "../../constants.js";
+import { ChannelLabels, ChannelType, DIMENSION_RANGE_V1, DIMENSION_RANGE_V2, DIMENSION_SETTINGS_HEIGHT, SimulationValues, DimensionLabels, DimensionType, FdlButtons, FdlInteraction, NO_CATEGORY_ID, Padding, Size, AngleType, SizeType, MAP_ELEMENTS } from "../../constants.js";
 import { DataModel } from "../../data_model.js";
 import { Data } from "../../data_structs.js";
 import { DataUtil } from "../../utils/data_util.js";
@@ -20,16 +20,16 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     const TARGET_ANGLE = "dimention_angle_setting_target";
     const TARGET_SIZE = "dimention_size_setting_target";
     const TARGET_DELETE = "delete_target";
-    const TARGET_BUBBLE = "level_bubble";
+    const TARGET_BAND = "category_band";
     const TARGET_CONTROL = "axis_control";
     const TARGET_NONE = "none_target";
     const TARGET_NOT_NONE = "not_none_target";
 
-    const ADD_LEVEL_LABEL = "Add Category +";
+    const ADD_CATEGORY_LABEL = "Add Category +";
 
     const CONTROL_ID = 'control_node_'
 
-    let mAddLevelCallback = () => { };
+    let mAddCategoryCallback = () => { };
     let mEditNameCallback = () => { };
     let mEditDomainCallback = () => { };
     let mEditTypeCallback = () => { };
@@ -38,8 +38,8 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     let mEditAngleTypeCallback = () => { };
     let mEditSizeTypeCallback = () => { };
     let mDeleteDimensionCallback = () => { };
-    let mUpdateLevelCallback = () => { };
-    let mLevelOrderUpdateCallback = () => { };
+    let mUpdateCategoryCallback = () => { };
+    let mCategoryOrderUpdateCallback = () => { };
     let mUpdateRangeControlCallback = () => { };
 
     let mModel = new DataModel();
@@ -54,13 +54,13 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     let mHeight = 100;
 
     let mDimensionNode;
-    let mLevels = [];
-    let mNone = { name: "None", id: NO_LEVEL_ID, x: 0, y: 0 }
+    let mCategories = [];
+    let mNone = { name: "None", id: NO_CATEGORY_ID, x: 0, y: 0 }
     let mNodes = [];
     let mAddButton = { id: FdlButtons.ADD, x: 0, y: 0 };
     let mControls = [];
 
-    let mLevelsX = 0;
+    let mCategoriesX = 0;
     let mElementsX = 1;
     let mElementsAxisX = 1;
     let mYRanges = {};
@@ -121,7 +121,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
 
         mDimensionNode = data.find(node => node.id == mDimension.id);
         mNodes = data.filter(node => IdUtil.isType(node.id, Data.Element) && DataUtil.getTier(mModel, node.id) == mDimension.tier);
-        mLevels = data.filter(node => node.dimension == mDimension.id);
+        mCategories = data.filter(node => node.dimension == mDimension.id);
 
         calculateLayoutValues();
         setControlNodes();
@@ -135,26 +135,26 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     }
 
     function calculateLayoutValues() {
-        mLevelsX = canvasCoordsToLocal({ x: Padding.LEVEL, y: 0 }).x;
-        mElementsX = mLevels.concat({ name: ADD_LEVEL_LABEL }).reduce((max, level) => {
-            return Math.max(max, mDrawingUtil.measureStringNode(level.name, Size.LEVEL_SIZE));
-        }, 10) + Padding.LEVEL * 2;
+        mCategoriesX = canvasCoordsToLocal({ x: Padding.CATEGORY, y: 0 }).x;
+        mElementsX = mCategories.concat({ name: ADD_CATEGORY_LABEL }).reduce((max, category) => {
+            return Math.max(max, mDrawingUtil.measureStringNode(category.name, Size.CATEGORY_SIZE));
+        }, 10) + Padding.CATEGORY * 2;
         mElementsAxisX = mElementsX + AXIS_PADDING + (mDimension.channel == ChannelType.ANGLE ? ANGLE_LABEL_SIZE : 0)
         mScreenEdge = canvasCoordsToLocal({ x: mWidth, y: 0 }).x;
 
         mYRanges = {};
         if (mDimension.type == DimensionType.DISCRETE) {
-            mDimension.levels.forEach(({ id }, index) => {
+            mDimension.categories.forEach(({ id }, index) => {
                 mYRanges[id] = getDiscreteYRange(index);
             });
-            mYRanges[FdlButtons.ADD] = getDiscreteYRange(mDimension.levels.length);
-            mYRanges[NO_LEVEL_ID] = getDiscreteYRange(mDimension.levels.length + 1);
-            // y range for the dimension is the space of the actual levels
-            mYRanges[mDimension.id] = [DIMENSION_SETTINGS_HEIGHT + Size.LEVEL_SIZE, mYRanges[FdlButtons.ADD][0]];
+            mYRanges[FdlButtons.ADD] = getDiscreteYRange(mDimension.categories.length);
+            mYRanges[NO_CATEGORY_ID] = getDiscreteYRange(mDimension.categories.length + 1);
+            // y range for the dimension is the space of the actual categories
+            mYRanges[mDimension.id] = [DIMENSION_SETTINGS_HEIGHT + Size.CATEGORY_SIZE, mYRanges[FdlButtons.ADD][0]];
         } else {
             // it's the whole space.
             mYRanges[mDimension.id] = getContinuousYRange(false);
-            mYRanges[NO_LEVEL_ID] = getContinuousYRange(true);
+            mYRanges[NO_CATEGORY_ID] = getContinuousYRange(true);
         }
 
         calculateNodeLayout();
@@ -225,30 +225,30 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     }
 
     function getDiscreteYRange(index) {
-        let top = DIMENSION_SETTINGS_HEIGHT + Size.LEVEL_SIZE + Padding.LEVEL * 2;
-        let levelheight = (mHeight - top - Size.LEVEL_SIZE - Padding.LEVEL * 2) / (mDimension.levels.length + 1);
+        let top = DIMENSION_SETTINGS_HEIGHT + Size.CATEGORY_SIZE + Padding.CATEGORY * 2;
+        let categoryheight = (mHeight - top - Size.CATEGORY_SIZE - Padding.CATEGORY * 2) / (mDimension.categories.length + 1);
 
-        if (index == mDimension.levels.length + 1) {
+        if (index == mDimension.categories.length + 1) {
             // none is at the bottom
-            let y1 = mHeight - levelheight + Padding.LEVEL;
-            let y2 = mHeight - Padding.LEVEL;
+            let y1 = mHeight - categoryheight + Padding.CATEGORY;
+            let y2 = mHeight - Padding.CATEGORY;
             return [y1, y2];
-        } else if (index == mDimension.levels.length) {
+        } else if (index == mDimension.categories.length) {
             // the add category button space is above none
-            let y1 = mHeight - levelheight - Size.LEVEL_SIZE - Padding.LEVEL;
-            let y2 = mHeight - levelheight - Padding.LEVEL;
+            let y1 = mHeight - categoryheight - Size.CATEGORY_SIZE - Padding.CATEGORY;
+            let y2 = mHeight - categoryheight - Padding.CATEGORY;
             return [y1, y2]
         } else {
             if (mDimension.channel == ChannelType.FORM || mDimension.channel == ChannelType.COLOR) {
-                let y1 = top + index * levelheight + Padding.LEVEL;
-                let y2 = y1 + levelheight - Padding.LEVEL;
+                let y1 = top + index * categoryheight + Padding.CATEGORY;
+                let y2 = y1 + categoryheight - Padding.CATEGORY;
                 return [y1, y2];
             } else {
                 let r1 = index == 0 ? 0 : mDimension.ranges[index - 1];
                 let r2 = index == mDimension.ranges.length ? 1 : mDimension.ranges[index];
-                let availableHeight = levelheight * mDimension.levels.length;
-                let y1 = top + r1 * availableHeight + Padding.LEVEL;
-                let y2 = top + r2 * availableHeight + Padding.LEVEL;
+                let availableHeight = categoryheight * mDimension.categories.length;
+                let y1 = top + r1 * availableHeight + Padding.CATEGORY;
+                let y2 = top + r2 * availableHeight + Padding.CATEGORY;
                 return [y1, y2];
             }
         }
@@ -260,8 +260,8 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             let y2 = mHeight;
             return [y1, y2];
         } else {
-            let top = DIMENSION_SETTINGS_HEIGHT + Size.LEVEL_SIZE + Padding.LEVEL * 2;
-            let height = mHeight - top - DEFAULT_NONE_HEIGHT - (Size.LEVEL_SIZE + Padding.LEVEL * 2);
+            let top = DIMENSION_SETTINGS_HEIGHT + Size.CATEGORY_SIZE + Padding.CATEGORY * 2;
+            let height = mHeight - top - DEFAULT_NONE_HEIGHT - (Size.CATEGORY_SIZE + Padding.CATEGORY * 2);
             if (height < 1) height = 1;
             return [top, top + height];
         }
@@ -269,48 +269,48 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
 
     function resetTargets() {
         if (mDimension.type == DimensionType.DISCRETE) {
-            mAddButton.targetY = rangeAverage(mYRanges[FdlButtons.ADD]) - Size.LEVEL_SIZE / 2;
-            mAddButton.targetX = mLevelsX;
+            mAddButton.targetY = rangeAverage(mYRanges[FdlButtons.ADD]) - Size.CATEGORY_SIZE / 2;
+            mAddButton.targetX = mCategoriesX;
         }
 
-        mNone.targetY = rangeAverage(mYRanges[NO_LEVEL_ID]) - Size.LEVEL_SIZE / 2;
-        mNone.targetX = mLevelsX;
+        mNone.targetY = rangeAverage(mYRanges[NO_CATEGORY_ID]) - Size.CATEGORY_SIZE / 2;
+        mNone.targetX = mCategoriesX;
 
-        updateLevelTargets();
+        updateCategoryTargets();
         updateNodeTargets();
     }
 
-    function updateLevelTargets() {
-        mLevels.forEach(levelNode => {
-            if (levelNode.id == DIMENSION_RANGE_V1) {
-                levelNode.targetY = mControls.find(c => c.id == CONTROL_ID + DIMENSION_RANGE_V1).y;
-            } else if (levelNode.id == DIMENSION_RANGE_V2) {
-                levelNode.targetY = mControls.find(c => c.id == CONTROL_ID + DIMENSION_RANGE_V2).y; - Size.LEVEL_SIZE;
-            } else if (IdUtil.isType(levelNode.id, Data.Level)) {
+    function updateCategoryTargets() {
+        mCategories.forEach(categoryNode => {
+            if (categoryNode.id == DIMENSION_RANGE_V1) {
+                categoryNode.targetY = mControls.find(c => c.id == CONTROL_ID + DIMENSION_RANGE_V1).y;
+            } else if (categoryNode.id == DIMENSION_RANGE_V2) {
+                categoryNode.targetY = mControls.find(c => c.id == CONTROL_ID + DIMENSION_RANGE_V2).y; - Size.CATEGORY_SIZE;
+            } else if (IdUtil.isType(categoryNode.id, Data.Category)) {
                 if (mDimension.channel == ChannelType.FORM || mDimension.channel == ChannelType.COLOR) {
-                    levelNode.targetY = rangeAverage(mYRanges[levelNode.id]) - Size.LEVEL_SIZE / 2;
+                    categoryNode.targetY = rangeAverage(mYRanges[categoryNode.id]) - Size.CATEGORY_SIZE / 2;
                 } else {
-                    let index = mDimension.levels.findIndex(l => l.id == levelNode.id);
+                    let index = mDimension.categories.findIndex(l => l.id == categoryNode.id);
                     let range = [mControls.find(c => c.index == index - 1).y, mControls.find(c => c.index == index).y];
-                    levelNode.targetY = rangeAverage(range) - Size.LEVEL_SIZE / 2;
+                    categoryNode.targetY = rangeAverage(range) - Size.CATEGORY_SIZE / 2;
                 }
             } else {
-                console.error("Invalid level id", levelNode.id)
+                console.error("Invalid category id", categoryNode.id)
             }
-            levelNode.targetX = mLevelsX;
+            categoryNode.targetX = mCategoriesX;
         })
     }
 
     function updateNodeTargets() {
         mNodes.forEach(node => {
             if (mDimension.unmappedIds.includes(node.id)) {
-                let yRange = mYRanges[NO_LEVEL_ID];
+                let yRange = mYRanges[NO_CATEGORY_ID];
                 node.targetY = Math.max(Math.min(node.y, yRange[1] - Size.ELEMENT_NODE_SIZE + Padding.NODE), yRange[0] + Size.ELEMENT_NODE_SIZE + Padding.NODE);
                 node.targetX = Math.max(Math.min(node.x, mScreenEdge - Size.ELEMENT_NODE_SIZE + Padding.NODE), mElementsX + Size.ELEMENT_NODE_SIZE + Padding.NODE);
             } else if (mDimension.channel == ChannelType.FORM || mDimension.channel == ChannelType.COLOR) {
-                let level = mDimension.levels.find(l => l.elementIds.includes(node.id));
-                let levelId = level ? level.id : NO_LEVEL_ID;
-                let yRange = mYRanges[levelId];
+                let category = mDimension.categories.find(l => l.elementIds.includes(node.id));
+                let categoryId = category ? category.id : NO_CATEGORY_ID;
+                let yRange = mYRanges[categoryId];
                 node.targetY = DataUtil.limit(node.y,
                     yRange[0] + Size.ELEMENT_NODE_SIZE + Padding.NODE,
                     yRange[1] - Size.ELEMENT_NODE_SIZE + Padding.NODE);
@@ -374,13 +374,13 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             mDrawingUtil.drawStringNode({
                 label: header,
                 x: 10,
-                y: mSettingsBottom + Padding.LEVEL,
-                height: Size.LEVEL_SIZE,
+                y: mSettingsBottom + Padding.CATEGORY,
+                height: Size.CATEGORY_SIZE,
                 box: false
             })
 
             if (mDimension.channel == ChannelType.FORM || mDimension.channel == ChannelType.COLOR) {
-                mLevels.forEach(({ id }) => drawContainer(id));
+                mCategories.forEach(({ id }) => drawContainer(id));
             } else {
                 drawChannelRange();
                 // draw the dimention range(s)
@@ -392,10 +392,10 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                 });
             }
 
-            // mLevels includes the range labels
-            mLevels.forEach(level => drawLevelLabel(level));
+            // mCategories includes the range labels
+            mCategories.forEach(category => drawCategoryLabel(category));
             drawNoneLabel()
-            drawContainer(NO_LEVEL_ID)
+            drawContainer(NO_CATEGORY_ID)
             mControls.forEach(c => drawControlNode(c));
 
             let elements = mNodes.map(n => mModel.getElement(n.id));
@@ -427,8 +427,8 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         mDrawingUtil.drawStringNode({
             x: mAddButton.x,
             y: mAddButton.y,
-            label: ADD_LEVEL_LABEL,
-            height: Size.LEVEL_SIZE,
+            label: ADD_CATEGORY_LABEL,
+            height: Size.CATEGORY_SIZE,
             outline: mSelectionIds.includes(FdlButtons.ADD) ? mColorMap(FdlButtons.ADD) : null,
             shadow: mHighlightIds.includes(FdlButtons.ADD),
             code: mCodeUtil.getCode(FdlButtons.ADD)
@@ -440,7 +440,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             label: mNone.name,
             x: mNone.x,
             y: mNone.y,
-            height: Size.LEVEL_SIZE,
+            height: Size.CATEGORY_SIZE,
             box: false,
             outline: 'white',
             code: mCodeUtil.getCode(mNone.id, TARGET_NONE),
@@ -455,7 +455,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             width: mScreenEdge - mElementsX,
             shadow: mHighlightIds.includes(id),
             color: CONTAINER_COLOR,
-            code: mDraggedNodes.length > 0 ? mCodeUtil.getCode(id, TARGET_BUBBLE) : null,
+            code: mDraggedNodes.length > 0 ? mCodeUtil.getCode(id, TARGET_BAND) : null,
         })
 
         mDrawingUtil.drawLine({
@@ -499,7 +499,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                     let yRange = mYRanges[mDimension.id];
                     let yPos = (yRange[1] - yRange[0]) * index / images.length + yRange[0];
                     mDrawingUtil.drawImage({
-                        x: mElementsX + Padding.LEVEL / 2,
+                        x: mElementsX + Padding.CATEGORY / 2,
                         y: yPos,
                         height: ANGLE_LABEL_SIZE,
                         width: ANGLE_LABEL_SIZE,
@@ -511,30 +511,30 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             mDrawingUtil.drawStringNode({
                 label: "Start of Parent",
                 x: mElementsAxisX,
-                y: yRange[0] - (Size.LEVEL_SIZE),
-                height: Size.LEVEL_SIZE,
+                y: yRange[0] - (Size.CATEGORY_SIZE),
+                height: Size.CATEGORY_SIZE,
                 box: false,
             });
             mDrawingUtil.drawStringNode({
                 label: "End of Parent",
                 x: mElementsAxisX,
-                y: yRange[1] + (Padding.LEVEL),
-                height: Size.LEVEL_SIZE,
+                y: yRange[1] + (Padding.CATEGORY),
+                height: Size.CATEGORY_SIZE,
                 box: false,
             });
         } else if (mDimension.channel == ChannelType.SIZE) {
             mDrawingUtil.drawStringNode({
                 label: "Smallest Element",
                 x: mElementsAxisX,
-                y: yRange[0] - (Size.LEVEL_SIZE),
-                height: Size.LEVEL_SIZE,
+                y: yRange[0] - (Size.CATEGORY_SIZE),
+                height: Size.CATEGORY_SIZE,
                 box: false,
             });
             mDrawingUtil.drawStringNode({
                 label: "Largest Element",
                 x: mElementsAxisX,
-                y: yRange[1] + (+ Padding.LEVEL),
-                height: Size.LEVEL_SIZE,
+                y: yRange[1] + (+ Padding.CATEGORY),
+                height: Size.CATEGORY_SIZE,
                 box: false,
             });
         }
@@ -547,16 +547,16 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         });
     }
 
-    function drawLevelLabel(levelItem) {
+    function drawCategoryLabel(categoryItem) {
         mDrawingUtil.drawStringNode({
-            x: levelItem.x,
-            y: levelItem.y,
-            label: levelItem.name,
-            height: Size.LEVEL_SIZE,
-            shadow: mHighlightIds.includes(levelItem.id),
-            code: mCodeUtil.getCode(levelItem.id, TARGET_LABEL),
-            outline: mSelectionIds.includes(levelItem.id) ? mColorMap(levelItem.id) : null,
-            background: levelItem.invalid ? "#FF6865" : "white"
+            x: categoryItem.x,
+            y: categoryItem.y,
+            label: categoryItem.name,
+            height: Size.CATEGORY_SIZE,
+            shadow: mHighlightIds.includes(categoryItem.id),
+            code: mCodeUtil.getCode(categoryItem.id, TARGET_LABEL),
+            outline: mSelectionIds.includes(categoryItem.id) ? mColorMap(categoryItem.id) : null,
+            background: categoryItem.invalid ? "#FF6865" : "white"
         });
     }
 
@@ -619,17 +619,17 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         mSettingsTargets.push(TARGET_DELETE);
 
         mSettingsWidths = strings.map((s, i) => Math.max(
-            mDrawingUtil.measureStringNode(s, Size.LEVEL_SIZE),
-            mDrawingUtil.measureStringNode(labels[i], Size.LEVEL_SIZE)));
-        let totalWidth = mSettingsWidths.reduce((s, v) => s + v + Padding.LEVEL, 0)
+            mDrawingUtil.measureStringNode(s, Size.CATEGORY_SIZE),
+            mDrawingUtil.measureStringNode(labels[i], Size.CATEGORY_SIZE)));
+        let totalWidth = mSettingsWidths.reduce((s, v) => s + v + Padding.CATEGORY, 0)
         mSettingsScale = (totalWidth + 10) < mWidth ? 1 : mWidth / (totalWidth + 10);
         mSettingsBottom = canvasCoordsToLocal({ x: 0, y: DIMENSION_SETTINGS_HEIGHT }).y;
 
         mSettingsXs = new Array(mSettingsWidths.length).fill('')
-            .map((_, i) => mSettingsWidths.slice(0, i).reduce((s, v) => s + v * mSettingsScale + Padding.LEVEL, 0) + Padding.LEVEL);
+            .map((_, i) => mSettingsWidths.slice(0, i).reduce((s, v) => s + v * mSettingsScale + Padding.CATEGORY, 0) + Padding.CATEGORY);
 
-        let labelY = canvasCoordsToLocal({ x: 0, y: DIMENSION_SETTINGS_HEIGHT - (Size.LEVEL_SIZE * mSettingsScale) * 2 - Padding.LEVEL }).y;
-        mSettingsY = canvasCoordsToLocal({ x: 0, y: DIMENSION_SETTINGS_HEIGHT - Size.LEVEL_SIZE * mSettingsScale - Padding.LEVEL }).y;
+        let labelY = canvasCoordsToLocal({ x: 0, y: DIMENSION_SETTINGS_HEIGHT - (Size.CATEGORY_SIZE * mSettingsScale) * 2 - Padding.CATEGORY }).y;
+        mSettingsY = canvasCoordsToLocal({ x: 0, y: DIMENSION_SETTINGS_HEIGHT - Size.CATEGORY_SIZE * mSettingsScale - Padding.CATEGORY }).y;
 
         strings.forEach((string, index) => {
             if (labels[index]) {
@@ -637,7 +637,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                     x: mSettingsXs[index],
                     y: labelY,
                     label: labels[index],
-                    height: Size.LEVEL_SIZE * mSettingsScale,
+                    height: Size.CATEGORY_SIZE * mSettingsScale,
                     box: false
                 });
             }
@@ -646,7 +646,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                 x: mSettingsXs[index],
                 y: mSettingsY,
                 label: string,
-                height: Size.LEVEL_SIZE * mSettingsScale,
+                height: Size.CATEGORY_SIZE * mSettingsScale,
                 shadow: mHighlightIds.includes(mDimensionNode.id),
                 code: mCodeUtil.getCode(mDimensionNode.id, mSettingsTargets[index]),
                 background: valid[index] ? DataUtil.getTierColor(mDimensionNode.tier) : "#FF6865",
@@ -657,7 +657,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     function getSettingsBoundingBox(targetId) {
         let index = mSettingsTargets.findIndex(t => t == targetId);
         if (index == -1) { console.error("invalid target", targetId); return { x: 0, y: 0 } };
-        return { x: mSettingsXs[index] - 10, y: mSettingsY - 1, width: mSettingsWidths[index], height: Size.LEVEL_SIZE * mSettingsScale };
+        return { x: mSettingsXs[index] - 10, y: mSettingsY - 1, width: mSettingsWidths[index], height: Size.CATEGORY_SIZE * mSettingsScale };
     }
 
     function start() {
@@ -689,7 +689,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         if (interaction.type != FdlInteraction.SELECTION) { console.error("Interaction not supported!"); return; }
         let dist = VectorUtil.subtract(modelCoords, interaction.start);
         mDraggedNodes.filter(n => mDimension.type == DimensionType.DISCRETE &&
-            IdUtil.isType(n.id, Data.Level)).forEach(l => {
+            IdUtil.isType(n.id, Data.Category)).forEach(l => {
                 l.targetY = l.startY + dist.y;
             })
 
@@ -716,8 +716,8 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                     }
                 }
             });
-            updateLevelTargets();
-        } if (interaction.mouseOverTarget && (IdUtil.isType(interaction.mouseOverTarget.id, Data.Level) || interaction.mouseOverTarget.id == NO_LEVEL_ID)) {
+            updateCategoryTargets();
+        } if (interaction.mouseOverTarget && (IdUtil.isType(interaction.mouseOverTarget.id, Data.Category) || interaction.mouseOverTarget.id == NO_CATEGORY_ID)) {
             let yRange = mYRanges[interaction.mouseOverTarget.id];
             mDraggedNodes.forEach(node => {
                 if (IdUtil.isType(node.id, Data.Element)) {
@@ -751,17 +751,17 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                     } else {
                         console.error("Unsupported Target Type", interaction.startTarget.type);
                     }
-                } else if (interaction.startTarget && IdUtil.isType(interaction.startTarget.id, Data.Level)) {
-                    let levelNode = mLevels.find(l => l.id == interaction.startTarget.id);
-                    if (!levelNode) { console.error("Invalid level id", interaction.startTarget.id); return; }
-                    mEditNameCallback(interaction.startTarget.id, levelNode.x, levelNode.y,
-                        mDrawingUtil.measureStringNode(levelNode.name, Size.LEVEL_SIZE), Size.LEVEL_SIZE);
+                } else if (interaction.startTarget && IdUtil.isType(interaction.startTarget.id, Data.Category)) {
+                    let categoryNode = mCategories.find(l => l.id == interaction.startTarget.id);
+                    if (!categoryNode) { console.error("Invalid category id", interaction.startTarget.id); return; }
+                    mEditNameCallback(interaction.startTarget.id, categoryNode.x, categoryNode.y,
+                        mDrawingUtil.measureStringNode(categoryNode.name, Size.CATEGORY_SIZE), Size.CATEGORY_SIZE);
                 } else if (interaction.startTarget && interaction.endTarget && interaction.endTarget.id == FdlButtons.ADD) {
-                    mAddLevelCallback(mDimension.id);
+                    mAddCategoryCallback(mDimension.id);
                 } else if (interaction.startTarget && (interaction.startTarget.id == DIMENSION_RANGE_V2 || interaction.startTarget.id == DIMENSION_RANGE_V1)) {
-                    let node = mLevels.find(l => l.id == interaction.startTarget.id);
+                    let node = mCategories.find(l => l.id == interaction.startTarget.id);
                     mEditDomainCallback(mDimension.id, interaction.startTarget.id, node.x, node.y,
-                        mDrawingUtil.measureStringNode(node.name, Size.LEVEL_SIZE), Size.LEVEL_SIZE)
+                        mDrawingUtil.measureStringNode(node.name, Size.CATEGORY_SIZE), Size.CATEGORY_SIZE)
                 }
             } else if (interaction.startTarget && interaction.startTarget.type == TARGET_CONTROL) {
                 let target = mControls.find(node => node.id == interaction.startTarget.id);
@@ -771,27 +771,27 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             } else {
                 let elementTargetIds = mDraggedNodes.map(i => i.id).filter(id => IdUtil.isType(id, Data.Element));
                 if (elementTargetIds.length > 0) {
-                    if (interaction.endTarget && IdUtil.isType(interaction.endTarget.id, Data.Level)) {
-                        mUpdateLevelCallback(mDimension.id, interaction.endTarget.id, elementTargetIds);
+                    if (interaction.endTarget && IdUtil.isType(interaction.endTarget.id, Data.Category)) {
+                        mUpdateCategoryCallback(mDimension.id, interaction.endTarget.id, elementTargetIds);
                     } else if (interaction.endTarget && IdUtil.isType(interaction.endTarget.id, Data.Element)) {
-                        let levelTarget = mModel.getLevelForElement(mDimension.id, interaction.endTarget.id);
-                        mUpdateLevelCallback(mDimension.id, levelTarget, elementTargetIds);
-                    } else if (interaction.endTarget && interaction.endTarget.id == NO_LEVEL_ID) {
-                        mUpdateLevelCallback(mDimension.id, NO_LEVEL_ID, elementTargetIds);
+                        let categoryTarget = mModel.getCategoryForElement(mDimension.id, interaction.endTarget.id);
+                        mUpdateCategoryCallback(mDimension.id, categoryTarget, elementTargetIds);
+                    } else if (interaction.endTarget && interaction.endTarget.id == NO_CATEGORY_ID) {
+                        mUpdateCategoryCallback(mDimension.id, NO_CATEGORY_ID, elementTargetIds);
                     } else if (interaction.endTarget && interaction.endTarget.id == MAP_ELEMENTS) {
-                        mUpdateLevelCallback(mDimension.id, MAP_ELEMENTS, elementTargetIds);
+                        mUpdateCategoryCallback(mDimension.id, MAP_ELEMENTS, elementTargetIds);
                     }
                 }
 
-                let levelTargetIds = mDraggedNodes.map(i => i.id).filter(id => IdUtil.isType(id, Data.Level));
-                if (levelTargetIds.length > 0) {
-                    let levelsOrdering = mDimension.levels.map(l => {
-                        let levelNode = mLevels.find(i => i.id == l.id);
-                        if (!levelNode) { console.error("Node not found for level id", l.id); return { id: l.id, y: 0 } }
-                        return { id: l.id, y: levelNode.y };
+                let categoryTargetIds = mDraggedNodes.map(i => i.id).filter(id => IdUtil.isType(id, Data.Category));
+                if (categoryTargetIds.length > 0) {
+                    let categoriesOrdering = mDimension.categories.map(l => {
+                        let categoryNode = mCategories.find(i => i.id == l.id);
+                        if (!categoryNode) { console.error("Node not found for category id", l.id); return { id: l.id, y: 0 } }
+                        return { id: l.id, y: categoryNode.y };
                     })
-                    levelsOrdering.sort((a, b) => a.y - b.y);
-                    mLevelOrderUpdateCallback(mDimension.id, levelsOrdering.map(lo => lo.id));
+                    categoriesOrdering.sort((a, b) => a.y - b.y);
+                    mCategoryOrderUpdateCallback(mDimension.id, categoriesOrdering.map(lo => lo.id));
                 }
 
                 mSimulation.nodes(mNodes);
@@ -799,7 +799,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         } else if (interaction.type == FdlInteraction.LASSO) {
             mOverlayUtil.reset(mZoomTransform);
             mOverlayUtil.drawBubble(interaction.path);
-            let selectedIds = mLevels.concat(mNodes).filter(obj => mOverlayUtil.covered(obj)).map(n => n.id);
+            let selectedIds = mCategories.concat(mNodes).filter(obj => mOverlayUtil.covered(obj)).map(n => n.id);
             return selectedIds;
         } else { console.error("Interaction not supported!"); return; }
 
@@ -838,7 +838,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     }
 
     function allItems() {
-        return mNodes.concat(mLevels)
+        return mNodes.concat(mCategories)
             .concat(mControls)
             .concat([mDimensionNode, mAddButton, mNone]);
     }
@@ -870,7 +870,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         getTranslate,
         getScale,
         getZoomTransform,
-        setAddLevelCallback: (func) => mAddLevelCallback = func,
+        setAddCategoryCallback: (func) => mAddCategoryCallback = func,
         setEditNameCallback: (func) => mEditNameCallback = func,
         setEditDomainCallback: (func) => mEditDomainCallback = func,
         setEditTypeCallback: (func) => mEditTypeCallback = func,
@@ -878,9 +878,9 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         setEditTierCallback: (func) => mEditTierCallback = func,
         setEditAngleTypeCallback: (func) => mEditAngleTypeCallback = func,
         setEditSizeTypeCallback: (func) => mEditSizeTypeCallback = func,
-        setUpdateLevelCallback: (func) => mUpdateLevelCallback = func,
+        setUpdateCategoryCallback: (func) => mUpdateCategoryCallback = func,
         setDeleteDimensionCallback: (func) => mDeleteDimensionCallback = func,
-        setLevelOrderUpdateCallback: (func) => mLevelOrderUpdateCallback = func,
+        setCategoryOrderUpdateCallback: (func) => mCategoryOrderUpdateCallback = func,
         setUpdateRangeControlCallback: (func) => mUpdateRangeControlCallback = func,
     }
 }
