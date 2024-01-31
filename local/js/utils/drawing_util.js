@@ -773,9 +773,7 @@ function loadImage(url) {
     ImageHelper[url] = new Image();
     ImageHelper[url].src = url;
 }
-loadImage("img/deg45_neg.png")
-loadImage("img/deg45_pos.png")
-loadImage("img/deg90_neg.png")
-loadImage("img/deg90_pos.png")
-loadImage("img/deg135_neg.png")
-loadImage("img/deg135_pos.png")
+loadImage("img/deg45_neg_v2.png")
+loadImage("img/deg45_pos_v2.png")
+loadImage("img/deg135_neg_v2.png")
+loadImage("img/deg135_pos_v2.png")

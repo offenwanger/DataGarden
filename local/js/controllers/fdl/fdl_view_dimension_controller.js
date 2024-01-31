@@ -485,13 +485,13 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         if (mDimension.channel == ChannelType.ANGLE) {
             let images = [
                 null,
-                "img/deg135_neg.png",
-                "img/deg90_neg.png",
-                "img/deg45_neg.png",
+                "img/deg135_pos_v2.png",
                 null,
-                "img/deg45_pos.png",
-                "img/deg90_pos.png",
-                "img/deg135_pos.png",
+                "img/deg45_pos_v2.png",
+                null,
+                "img/deg45_neg_v2.png",
+                null,
+                "img/deg135_neg_v2.png",
                 null,
             ]
             images.forEach((img, index) => {
