@@ -35,8 +35,8 @@ export function FdlParentViewController(mDrawingUtil, mOverlayUtil, mCodeUtil, m
                 if (!node.x) node.x = 0;
                 if (!node.y) node.y = 0;
 
-                if (node.targetX) node.x += (node.targetX - node.x) * mSimulation.alpha();
-                if (node.targetY) node.y += (node.targetY - node.y) * mSimulation.alpha();
+                if (node.targetX || node.targetX === 0) node.x += (node.targetX - node.x) * mSimulation.alpha();
+                if (node.targetY || node.targetY === 0) node.y += (node.targetY - node.y) * mSimulation.alpha();
             })
             draw();
         })
