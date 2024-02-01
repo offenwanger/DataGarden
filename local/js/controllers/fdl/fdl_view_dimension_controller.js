@@ -94,10 +94,10 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                 if (!node.x) node.x = node.targetX ? node.targetX : 0;
                 if (!node.y) node.y = node.targetY ? node.targetY : 0;
 
-                if (node.targetX) {
+                if (node.targetX || node.targetX === 0) {
                     node.x += (node.targetX - node.x) * mSimulation.alpha();
                 }
-                if (node.targetY) {
+                if (node.targetY || node.targetY === 0) {
                     node.y += (node.targetY - node.y) * mSimulation.alpha();
                 }
 
@@ -158,7 +158,6 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         }
 
         calculateNodeLayout();
-
     }
 
     function calculateNodeLayout() {
@@ -206,21 +205,14 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     function setControlNodes() {
         mControls = [];
         if (mDimension.type == DimensionType.CONTINUOUS) {
-            let v1Y = (mYRanges[mDimension.id][1] - mYRanges[mDimension.id][0]) * mDimension.domainRange[0] + mYRanges[mDimension.id][0];
-            let v2Y = (mYRanges[mDimension.id][1] - mYRanges[mDimension.id][0]) * mDimension.domainRange[1] + mYRanges[mDimension.id][0];
-            mControls.push({ id: CONTROL_ID + DIMENSION_RANGE_V1, index: DIMENSION_RANGE_V1, x: mElementsX, y: v1Y });
-            mControls.push({ id: CONTROL_ID + DIMENSION_RANGE_V2, index: DIMENSION_RANGE_V2, x: mElementsX, y: v2Y });
+            mControls.push({ id: CONTROL_ID + DIMENSION_RANGE_V1, index: DIMENSION_RANGE_V1 });
+            mControls.push({ id: CONTROL_ID + DIMENSION_RANGE_V2, index: DIMENSION_RANGE_V2 });
         } else if (mDimension.channel == ChannelType.ANGLE || mDimension.channel == ChannelType.POSITION || mDimension.channel == ChannelType.SIZE) {
-            mControls.push({ id: CONTROL_ID + "-1", index: -1, x: mElementsX, y: mYRanges[mDimension.id][0] });
+            mControls.push({ id: CONTROL_ID + "-1", index: -1 });
             mDimension.ranges.forEach((range, index) => {
-                mControls.push({
-                    id: CONTROL_ID + index,
-                    index,
-                    x: mElementsX,
-                    y: (mYRanges[mDimension.id][1] - mYRanges[mDimension.id][0]) * range + mYRanges[mDimension.id][0],
-                });
+                mControls.push({ id: CONTROL_ID + index, index, });
             })
-            mControls.push({ id: CONTROL_ID + mDimension.ranges.length, index: mDimension.ranges.length, x: mElementsX, y: mYRanges[mDimension.id][1] });
+            mControls.push({ id: CONTROL_ID + mDimension.ranges.length, index: mDimension.ranges.length });
         }
     }
 
@@ -276,8 +268,28 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         mNone.targetY = rangeAverage(mYRanges[NO_CATEGORY_ID]) - Size.CATEGORY_SIZE / 2;
         mNone.targetX = mCategoriesX;
 
+        updateControlTargets();
         updateCategoryTargets();
         updateNodeTargets();
+    }
+
+    function updateControlTargets() {
+        if (mDimension.type == DimensionType.CONTINUOUS) {
+            let r1 = mYRanges[mDimension.id][0];
+            let r2 = mYRanges[mDimension.id][1];
+            mControls[0].targetX = mElementsX;
+            mControls[0].targetY = (r2 - r1) * mDimension.domainRange[0] + r1;
+            mControls[1].targetX = mElementsX;
+            mControls[1].targetY = (r2 - r1) * mDimension.domainRange[1] + r1;
+        } else if (mDimension.channel == ChannelType.ANGLE || mDimension.channel == ChannelType.POSITION || mDimension.channel == ChannelType.SIZE) {
+            for (let i = -1; i <= mDimension.ranges.length; i++) {
+                let control = mControls.find(c => c.index == i);
+                if (!control) { console.error("contorl not found for index!", i); continue; }
+                let range = i == -1 ? 0 : i == mDimension.ranges.length ? 1 : mDimension.ranges[i];
+                control.targetX = mElementsX;
+                control.targetY = (mYRanges[mDimension.id][1] - mYRanges[mDimension.id][0]) * range + mYRanges[mDimension.id][0];
+            }
+        }
     }
 
     function updateCategoryTargets() {
@@ -294,7 +306,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                     let control1 = mControls.find(c => c.index == index - 1);
                     let control2 = mControls.find(c => c.index == index);
                     if (control1 && control2) {
-                        let range = [control1.y, control2.y];
+                        let range = [control1.targetY, control2.targetY];
                         categoryNode.targetY = rangeAverage(range) - Size.CATEGORY_SIZE / 2;
                     } else {
                         console.error("Contorls not set yet!");
