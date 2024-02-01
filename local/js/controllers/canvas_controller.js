@@ -234,7 +234,7 @@ export function CanvasController(mColorMap) {
         } else if (mInteraction && mInteraction.type == LASSO) {
             mInteraction.line.push(screenToModelCoords(screenCoords));
         } else if (mInteraction && mInteraction.type == DRAGGING) {
-            mInteraction.translation = VectorUtil.subtract(screenCoords, mInteraction.start);
+            mInteraction.translation = VectorUtil.subtract(screenToModelCoords(screenCoords), screenToModelCoords(mInteraction.start));
         } else if (mInteraction) {
             console.error("Not Handled!", mInteraction);
         } else if (systemState.getToolState() == Buttons.BRUSH_BUTTON) {
@@ -298,10 +298,9 @@ export function CanvasController(mColorMap) {
         } else if (interaction && interaction.type == DRAGGING && !systemState.isShift() && !systemState.isCtrl()) {
             let moveDist = VectorUtil.dist(interaction.start, screenCoords);
             if (moveDist < 5) {
-                let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
                 mContextMenuCallback(screenCoords, mSelectionIds, interaction.startTarget.id);
             } else {
-                mTranslateStrokesCallback(mSelectionIds, VectorUtil.subtract(screenCoords, interaction.start));
+                mTranslateStrokesCallback(mSelectionIds, VectorUtil.subtract(screenToModelCoords(screenCoords), screenToModelCoords(interaction.start)));
             }
         } else if (interaction && interaction.type == PANNING &&
             systemState.getToolState() == Buttons.CURSOR_BUTTON &&
