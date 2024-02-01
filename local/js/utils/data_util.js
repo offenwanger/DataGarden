@@ -1,4 +1,4 @@
-import { AngleType, ChannelType, DimensionType, SizeType } from "../constants.js";
+import { AngleType, ChannelType, DEFAULT_CATEGORY_NAME, DimensionType, SizeType } from "../constants.js";
 import { Data } from "../data_structs.js";
 import { IdUtil } from "./id_util.js";
 import { PathUtil } from "./path_util.js";
@@ -195,13 +195,28 @@ export let DataUtil = function () {
     }
 
     function channelIsDiscrete(channelType) {
-        return channelType == ChannelType.SHAPE || channelType == ChannelType.COLOR;
+        return channelType == ChannelType.SHAPE || channelType == ChannelType.COLOR || channelType == ChannelType.LABEL;
+    }
+
+    function channelIsContinuous(channelType) {
+        return channelType == ChannelType.POSITION || channelType == ChannelType.SIZE || channelType == ChannelType.ANGLE;
+    }
+
+    function isDefaultLabel(dimensionName, labelName) {
+        return labelName.startsWith(dimensionName) && !isNaN(parseInt(labelName.split(dimensionName)[1])) ||
+            labelName.startsWith(DEFAULT_CATEGORY_NAME) && !isNaN(parseInt(labelName.split(DEFAULT_CATEGORY_NAME)[1]));
+    }
+
+    function getDefaultLabelIndex(dimentionName, labelName) {
+        if (!isDefaultLabel(dimentionName, labelName)) return 0;
+        if (labelName.startsWith(DEFAULT_CATEGORY_NAME)) dimentionName = DEFAULT_CATEGORY_NAME;
+        return parseInt(labelName.split(dimentionName)[1]);
     }
 
     function getMappedValue(model, dimensionId, elementId) {
         let dimension = model.getDimension(dimensionId);
         if (dimension.unmappedIds.includes(elementId)) return null;
-        if (dimension.channel == ChannelType.SHAPE || dimension.channel == ChannelType.COLOR) {
+        if (channelIsDiscrete(dimension.channel)) {
             let category = dimension.categories.find(category => category.elementIds.includes(elementId));
             return category ? category.name : null;
         } else {
@@ -405,7 +420,7 @@ export let DataUtil = function () {
 
     function dimensionTypeValid(dimension) {
         if (dimension.type == DimensionType.CONTINUOUS) {
-            return dimension.channel == ChannelType.ANGLE || dimension.channel == ChannelType.POSITION || dimension.channel == ChannelType.SIZE;
+            return channelIsContinuous(dimension.channel);
         } else {
             // all types are valid for discrete dimens
             return true;
@@ -419,6 +434,8 @@ export let DataUtil = function () {
 
     function dimensionLevelValid(dimension) {
         if (dimension.channel == ChannelType.POSITION) {
+            return dimension.level > 0;
+        } else if (dimension.channel == ChannelType.ANGLE && dimension.angleType == AngleType.RELATIVE) {
             return dimension.level > 0;
         } else {
             return true;
@@ -472,6 +489,9 @@ export let DataUtil = function () {
         findEmptyPlace,
         getStrokesInLocalCoords,
         channelIsDiscrete,
+        channelIsContinuous,
+        isDefaultLabel,
+        getDefaultLabelIndex,
         getMappedValue,
         getPaddedPoints,
         domainIsValid,

@@ -1,4 +1,4 @@
-import { ChannelType, DimensionType, MAP_ELEMENTS, NO_CATEGORY_ID } from "../constants.js";
+import { ChannelType, DEFAULT_CATEGORY_NAME, DimensionType, MAP_ELEMENTS, NO_CATEGORY_ID } from "../constants.js";
 import { Data } from "../data_structs.js";
 import { ClassifierUtil } from "./classifier_util.js";
 import { DataUtil } from "./data_util.js";
@@ -93,7 +93,7 @@ export let StructureFairy = function () {
                 if (!category) {
                     if (i == 0 || dimension.channel == ChannelType.COLOR || dimension.channel == ChannelType.SHAPE) {
                         category = new Data.Category();
-                        category.name = "Category" + (i + 1);
+                        category.name = DEFAULT_CATEGORY_NAME + (i + 1);
                         categories.push(category)
                     } else {
                         // don't make new categories unless we are using a discrete channel.

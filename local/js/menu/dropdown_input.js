@@ -1,4 +1,4 @@
-import { AngleType, ChannelType, DimensionType, DropDown, SizeType } from "../constants.js";
+import { AngleType, ChannelLabels, ChannelType, DimensionType, DropDown, SizeType } from "../constants.js";
 import { DataUtil } from "../utils/data_util.js";
 
 export function DropdownInput() {
@@ -11,11 +11,12 @@ export function DropdownInput() {
     mTypeSelect.append("option").attr("value", DimensionType.DISCRETE).html("Discrete");
     mTypeSelect.append("option").attr("value", DimensionType.CONTINUOUS).html("Continuous");
     let mChannelSelect = mDropdownContainer.append("select").attr('id', 'channel-select');
-    mChannelSelect.append("option").attr("value", ChannelType.SHAPE).html("Shape");
-    mChannelSelect.append("option").attr("value", ChannelType.COLOR).html("Color");
-    mChannelSelect.append("option").attr("value", ChannelType.SIZE).html("Size");
-    mChannelSelect.append("option").attr("value", ChannelType.ANGLE).html("Angle");
-    mChannelSelect.append("option").attr("value", ChannelType.POSITION).html("Position");
+    mChannelSelect.append("option").attr("value", ChannelType.LABEL).html(ChannelLabels[ChannelType.LABEL]);
+    mChannelSelect.append("option").attr("value", ChannelType.SHAPE).html(ChannelLabels[ChannelType.SHAPE]);
+    mChannelSelect.append("option").attr("value", ChannelType.COLOR).html(ChannelLabels[ChannelType.COLOR]);
+    mChannelSelect.append("option").attr("value", ChannelType.SIZE).html(ChannelLabels[ChannelType.SIZE]);
+    mChannelSelect.append("option").attr("value", ChannelType.ANGLE).html(ChannelLabels[ChannelType.ANGLE]);
+    mChannelSelect.append("option").attr("value", ChannelType.POSITION).html(ChannelLabels[ChannelType.POSITION]);
     let mAngleSelect = mDropdownContainer.append("select").attr('id', 'angle-select');
     mAngleSelect.append("option").attr("value", AngleType.RELATIVE).html("Relative");
     mAngleSelect.append("option").attr("value", AngleType.ABSOLUTE).html("Absolute");

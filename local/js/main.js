@@ -1,4 +1,4 @@
-import { ChannelType, DIMENSION_RANGE_V1, DIMENSION_RANGE_V2, DimensionType, MAP_ELEMENTS, NO_CATEGORY_ID } from "./constants.js";
+import { ChannelType, DEFAULT_CATEGORY_NAME, DIMENSION_RANGE_V1, DIMENSION_RANGE_V2, DimensionType, MAP_ELEMENTS, NO_CATEGORY_ID } from "./constants.js";
 import { DashboardController } from "./controllers/dashboard_controller.js";
 import { ModelController } from "./controllers/model_controller.js";
 import { ServerController } from "./controllers/server_controller.js";
@@ -167,8 +167,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
         if (!dimension) { console.error("Invalid dimension id", dimenId); return; }
 
         let newCategory = new Data.Category();
-        newCategory.name = "Category" + (Math.max(0, ...dimension.categories
-            .map(l => l.name.startsWith("Category") ? parseInt(l.name.slice(8)) : 0)
+        let defaultName = dimension.channel == ChannelType.LABEL ? dimension.name : DEFAULT_CATEGORY_NAME;
+        newCategory.name = defaultName + (Math.max(0, ...dimension.categories
+            .map(c => DataUtil.isDefaultLabel(defaultName, c.name) ? DataUtil.getDefaultLabelIndex(defaultName, c.name) : 0)
             .filter(n => !isNaN(n))) + 1);
         dimension.categories.push(newCategory);
         ModelUtil.syncRanges(dimension);
@@ -182,37 +183,52 @@ document.addEventListener('DOMContentLoaded', function (e) {
     mDashboardController.setUpdateCategoryCallback((dimenId, categoryId, elementIds) => {
         let model = mModelController.getModel();
         let dimension = model.getDimension(dimenId);
+        if (!dimension) { console.error('Invalid dimension id', dimenId); return; }
+        let category;
+        if (categoryId != NO_CATEGORY_ID && categoryId != MAP_ELEMENTS) {
+            category = dimension.categories.find(category => category.id == categoryId);
+            if (!category) { console.error("Invalid category id"); return; }
+        }
 
-        // Validation
+        if (dimension.channel != ChannelType.LABEL) {
+            dimension.categories.forEach(category => {
+                category.elementIds = category.elementIds.filter(e => !elementIds.includes(e));
+            })
+            dimension.unmappedIds = dimension.unmappedIds.filter(e => !elementIds.includes(e));
+        }
+
+        // Only add valid elements
         elementIds = elementIds.map(eId => {
             let e = model.getElement(eId);
             if (!e) { console.error("Invalid element id!", eId); return null; };
             return e;
         }).filter(e => e).map(e => e.id);
 
-        if (categoryId == NO_CATEGORY_ID) {
-            dimension.unmappedIds = DataUtil.unique(dimension.unmappedIds.concat(elementIds));
-        } else {
-            dimension.unmappedIds = dimension.unmappedIds.filter(e => !elementIds.includes(e));
-            if (categoryId == MAP_ELEMENTS) {
-                let setIds = dimension.categories.map(l => l.elementIds).flat();
-                let unsetIds = elementIds.filter(eId => !setIds.includes(eId));
-                if (dimension.categories.length == 0) {
-                    let newCategory = new Data.Category();
-                    newCategory.name = "Category1";
-                    dimension.categories.push(newCategory)
-                }
-                dimension.categories[0].elementIds = DataUtil.unique(dimension.categories[0].elementIds.concat(unsetIds));
+        if (dimension.channel == ChannelType.LABEL) {
+            let firstElement = elementIds[0];
+            dimension.unmappedIds = dimension.unmappedIds.filter(e => e != firstElement);
+
+            let firstElementCategory = dimension.categories.find(c => c.elementIds.includes(firstElement));
+            if (firstElementCategory && DataUtil.isDefaultLabel(dimension.name, firstElementCategory.name) && firstElementCategory != category) {
+                dimension.categories = dimension.categories.filter(category => category != firstElementCategory);
+            } else if (firstElementCategory) {
+                firstElementCategory.elementIds = firstElementCategory.elementIds.filter(e => e != firstElement)
+            }
+
+            if (category) {
+                dimension.unmappedIds.push(...category.elementIds)
+                category.elementIds = [firstElement];
             } else {
-                dimension.categories.forEach(category => {
-                    if (category.id == categoryId) {
-                        category.elementIds = DataUtil.unique(category.elementIds.concat(elementIds));
-                    } else {
-                        category.elementIds = category.elementIds.filter(e => !elementIds.includes(e));
-                    }
-                });
+                dimension.unmappedIds.push(firstElement);
+            }
+        } else {
+            if (categoryId == NO_CATEGORY_ID) {
+                dimension.unmappedIds.push(...elementIds);
+            } else if (category) {
+                category.elementIds = DataUtil.unique(category.elementIds.concat(elementIds));
             }
         }
+
         ModelUtil.syncRanges(dimension);
 
         mModelController.updateDimension(dimension);
@@ -275,6 +291,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
     mDashboardController.setUpdateDimensionNameCallback((dimensionId, name) => {
         let dimension = mModelController.getModel().getDimension(dimensionId);
         if (!dimension) { console.error("Invalid dimension id: ", dimensionId); return; }
+        if (dimension.channel == ChannelType.LABEL) {
+            dimension.categories.forEach(c => {
+                if (DataUtil.isDefaultLabel(dimension.name, c.name)) {
+                    c.name = name + DataUtil.getDefaultLabelIndex(dimension.name, c.name);
+                }
+            });
+        }
         dimension.name = name;
         mModelController.updateDimension(dimension);
 
@@ -300,17 +323,12 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         mModelController.updateDimension(dimension);
 
-        let categories = StructureFairy.getCluster(dimensionId, mModelController.getModel());
-        if (categories) {
-            dimension = mModelController.getModel().getDimension(dimensionId);
-
-            let noMapping = categories.find(l => l.id == NO_CATEGORY_ID).elementIds;
-            dimension.unmappedIds = noMapping;
-            dimension.categories = categories.filter(l => l.id != NO_CATEGORY_ID);
+        if (DataUtil.channelIsDiscrete(dimension.channel)) {
+            ModelUtil.updateCategories(dimension, mModelController.getModel());
+        } else {
             ModelUtil.syncRanges(dimension);
-
-            mModelController.updateDimension(dimension);
         }
+        mModelController.updateDimension(dimension);
 
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
@@ -318,23 +336,25 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     mDashboardController.setUpdateDimensionChannelCallback((dimensionId, channel) => {
         let dimension = mModelController.getModel().getDimension(dimensionId);
-        if ((dimension.channel == ChannelType.SHAPE && channel == ChannelType.COLOR) ||
-            (dimension.channel == ChannelType.COLOR && channel == ChannelType.SHAPE)) {
-            dimension.categories.forEach(l => l.elementIds = []);
-        }
         if (!dimension) { console.error("Invalid dimension id: ", dimensionId); return; }
+
+        // if we are changing from a discrete to a discrete channel, change the entire mapping.
+        if (DataUtil.channelIsDiscrete(dimension.channel) && DataUtil.channelIsDiscrete(channel) && dimension.channel != channel) {
+            dimension.categories.forEach(c => c.elementIds = []);
+        }
+        if (dimension.channel == ChannelType.LABEL && channel != ChannelType.LABEL) {
+            dimension.categories = dimension.categories.filter(c => !DataUtil.isDefaultLabel(dimension.name, c.name));
+        }
+
         dimension.channel = channel;
         mModelController.updateDimension(dimension);
 
-        let categories = StructureFairy.getCluster(dimensionId, mModelController.getModel());
-        if (categories) {
-            dimension = mModelController.getModel().getDimension(dimensionId);
-            let noMapping = categories.find(l => l.id == NO_CATEGORY_ID).elementIds;
-            dimension.unmappedIds = noMapping;
-            dimension.categories = categories.filter(l => l.id != NO_CATEGORY_ID);
+        if (DataUtil.channelIsDiscrete(dimension.channel)) {
+            ModelUtil.updateCategories(dimension, mModelController.getModel());
+        } else {
             ModelUtil.syncRanges(dimension);
-            mModelController.updateDimension(dimension);
         }
+        mModelController.updateDimension(dimension);
 
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
@@ -346,15 +366,12 @@ document.addEventListener('DOMContentLoaded', function (e) {
         dimension.level = level;
         mModelController.updateDimension(dimension);
 
-        let categories = StructureFairy.getCluster(dimensionId, mModelController.getModel());
-        if (categories) {
-            dimension = mModelController.getModel().getDimension(dimensionId);
-            let noMapping = categories.find(l => l.id == NO_CATEGORY_ID).elementIds;
-            dimension.unmappedIds = noMapping;
-            dimension.categories = categories.filter(l => l.id != NO_CATEGORY_ID);
+        if (DataUtil.channelIsDiscrete(dimension.channel)) {
+            ModelUtil.updateCategories(dimension, mModelController.getModel());
+        } else {
             ModelUtil.syncRanges(dimension);
-            mModelController.updateDimension(dimension);
         }
+        mModelController.updateDimension(dimension);
 
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());

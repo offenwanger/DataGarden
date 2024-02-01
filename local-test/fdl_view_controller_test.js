@@ -105,6 +105,57 @@ describe('FDL View Controller Test', function () {
             assert.equal(model().getDimensions()[0].channel, ChannelType.ANGLE);
         });
 
+        it('should change dimension channel to label', function () {
+            utility.clickTab(Tab.LEGEND);
+            assert.equal(model().getDimensions().length, 0);
+            utility.click('#fdl-view-container', { x: 15, y: 15 });
+            utility.click('#fdl-view-container', { x: 365, y: DIMENSION_SETTINGS_HEIGHT - 20 });
+            utility.selectOption(ChannelType.LABEL);
+            assert.equal(model().getDimensions().length, 1)
+            assert.equal(model().getDimensions()[0].channel, ChannelType.LABEL);
+        });
+
+        it('should change provide one category per element for label channel', function () {
+            utility.drawStroke([{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 20, y: 80 }])
+            utility.drawStroke([{ x: 30, y: 20 }, { x: 30, y: 40 }, { x: 30, y: 60 }, { x: 30, y: 80 }])
+            utility.drawStroke([{ x: 40, y: 20 }, { x: 40, y: 40 }, { x: 40, y: 60 }, { x: 40, y: 80 }])
+            assert.equal(model().getElements().length, 3);
+
+            utility.clickTab(Tab.LEGEND);
+            assert.equal(model().getDimensions().length, 0);
+            utility.click('#fdl-view-container', { x: 15, y: 15 });
+            utility.click('#fdl-view-container', { x: 365, y: DIMENSION_SETTINGS_HEIGHT - 20 });
+            utility.selectOption(ChannelType.LABEL);
+            assert.equal(model().getDimensions().length, 1)
+            assert.equal(model().getDimensions()[0].channel, ChannelType.LABEL);
+            assert.equal(model().getDimensions()[0].categories.length, 3);
+            expect(model().getDimensions()[0].categories.map(c => c.elementIds.length)).to.eql([1, 1, 1]);
+        });
+
+        it('should update label names on dimen name update', function () {
+            utility.drawStroke([{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 20, y: 80 }])
+            utility.drawStroke([{ x: 30, y: 20 }, { x: 30, y: 40 }, { x: 30, y: 60 }, { x: 30, y: 80 }])
+            utility.drawStroke([{ x: 40, y: 20 }, { x: 40, y: 40 }, { x: 40, y: 60 }, { x: 40, y: 80 }])
+            assert.equal(model().getElements().length, 3);
+
+            utility.clickTab(Tab.LEGEND);
+            assert.equal(model().getDimensions().length, 0);
+            utility.click('#fdl-view-container', { x: 15, y: 15 });
+            utility.click('#fdl-view-container', { x: 365, y: DIMENSION_SETTINGS_HEIGHT - 20 });
+            utility.selectOption(ChannelType.LABEL);
+            assert.equal(model().getDimensions().length, 1)
+            assert.equal(model().getDimensions()[0].channel, ChannelType.LABEL);
+            assert.equal(model().getDimensions()[0].categories.length, 3);
+            expect(model().getDimensions()[0].categories.map(c => c.elementIds.length)).to.eql([1, 1, 1]);
+
+            utility.click('#fdl-view-container', { x: 15, y: DIMENSION_SETTINGS_HEIGHT - 20 });
+            utility.enterText("new name");
+            assert.equal(model().getDimensions().length, 1)
+            assert.equal(model().getDimensions()[0].name, "new name");
+
+            expect(model().getDimensions()[0].categories.map(c => c.name)).to.eql(["new name0", "new name1", "new name2"]);
+        });
+
         it('should change dimension channel to dist, also make it valid', function () {
             utility.clickTab(Tab.LEGEND);
             assert.equal(model().getDimensions().length, 0);

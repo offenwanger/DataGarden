@@ -1,7 +1,7 @@
 import { DataModel } from '../local/js/data_model.js';
 import { Data } from '../local/js/data_structs.js';
 import { IdUtil } from '../local/js/utils/id_util.js';
-import { ChannelType, DimensionType } from '../local/js/constants.js';
+import { ChannelType, DEFAULT_CATEGORY_NAME, DimensionType } from '../local/js/constants.js';
 
 import * as  chai from 'chai';
 let assert = chai.assert;
@@ -184,7 +184,7 @@ describe('Test Data Model', function () {
                 dataModel.getDimensions()[i].level = i % 2;
                 for (let j = 0; j < 2; j++) {
                     dataModel.getDimensions()[i].categories.push(new Data.Category());
-                    dataModel.getDimensions()[i].categories[j].name = "Category" + (i * 10 + j);
+                    dataModel.getDimensions()[i].categories[j].name = DEFAULT_CATEGORY_NAME + (i * 10 + j);
                     for (let k = 0; k < 2; k++) {
                         dataModel.getDimensions()[i].categories[j].elementIds.push(elementsLevels[i % 2].pop());
                     }

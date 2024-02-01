@@ -1,4 +1,4 @@
-import { NO_CATEGORY_ID } from "../constants.js";
+import { ChannelType, DEFAULT_CATEGORY_NAME, NO_CATEGORY_ID } from "../constants.js";
 import { Data } from "../data_structs.js";
 import { DataUtil } from "./data_util.js";
 import { IdUtil } from "./id_util.js";
@@ -96,6 +96,32 @@ export let ModelUtil = function () {
         }
     }
 
+    function updateCategories(dimension, model) {
+        if (dimension.channel == ChannelType.LABEL) {
+            let elements = model.getElements().filter(e => DataUtil.getLevelForElement(e.id, model) == dimension.level);
+            elements.forEach(e => {
+                if (dimension.unmappedIds.includes(e.id)) return;
+                let category = dimension.categories.find(c => c.elementIds.includes(e.id));
+                if (!category) category = dimension.categories.find(c => c.elementIds.length == 0);
+                if (!category) { category = new Data.Category(); dimension.categories.push(category); }
+                category.elementIds = [e.id];
+            });
+            dimension.categories.forEach((category, index) => {
+                if (!category.name || DataUtil.isDefaultLabel(dimension.name, category.name)) {
+                    category.name = dimension.name + index;
+                }
+            });
+            dimension.categories.filter(c => c.elementIds > 0 || !DataUtil.isDefaultLabel(dimension.name, c.name));
+        } else if (dimension.channel == ChannelType.SHAPE || dimension.channel == ChannelType.COLOR) {
+            let categories = StructureFairy.getCluster(dimension.id, model);
+            if (categories) {
+                let noMapping = categories.find(l => l.id == NO_CATEGORY_ID).elementIds;
+                dimension.unmappedIds = noMapping;
+                dimension.categories = categories.filter(l => l.id != NO_CATEGORY_ID);
+            }
+        }
+    }
+
     return {
         updateParent,
         clearEmptyElements,
@@ -105,5 +131,6 @@ export let ModelUtil = function () {
         orientSpineToParent,
         orientElementByParent,
         syncRanges,
+        updateCategories,
     }
 }();

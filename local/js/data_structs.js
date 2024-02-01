@@ -152,7 +152,7 @@ export let Data = function () {
     function Category() {
         this.id = IdUtil.getUniqueId(Category);
         this.creationTime = Date.now();
-        this.name = "Category";
+        this.name = "";
         this.elementIds = [];
 
         this.clone = function () {

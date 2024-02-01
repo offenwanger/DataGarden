@@ -3,6 +3,8 @@ export const MAP_ELEMENTS = "apply_mapping";
 export const DIMENSION_RANGE_V1 = 'range_top';
 export const DIMENSION_RANGE_V2 = 'range_bottom';
 
+export const DEFAULT_CATEGORY_NAME = "Category";
+
 export const DIMENSION_SETTINGS_HEIGHT = 100;
 
 export const Buttons = {
@@ -47,6 +49,7 @@ export const ContextButtons = {
 }
 
 export const ChannelType = {
+    LABEL: "label",
     SHAPE: "form",
     COLOR: "color",
     SIZE: "size",
@@ -87,6 +90,7 @@ DimensionLabels[DimensionType.DISCRETE] = 'Discrete';
 DimensionLabels[DimensionType.CONTINUOUS] = 'Continuous';
 
 export const ChannelLabels = {};
+ChannelLabels[ChannelType.LABEL] = 'Label';
 ChannelLabels[ChannelType.SHAPE] = 'Shape';
 ChannelLabels[ChannelType.COLOR] = 'Color';
 ChannelLabels[ChannelType.SIZE] = 'Size';
