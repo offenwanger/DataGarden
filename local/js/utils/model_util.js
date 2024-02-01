@@ -4,6 +4,7 @@ import { DataUtil } from "./data_util.js";
 import { IdUtil } from "./id_util.js";
 import { PathUtil } from "./path_util.js";
 import { StructureFairy } from "./structure_fairy.js";
+import { VectorUtil } from "./vector_util.js";
 
 export let ModelUtil = function () {
     function updateParent(parentElementId, elementId, modelController) {
@@ -63,10 +64,33 @@ export let ModelUtil = function () {
         });
     }
 
+    function orientSpine(spine, root) {
+        if (VectorUtil.dist(root, spine[0]) > VectorUtil.dist(root, spine[spine.length - 1])) {
+            return spine.reverse();
+        } else return spine;
+    }
+
+    function orientSpineToParent(spine, parentSpine) {
+        let pos0 = PathUtil.getClosestPointOnPath(spine[0], parentSpine);
+        let pos1 = PathUtil.getClosestPointOnPath(spine[spine.length - 1], parentSpine);
+        if (VectorUtil.dist(pos1, spine[spine.length - 1]) < VectorUtil.dist(pos0, spine[0])) {
+            return spine.reverse();
+        } else return spine;
+    }
+
+    function orientElementByParent(element, parentSpine) {
+        element.spine = ModelUtil.orientSpineToParent(element.spine, parentSpine);
+        element.root = element.spine[0];
+        element.angle = VectorUtil.normalize(VectorUtil.subtract(PathUtil.getPositionForPercent(element.spine, 0.2), element.spine[0]))
+    }
+
     return {
         updateParent,
         clearEmptyElements,
         removeElement,
         autoClusterLevelDimensions,
+        orientSpine,
+        orientSpineToParent,
+        orientElementByParent,
     }
 }();

@@ -43,20 +43,10 @@ document.addEventListener('DOMContentLoaded', function (e) {
             mModelController.addElement(element);
             if (parentId) {
                 ModelUtil.updateParent(parentId, element.id, mModelController);
-
                 model = mModelController.getModel();
                 let parent = model.getElement(parentId);
-                let axis = DataUtil.getLongestAxis(element);
-                let p1 = PathUtil.getClosestPointOnPath(axis[0], parent.spine);
-                let p2 = PathUtil.getClosestPointOnPath(axis[1], parent.spine);
                 element = model.getElement(element.id);
-                if (VectorUtil.dist(p1, axis[0]) < VectorUtil.dist(p2, axis[1])) {
-                    element.root = axis[0];
-                    element.angle = VectorUtil.normalize(VectorUtil.subtract(axis[1], axis[0]))
-                } else {
-                    element.root = axis[1];
-                    element.angle = VectorUtil.normalize(VectorUtil.subtract(axis[0], axis[1]))
-                }
+                ModelUtil.orientElementByParent(element, parent.spine);
                 mModelController.updateElement(element);
             }
 
@@ -97,10 +87,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         if (!element) { console.error("invalid element id", elementId); return; }
         element.root = root;
         element.angle = angle;
-        if (VectorUtil.dist(root, element.spine[0]) > VectorUtil.dist(root, element.spine[element.spine.length - 1])) {
-            element.spine = element.spine.reverse();
-        }
-
+        element.spine = ModelUtil.orientSpine(element.spine(root));
         mModelController.updateElement(element);
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
@@ -463,43 +450,28 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     mDashboardController.setMergeCallback((strokeIds, elementTarget = null) => {
         let model = mModelController.getModel();
+        let strokes = strokeIds.map(s => model.getStroke(s));
+        let oldStrokeElementIds;
+
+        strokeIds.forEach(s => mModelController.removeStroke(s));
 
         let element;
         if (elementTarget) {
             element = model.getElement(elementTarget);
             if (!element) { console.error("Invalid element id!", elementTarget); return; }
+            let elementStrokeIds = element.strokes.map(s => s.id);
+            element.strokes.push(...strokes.filter(stroke => !elementStrokeIds.includes(stroke.id)));
+            mModelController.updateElement(element);
         } else {
             element = new Data.Element();
-        }
-
-        let elementStrokes = element.strokes.map(s => s.id);
-        let strokes = strokeIds.filter(sId => !elementStrokes.includes(sId)).map(s => model.getStroke(s));
-        element.strokes.push(...strokes);
-
-        if (!elementTarget) {
-            // new element, set all the things
-            element.spine = DataUtil.getStupidSpine(element);
+            element.strokes = strokes;
+            element.spine = getStupidSpine(element);
             element.root = element.spine[0];
             element.angle = VectorUtil.normalize(VectorUtil.subtract(element.spine[1], element.spine[0]));
-            // count the elements, if most of the strokes belong to one, make the new element
-            // a sibling of that element
-            let elements = strokeIds.map(s => model.getElementForStroke(s));
-            let elementCounts = elements.reduce((count, element) => {
-                count[element.id] ? ++count[element.id] : count[element.id] = 1;
-                return count;
-            }, {});
-            let topElement = Object.entries(elementCounts).sort((a, b) => a[1] - b[1])[0];
-            if (topElement[1] / strokes.length > 0.5) {
-                element.parentId = elements.find(e => e.id == topElement[0]).parentId;
-            }
-        }
-
-        strokeIds.forEach(s => mModelController.removeStroke(s));
-
-        if (!elementTarget) {
             mModelController.addElement(element);
-        } else {
-            mModelController.updateElement(element);
+
+            // save these for later.
+            oldStrokeElementIds = strokeIds.map(s => model.getElementForStroke(s)).filter(e => e).map(e => e.id);
         }
 
         // if we just stole all the strokes of an element, steal it's children to. 
@@ -511,6 +483,27 @@ document.addEventListener('DOMContentLoaded', function (e) {
         });
         ModelUtil.clearEmptyElements(mModelController);
 
+        if (!elementTarget) {
+            // now that the rest of the model is sorted, check if we can set a parent and 
+            // thereby get a better spine and angle.
+            model = mModelController.getModel();
+            let oldElements = oldStrokeElementIds.map(eId => model.getElement(eId)).filter(e => e && e.parentId && e.parentId != element.id);
+            if (oldElements.length > 0) {
+                let parentId = Object.entries(oldElements.reduce((counts, e) => {
+                    counts[e.parentId] ? counts[e.parentId]++ : counts[e.parentId] = 1;
+                    return counts;
+                }, {})).reduce((max, [parentId, count]) => {
+                    count > max.count ? { parentId, count } : max;
+                }, { count: 0, parentId: null }).parentId;
+                let parent = parentId ? model.getElement(parentId) : null;
+                if (parent) {
+                    element.parentId = parentId;
+                    ModelUtil.orientElementByParent(element, parent.spine)
+                    mModelController.updateElement(element);
+                } else if (parentId) { console.error("Invalid parent id", parentId); }
+            }
+        }
+
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
     });
@@ -520,10 +513,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
         if (!element) { console.error("Invalid element id", elementId); return; }
         ServerController.getSpine(element).then(result => {
             element = mModelController.getModel().getElement(elementId);
-            if (!result) {
-                result = DataUtil.getStupidSpine(element);
-            }
-            element.spine = result;
+            if (!result) result = DataUtil.getStupidSpine(element)
+            element.spine = ModelUtil.orientSpine(result, element.root);
+
             mModelController.updateElement(element);
             mVersionController.stack(mModelController.getModel().toObject());
             mDashboardController.modelUpdate(mModelController.getModel());
