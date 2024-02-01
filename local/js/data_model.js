@@ -66,6 +66,19 @@ export function DataModel() {
         return elements;
     }
 
+    function getElementMappedValues(elementId) {
+        let level = DataUtil.getLevelForElement(elementId, this)
+        let result = [];
+        getDimensions().filter(d => d.level == level && DataUtil.dimensionValid(d)).forEach(dimension => {
+            let value = DataUtil.getMappedValue(this, dimension.id, elementId);
+            if (typeof value == "number") { value = Math.round(value * 100) / 100 }
+            if (value || value === 0) {
+                result.push({ dimensionId: dimension.id, dimensionName: dimension.name, value: value });
+            }
+        })
+        return result;
+    }
+
     function getDimension(dimensionId) {
         if (!IdUtil.isType(dimensionId, Data.Dimension)) { console.error("Not an dimension id! " + dimensionId); return null; };
         return getDimensions().find(d => d.id == dimensionId)
@@ -196,6 +209,7 @@ export function DataModel() {
         getElements,
         setElements,
         getElementDecendants,
+        getElementMappedValues,
         getElementChildren,
         getDimension,
         getDimensions,

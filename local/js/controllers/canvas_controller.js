@@ -8,6 +8,7 @@ import { ValUtil } from "../utils/value_util.js";
 import { VectorUtil } from "../utils/vector_util.js";
 import { Buttons, ContextButtons } from "../constants.js";
 import { Data } from "../data_structs.js";
+import { ToolTip } from "../menu/tooltip.js";
 
 export function CanvasController(mColorMap) {
     const DRAWING = 'drawing';
@@ -27,6 +28,7 @@ export function CanvasController(mColorMap) {
     let mInteractionCanvas = d3.select("#canvas-view-container").select('.canvas-container').append('canvas')
         .style("opacity", 0)
         .classed('interaction-canvas', true);
+    let mDataTooltip = new ToolTip(d3.select('#interface-svg'));
 
     let mDrawingUtil = new DrawingUtil(
         mCanvas.node().getContext("2d"),
@@ -60,12 +62,14 @@ export function CanvasController(mColorMap) {
 
     let mModel = new DataModel();
     let mProjections = {};
+    let mMappedData = {};
     let mBoundingBoxes = [];
     let mInteraction = null;
 
     function onModelUpdate(model) {
         mModel = model;
         mProjections = {};
+        mMappedData = {};
         mBoundingBoxes = [];
         let elements = model.getElements();
         elements.forEach(element => {
@@ -76,6 +80,11 @@ export function CanvasController(mColorMap) {
             }
 
             mBoundingBoxes.push({ id: element.id, box: DataUtil.getBoundingBox(element) });
+
+            let data = model.getElementMappedValues(element.id);
+            element.strokes.forEach(stroke => {
+                mMappedData[stroke.id] = data;
+            })
         })
         mHighlightIds = [];
         mSelectionIds = mSelectionIds.filter(id => !DataUtil.isDataId(id) || DataUtil.itemExists(id, model));
@@ -241,8 +250,8 @@ export function CanvasController(mColorMap) {
             mBrushActivePosition = [screenToModelCoords(screenCoords)];
         }
 
+        let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
         if (!mInteraction || mInteraction.type != DRAWING) {
-            let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
             if (target) {
                 let element = mModel.getElementForStroke(target.id);
                 mHighlightIds = element.strokes.map(s => s.id);
@@ -251,6 +260,15 @@ export function CanvasController(mColorMap) {
                 mHighlightIds = [];
                 mHighlightCallback([]);
             }
+        }
+
+        if (target && (systemState.getToolState() == Buttons.CURSOR_BUTTON ||
+            systemState.getToolState() == Buttons.SELECTION_BUTTON) &&
+            IdUtil.isType(target.id, Data.Stroke)) {
+            mDataTooltip.show(screenCoords.x + 20, screenCoords.y + 20,
+                mMappedData[target.id].map(item => item.dimensionName + ": " + item.value).join(", "));
+        } else {
+            mDataTooltip.hide();
         }
 
         if (mBrushActivePosition && systemState.getToolState() != Buttons.BRUSH_BUTTON) {

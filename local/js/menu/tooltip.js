@@ -7,6 +7,8 @@ export function ToolTip(svg) {
         .style("stroke-width", "1px")
         .style("paint-order", "stroke");
 
+    mText.style("display", "none")
+
     function show(x, y, text) {
         mText.attr("x", x + 10)
             .attr("y", y + 10)
