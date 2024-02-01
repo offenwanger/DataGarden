@@ -291,8 +291,14 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                     categoryNode.targetY = rangeAverage(mYRanges[categoryNode.id]) - Size.CATEGORY_SIZE / 2;
                 } else {
                     let index = mDimension.categories.findIndex(l => l.id == categoryNode.id);
-                    let range = [mControls.find(c => c.index == index - 1).y, mControls.find(c => c.index == index).y];
-                    categoryNode.targetY = rangeAverage(range) - Size.CATEGORY_SIZE / 2;
+                    let control1 = mControls.find(c => c.index == index - 1);
+                    let control2 = mControls.find(c => c.index == index);
+                    if (control1 && control2) {
+                        let range = [control1.y, control2.y];
+                        categoryNode.targetY = rangeAverage(range) - Size.CATEGORY_SIZE / 2;
+                    } else {
+                        console.error("Contorls not set yet!");
+                    }
                 }
             } else {
                 console.error("Invalid category id", categoryNode.id)
