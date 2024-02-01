@@ -150,6 +150,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             let noMapping = categories.find(l => l.id == NO_CATEGORY_ID).elementIds;
             newDimension.unmappedIds = noMapping;
             newDimension.categories = categories.filter(l => l.id != NO_CATEGORY_ID);
+            ModelUtil.syncRanges(newDimension);
 
             mModelController.updateDimension(newDimension);
         }
@@ -169,12 +170,8 @@ document.addEventListener('DOMContentLoaded', function (e) {
         newCategory.name = "Category" + (Math.max(0, ...dimension.categories
             .map(l => l.name.startsWith("Category") ? parseInt(l.name.slice(8)) : 0)
             .filter(n => !isNaN(n))) + 1);
-        dimension.categories.push(newCategory)
-
-        if (dimension.categories.length > 1) {
-            let lastRange = dimension.ranges.length ? dimension.ranges[dimension.ranges.length - 1] : 0;
-            dimension.ranges.push((1 - lastRange) / 2 + lastRange)
-        }
+        dimension.categories.push(newCategory);
+        ModelUtil.syncRanges(dimension);
 
         mModelController.updateDimension(dimension);
 
@@ -216,6 +213,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 });
             }
         }
+        ModelUtil.syncRanges(dimension);
 
         mModelController.updateDimension(dimension);
 
@@ -309,6 +307,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             let noMapping = categories.find(l => l.id == NO_CATEGORY_ID).elementIds;
             dimension.unmappedIds = noMapping;
             dimension.categories = categories.filter(l => l.id != NO_CATEGORY_ID);
+            ModelUtil.syncRanges(dimension);
 
             mModelController.updateDimension(dimension);
         }
@@ -333,6 +332,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             let noMapping = categories.find(l => l.id == NO_CATEGORY_ID).elementIds;
             dimension.unmappedIds = noMapping;
             dimension.categories = categories.filter(l => l.id != NO_CATEGORY_ID);
+            ModelUtil.syncRanges(dimension);
             mModelController.updateDimension(dimension);
         }
 
@@ -352,6 +352,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             let noMapping = categories.find(l => l.id == NO_CATEGORY_ID).elementIds;
             dimension.unmappedIds = noMapping;
             dimension.categories = categories.filter(l => l.id != NO_CATEGORY_ID);
+            ModelUtil.syncRanges(dimension);
             mModelController.updateDimension(dimension);
         }
 

@@ -59,6 +59,7 @@ export let ModelUtil = function () {
                 let noMapping = categories.find(l => l.id == NO_CATEGORY_ID).elementIds;
                 dimen.unmappedIds = noMapping;
                 dimen.categories = categories.filter(l => l.id != NO_CATEGORY_ID);
+                ModelUtil.syncRanges(dimen);
                 modelController.updateDimension(dimen);
             }
         });
@@ -84,6 +85,17 @@ export let ModelUtil = function () {
         element.angle = VectorUtil.normalize(VectorUtil.subtract(PathUtil.getPositionForPercent(element.spine, 0.2), element.spine[0]))
     }
 
+    function syncRanges(dimension) {
+        while (dimension.ranges.length < dimension.categories.length - 1) {
+            let lastRange = dimension.ranges.length ? dimension.ranges[dimension.ranges.length - 1] : 0;
+            dimension.ranges.push((1 - lastRange) / 2 + lastRange)
+        }
+
+        if (dimension.ranges.length > dimension.categories.length - 1) {
+            dimension.ranges = dimension.ranges.slice(0, dimension.categories.length - 1);
+        }
+    }
+
     return {
         updateParent,
         clearEmptyElements,
@@ -92,5 +104,6 @@ export let ModelUtil = function () {
         orientSpine,
         orientSpineToParent,
         orientElementByParent,
+        syncRanges,
     }
 }();
