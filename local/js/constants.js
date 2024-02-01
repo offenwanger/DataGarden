@@ -37,11 +37,6 @@ export const Padding = {
 
 export const ContextButtons = {
     CENTER: 'center',
-    ADD_DIMENSION_FOR_FORM: 'add-dimension-for-form',
-    ADD_DIMENSION_FOR_COLOR: 'add-dimension-for-color',
-    ADD_DIMENSION_FOR_SIZE: 'add-dimension-for-size',
-    ADD_DIMENSION_FOR_ANGLE: 'add-dimension-for-angle',
-    ADD_DIMENSION_FOR_POSITION: 'add-dimension-for-position',
     MERGE: 'merge-mode',
     SPINE: 'recalculate-spine',
     STYLE_STRIP: 'style-element-strip',
@@ -52,7 +47,7 @@ export const ContextButtons = {
 }
 
 export const ChannelType = {
-    FORM: "form",
+    SHAPE: "form",
     COLOR: "color",
     SIZE: "size",
     ANGLE: "angle",
@@ -92,7 +87,7 @@ DimensionLabels[DimensionType.DISCRETE] = 'Discrete';
 DimensionLabels[DimensionType.CONTINUOUS] = 'Continuous';
 
 export const ChannelLabels = {};
-ChannelLabels[ChannelType.FORM] = 'Form';
+ChannelLabels[ChannelType.SHAPE] = 'Shape';
 ChannelLabels[ChannelType.COLOR] = 'Color';
 ChannelLabels[ChannelType.SIZE] = 'Size';
 ChannelLabels[ChannelType.ANGLE] = 'Angle';

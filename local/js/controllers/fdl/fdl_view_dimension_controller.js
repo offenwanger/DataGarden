@@ -239,7 +239,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             let y2 = mHeight - categoryheight - Padding.CATEGORY;
             return [y1, y2]
         } else {
-            if (mDimension.channel == ChannelType.FORM || mDimension.channel == ChannelType.COLOR) {
+            if (mDimension.channel == ChannelType.SHAPE || mDimension.channel == ChannelType.COLOR) {
                 let y1 = top + index * categoryheight + Padding.CATEGORY;
                 let y2 = y1 + categoryheight - Padding.CATEGORY;
                 return [y1, y2];
@@ -287,7 +287,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             } else if (categoryNode.id == DIMENSION_RANGE_V2) {
                 categoryNode.targetY = mControls.find(c => c.id == CONTROL_ID + DIMENSION_RANGE_V2).y; - Size.CATEGORY_SIZE;
             } else if (IdUtil.isType(categoryNode.id, Data.Category)) {
-                if (mDimension.channel == ChannelType.FORM || mDimension.channel == ChannelType.COLOR) {
+                if (mDimension.channel == ChannelType.SHAPE || mDimension.channel == ChannelType.COLOR) {
                     categoryNode.targetY = rangeAverage(mYRanges[categoryNode.id]) - Size.CATEGORY_SIZE / 2;
                 } else {
                     let index = mDimension.categories.findIndex(l => l.id == categoryNode.id);
@@ -307,7 +307,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                 let yRange = mYRanges[NO_CATEGORY_ID];
                 node.targetY = Math.max(Math.min(node.y, yRange[1] - Size.ELEMENT_NODE_SIZE + Padding.NODE), yRange[0] + Size.ELEMENT_NODE_SIZE + Padding.NODE);
                 node.targetX = Math.max(Math.min(node.x, mScreenEdge - Size.ELEMENT_NODE_SIZE + Padding.NODE), mElementsX + Size.ELEMENT_NODE_SIZE + Padding.NODE);
-            } else if (mDimension.channel == ChannelType.FORM || mDimension.channel == ChannelType.COLOR) {
+            } else if (mDimension.channel == ChannelType.SHAPE || mDimension.channel == ChannelType.COLOR) {
                 let category = mDimension.categories.find(l => l.elementIds.includes(node.id));
                 let categoryId = category ? category.id : NO_CATEGORY_ID;
                 let yRange = mYRanges[categoryId];
@@ -379,7 +379,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                 box: false
             })
 
-            if (mDimension.channel == ChannelType.FORM || mDimension.channel == ChannelType.COLOR) {
+            if (mDimension.channel == ChannelType.SHAPE || mDimension.channel == ChannelType.COLOR) {
                 mCategories.forEach(({ id }) => drawContainer(id));
             } else {
                 drawChannelRange();
@@ -572,7 +572,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
 
     function drawNode(node, element) {
         let strokes = element.strokes;
-        if (mDimension.channel == ChannelType.FORM) {
+        if (mDimension.channel == ChannelType.SHAPE) {
             strokes = DataUtil.getStraightenedStrokes(element);
         }
         mDrawingUtil.drawThumbnailCircle({

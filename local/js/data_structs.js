@@ -82,10 +82,9 @@ export let Data = function () {
         this.creationTime = Date.now();
         this.name = "Dimension";
         this.type = DimensionType.DISCRETE;
-        this.channel = ChannelType.FORM;
+        this.channel = ChannelType.SHAPE;
         this.angleType = AngleType.RELATIVE;
         this.sizeType = SizeType.AREA;
-        this.channel = ChannelType.FORM;
         this.level = 0;
         this.unmappedIds = []
         // discrete dimensions

@@ -84,14 +84,14 @@ export let StructureFairy = function () {
             if (dimension.channel == ChannelType.COLOR) {
                 clusters = ClassifierUtil.clusterElementColors(elements, categories);
             } else {
-                clusters = ClassifierUtil.clusterElementForms(elements, categories);
+                clusters = ClassifierUtil.clusterElementShapes(elements, categories);
             }
             let clusterCount = Math.max(...clusters) + 1;
 
             for (let i = 0; i < clusterCount; i++) {
                 let category = categories[i];
                 if (!category) {
-                    if (i == 0 || dimension.channel == ChannelType.COLOR || dimension.channel == ChannelType.FORM) {
+                    if (i == 0 || dimension.channel == ChannelType.COLOR || dimension.channel == ChannelType.SHAPE) {
                         category = new Data.Category();
                         category.name = "Category" + (i + 1);
                         categories.push(category)
@@ -122,7 +122,7 @@ export let StructureFairy = function () {
                 { id: MAP_ELEMENTS, elementIds: elements.map(e => e.id).filter(eId => !dimension.unmappedIds.includes(eId)) },
             ];
 
-            let clusters = ClassifierUtil.clusterElementForms(elements, categories);
+            let clusters = ClassifierUtil.clusterElementShapes(elements, categories);
             let unmappedIds = clusters.map((c, index) => c == 0 ? elements[index].id : null).filter(id => id);
 
             return dimension.categories.concat([{ id: NO_CATEGORY_ID, elementIds: unmappedIds }]);

@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let newDimension = new Data.Dimension();
         newDimension.name = "Dimension" + (maxNum + 1);
         newDimension.type = DimensionType.DISCRETE;
-        newDimension.channel = ChannelType.FORM;
+        newDimension.channel = ChannelType.SHAPE;
         newDimension.level = maxLevel;
         mModelController.addDimension(newDimension);
 
@@ -332,8 +332,8 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     mDashboardController.setUpdateDimensionChannelCallback((dimensionId, channel) => {
         let dimension = mModelController.getModel().getDimension(dimensionId);
-        if ((dimension.channel == ChannelType.FORM && channel == ChannelType.COLOR) ||
-            (dimension.channel == ChannelType.COLOR && channel == ChannelType.FORM)) {
+        if ((dimension.channel == ChannelType.SHAPE && channel == ChannelType.COLOR) ||
+            (dimension.channel == ChannelType.COLOR && channel == ChannelType.SHAPE)) {
             dimension.categories.forEach(l => l.elementIds = []);
         }
         if (!dimension) { console.error("Invalid dimension id: ", dimensionId); return; }

@@ -99,7 +99,7 @@ describe('Test Data Model', function () {
 
             dataModel.getDimensions().push(new Data.Dimension());
             dataModel.getDimensions()[0].type = DimensionType.DISCRETE;
-            dataModel.getDimensions()[0].channel = ChannelType.FORM;
+            dataModel.getDimensions()[0].channel = ChannelType.SHAPE;
             dataModel.getDimensions()[0].categories.push(new Data.Category());
             dataModel.getDimensions()[0].categories[0].name = categoryName1;
             dataModel.getDimensions()[0].categories[0].elementIds = [elId1, elId2];
@@ -128,7 +128,7 @@ describe('Test Data Model', function () {
 
             dataModel.getDimensions().push(new Data.Dimension());
             dataModel.getDimensions()[0].type = DimensionType.DISCRETE;
-            dataModel.getDimensions()[0].channel = ChannelType.FORM;
+            dataModel.getDimensions()[0].channel = ChannelType.SHAPE;
             dataModel.getDimensions()[0].level = 0;
             dataModel.getDimensions()[0].categories.push(new Data.Category());
             dataModel.getDimensions()[0].categories[0].name = "Category1";
@@ -141,7 +141,7 @@ describe('Test Data Model', function () {
 
             dataModel.getDimensions().push(new Data.Dimension());
             dataModel.getDimensions()[1].type = DimensionType.DISCRETE;
-            dataModel.getDimensions()[1].channel = ChannelType.FORM;
+            dataModel.getDimensions()[1].channel = ChannelType.SHAPE;
             dataModel.getDimensions()[1].level = 1;
             dataModel.getDimensions()[1].categories.push(new Data.Category());
             dataModel.getDimensions()[1].categories[0].name = "Category3";
@@ -180,7 +180,7 @@ describe('Test Data Model', function () {
             for (let i = 0; i < 4; i++) {
                 dataModel.getDimensions().push(new Data.Dimension());
                 dataModel.getDimensions()[i].type = DimensionType.DISCRETE;
-                dataModel.getDimensions()[i].channel = ChannelType.FORM;
+                dataModel.getDimensions()[i].channel = ChannelType.SHAPE;
                 dataModel.getDimensions()[i].level = i % 2;
                 for (let j = 0; j < 2; j++) {
                     dataModel.getDimensions()[i].categories.push(new Data.Category());

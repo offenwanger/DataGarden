@@ -109,7 +109,7 @@ describe('FDL View Controller Test', function () {
             assert.equal(model().getDimensions()[0].type, DimensionType.DISCRETE);
         });
 
-        it('should change dimension channel to form', function () {
+        it('should change dimension channel to shape', function () {
             utility.clickTab(Tab.LEGEND);
             assert.equal(model().getDimensions().length, 0);
             utility.click('#fdl-view-container', { x: 15, y: 15 });
@@ -118,9 +118,9 @@ describe('FDL View Controller Test', function () {
             assert.equal(model().getDimensions().length, 1)
             assert.equal(model().getDimensions()[0].channel, ChannelType.COLOR);
             utility.click('#fdl-view-container', { x: 365, y: DIMENSION_SETTINGS_HEIGHT - 20 });
-            utility.selectOption(ChannelType.FORM);
+            utility.selectOption(ChannelType.SHAPE);
             assert.equal(model().getDimensions().length, 1)
-            assert.equal(model().getDimensions()[0].channel, ChannelType.FORM);
+            assert.equal(model().getDimensions()[0].channel, ChannelType.SHAPE);
         });
 
         it('should change dimension channel to color', function () {

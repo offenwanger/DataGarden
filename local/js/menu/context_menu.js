@@ -6,31 +6,6 @@ export function ContextMenu(svg) {
     let mButtonData = {}
     let mSvg = svg;
 
-    mButtonData[ContextButtons.ADD_DIMENSION_FOR_FORM] = {
-        id: ContextButtons.ADD_DIMENSION_FOR_FORM,
-        img: "img/bind_form_button.svg",
-        tooltip: "Bind a new dimension to the form channel",
-    }
-    mButtonData[ContextButtons.ADD_DIMENSION_FOR_COLOR] = {
-        id: ContextButtons.ADD_DIMENSION_FOR_COLOR,
-        img: "img/bind_color_button.svg",
-        tooltip: "Bind a new dimension to the color channel",
-    }
-    mButtonData[ContextButtons.ADD_DIMENSION_FOR_SIZE] = {
-        id: ContextButtons.ADD_DIMENSION_FOR_SIZE,
-        img: "img/bind_size_button.svg",
-        tooltip: "Bind a new dimension to the size channel",
-    }
-    mButtonData[ContextButtons.ADD_DIMENSION_FOR_ANGLE] = {
-        id: ContextButtons.ADD_DIMENSION_FOR_ANGLE,
-        img: "img/bind_angle_button.svg",
-        tooltip: "Bind a new dimension to the angle channel",
-    }
-    mButtonData[ContextButtons.ADD_DIMENSION_FOR_POSITION] = {
-        id: ContextButtons.ADD_DIMENSION_FOR_POSITION,
-        img: "img/bind_position_button.svg",
-        tooltip: "Bind a new dimension to the position channel",
-    }
     mButtonData[ContextButtons.MERGE] = {
         id: ContextButtons.MERGE,
         img: "img/merge_elements.svg",

@@ -195,13 +195,13 @@ export let DataUtil = function () {
     }
 
     function channelIsDiscrete(channelType) {
-        return channelType == ChannelType.FORM || channelType == ChannelType.COLOR;
+        return channelType == ChannelType.SHAPE || channelType == ChannelType.COLOR;
     }
 
     function getMappedValue(model, dimensionId, elementId) {
         let dimension = model.getDimension(dimensionId);
         if (dimension.unmappedIds.includes(elementId)) return null;
-        if (dimension.channel == ChannelType.FORM || dimension.channel == ChannelType.COLOR) {
+        if (dimension.channel == ChannelType.SHAPE || dimension.channel == ChannelType.COLOR) {
             let category = dimension.categories.find(category => category.elementIds.includes(elementId));
             return category ? category.name : null;
         } else {

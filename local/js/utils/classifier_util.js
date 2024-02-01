@@ -85,7 +85,7 @@ export let ClassifierUtil = function () {
         return count == 0 ? sum : sum.map(c => c / count);
     }
 
-    function clusterElementForms(elements, categories) {
+    function clusterElementShapes(elements, categories) {
         let vectors = elements.map(e => elementToImgVector(e));
         return clusterElementVectors(elements, vectors, categories);
     }
@@ -191,7 +191,7 @@ export let ClassifierUtil = function () {
     return {
         elementToImg,
         elementToImgVector,
-        clusterElementForms,
+        clusterElementShapes,
         clusterElementColors,
         clusterVectors,
         kMeans,

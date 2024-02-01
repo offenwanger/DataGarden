@@ -11,7 +11,7 @@ export function DropdownInput() {
     mTypeSelect.append("option").attr("value", DimensionType.DISCRETE).html("Discrete");
     mTypeSelect.append("option").attr("value", DimensionType.CONTINUOUS).html("Continuous");
     let mChannelSelect = mDropdownContainer.append("select").attr('id', 'channel-select');
-    mChannelSelect.append("option").attr("value", ChannelType.FORM).html("Form");
+    mChannelSelect.append("option").attr("value", ChannelType.SHAPE).html("Shape");
     mChannelSelect.append("option").attr("value", ChannelType.COLOR).html("Color");
     mChannelSelect.append("option").attr("value", ChannelType.SIZE).html("Size");
     mChannelSelect.append("option").attr("value", ChannelType.ANGLE).html("Angle");
