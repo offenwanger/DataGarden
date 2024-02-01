@@ -63,6 +63,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     let mCategoriesX = 0;
     let mElementsX = 1;
     let mElementsAxisX = 1;
+    let mElementsFloatX = 1;
     let mYRanges = {};
     let mNodeLayout = {}
     let mScreenEdge = 10;
@@ -81,7 +82,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         .velocityDecay(SimulationValues.VELOCITY)
         .force("collide", d3.forceCollide((d) => IdUtil.isType(d.id, Data.Element) ? d.radius + Padding.NODE * 2 : 0)
             .strength(SimulationValues.STRENGTH_COLLIDE))
-        .force("xDrift", d3.forceX(mElementsX)
+        .force("xDrift", d3.forceX(mElementsFloatX + Size.ELEMENT_NODE_SIZE + Padding.NODE)
             .strength(SimulationValues.STRENGTH_X))
         .alpha(0.3)
         .on("tick", () => {
@@ -129,7 +130,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         resetTargets();
 
         mSimulation.nodes(mNodes)
-            .force("xDrift", d3.forceX(mElementsX).strength(SimulationValues.STRENGTH_X))
+            .force("xDrift", d3.forceX(mElementsFloatX + Size.ELEMENT_NODE_SIZE + Padding.NODE).strength(SimulationValues.STRENGTH_X))
             .alphaTarget(0.3)
             .restart();
     }
@@ -139,7 +140,8 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         mElementsX = mCategories.concat({ name: ADD_CATEGORY_LABEL }).reduce((max, category) => {
             return Math.max(max, mDrawingUtil.measureStringNode(category.name, Size.CATEGORY_SIZE));
         }, 10) + Padding.CATEGORY * 2;
-        mElementsAxisX = mElementsX + AXIS_PADDING + (mDimension.channel == ChannelType.ANGLE ? ANGLE_LABEL_SIZE : 0)
+        mElementsAxisX = mElementsX + AXIS_PADDING + (mDimension.channel == ChannelType.ANGLE ? ANGLE_LABEL_SIZE / 2 : 0)
+        mElementsFloatX = mElementsAxisX + AXIS_PADDING + (mDimension.channel == ChannelType.ANGLE ? ANGLE_LABEL_SIZE / 2 : 0)
         mScreenEdge = canvasCoordsToLocal({ x: mWidth, y: 0 }).x;
 
         mYRanges = {};
@@ -198,7 +200,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             mNodeLayout[node.id] = {
                 y: (mYRanges[mDimension.id][1] - mYRanges[mDimension.id][0]) * yPercent + mYRanges[mDimension.id][0]
             };
-            if (mSelectionIds.includes(node.id)) mNodeLayout[node.id].x = mElementsX + Size.ELEMENT_NODE_SIZE + Padding.NODE;
+            if (mSelectionIds.includes(node.id)) mNodeLayout[node.id].x = mElementsFloatX + Size.ELEMENT_NODE_SIZE + Padding.NODE;
         });
     }
 
@@ -323,8 +325,8 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         mNodes.forEach(node => {
             if (mDimension.unmappedIds.includes(node.id)) {
                 let yRange = mYRanges[NO_CATEGORY_ID];
-                node.targetY = Math.max(Math.min(node.y, yRange[1] - Size.ELEMENT_NODE_SIZE + Padding.NODE), yRange[0] + Size.ELEMENT_NODE_SIZE + Padding.NODE);
-                node.targetX = Math.max(Math.min(node.x, mScreenEdge - Size.ELEMENT_NODE_SIZE + Padding.NODE), mElementsX + Size.ELEMENT_NODE_SIZE + Padding.NODE);
+                node.targetY = DataUtil.limit(node.y, yRange[0] + Size.ELEMENT_NODE_SIZE + Padding.NODE, yRange[1] - Size.ELEMENT_NODE_SIZE - Padding.NODE);
+                node.targetX = DataUtil.limit(node.x, mElementsFloatX + Size.ELEMENT_NODE_SIZE + Padding.NODE, mScreenEdge - Size.ELEMENT_NODE_SIZE - Padding.NODE);
             } else if (DataUtil.channelIsDiscrete(mDimension.channel)) {
                 let category = mDimension.categories.find(l => l.elementIds.includes(node.id));
                 let categoryId = category ? category.id : NO_CATEGORY_ID;
@@ -333,7 +335,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                     yRange[0] + Size.ELEMENT_NODE_SIZE + Padding.NODE,
                     yRange[1] - Size.ELEMENT_NODE_SIZE + Padding.NODE);
                 node.targetX = DataUtil.limit(node.x,
-                    mElementsX + Size.ELEMENT_NODE_SIZE + Padding.NODE,
+                    mElementsFloatX + Size.ELEMENT_NODE_SIZE + Padding.NODE,
                     mScreenEdge - Size.ELEMENT_NODE_SIZE + Padding.NODE);
             } else {
                 node.targetY = mNodeLayout[node.id].y;
@@ -500,28 +502,44 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
 
     function drawChannelRange() {
         let yRange = mYRanges[mDimension.id];
+
+        mDrawingUtil.drawLine({
+            x1: mElementsAxisX,
+            x2: mElementsAxisX,
+            y1: yRange[0],
+            y2: yRange[1]
+        });
+
         if (mDimension.channel == ChannelType.ANGLE) {
-            let images = [
-                null,
-                "img/deg135_pos_v2.png",
-                null,
-                "img/deg45_pos_v2.png",
-                null,
-                "img/deg45_neg_v2.png",
-                null,
-                "img/deg135_neg_v2.png",
-                null,
-            ]
+            let images = [];
+            if (mDimension.angleType == AngleType.RELATIVE) {
+                images.push(
+                    "img/angle_180_rel.svg",
+                    "img/angle_90_rel.svg",
+                    "img/angle_0_rel.svg",
+                    "img/angle_-90_rel.svg",
+                    "img/angle_-180_rel.svg",
+                )
+            } else {
+                images.push(
+                    "img/angle_180_abs.svg",
+                    "img/angle_90_abs.svg",
+                    "img/angle_0_abs.svg",
+                    "img/angle_-90_abs.svg",
+                    "img/angle_-180_abs.svg",
+                )
+            }
             images.forEach((img, index) => {
                 if (img) {
                     let yRange = mYRanges[mDimension.id];
-                    let yPos = (yRange[1] - yRange[0]) * index / images.length + yRange[0];
+                    let yPos = (yRange[1] - yRange[0]) * index / (images.length - 1) + yRange[0];
                     mDrawingUtil.drawImage({
-                        x: mElementsX + Padding.CATEGORY / 2,
-                        y: yPos,
+                        x: mElementsX + Padding.CATEGORY,
+                        y: yPos - ANGLE_LABEL_SIZE / 2,
                         height: ANGLE_LABEL_SIZE,
                         width: ANGLE_LABEL_SIZE,
-                        url: img
+                        url: img,
+                        shadow: true,
                     })
                 }
             })
@@ -556,13 +574,6 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                 box: false,
             });
         }
-
-        mDrawingUtil.drawLine({
-            x1: mElementsAxisX,
-            x2: mElementsAxisX,
-            y1: yRange[0],
-            y2: yRange[1]
-        });
     }
 
     function drawCategoryLabel(categoryItem) {
@@ -739,8 +750,8 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             let yRange = mYRanges[interaction.mouseOverTarget.id];
             mDraggedNodes.forEach(node => {
                 if (IdUtil.isType(node.id, Data.Element)) {
-                    node.targetY = Math.max(Math.min(node.targetY, yRange[1] - Size.ELEMENT_NODE_SIZE + Padding.NODE), yRange[0] + Size.ELEMENT_NODE_SIZE + Padding.NODE);
-                    node.targetX = Math.max(Math.min(node.targetX, mScreenEdge - Size.ELEMENT_NODE_SIZE + Padding.NODE), mElementsX + Size.ELEMENT_NODE_SIZE + Padding.NODE);
+                    node.targetY = DataUtil.limit(node.targetY, yRange[1] - Size.ELEMENT_NODE_SIZE + Padding.NODE, yRange[0] + Size.ELEMENT_NODE_SIZE + Padding.NODE);
+                    node.targetX = DataUtil.limit(node.targetX, mScreenEdge - Size.ELEMENT_NODE_SIZE + Padding.NODE, mElementsFloatX + Size.ELEMENT_NODE_SIZE + Padding.NODE);
                 }
             });
         }

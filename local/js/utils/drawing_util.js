@@ -725,13 +725,23 @@ export function DrawingUtil(context, interactionContext, interfaceContext) {
         intCtx.restore();
     }
 
-    function drawImage({ x, y, height, width, url }) {
+    function drawImage({ x, y, height, width, shadow = false, url }) {
         if (!ImageHelper[url]) { console.error("Image not preloaded"); return; }
+        ctx.save();
         try {
+
+            if (shadow) {
+                ctx.shadowColor = "black";
+                ctx.shadowOffsetX = 1;
+                ctx.shadowOffsetY = 1;
+                ctx.shadowBlur = 3;
+            }
             ctx.drawImage(ImageHelper[url], x, y, width, height);
+
         } catch (e) {
             console.error("Failed to draw " + url);
         }
+        ctx.restore();
     }
 
     return {
@@ -773,7 +783,13 @@ function loadImage(url) {
     ImageHelper[url] = new Image();
     ImageHelper[url].src = url;
 }
-loadImage("img/deg45_neg_v2.png")
-loadImage("img/deg45_pos_v2.png")
-loadImage("img/deg135_neg_v2.png")
-loadImage("img/deg135_pos_v2.png")
+loadImage("img/angle_-90_abs.svg");
+loadImage("img/angle_-90_rel.svg");
+loadImage("img/angle_-180_abs.svg");
+loadImage("img/angle_-180_rel.svg");
+loadImage("img/angle_0_abs.svg");
+loadImage("img/angle_0_rel.svg");
+loadImage("img/angle_90_abs.svg");
+loadImage("img/angle_90_rel.svg");
+loadImage("img/angle_180_abs.svg");
+loadImage("img/angle_180_rel.svg");
