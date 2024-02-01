@@ -465,7 +465,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         } else {
             element = new Data.Element();
             element.strokes = strokes;
-            element.spine = getStupidSpine(element);
+            element.spine = DataUtil.getStupidSpine(element);
             element.root = element.spine[0];
             element.angle = VectorUtil.normalize(VectorUtil.subtract(element.spine[1], element.spine[0]));
             mModelController.addElement(element);

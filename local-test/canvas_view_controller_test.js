@@ -49,6 +49,34 @@ describe('Canvas View Controller Test', function () {
             expect(model().getElements().map(e => e.strokes.length)).to.eql([2]);
         });
 
+        it('should split two elements', function () {
+            utility.drawStroke([{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 20, y: 80 }])
+            utility.drawStroke([{ x: 30, y: 20 }, { x: 30, y: 40 }, { x: 30, y: 60 }, { x: 30, y: 80 }])
+
+            assert.equal(model().getElements().length, 2);
+            expect(model().getElements().map(e => e.strokes.length)).to.eql([1, 1]);
+
+            utility.drawSelection([{ x: 10, y: 10 }, { x: 10, y: 90 }, { x: 40, y: 90 }, { x: 40, y: 10 }]);
+            utility.clickSelect("#canvas-view-container", { x: 20, y: 40 });
+            utility.clickContextMenuButton("#" + ContextButtons.MERGE);
+
+            // avoid double click
+            utility.click("#canvas-view-container", { x: 20, y: 40 })
+
+            assert.equal(model().getElements().length, 1);
+            expect(model().getElements().map(e => e.strokes.length)).to.eql([2]);
+
+            utility.drawSelection([{ x: 10, y: 10 }, { x: 10, y: 90 }, { x: 25, y: 90 }, { x: 25, y: 10 }]);
+            utility.clickSelect("#canvas-view-container", { x: 20, y: 40 });
+            utility.clickContextMenuButton("#" + ContextButtons.MERGE);
+
+            // avoid double click
+            utility.click("#canvas-view-container", { x: 100, y: 100 })
+
+            assert.equal(model().getElements().length, 2);
+            expect(model().getElements().map(e => e.strokes.length)).to.eql([1, 1]);
+        });
+
         it('should automerge two elements', function () {
             utility.drawStroke([{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 20, y: 80 }])
             utility.drawStroke([{ x: 22, y: 30 }, { x: 22, y: 40 }, { x: 22, y: 60 }, { x: 22, y: 90 }])
