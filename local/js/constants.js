@@ -86,8 +86,8 @@ export const FdlMode = {
 }
 
 export const DimensionLabels = {};
-DimensionLabels[DimensionType.DISCRETE] = 'Discrete';
-DimensionLabels[DimensionType.CONTINUOUS] = 'Continuous';
+DimensionLabels[DimensionType.DISCRETE] = 'Categorical';
+DimensionLabels[DimensionType.CONTINUOUS] = 'Number';
 
 export const ChannelLabels = {};
 ChannelLabels[ChannelType.LABEL] = 'Label';

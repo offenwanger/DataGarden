@@ -1,4 +1,4 @@
-import { AngleType, ChannelLabels, ChannelType, DimensionType, DropDown, SizeType } from "../constants.js";
+import { AngleType, ChannelLabels, ChannelType, DimensionLabels, DimensionType, DropDown, SizeType } from "../constants.js";
 import { DataUtil } from "../utils/data_util.js";
 
 export function DropdownInput() {
@@ -8,8 +8,8 @@ export function DropdownInput() {
     let mShowingType = null;
     let mDropdownContainer = d3.select('#dropdown-container');
     let mTypeSelect = mDropdownContainer.append("select").attr('id', 'type-select');
-    mTypeSelect.append("option").attr("value", DimensionType.DISCRETE).html("Discrete");
-    mTypeSelect.append("option").attr("value", DimensionType.CONTINUOUS).html("Continuous");
+    mTypeSelect.append("option").attr("value", DimensionType.DISCRETE).html(DimensionLabels[DimensionType.DISCRETE]);
+    mTypeSelect.append("option").attr("value", DimensionType.CONTINUOUS).html(DimensionLabels[DimensionType.CONTINUOUS]);
     let mChannelSelect = mDropdownContainer.append("select").attr('id', 'channel-select');
     mChannelSelect.append("option").attr("value", ChannelType.LABEL).html(ChannelLabels[ChannelType.LABEL]);
     mChannelSelect.append("option").attr("value", ChannelType.SHAPE).html(ChannelLabels[ChannelType.SHAPE]);

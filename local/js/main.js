@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         if (!element) { console.error("invalid element id", elementId); return; }
         element.root = root;
         element.angle = angle;
-        element.spine = ModelUtil.orientSpine(element.spine(root));
+        element.spine = ModelUtil.orientSpine(element.spine, root);
         mModelController.updateElement(element);
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
@@ -205,21 +205,31 @@ document.addEventListener('DOMContentLoaded', function (e) {
         }).filter(e => e).map(e => e.id);
 
         if (dimension.channel == ChannelType.LABEL) {
-            let firstElement = elementIds[0];
-            dimension.unmappedIds = dimension.unmappedIds.filter(e => e != firstElement);
-
-            let firstElementCategory = dimension.categories.find(c => c.elementIds.includes(firstElement));
-            if (firstElementCategory && DataUtil.isDefaultLabel(dimension.name, firstElementCategory.name) && firstElementCategory != category) {
-                dimension.categories = dimension.categories.filter(category => category != firstElementCategory);
-            } else if (firstElementCategory) {
-                firstElementCategory.elementIds = firstElementCategory.elementIds.filter(e => e != firstElement)
-            }
-
-            if (category) {
-                dimension.unmappedIds.push(...category.elementIds)
-                category.elementIds = [firstElement];
+            if (categoryId == NO_CATEGORY_ID) {
+                dimension.categories = dimension.categories.filter(c => {
+                    if (c.elementIds.length != 1) return true;
+                    if (!DataUtil.isDefaultLabel(dimension.name, c.name)) return true;
+                    if (!elementIds.includes(c.elementIds[0])) return true;
+                    return false;
+                })
+                dimension.unmappedIds.push(...elementIds);
             } else {
-                dimension.unmappedIds.push(firstElement);
+                let firstElement = elementIds[0];
+                dimension.unmappedIds = dimension.unmappedIds.filter(e => e != firstElement);
+
+                let firstElementCategory = dimension.categories.find(c => c.elementIds.includes(firstElement));
+                if (firstElementCategory && DataUtil.isDefaultLabel(dimension.name, firstElementCategory.name) && firstElementCategory != category) {
+                    dimension.categories = dimension.categories.filter(category => category != firstElementCategory);
+                } else if (firstElementCategory) {
+                    firstElementCategory.elementIds = firstElementCategory.elementIds.filter(e => e != firstElement)
+                }
+
+                if (category) {
+                    dimension.unmappedIds.push(...category.elementIds)
+                    category.elementIds = [firstElement];
+                } else {
+                    dimension.unmappedIds.push(firstElement);
+                }
             }
         } else {
             if (categoryId == NO_CATEGORY_ID) {
