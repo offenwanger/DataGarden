@@ -138,7 +138,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     function calculateLayoutValues() {
         mCategoriesX = canvasCoordsToLocal({ x: Padding.CATEGORY, y: 0 }).x;
         let categoryStrings = mCategories.map(c => c.name).concat([ADD_CATEGORY_LABEL]);
-        mDimenAxisX = categoryStrings.reduce((max, name) => Math.max(max, mDrawingUtil.measureStringNode(name, Size.CATEGORY_SIZE)))
+        mDimenAxisX = categoryStrings.reduce((max, name) => Math.max(max, mDrawingUtil.measureStringNode(name, Size.CATEGORY_SIZE)), 0)
             + Padding.CATEGORY * 2;
         mElementsAxisX = mDimenAxisX + AXIS_PADDING + (mDimension.channel == ChannelType.ANGLE ? ANGLE_LABEL_SIZE / 2 : 0)
         mElementsFloatX = mElementsAxisX + AXIS_PADDING + (mDimension.channel == ChannelType.ANGLE ? ANGLE_LABEL_SIZE / 2 : 0)
