@@ -317,7 +317,7 @@ export let DataUtil = function () {
         if (parent) {
             tangent = PathUtil.getTangentForPercent(parent.spine, PathUtil.getClosestPointOnPath(element.root, parent.spine).percent);
         } else {
-            tangent = { x: 0, y: 1 };
+            tangent = { x: 1, y: 0 };
         }
 
         let angle = Math.atan2(element.angle.y, element.angle.x) - Math.atan2(tangent.y, tangent.x);
