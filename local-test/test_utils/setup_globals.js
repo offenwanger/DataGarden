@@ -12,6 +12,7 @@ import { DataModel } from "../../local/js/data_model.js";
 
 import * as  chai from 'chai';
 import { registerFont } from "canvas";
+import { Buttons } from "../../local/js/constants.js";
 let assert = chai.assert;
 
 global.document = {
@@ -73,7 +74,7 @@ global.URL = {
 }
 global.model = function () {
     let blobLength = global.blobs.length;
-    let downloadButton = global.d3.select("#download-button");
+    let downloadButton = global.d3.select("#" + Buttons.DOWNLOAD);
     if (!downloadButton) {
         console.error("No download button found!");
         return null;

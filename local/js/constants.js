@@ -7,6 +7,8 @@ export const DEFAULT_CATEGORY_NAME = "Category";
 
 export const DIMENSION_SETTINGS_HEIGHT = 100;
 
+export const MENU_BUTTON_SIZE = 40;
+
 export const Buttons = {
     CURSOR_BUTTON: "Cursor",
     BRUSH_BUTTON: "Brush",

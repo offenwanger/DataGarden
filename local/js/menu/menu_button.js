@@ -1,13 +1,27 @@
+import { MENU_BUTTON_SIZE } from "../constants.js";
 import { FiltersUtil } from "../utils/filters_util.js";
 
-export function MenuButton(id, svg, img, buttonSize, clickCallback, onLoad) {
+export function MenuButton({ id, parentSvg, img, buttonSize = MENU_BUTTON_SIZE, clickCallback, onLoad, hotkey }) {
+    const HOTKEY_HEIGHT = 14;
+
     let mPosition = { x: 0, y: 0 };
 
-    let mButton = svg.append('g')
+    let mButton = parentSvg.append('g')
         .attr("id", id);
     let mSvg = mButton.append('g')
         .attr("filter", FiltersUtil.DROP_SHADOW);
-    let mOverlay = mButton.append("rect")
+    if (hotkey) mButton.append("text")
+        .style("font", HOTKEY_HEIGHT + "px DefaultFont")
+        .style("stroke-linejoin", "round")
+        .style("fill", "black")
+        .style("stroke", "white")
+        .style("stroke-width", "1px")
+        .style("paint-order", "stroke")
+        .attr("x", buttonSize)
+        .attr("y", buttonSize)
+        .text(hotkey);
+
+    mButton.append("rect")
         .classed("button-overlay", true)
         .attr("height", buttonSize)
         .attr("width", buttonSize)

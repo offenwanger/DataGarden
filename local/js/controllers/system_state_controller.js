@@ -6,6 +6,9 @@ export function SystemState() {
         [Buttons.SELECTION_BUTTON, "s"],
         [Buttons.PANNING_BUTTON, "a"],
         [Buttons.ZOOM_BUTTON, "a", "s"],
+        [Buttons.CURSOR_BUTTON, "x"],
+        [Buttons.SPINE_BRUSH_BUTTON, "c"],
+        [Buttons.ANGLE_BRUSH_BUTTON, "v"],
     ]
 
     let mKeys = [];
@@ -30,12 +33,15 @@ export function SystemState() {
 
         let keys = [...mKeys];
         let validStates = mStateArray;
+        if (!mStructureViewActive) {
+            validStates = validStates.filter(s => s[0] != Buttons.ANGLE_BRUSH_BUTTON && s[0] != Buttons.SPINE_BRUSH_BUTTON);
+        }
         let checkIndex = 1;
         let found = false;
         while (keys.length > 0) {
-            if (mStateArray.filter(i => i[checkIndex] == keys[0]).length > 0) {
+            if (validStates.filter(i => i[checkIndex] == keys[0]).length > 0) {
                 found = true;
-                validStates = mStateArray.filter(i => i[checkIndex] == keys[0]);
+                validStates = validStates.filter(i => i[checkIndex] == keys[0]);
                 checkIndex++
             }
             keys.shift();

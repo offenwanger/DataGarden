@@ -67,13 +67,22 @@ describe('Test Main - Integration Test', function () {
             let element = new Data.Element();
 
             element.angle = { x: 1, y: 0 };
-            expect(DataUtil.getRelativeAngle(element)).to.be.closeTo(-Math.PI / 2, 0.00001);
+            expect(DataUtil.getRelativeAngle(element)).to.be.closeTo(0, 0.00001);
 
             element.angle = { x: -1, y: 0 };
+            expect(DataUtil.getRelativeAngle(element)).to.be.closeTo(Math.PI, 0.00001);
+
+            element.angle = { x: 0, y: 1 };
             expect(DataUtil.getRelativeAngle(element)).to.be.closeTo(Math.PI / 2, 0.00001);
 
+            element.angle = { x: 0, y: -1 };
+            expect(DataUtil.getRelativeAngle(element)).to.be.closeTo(-Math.PI / 2, 0.00001);
+
             element.angle = VectorUtil.normalize({ x: 1, y: 1 });
-            expect(DataUtil.getRelativeAngle(element)).to.be.closeTo(-Math.PI / 4, 0.00001);
+            expect(DataUtil.getRelativeAngle(element)).to.be.closeTo(Math.PI / 4, 0.00001);
+
+            element.angle = VectorUtil.normalize({ x: -1, y: 1 });
+            expect(DataUtil.getRelativeAngle(element)).to.be.closeTo(Math.PI * 3 / 4, 0.00001);
         });
 
         it('showuld return angles for parented element', function () {
