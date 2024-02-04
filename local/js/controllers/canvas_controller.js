@@ -330,6 +330,16 @@ export function CanvasController(mColorMap) {
         draw();
     }
 
+    function onWheel(screenCoords, delta, systemState) {
+        let currZoom = mZoomTransform.k;
+        let scale = currZoom * (1 - delta / 1000);
+        let zoomChange = scale - mZoomTransform.k;
+        let transformX = -(screenCoords.x * zoomChange) + mZoomTransform.x;
+        let transformY = -(screenCoords.y * zoomChange) + mZoomTransform.y;
+        mZoomTransform = d3.zoomIdentity.translate(transformX, transformY).scale(scale);
+        draw();
+    }
+
     function onResize(width, height) {
         d3.select("#canvas-view-container")
             .style('width', width + "px")
@@ -505,6 +515,7 @@ export function CanvasController(mColorMap) {
         onPointerDown,
         onPointerMove,
         onPointerUp,
+        onWheel,
         onResize,
         setColor,
         setStructureMode,

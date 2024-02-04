@@ -123,6 +123,18 @@ export function DashboardController() {
         mFdlViewController.onPointerUp(screenCoords, mSystemState);
     }
 
+    function onWheel(screenCoords, delta) {
+        if (screenCoords.x < mWidth * mCanvasPercent) {
+            mCanvasController.onWheel(screenCoords, delta, mSystemState);
+        } else if (screenCoords.y < TAB_HEIGHT) {
+            // do nothing, tab don't wheel
+        } else if (mActiveTab == mFdlViewController) {
+            mFdlViewController.onWheel(screenCoords, delta, mSystemState);
+        } else {
+            // table will handle it's own wheeling, let the event propogate
+        }
+    }
+
     function onDblClick(screenCoords) {
 
     }
@@ -457,6 +469,7 @@ export function DashboardController() {
         onPointerDown,
         onPointerMove,
         onPointerUp,
+        onWheel,
         onDblClick,
         onLongPress,
         onKeyStateChange,
