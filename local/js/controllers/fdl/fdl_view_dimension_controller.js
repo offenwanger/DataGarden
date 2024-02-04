@@ -61,7 +61,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     let mControls = [];
 
     let mCategoriesX = 0;
-    let mElementsX = 1;
+    let mDimenAxisX = 1;
     let mElementsAxisX = 1;
     let mElementsFloatX = 1;
     let mYRanges = {};
@@ -80,16 +80,17 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     let mSimulation = d3.forceSimulation()
         .alphaDecay(SimulationValues.ALPHA)
         .velocityDecay(SimulationValues.VELOCITY)
-        .force("collide", d3.forceCollide((d) => IdUtil.isType(d.id, Data.Element) ? d.radius + Padding.NODE * 2 : 0)
-            .strength(SimulationValues.STRENGTH_COLLIDE))
-        .force("xDrift", d3.forceX(mElementsFloatX + Size.ELEMENT_NODE_SIZE + Padding.NODE)
-            .strength(SimulationValues.STRENGTH_X))
+        .force("collide", d3.forceCollide((d) => IdUtil.isType(d.id, Data.Element) ? d.radius + Padding.NODE * 2 : 0).strength(SimulationValues.STRENGTH_COLLIDE))
+        .force("xDrift", d3.forceX(mElementsFloatX + Size.ELEMENT_NODE_SIZE + Padding.NODE).strength(SimulationValues.STRENGTH_X))
         .alpha(0.3)
         .on("tick", () => {
             // if the dimension isn't set yet, return.
             if (!mDimension) { return }
 
-            if (mDraggedNodes.length == 0) updateNodeTargets();
+            if (mDraggedNodes.length == 0) {
+                resetDependantTargets();
+            }
+
             allItems().forEach(node => {
                 if (!node) return;
                 if (!node.x) node.x = node.targetX ? node.targetX : 0;
@@ -123,10 +124,9 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         mDimensionNode = data.find(node => node.id == mDimension.id);
         mNodes = data.filter(node => IdUtil.isType(node.id, Data.Element) && DataUtil.getLevelForElement(node.id, mModel) == mDimension.level);
         mCategories = data.filter(node => node.dimension == mDimension.id);
+        mControls = makeControlNodes(mDimension);
 
         calculateLayoutValues();
-        setControlNodes();
-
         resetTargets();
 
         mSimulation.nodes(mNodes)
@@ -137,10 +137,10 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
 
     function calculateLayoutValues() {
         mCategoriesX = canvasCoordsToLocal({ x: Padding.CATEGORY, y: 0 }).x;
-        mElementsX = mCategories.concat({ name: ADD_CATEGORY_LABEL }).reduce((max, category) => {
-            return Math.max(max, mDrawingUtil.measureStringNode(category.name, Size.CATEGORY_SIZE));
-        }, 10) + Padding.CATEGORY * 2;
-        mElementsAxisX = mElementsX + AXIS_PADDING + (mDimension.channel == ChannelType.ANGLE ? ANGLE_LABEL_SIZE / 2 : 0)
+        let categoryStrings = mCategories.map(c => c.name).concat([ADD_CATEGORY_LABEL]);
+        mDimenAxisX = categoryStrings.reduce((max, name) => Math.max(max, mDrawingUtil.measureStringNode(name, Size.CATEGORY_SIZE)))
+            + Padding.CATEGORY * 2;
+        mElementsAxisX = mDimenAxisX + AXIS_PADDING + (mDimension.channel == ChannelType.ANGLE ? ANGLE_LABEL_SIZE / 2 : 0)
         mElementsFloatX = mElementsAxisX + AXIS_PADDING + (mDimension.channel == ChannelType.ANGLE ? ANGLE_LABEL_SIZE / 2 : 0)
         mScreenEdge = canvasCoordsToLocal({ x: mWidth, y: 0 }).x;
 
@@ -159,10 +159,13 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             mYRanges[NO_CATEGORY_ID] = getContinuousYRange(true);
         }
 
-        calculateNodeLayout();
+        if (DataUtil.channelIsContinuous(mDimension.channel)) {
+            calculateNodeLayoutValues();
+        }
     }
 
-    function calculateNodeLayout() {
+    function calculateNodeLayoutValues() {
+        mNodeLayout = {};
         let minSize, maxSize, sizeRange;
         if (mDimension.channel == ChannelType.SIZE) {
             mNodes.forEach(n => {
@@ -204,18 +207,19 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         });
     }
 
-    function setControlNodes() {
-        mControls = [];
-        if (mDimension.type == DimensionType.CONTINUOUS) {
-            mControls.push({ id: CONTROL_ID + DIMENSION_RANGE_V1, index: DIMENSION_RANGE_V1 });
-            mControls.push({ id: CONTROL_ID + DIMENSION_RANGE_V2, index: DIMENSION_RANGE_V2 });
-        } else if (DataUtil.channelIsContinuous(mDimension.channel)) {
-            mControls.push({ id: CONTROL_ID + "-1", index: -1 });
-            mDimension.ranges.forEach((range, index) => {
-                mControls.push({ id: CONTROL_ID + index, index, });
+    function makeControlNodes(dimension) {
+        let controlNodes = []
+        if (dimension.type == DimensionType.CONTINUOUS) {
+            controlNodes.push({ id: CONTROL_ID + DIMENSION_RANGE_V1, index: DIMENSION_RANGE_V1 });
+            controlNodes.push({ id: CONTROL_ID + DIMENSION_RANGE_V2, index: DIMENSION_RANGE_V2 });
+        } else if (DataUtil.channelIsContinuous(dimension.channel)) {
+            controlNodes.push({ id: CONTROL_ID + "-1", index: -1 });
+            dimension.ranges.forEach((range, index) => {
+                controlNodes.push({ id: CONTROL_ID + index, index, });
             })
-            mControls.push({ id: CONTROL_ID + mDimension.ranges.length, index: mDimension.ranges.length });
+            controlNodes.push({ id: CONTROL_ID + dimension.ranges.length, index: dimension.ranges.length });
         }
+        return controlNodes;
     }
 
     function getDiscreteYRange(index) {
@@ -261,6 +265,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         }
     }
 
+    // called only when the layout may have changed or we finish an interaction.
     function resetTargets() {
         if (mDimension.type == DimensionType.DISCRETE) {
             mAddButton.targetY = rangeAverage(mYRanges[FdlButtons.ADD]) - Size.CATEGORY_SIZE / 2;
@@ -271,6 +276,11 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         mNone.targetX = mCategoriesX;
 
         updateControlTargets();
+        resetDependantTargets();
+    }
+
+    // targets which depend on other possibly moving elemnts
+    function resetDependantTargets() {
         updateCategoryTargets();
         updateNodeTargets();
     }
@@ -279,16 +289,16 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         if (mDimension.type == DimensionType.CONTINUOUS) {
             let r1 = mYRanges[mDimension.id][0];
             let r2 = mYRanges[mDimension.id][1];
-            mControls[0].targetX = mElementsX;
+            mControls[0].targetX = mDimenAxisX;
             mControls[0].targetY = (r2 - r1) * mDimension.domainRange[0] + r1;
-            mControls[1].targetX = mElementsX;
+            mControls[1].targetX = mDimenAxisX;
             mControls[1].targetY = (r2 - r1) * mDimension.domainRange[1] + r1;
         } else if (DataUtil.channelIsContinuous(mDimension.channel)) {
             for (let i = -1; i <= mDimension.ranges.length; i++) {
                 let control = mControls.find(c => c.index == i);
                 if (!control) { console.error("contorl not found for index!", i); continue; }
                 let range = i == -1 ? 0 : i == mDimension.ranges.length ? 1 : mDimension.ranges[i];
-                control.targetX = mElementsX;
+                control.targetX = mDimenAxisX;
                 control.targetY = (mYRanges[mDimension.id][1] - mYRanges[mDimension.id][0]) * range + mYRanges[mDimension.id][0];
             }
         }
@@ -469,18 +479,18 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
 
     function drawContainer(id) {
         mDrawingUtil.drawRect({
-            x: mElementsX,
+            x: mDimenAxisX,
             y: mYRanges[id][0],
             height: mYRanges[id][1] - mYRanges[id][0],
-            width: mScreenEdge - mElementsX,
+            width: mScreenEdge - mDimenAxisX,
             shadow: mHighlightIds.includes(id),
             color: CONTAINER_COLOR,
             code: mDraggedNodes.length > 0 ? mCodeUtil.getCode(id, TARGET_BAND) : null,
         })
 
         mDrawingUtil.drawLine({
-            x1: mElementsX,
-            x2: mElementsX,
+            x1: mDimenAxisX,
+            x2: mDimenAxisX,
             y1: mYRanges[id][0],
             y2: mYRanges[id][1],
             width: 1,
@@ -534,7 +544,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                     let yRange = mYRanges[mDimension.id];
                     let yPos = (yRange[1] - yRange[0]) * index / (images.length - 1) + yRange[0];
                     mDrawingUtil.drawImage({
-                        x: mElementsX + Padding.CATEGORY,
+                        x: mDimenAxisX + Padding.CATEGORY,
                         y: yPos - ANGLE_LABEL_SIZE / 2,
                         height: ANGLE_LABEL_SIZE,
                         width: ANGLE_LABEL_SIZE,
