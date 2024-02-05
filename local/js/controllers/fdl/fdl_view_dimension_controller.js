@@ -53,7 +53,6 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     let mWidth = 100;
     let mHeight = 100;
 
-    let mDimensionNode;
     let mCategories = [];
     let mNone = { name: "None", id: NO_CATEGORY_ID, x: 0, y: 0 }
     let mNodes = [];
@@ -84,8 +83,9 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         .force("xDrift", d3.forceX(mElementsFloatX + Size.ELEMENT_NODE_SIZE + Padding.NODE).strength(SimulationValues.STRENGTH_X))
         .alpha(0.3)
         .on("tick", () => {
-            // if the dimension isn't set yet, return.
+            // if the dimension isn't set yet or is invalid, don't update targets or positions.
             if (!mDimension) { return }
+            if (!DataUtil.dimensionValid(mDimension)) { draw(); return; }
 
             if (mDraggedNodes.length == 0) {
                 resetDependantTargets();
@@ -121,7 +121,6 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         mDimension = mModel.getDimension(mDimensionId);
         if (!mDimension) { console.error("Invalid dimension id", mDimensionId); mDimensionId = null; mDimension = null; draw(); return; }
 
-        mDimensionNode = data.find(node => node.id == mDimension.id);
         mNodes = data.filter(node => IdUtil.isType(node.id, Data.Element) && DataUtil.getLevelForElement(node.id, mModel) == mDimension.level);
         mCategories = data.filter(node => node.dimension == mDimension.id);
         mControls = makeControlNodes(mDimension);
@@ -165,6 +164,8 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     }
 
     function calculateNodeLayoutValues() {
+        if (!DataUtil.dimensionValid(mDimension)) return;
+
         mNodeLayout = {};
         let minSize, maxSize, sizeRange;
         if (mDimension.channel == ChannelType.SIZE) {
@@ -267,6 +268,8 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
 
     // called only when the layout may have changed or we finish an interaction.
     function resetTargets() {
+        if (!DataUtil.dimensionValid(mDimension)) return;
+
         if (mDimension.type == DimensionType.DISCRETE) {
             mAddButton.targetY = rangeAverage(mYRanges[FdlButtons.ADD]) - Size.CATEGORY_SIZE / 2;
             mAddButton.targetX = mCategoriesX;
@@ -281,6 +284,8 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
 
     // targets which depend on other possibly moving elemnts
     function resetDependantTargets() {
+        if (!DataUtil.dimensionValid(mDimension)) return;
+
         updateCategoryTargets();
         updateNodeTargets();
     }
@@ -341,12 +346,14 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                 let category = mDimension.categories.find(l => l.elementIds.includes(node.id));
                 let categoryId = category ? category.id : NO_CATEGORY_ID;
                 let yRange = mYRanges[categoryId];
-                node.targetY = DataUtil.limit(node.y,
-                    yRange[0] + Size.ELEMENT_NODE_SIZE + Padding.NODE,
-                    yRange[1] - Size.ELEMENT_NODE_SIZE + Padding.NODE);
+
                 node.targetX = DataUtil.limit(node.x,
                     mElementsFloatX + Size.ELEMENT_NODE_SIZE + Padding.NODE,
                     mScreenEdge - Size.ELEMENT_NODE_SIZE + Padding.NODE);
+                if (!yRange) { console.error("Range not found for category!", categoryId); return; }
+                node.targetY = DataUtil.limit(node.y,
+                    yRange[0] + Size.ELEMENT_NODE_SIZE + Padding.NODE,
+                    yRange[1] - Size.ELEMENT_NODE_SIZE + Padding.NODE);
             } else {
                 node.targetY = mNodeLayout[node.id].y;
                 // x may be undefined
@@ -380,8 +387,10 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     function onResize(width, height) {
         mWidth = width;
         mHeight = height;
-        calculateLayoutValues();
-        resetTargets();
+        if (DataUtil.dimensionValid(mDimension)) {
+            calculateLayoutValues();
+            resetTargets();
+        }
         draw();
     }
 
@@ -391,7 +400,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         // we haven't been set yet, don't draw.
         if (!mDimension) return;
 
-        // Only draw if we are valid
+        // Only draw mapping if we are valid
         if (DataUtil.dimensionValid(mDimension)) {
             let header;
             if (mDimension.type == DimensionType.DISCRETE) {
@@ -638,15 +647,15 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         mDrawingUtil.drawLine({ x1: 0, x2: mScreenEdge, y1: mSettingsBottom, y2: mSettingsBottom });
 
         let labels = ["Name", "Type", "Level", "Channel"];
-        let strings = [mDimensionNode.name, DimensionLabels[mDimensionNode.type], "Level " + mDimensionNode.level, ChannelLabels[mDimensionNode.channel]];
-        let valid = [true, DataUtil.dimensionTypeValid(mDimensionNode), DataUtil.dimensionLevelValid(mDimensionNode), DataUtil.dimensionChannelValid(mDimensionNode)];
+        let strings = [mDimension.name, DimensionLabels[mDimension.type], "Level " + mDimension.level, ChannelLabels[mDimension.channel]];
+        let valid = [true, DataUtil.dimensionTypeValid(mDimension), DataUtil.dimensionLevelValid(mDimension), DataUtil.dimensionChannelValid(mDimension)];
         mSettingsTargets = [TARGET_LABEL, TARGET_TYPE, TARGET_LEVEL, TARGET_CHANNEL];
-        if (mDimensionNode.channel == ChannelType.ANGLE) {
+        if (mDimension.channel == ChannelType.ANGLE) {
             labels.push("Dependency");
             strings.push(mDimension.angleType);
             valid.push(true);
             mSettingsTargets.push(TARGET_ANGLE);
-        } else if (mDimensionNode.channel == ChannelType.SIZE) {
+        } else if (mDimension.channel == ChannelType.SIZE) {
             labels.push("Metric");
             strings.push(mDimension.sizeType);
             valid.push(true);
@@ -686,9 +695,9 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                 y: mSettingsY,
                 label: string,
                 height: Size.CATEGORY_SIZE * mSettingsScale,
-                shadow: mHighlightIds.includes(mDimensionNode.id),
-                code: mCodeUtil.getCode(mDimensionNode.id, mSettingsTargets[index]),
-                background: valid[index] ? DataUtil.getLevelColor(mDimensionNode.level) : "#FF6865",
+                shadow: mHighlightIds.includes(mDimension.id),
+                code: mCodeUtil.getCode(mDimension.id, mSettingsTargets[index]),
+                background: valid[index] ? DataUtil.getLevelColor(mDimension.level) : "#FF6865",
             });
         })
     }
@@ -836,10 +845,14 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
                 mSimulation.nodes(mNodes);
             }
         } else if (interaction.type == FdlInteraction.LASSO) {
-            mOverlayUtil.reset(mZoomTransform);
-            mOverlayUtil.drawBubble(interaction.path);
-            let selectedIds = mCategories.concat(mNodes).filter(obj => mOverlayUtil.covered(obj)).map(n => n.id);
-            return selectedIds;
+            if (DataUtil.dimensionValid(mDimension)) {
+                mOverlayUtil.reset(mZoomTransform);
+                mOverlayUtil.drawBubble(interaction.path);
+                let selectedIds = mCategories.concat(mNodes).filter(obj => mOverlayUtil.covered(obj)).map(n => n.id);
+                return selectedIds;
+            } else {
+                return [];
+            }
         } else { console.error("Interaction not supported!"); return; }
 
         mDraggedNodes.forEach(node => {
@@ -879,7 +892,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
     function allItems() {
         return mNodes.concat(mCategories)
             .concat(mControls)
-            .concat([mDimensionNode, mAddButton, mNone]);
+            .concat([mAddButton, mNone]);
     }
 
     function canvasCoordsToLocal(canvasCoords) {

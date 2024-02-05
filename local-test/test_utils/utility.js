@@ -109,9 +109,7 @@ export function click(id, pos) {
     let offset = getOffset(id);
     d3.select('#interface-container').select('#interface-svg').getCallbacks()['pointerdown'](new Event(pos.x + offset.x, pos.y + offset.y));
     d3.getCallbacks()['pointerup'](new Event(pos.x + offset.x, pos.y + offset.y));
-    // make time pass
-    Date.time += 501;
-    for (let i = 0; i < 3; i++) { d3.tick() }
+    timePass();
 }
 
 export function mouseOver(integrationEnv, id, point) {
@@ -208,12 +206,14 @@ export function enterText(text) {
     d3.select('#input-box').property('value', text);
     d3.select('#input-box').getCallbacks()['change']();
     d3.select('#input-box').getCallbacks()['blur']();
+    timePass();
 }
 
 export function selectOption(value) {
     d3.select('#dropdown-container').select('select').property('value', value);
     let changeCallback = d3.select('#dropdown-container').select('select').getCallbacks()['change'];
     changeCallback.call(d3.select('#dropdown-container').select('select'))
+    timePass();
 }
 
 function getOffset(id) {
@@ -221,4 +221,9 @@ function getOffset(id) {
     if (id == "#fdl-view-container" || id == "#tab-view-container") offset.x += window.innerWidth / 2;
     if (id == "#fdl-view-container") offset.y = 60;
     return offset;
+}
+
+export function timePass() {
+    Date.time += 501;
+    for (let i = 0; i < 3; i++) { d3.tick() }
 }

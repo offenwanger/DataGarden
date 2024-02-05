@@ -257,6 +257,7 @@ describe('FDL View Controller Test', function () {
 
             utility.click('#fdl-view-container', { x: 20, y: 150 });
             utility.enterText("10:30");
+            utility.timePass();
             utility.click('#fdl-view-container', { x: 20, y: 515 });
             utility.enterText("20:30");
 
