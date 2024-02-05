@@ -152,6 +152,8 @@ export function CanvasController(mColorMap) {
                 type: DRAWING,
                 currentStroke: [screenToModelCoords(screenCoords)],
                 screenStart: screenCoords,
+                startTime: Date.now(),
+                startTarget: target,
             };
         } else if (systemState.getToolState() == Buttons.ANGLE_BRUSH_BUTTON && !systemState.isShift() && !systemState.isCtrl()) {
             let coords = screenToModelCoords(screenCoords);
@@ -282,9 +284,15 @@ export function CanvasController(mColorMap) {
         let interaction = mInteraction;
         mInteraction = null;
 
-        if (interaction && interaction.type == DRAWING && (interaction.currentStroke.length > 10 || VectorUtil.dist(interaction.screenStart, screenCoords) > 10)) {
-            let storke = new Data.Stroke(interaction.currentStroke, mBrushOptions.size, mBrushOptions.color);
-            mNewStrokeCallback(storke);
+        if (interaction && interaction.type == DRAWING) {
+            if ((interaction.currentStroke.length > 10 || VectorUtil.dist(interaction.screenStart, screenCoords) > 10)) {
+                let storke = new Data.Stroke(interaction.currentStroke, mBrushOptions.size, mBrushOptions.color);
+                mNewStrokeCallback(storke);
+            } else if (Date.now() - interaction.startTime < 1000 && interaction.startTarget) {
+                mSelectionIds = [interaction.startTarget.id];
+                mSelectionCallback(mSelectionIds);
+                mContextMenuCallback(screenCoords, mSelectionIds, interaction.startTarget.id);
+            }
         } else if (interaction && interaction.type == ANGLING) {
             if (interaction.targetElement && (interaction.currentStroke.length > 10 || VectorUtil.dist(interaction.screenStart, screenCoords) > 10)) {
                 let root = interaction.currentStroke[0];

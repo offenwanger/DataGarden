@@ -2,7 +2,7 @@ import { MENU_BUTTON_SIZE } from "../constants.js";
 import { FiltersUtil } from "../utils/filters_util.js";
 
 export function MenuButton({ id, parentSvg, img, buttonSize = MENU_BUTTON_SIZE, clickCallback, onLoad, hotkey }) {
-    const HOTKEY_HEIGHT = 14;
+    const HOTKEY_HEIGHT = 25;
 
     let mPosition = { x: 0, y: 0 };
 
@@ -17,7 +17,7 @@ export function MenuButton({ id, parentSvg, img, buttonSize = MENU_BUTTON_SIZE, 
         .style("stroke", "white")
         .style("stroke-width", "1px")
         .style("paint-order", "stroke")
-        .attr("x", buttonSize)
+        .attr("x", buttonSize - 8)
         .attr("y", buttonSize)
         .text(hotkey);
 
