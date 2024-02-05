@@ -241,6 +241,8 @@ export function DashboardController() {
         } else if (IdUtil.isType(tabId, Data.Dimension)) {
             setDimensionTab(tabId);
         }
+
+        mDropdownInput.hide();
     })
 
     mCanvasController.setHighlightCallback(onHighlight)
