@@ -349,12 +349,18 @@ export function FdlViewController(mColorMap) {
     }
 
     function onWheel(screenCoords, delta, systemState) {
-        let currTransform = mActiveViewController.getZoomTransform();
-        let scale = currTransform.k * (1 - delta / 1000);
-        let zoomChange = scale - currTransform.k;
-        let transformX = -(screenCoords.x * zoomChange) + currTransform.x;
-        let transformY = -(screenCoords.x * zoomChange) + currTransform.y;
-        mActiveViewController.zoom(transformX, transformY, scale);
+        if (mActiveViewController == mFdlLegendViewController) {
+            let currTransform = mActiveViewController.getZoomTransform();
+            currTransform.y += delta;
+            mActiveViewController.zoom(currTransform.x, currTransform.y, currTransform.k);
+        } else if (mActiveViewController == mFdlParentViewController) {
+            let currTransform = mActiveViewController.getZoomTransform();
+            let scale = currTransform.k * (1 - delta / 1000);
+            let zoomChange = scale - currTransform.k;
+            let transformX = -(screenCoords.x * zoomChange) + currTransform.x;
+            let transformY = -(screenCoords.x * zoomChange) + currTransform.y;
+            mActiveViewController.zoom(transformX, transformY, scale);
+        }
     }
 
     function onHighlight(selection) {
