@@ -180,7 +180,7 @@ describe('FDL View Controller Test', function () {
             assert.equal(model().getDimensions()[0].level, 1);
         });
 
-        it('should change dimension type to cont and channel to size', function () {
+        it('should change dimension type to cont and channel to position', function () {
             utility.clickTab(Tab.LEGEND);
             assert.equal(model().getDimensions().length, 0);
             utility.click('#fdl-view-container', { x: 15, y: 15 });
@@ -194,6 +194,77 @@ describe('FDL View Controller Test', function () {
             utility.selectOption(ChannelType.POSITION);
             assert.equal(model().getDimensions().length, 1)
             assert.equal(model().getDimensions()[0].channel, ChannelType.POSITION);
+        });
+
+        it('should map values to numbers', function () {
+            utility.clickTab(Tab.LEGEND);
+            assert.equal(model().getDimensions().length, 0);
+            utility.click('#fdl-view-container', { x: 15, y: 15 });
+
+            utility.click('#fdl-view-container', { x: 180, y: DIMENSION_SETTINGS_HEIGHT - 20 });
+            utility.selectOption(DimensionType.CONTINUOUS);
+            assert.equal(model().getDimensions().length, 1)
+            assert.equal(model().getDimensions()[0].type, DimensionType.CONTINUOUS);
+
+            utility.click('#fdl-view-container', { x: 365, y: DIMENSION_SETTINGS_HEIGHT - 20 });
+            utility.selectOption(ChannelType.POSITION);
+            assert.equal(model().getDimensions().length, 1)
+            assert.equal(model().getDimensions()[0].channel, ChannelType.POSITION);
+
+            utility.drawStroke([{ x: 20, y: 1 }, { x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 65 }, { x: 20, y: 80 }, { x: 20, y: 101 }]);
+            utility.drawStroke([{ x: 20, y: 25 }, { x: 40, y: 25 }, { x: 50, y: 25 }, { x: 60, y: 20 }]);
+            utility.drawStroke([{ x: 20, y: 50 }, { x: 40, y: 55 }, { x: 50, y: 45 }, { x: 60, y: 50 }]);
+            utility.drawStroke([{ x: 20, y: 75 }, { x: 40, y: 75 }, { x: 50, y: 85 }, { x: 60, y: 70 }]);
+
+            expect(model().getElements().length).to.eql(4);
+            expect(model().getElements().filter(e => e.parentId).length).to.eql(3);
+
+            utility.click('#fdl-view-container', { x: 285, y: DIMENSION_SETTINGS_HEIGHT - 20 });
+            utility.selectOption(1);
+
+            assert.equal(model().getDimensions().length, 1)
+            assert.equal(model().getDimensions()[0].level, 1);
+
+            expect(model().getTables().length).to.eql(1);
+            expect(model().getTables()[0].getDataArray().flat().map(i => i.value)).to.eql([0.2, 0.49, 0.74]);
+        });
+
+        it('should map values to times', function () {
+            utility.clickTab(Tab.LEGEND);
+            assert.equal(model().getDimensions().length, 0);
+            utility.click('#fdl-view-container', { x: 15, y: 15 });
+
+            utility.click('#fdl-view-container', { x: 180, y: DIMENSION_SETTINGS_HEIGHT - 20 });
+            utility.selectOption(DimensionType.CONTINUOUS);
+            assert.equal(model().getDimensions().length, 1)
+            assert.equal(model().getDimensions()[0].type, DimensionType.CONTINUOUS);
+
+            utility.click('#fdl-view-container', { x: 365, y: DIMENSION_SETTINGS_HEIGHT - 20 });
+            utility.selectOption(ChannelType.POSITION);
+            assert.equal(model().getDimensions().length, 1)
+            assert.equal(model().getDimensions()[0].channel, ChannelType.POSITION);
+
+            utility.drawStroke([{ x: 20, y: 1 }, { x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 65 }, { x: 20, y: 80 }, { x: 20, y: 101 }]);
+            utility.drawStroke([{ x: 20, y: 25 }, { x: 40, y: 25 }, { x: 50, y: 25 }, { x: 60, y: 20 }]);
+            utility.drawStroke([{ x: 20, y: 50 }, { x: 40, y: 55 }, { x: 50, y: 45 }, { x: 60, y: 50 }]);
+            utility.drawStroke([{ x: 20, y: 75 }, { x: 40, y: 75 }, { x: 50, y: 85 }, { x: 60, y: 70 }]);
+
+            expect(model().getElements().length).to.eql(4);
+            expect(model().getElements().filter(e => e.parentId).length).to.eql(3);
+
+            utility.click('#fdl-view-container', { x: 285, y: DIMENSION_SETTINGS_HEIGHT - 20 });
+            utility.selectOption(1);
+
+            utility.click('#fdl-view-container', { x: 20, y: 150 });
+            utility.enterText("10:30");
+            utility.click('#fdl-view-container', { x: 20, y: 515 });
+            utility.enterText("20:30");
+
+            assert.equal(model().getDimensions().length, 1)
+            assert.equal(model().getDimensions()[0].level, 1);
+
+            expect(model().getTables().length).to.eql(1);
+            expect(model().getTables()[0].getDataArray().flat().map(i => i.value)).to.eql(["12:30", "15:24", "17:54"]);
         });
 
         it('should create a category', function () {

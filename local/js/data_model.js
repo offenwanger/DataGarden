@@ -124,7 +124,9 @@ export function DataModel() {
     }
 
     function getTables() {
-        let dimensions = mDimensions.filter(d => DataUtil.dimensionValid(d));
+        let dimensions = mDimensions
+            .filter(d => DataUtil.dimensionValid(d))
+            .filter(d => d.type == DimensionType.DISCRETE || DataUtil.domainIsValid(d.domain));
         if (dimensions.length == 0) return [];
 
         let tableCells = []

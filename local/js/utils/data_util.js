@@ -257,7 +257,8 @@ export let DataUtil = function () {
                     percent = (percent - dimension.domainRange[0]) / (dimension.domainRange[1] - dimension.domainRange[0]);
                 }
                 percent = limit(percent, 0, 1);
-                return (parseFloat(dimension.domain[1]) - parseFloat(dimension.domain[0])) * percent + parseFloat(dimension.domain[0]);
+                let value = (parseDomainValue(dimension.domain[1]) - parseDomainValue(dimension.domain[0])) * percent + parseDomainValue(dimension.domain[0]);
+                return isTime(dimension.domain[0]) ? formatTime(value) : value;
             } else {
                 let category = getCategoryForPercent(dimension, percent);
                 return category ? category.name : null;
@@ -294,8 +295,8 @@ export let DataUtil = function () {
     }
 
     function domainIsValid(domain) {
-        if (isNumeric(domain[0]) && isNumeric(domain[1])) return true;
-        if (isDateLike(domain[0]) && isDateLike(domain[1])) return true;
+        if (isDomainNumeric(domain[0]) && isDomainNumeric(domain[1])) return true;
+        return false;
     }
 
     function isNumeric(str) {
@@ -303,6 +304,35 @@ export let DataUtil = function () {
         if (typeof str != "string") return false;
         return !isNaN(str) && !isNaN(parseFloat(str));
     }
+
+    function isDomainNumeric(str) {
+        if (typeof str == "number") return true;
+        if (typeof str != "string") return false;
+        if (str.includes(':')) {
+            return isNumeric(str.split(':')[0]) && isNumeric(str.split(':')[1]);
+        }
+        return isNumeric(str);
+    }
+
+    function isTime(str) {
+        if (typeof str != "string") return false;
+        if (str.includes(':') && isNumeric(str.split(':')[0]) && isNumeric(str.split(':')[1])) { return true };
+    }
+
+    function parseDomainValue(str) {
+        if (isTime(str)) {
+            return parseInt(str.split(':')[0]) + parseInt(str.split(':')[1]) / 60;
+        } else {
+            return parseFloat(str);
+        }
+    }
+
+    function formatTime(num) {
+        let hours = Math.floor(num);
+        let minutes = Math.round((num - hours) * 60);
+        return String(hours).padStart(2, '0') + ":" + String(minutes).padStart(2, '0');
+    }
+
 
     function isDateLike(dateStr) {
         return !isNaN(new Date(dateStr));
@@ -496,6 +526,7 @@ export let DataUtil = function () {
         getPaddedPoints,
         domainIsValid,
         isNumeric,
+        isDomainNumeric,
         isDateLike,
         angleToPercent,
         getRelativeAngle,

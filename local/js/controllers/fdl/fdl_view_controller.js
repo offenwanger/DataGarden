@@ -136,7 +136,7 @@ export function FdlViewController(mColorMap) {
                     id: DIMENSION_RANGE_V1,
                     name: dimension.domain[0],
                     dimension: dimension.id,
-                    invalid: !DataUtil.isNumeric(dimension.domain[0]),
+                    invalid: !DataUtil.isDomainNumeric(dimension.domain[0]),
                 };
                 let oldV1Data = oldSimulationData.find(item => item.dimension == dimension.id && item.id == DIMENSION_RANGE_V1);
                 if (oldV1Data) {
@@ -149,7 +149,7 @@ export function FdlViewController(mColorMap) {
                     id: DIMENSION_RANGE_V2,
                     name: dimension.domain[1],
                     dimension: dimension.id,
-                    invalid: !DataUtil.isNumeric(dimension.domain[1]),
+                    invalid: !DataUtil.isDomainNumeric(dimension.domain[1]),
                 };
                 let oldV2Data = oldSimulationData.find(item => item.dimension == dimension.id && item.id == DIMENSION_RANGE_V2);
                 if (oldV2Data) {
