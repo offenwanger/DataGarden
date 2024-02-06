@@ -86,30 +86,32 @@ export let ClassifierUtil = function () {
     }
 
     function clusterElementShapes(elements, categories) {
-        let vectors = elements.map(e => elementToImgVector(e));
-        return clusterElementVectors(elements, vectors, categories);
+        return clusterElementVectors(elements, categories, elementToImgVector);
     }
 
     function clusterElementColors(elements, categories) {
-        let vectors = elements.map(e => elementToColorVector(e));
-        return clusterElementVectors(elements, vectors, categories);
+        return clusterElementVectors(elements, categories, elementToColorVector);
     }
 
-    function clusterElementVectors(elements, vectors, categories) {
-        let clusters = new Array(vectors.length).fill(-1);
-        categories.forEach((l, index) => l.elementIds
-            .forEach(eId => clusters[elements.findIndex(e => e.id == eId)] = index));
-
+    function clusterElementVectors(elements, categories, vectorFunction) {
+        // Convert categories to initial clusters
+        // clusters is an array matching vector length with a cluster number for each
+        // vector. 
+        let clusters = new Array(elements.length).fill(-1);
+        clusters = elements.map(e => categories.findIndex(c => c.elementIds.find(eId => eId == e.id)));
         if (categories.length > elements.length) {
-            clusters = clusters.map((cluster, elementIndex) => {
+            // just assign an element to each category
+            let availableIndexes = Array.from(Array(categories.length).keys()).filter(index => !clusters.find(c => c == index));
+            clusters = clusters.map((cluster) => {
                 if (cluster == -1) {
-                    let categoryIndex = categories.findIndex(l => l.elementIds.length == 0);
-                    categories[categoryIndex].elementIds.push(elements[elementIndex].id);
-                    return categoryIndex;
-                } else return cluster;
+                    return availableIndexes.shift();
+                } else {
+                    return cluster;
+                }
             });
             return clusters;
         } else {
+            let vectors = elements.map(e => vectorFunction(e));
             return clusterVectors(vectors, clusters);
         }
     }

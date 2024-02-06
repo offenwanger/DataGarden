@@ -180,6 +180,32 @@ describe('FDL View Controller Test', function () {
             assert.equal(model().getDimensions()[0].level, 1);
         });
 
+        it('should set level to 0', function () {
+            utility.drawStroke([{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 20, y: 80 }, { x: 20, y: 100 }])
+
+            utility.drawStroke([{ x: 20, y: 50 }, { x: 40, y: 55 }, { x: 50, y: 45 }, { x: 80, y: 50 }])
+            utility.drawStroke([{ x: 50, y: 50 }, { x: 50, y: 40 }, { x: 50, y: 30 }])
+            utility.drawStroke([{ x: 70, y: 50 }, { x: 70, y: 40 }, { x: 70, y: 25 }])
+
+            utility.drawStroke([{ x: 20, y: 70 }, { x: 40, y: 70 }, { x: 50, y: 75 }, { x: 60, y: 70 }])
+            utility.drawStroke([{ x: 50, y: 70 }, { x: 50, y: 90 }, { x: 50, y: 100 }])
+            utility.drawStroke([{ x: 70, y: 70 }, { x: 70, y: 90 }, { x: 70, y: 100 }])
+
+            assert.equal(model().getElements().length, 7);
+
+            utility.clickTab(Tab.LEGEND);
+            assert.equal(model().getDimensions().length, 0);
+            utility.click('#fdl-view-container', { x: 15, y: 15 });
+            utility.click('#fdl-view-container', { x: 365, y: DIMENSION_SETTINGS_HEIGHT - 20 });
+            assert.equal(model().getDimensions().length, 1)
+            assert.equal(model().getDimensions()[0].level, 2)
+
+            utility.click('#fdl-view-container', { x: 285, y: DIMENSION_SETTINGS_HEIGHT - 20 });
+            utility.selectOption(0);
+            assert.equal(model().getDimensions().length, 1)
+            assert.equal(model().getDimensions()[0].level, 0)
+        });
+
         it('should change dimension type to cont and channel to position', function () {
             utility.clickTab(Tab.LEGEND);
             assert.equal(model().getDimensions().length, 0);
