@@ -141,14 +141,23 @@ export function DataModel() {
                         dimensionId: dimension.id,
                         value: value,
                         level: level,
-                    })
+                    });
                 }
             })
         });
 
-        let parents = DataUtil.unique(mElements.map(e => e.parentId).filter(p => p));
-        let tableElements = DataUtil.unique(tableCells.map(c => c.elementId));
-        let leafs = mElements.filter(e => tableElements.includes(e.id) && !parents.includes(e.id));
+        let tableElementIds = [];
+        let maxLevel = Math.max(0, ...tableCells.map(t => t.level))
+        for (let i = maxLevel; i >= 0; i--) {
+            let dataIds = tableCells.filter(t => t.level == i).map(c => c.elementId);
+            let parentIds = mElements.filter(e => dataIds.includes(e.id)).map(e => e.parentId).filter(pId => pId);
+            tableElementIds.push(...dataIds, ...parentIds);
+        }
+        tableElementIds = DataUtil.unique(tableElementIds);
+        let tableElements = tableElementIds.map(eId => mElements.find(e => e.id == eId));
+
+        let parentIds = tableElements.filter(p => tableElements.filter(e => e.parentId == p.id).length > 0).map(p => p.id);
+        let leafs = tableElements.filter(e => !parentIds.includes(e.id));
 
         let rows = []
         leafs.forEach(leaf => {
