@@ -392,11 +392,11 @@ export function DashboardController() {
     mTableViewController.setModelGeneratedCallback((model) => {
         console.log("Need to shut off the editing controls");
         modelUpdate(model);
-    })
+    });
 
-    mTableViewController.setClearGeneratedModelCallback(() => {
-        modelUpdate(mModel);
-    })
+    mTableViewController.setClearGeneratedModelCallback((model) => {
+        modelUpdate(model);
+    });
 
     mMenuController.setColorChangeCallback((color, interfaceOnly) => {
         if (!interfaceOnly) {

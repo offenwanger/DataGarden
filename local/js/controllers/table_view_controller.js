@@ -8,6 +8,8 @@ export function TableViewController(mColorMap) {
     const GENERATE_MODEL_LABEL = 'Generator Mode';
     const CLEAR_MODEL_LABEL = 'Clear Generated Model';
 
+    const DEFAULT_COL_WIDTH = 100;
+
     let mSelectionCallback = () => { };
     let mHighlightCallback = () => { };
     let mModelGeneratedCallback = () => { }
@@ -17,6 +19,7 @@ export function TableViewController(mColorMap) {
     let mPasting = false;
 
     let mModel = new DataModel();
+    let mOriginalModel = new DataModel();
 
     let mViewContainer = d3.select("#table-view-container")
     let mGenerateButton = mViewContainer.append('button')
@@ -26,7 +29,8 @@ export function TableViewController(mColorMap) {
         .style("display", "none");
     let mTablesContainer = mViewContainer.append('div').attr('id', 'tables-container');
 
-    let mJTables = []
+    let mJTables = [];
+    let mTableDivs = [];
     let mDataTables = [];
 
     let mSelection = []
@@ -35,42 +39,52 @@ export function TableViewController(mColorMap) {
 
     function onModelUpdate(model) {
         mModel = model;
-        // TODO: Don't do this, update the data instead
-        mTablesContainer.selectAll("*").remove();
-        mJTables = [];
+        let tables = model.getTables();
+        for (let index in tables) {
+            if (!mTableDivs[index]) {
+                // if (index > 0) mTableDivs[index].append("br");
+                mTableDivs[index] = mTablesContainer.append("div")
+                    .attr('id', TABLE_ID + index)
+                    .attr('tableIndex', index)
+                mJTables[index] = jspreadsheet(mTableDivs[index].node(), {
+                    data: [['']],
+                    columns: [{ width: DEFAULT_COL_WIDTH }],
+                    meta: {},
+                    contextMenu: () => { },
+                    onselection,
+                    onbeforechange,
+                    onchange,
+                    onbeforepaste,
+                    onpaste,
+                });
+            }
+        }
+        if (mTableDivs.length > tables.length) {
+            mTableDivs.splice(tables.length, mTableDivs.length - tables.length).forEach(div => div.remove());
+        }
+
         mDataTables = [];
-
-        model.getTables().forEach((modelTable, index) => {
+        tables.forEach((modelTable, index) => {
             mDataTables.push(modelTable)
+            let colCount = mJTables[index].getData()[0].length;
+            let newColCount = modelTable.getColumns().length;
+            for (let i = colCount; i < newColCount; i++) {
+                mJTables[index].insertColumn();
+                mJTables[index].setWidth(i, DEFAULT_COL_WIDTH)
+            }
+            for (let i = newColCount; i < colCount; i++) {
+                mJTables[index].removeColumn();
+            }
 
-            if (index > 0) mTablesContainer.append("br");
-            let tableDiv = mTablesContainer.append("div")
-                .attr('id', TABLE_ID + index)
-                .attr('tableIndex', index)
-            let jtable = jspreadsheet(tableDiv.node(), {
-                data: modelTable.getDataArray().map(r => r.map(c => c.value)),
-                columns: modelTable.getColumns().map(col => {
-                    return {
-                        type: 'text',
-                        title: col.name,
-                        width: 200,
-                    };
-                }),
-                meta: modelTable.getDataArray().reduce((obj, rowData, rowIndex) => {
-                    rowData.forEach((cellData, colIndex) => {
-                        let cellIndex = jspreadsheet.helpers.getColumnNameFromCoords(colIndex, rowIndex);
-                        obj[cellIndex] = cellData
-                    })
-                    return obj;
-                }, {}),
-                contextMenu: () => { },
-                onselection,
-                onbeforechange,
-                onchange,
-                onbeforepaste,
-                onpaste,
-            });
-            mJTables.push(jtable);
+            mJTables[index].setData(modelTable.getDataArray().map(r => r.map(c => c.value)));
+            modelTable.getColumns().forEach((col, i) => { mJTables[index].setHeader(i, col.name); });
+            mJTables[index].setMeta(modelTable.getDataArray().reduce((obj, rowData, rowIndex) => {
+                rowData.forEach((cellData, colIndex) => {
+                    let cellIndex = jspreadsheet.helpers.getColumnNameFromCoords(colIndex, rowIndex);
+                    obj[cellIndex] = cellData
+                })
+                return obj;
+            }, {}));
         })
 
         restyle();
@@ -146,6 +160,7 @@ export function TableViewController(mColorMap) {
 
     function modelGenerationMode() {
         mEditingMode = true;
+        mOriginalModel = mModel;
         mGenerateButton.html(CLEAR_MODEL_LABEL);
         mGenerateButton.on('click', clearModelMode);
         parseTables();
@@ -155,12 +170,16 @@ export function TableViewController(mColorMap) {
         mEditingMode = false;
         mGenerateButton.html(GENERATE_MODEL_LABEL);
         mGenerateButton.on('click', modelGenerationMode);
-        mClearGeneratedModelCallback();
+        mClearGeneratedModelCallback(mOriginalModel);
     }
 
     function parseTables() {
         let model = new DataModel();
-        mModelGeneratedCallback();
+        mJTables.forEach(table => {
+            let data = mJTables.getData();
+        })
+
+        mModelGeneratedCallback(model);
     }
 
     function onResize(width, height) {
