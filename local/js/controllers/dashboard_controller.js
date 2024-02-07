@@ -93,6 +93,7 @@ export function DashboardController() {
     }
 
     function onPointerDown(screenCoords) {
+        mMenuController.hideColorPicker();
         mContextMenu.hideContextMenu();
         if (screenCoords.x < mWidth * mCanvasPercent) {
             mCanvasController.onPointerDown(screenCoords, mSystemState);

@@ -88,17 +88,21 @@ export function MenuController() {
         });
     });
 
-    mColorPickerContainer = d3.select("#color-container");
-    mColorPicker = new Picker({ parent: mColorPickerContainer.node(), popup: "right" });
+    mColorPickerContainer = d3.select("#color-container")
+        .style('display', 'none');
+    mColorPicker = new Picker({
+        parent: mColorPickerContainer.node(),
+        popup: false,
+        editor: false,
+    });
+
     mColorPicker.onChange = function (color) {
         mColorChangeCallback(color.hex, mColorPickerInternalOpen);
         if (mColorPickerInternalOpen) {
             d3.select("#color-selector-color").style("fill", color.hex)
         }
     };
-    mColorPicker.onClose = function (color) {
-        mColorPickedCallback(color.hex, mColorPickerInternalOpen);
-    }
+    mColorPicker.onDone = hideColorPicker;
 
     function activateButton(buttonId) {
         // if the active button is not a menu button do nothing.
@@ -145,8 +149,14 @@ export function MenuController() {
     }
 
     function openColorPicker(coords) {
-        mColorPickerContainer.style("left", coords.x + "px").style("top", coords.y + "px");
-        mColorPicker.openHandler();
+        mColorPickerContainer
+            .style("left", coords.x + "px")
+            .style("top", coords.y + "px")
+            .style('display', '');
+    }
+
+    function hideColorPicker() {
+        mColorPickerContainer.style('display', 'none');
     }
 
     return {
@@ -155,6 +165,7 @@ export function MenuController() {
         deactivateButton,
         deactivateAll,
         showColorPicker,
+        hideColorPicker,
         setColorChangeCallback: (func) => mColorChangeCallback = func,
         setColorPickedCallback: (func) => mColorPickedCallback = func,
         setOnClickCallback: (func) => mOnClickCallack = func,
