@@ -1,4 +1,4 @@
-import { Tab } from '../../local/js/constants.js';
+import { Buttons, Tab } from '../../local/js/constants.js';
 import { DataModel } from '../../local/js/data_model.js';
 import { Data } from '../../local/js/data_structs.js';
 
@@ -10,6 +10,13 @@ function Event(clientX = 0, clientY = 0) {
     this.clientX = clientX;
     this.clientY = clientY;
     this.stopPropagation = () => { };
+}
+
+function getOffset(id) {
+    let offset = { x: 0, y: 0 }
+    if (id == "#fdl-view-container" || id == "#tab-view-container") offset.x += window.innerWidth / 2;
+    if (id == "#fdl-view-container") offset.y = 60;
+    return offset;
 }
 
 export function deepEquals(original, obj) {
@@ -216,11 +223,14 @@ export function selectOption(value) {
     timePass();
 }
 
-function getOffset(id) {
-    let offset = { x: 0, y: 0 }
-    if (id == "#fdl-view-container" || id == "#tab-view-container") offset.x += window.innerWidth / 2;
-    if (id == "#fdl-view-container") offset.y = 60;
-    return offset;
+export async function uploadJSON(filename) {
+    let uploadButton = global.d3.select("#" + Buttons.UPLOAD);
+    if (!uploadButton) {
+        console.error("No upload button found!");
+        return null;
+    }
+    window.files.push(filename)
+    await uploadButton.select('rect').getCallbacks()['pointerup']({ stopPropagation: () => { } });
 }
 
 export function timePass() {

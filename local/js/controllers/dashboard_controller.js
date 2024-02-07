@@ -62,7 +62,7 @@ export function DashboardController() {
     let mUpdateAngleTypeCallback = () => { };
     let mUpdateSizeTypeCallback = () => { };
     let mUpdateColorCallback = () => { };
-    let mLoadModelCallback = () => { };
+    let mLoadModelCallback = async () => { };
     let mMergeCallback = () => { };
 
     function modelUpdate(model) {
@@ -420,7 +420,7 @@ export function DashboardController() {
         }
     });
 
-    mMenuController.setOnClickCallback((button) => {
+    mMenuController.setOnClickCallback(async (button) => {
         if (button == Buttons.BRUSH_BUTTON ||
             button == Buttons.SPINE_BRUSH_BUTTON ||
             button == Buttons.ANGLE_BRUSH_BUTTON ||
@@ -439,7 +439,7 @@ export function DashboardController() {
         } else if (button == Buttons.DOWNLOAD) {
             FileHandler.downloadJSON(mModel.toObject());
         } else if (button == Buttons.UPLOAD) {
-            mLoadModelCallback();
+            await mLoadModelCallback();
         }
         activateStateButtons();
     })

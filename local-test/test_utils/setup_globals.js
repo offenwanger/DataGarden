@@ -1,4 +1,8 @@
-import * as mockCanvas from "./mock_canvas.js"
+import fs from 'fs';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 import { mockDate } from "./mock_date.js"
 import { mockD3 } from "./mock_d3.js";
 import { mockJspreadsheet } from "./mock_jspreadsheet.js"
@@ -36,6 +40,13 @@ global.document = {
         }
     }
 }
+global.window = {
+    isWindow: true,
+    innerWidth: 1000,
+    innerHeight: 800,
+    files: [],
+    showOpenFilePicker: function () { return [{ getFile: () => { return { text: () => fs.readFileSync(__dirname + '/' + this.files[0], 'utf8') } } }] }
+}
 
 // Trap error and trigger a failure. 
 let consoleError = console.error;
@@ -44,11 +55,6 @@ console.error = function (message) {
     assert.equal("No Error", "Error: " + message);
 }
 
-global.window = {
-    isWindow: true,
-    innerWidth: 1000,
-    innerHeight: 800,
-}
 global.Date = new mockDate();
 global.timeouts = [];
 global.setTimeout = function (callback, delay) {
@@ -86,7 +92,7 @@ global.model = function () {
     return DataModel.fromObject(JSON.parse(global.blobs[blobLength]));
 }
 
-global.jspreadsheet = new mockJspreadsheet()
+global.jspreadsheet = mockJspreadsheet;
 global.d3 = new mockD3(jspreadsheet);
 
 registerFont('./local/lib/fonts/IndieFlower-Regular.ttf', {
@@ -94,6 +100,5 @@ registerFont('./local/lib/fonts/IndieFlower-Regular.ttf', {
 });
 
 export function resetGlobals() {
-    global.jspreadsheet = new mockJspreadsheet()
     global.d3 = new mockD3(jspreadsheet);
 }

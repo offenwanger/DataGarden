@@ -28,9 +28,9 @@ export function MenuButton({ id, parentSvg, img, buttonSize = MENU_BUTTON_SIZE, 
         .attr("opacity", 0)
         .on('pointerdown', (event) => {
             event.stopPropagation();
-        }).on('pointerup', (event) => {
+        }).on('pointerup', async (event) => {
             event.stopPropagation();
-            clickCallback();
+            await clickCallback();
         });
 
     d3.xml(img).then(data => {

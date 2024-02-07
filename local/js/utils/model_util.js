@@ -1,4 +1,5 @@
-import { ChannelType, DEFAULT_CATEGORY_NAME, NO_CATEGORY_ID } from "../constants.js";
+import { ChannelType, DimensionType, NO_CATEGORY_ID } from "../constants.js";
+import { DataModel } from "../data_model.js";
 import { Data } from "../data_structs.js";
 import { DataUtil } from "./data_util.js";
 import { IdUtil } from "./id_util.js";
@@ -122,6 +123,190 @@ export let ModelUtil = function () {
         }
     }
 
+    function modelFromTables(template, dataTables) {
+        let newModel = new DataModel();
+        newModel.setDimensions(template.getDimensions().map(dimen => dimen.clone()));
+        newModel.getDimensions().forEach(dimen => {
+            dimen.categories.forEach(category => {
+                category.elementIds = [];
+            });
+        })
+        // may need to clear out elements here
+
+        let originalTables = template.getTables();
+
+        dataTables.forEach((table, tableIndex) => {
+            let columns = originalTables[tableIndex].getColumns();
+            let originalDataArray = originalTables[tableIndex].getDataArray();
+
+            let maxLevel = Math.max(...columns.map(c => c.level));
+            for (const row of table) {
+                let parentId = null;
+                for (let level = 0; level <= maxLevel; level++) {
+                    let levelElementIds = DataUtil.unique(originalDataArray.map(row => row[columns.findIndex(c => c.level == level)].id));
+                    // show we make a new element or find an existing one?
+                    let element = null; // TODO: find an existing element
+                    if (!element) {
+                        element = new Data.Element();
+                        element.parentId = parentId;
+
+                        let dimensions = columns.map(c => template.getDimension(c.id)).filter(d => d.level == level);
+                        let shapeDimens = dimensions.filter(d => d.channel == ChannelType.SHAPE);
+                        let sampleShapeElementsIds = [];
+                        if (shapeDimens.length == 0) {
+                            sampleShapeElementsIds = levelElementIds;
+                        } else {
+                            if (shapeDimens > 1) {
+                                console.log("Need to validate double shape");
+                            }
+                            let shapeDimen = shapeDimens[0];
+                            let shapeValue = row[columns.findIndex(c => c.id == shapeDimen.id)];
+                            let category = shapeDimen.categories.find(c => c.name == shapeValue);
+                            sampleShapeElementsIds = category.elementIds;
+                        }
+
+                        let sampledShapeElement = template.getElement(sampleShapeElementsIds[0]).clone();// TODO: Actually sample
+                        //TODO: Parent shift and conversion
+                        element.strokes = sampledShapeElement.strokes;
+                        element.spine = sampledShapeElement.spine;
+
+                        let colorDimens = dimensions.filter(d => d.channel == ChannelType.COLOR);
+                        if (colorDimens.length > 0) {
+                            if (colorDimens > 1) {
+                                console.log("Need to validate double color");
+                            }
+                            let colorDimen = colorDimens[0];
+                            let colorValue = row[columns.findIndex(c => c.id == colorDimen.id)];
+                            let category = colorDimen.categories.find(c => c.name == colorValue);
+                            let sampleColorElementsIds = category.elementIds;
+                            if (!sampleColorElementsIds.includes(sampledShapeElement.id)) {
+                                let shapeCrossColor = sampleColorElementsIds.filter(id => sampleShapeElementsIds.includes(id));
+                                if (shapeCrossColor.length > 0) {
+                                    sampleColorElementsIds = shapeCrossColor;
+                                }
+                                let sampleColorElement = template.getElement(sampleColorElementsIds[0]) //TODO: Actually sample
+
+                                let currentColors = DataUtil.unique(element.strokes.map(s => s.color)).sort();
+                                let sampledColors = DataUtil.unique(sampleColorElement.strokes.map(s => s.color)).sort();
+                                for (let i = sampledColors.length; i < currentColors.length; i++) {
+                                    sampledColors[i] = sampledColors[i - 1];
+                                }
+                                element.strokes.forEach(stroke => {
+                                    let colorIndex = currentColors.findIndex(c => c == stroke.color)
+                                    stroke.color = sampledColors[colorIndex];
+                                })
+                            }
+                        }
+
+                        let sizeDimens = dimensions.filter(d => d.channel == ChannelType.SIZE);
+                        if (sizeDimens.length > 0) {
+                            if (sizeDimens > 1) {
+                                console.log("Need to validate double size");
+                            }
+                            let sizeDimen = sizeDimens[0];
+                            let sizeValue = row[columns.findIndex(c => c.id == sizeDimen.id)];
+                            if (sizeDimen.type == DimensionType.DISCRETE) {
+                                // find the category this size falls into
+                                // same as above
+                            } else if (sizeDimen.type == DimensionType.CONTINUOUS) {
+                                sizeValue = parseFloat(sizeValue);
+                                // calculate the channel value
+                                // get the currnelt channel value
+                                // scale the element
+                                console.log("Finish me!");
+                            }
+                        }
+
+                        let positionDimens = dimensions.filter(d => d.channel == ChannelType.POSITION);
+                        if (positionDimens.length > 0) {
+                            if (positionDimens > 1) {
+                                console.log("Need to validate double position");
+                            }
+                            let positionDimen = positionDimens[0];
+                            let positionValue = row[columns.findIndex(c => c.id == positionDimen.id)];
+                            let position = 0;
+                            if (positionDimen.type == DimensionType.DISCRETE) {
+                                let elementIds = DataUtil.unmapValue(template, positionDimen.id, positionValue)
+                                let positions = elementIds.map(eId => DataUtil.getChannelPercentForElement(template.getElement(eId), positionDimen, template));
+                                console.log("actually sample???")
+                                position = positions[0];
+                            } else if (positionDimen.type == DimensionType.CONTINUOUS) {
+                                positionValue = parseFloat(positionValue);
+                                if (isNaN(positionValue)) { console.error('invalid position value'); } else {
+                                    position = DataUtil.unmapValue(template, positionDimen.id, positionValue)
+                                }
+                            }
+                            let sampledParent = template.getElement(sampledShapeElement.parentId);
+                            let sampledParentPosition = PathUtil.getClosestPointOnPath(sampledShapeElement.root, sampledParent.spine);
+                            let offset = VectorUtil.subtract(sampledShapeElement.root, sampledParentPosition);
+                            let parent = newModel.getElement(element.parentId);
+                            let parentPosition = PathUtil.getPositionForPercent(parent.spine, position);
+                            element.root = VectorUtil.add(offset, parentPosition);
+                        } else {
+                            if (level == 0) {
+                                // absolute positioning
+                                let positions = levelElementIds.map(id => template.getElement(id).root);
+                                if (positions.length == 1) {
+                                    element.root = positions[0];
+                                } else {
+                                    let xDist = Math.max(...positions.map(p => p.x)) - Math.min(...positions.map(p => p.x));
+                                    let yDist = Math.max(...positions.map(p => p.y)) - Math.min(...positions.map(p => p.y));
+                                    if (xDist > yDist) {
+                                        let avgY = positions.map(p => p.y).reduce((sum, curY) => sum + curY, 0) / positions.length
+                                        let xs = positions.map(p => p.x).sort();
+                                        let avgXDist = xs.reduce((sum, curX, index) => sum + (index == 0 ? 0 : curX - xs[index - 1]), 0) / positions.length;
+                                        element.root = { x: Math.max(...positions.map(p => p.x)) + avgXDist, y: avgY };
+                                    } else {
+                                        let avgX = positions.map(p => p.x).reduce((sum, curX) => sum + curX, 0) / positions.length
+                                        let ys = positions.map(p => p.y).sort();
+                                        let avgYDist = ys.reduce((sum, curY, index) => sum + (index == 0 ? 0 : curY - ys[index - 1]), 0) / positions.length;
+                                        element.root = { y: Math.max(...positions.map(p => p.y)) + avgYDist, x: avgX };
+                                    }
+                                }
+                            } else {
+                                let sampledParent = template.getElement(sampledShapeElement.parentId);
+                                let sampledParentPosition = PathUtil.getClosestPointOnPath(sampledShapeElement.root, sampledParent.spine);
+                                let offset = VectorUtil.subtract(sampledShapeElement.root, sampledParentPosition);
+                                let parent = newModel.getElement(element.parentId);
+                                let parentPosition = PathUtil.getPositionForPercent(parent.spine, sampledParentPosition.percent);
+                                element.root = VectorUtil.add(offset, parentPosition);
+                            }
+                        }
+                        let positionTranslation = VectorUtil.subtract(element.root, sampledShapeElement.root);
+                        element.strokes.forEach(stroke => stroke.path = PathUtil.translate(stroke.path, positionTranslation));
+                        element.spine = PathUtil.translate(element.spine, positionTranslation)
+
+                        element.angle = sampledShapeElement.angle;
+                        let angleDimens = dimensions.filter(d => d.channel == ChannelType.ANGLE);
+                        if (angleDimens.length > 0) {
+                            // if angle is mapped do something else keep what we had from above
+                            if (angleDimens > 1) {
+                                console.log("Need to validate double angle");
+                            }
+                            let angleDimen = angleDimens[0];
+                            let angleValue = row[columns.findIndex(c => c.id == angleDimen.id)];
+                            if (angleDimen.type == DimensionType.DISCRETE) {
+                                // find the category this angle falls into
+                                // same as above
+                                console.log("Finish me!");
+                            } else if (angleDimen.type == DimensionType.CONTINUOUS) {
+                                angleValue = parseFloat(angleValue);
+                                // calculate the channel value
+                                // get the currnelt channel value
+                                // scale the element
+                                console.log("Finish me!");
+                            }
+                        }
+                    }
+                    newModel.getElements().push(element);
+
+                    parentId = element.id;
+                }
+            }
+        })
+        return newModel;
+    }
+
     return {
         updateParent,
         clearEmptyElements,
@@ -132,5 +317,6 @@ export let ModelUtil = function () {
         orientElementByParent,
         syncRanges,
         updateCategories,
+        modelFromTables,
     }
 }();

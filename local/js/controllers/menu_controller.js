@@ -11,7 +11,7 @@ export function MenuController() {
 
     let mColorChangeCallback = () => { };
     let mColorPickedCallback = () => { };
-    let mOnClickCallack = () => { };
+    let mOnClickCallack = async () => { };
 
     let mSvg = d3.select('#interface-svg');
 
@@ -60,7 +60,7 @@ export function MenuController() {
 
     let mButtons = {}
     for (const buttonId of BUTTON_LIST) {
-        let clickCallback = () => mOnClickCallack(buttonId);
+        let clickCallback = async () => await mOnClickCallack(buttonId);
         let onLoad = null;
         if (buttonId == Buttons.COLOR_BUTTON) {
             clickCallback = () => openBrushColorPicker();

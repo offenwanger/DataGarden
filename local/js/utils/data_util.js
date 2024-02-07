@@ -221,35 +221,7 @@ export let DataUtil = function () {
             return category ? category.name : null;
         } else {
             let element = model.getElement(elementId);
-            let percent;
-            if (dimension.channel == ChannelType.POSITION) {
-                let parent = model.getElement(element.parentId)
-                if (!parent) { console.error("Inavlid position element", element); return null }
-                percent = PathUtil.getClosestPointOnPath(element.root, parent.spine).percent;
-            } else if (dimension.channel == ChannelType.ANGLE) {
-                let parent = dimension.angleType == AngleType.RELATIVE ? model.getElement(element.parentId) : null;
-                percent = DataUtil.angleToPercent(DataUtil.getRelativeAngle(element, parent));
-            } else if (dimension.channel == ChannelType.SIZE) {
-                let elements = model.getElements().filter(e => DataUtil.getLevelForElement(e.id, model) == dimension.level && !dimension.unmappedIds.includes(e.id));
-                let sizes, eSize;
-                if (dimension.sizeType == SizeType.LENGTH) {
-                    sizes = elements.map(e => PathUtil.getPathLength(e.spine));
-                    eSize = PathUtil.getPathLength(element.spine);
-                } else {
-                    sizes = elements.map(e => { let bb = DataUtil.getBoundingBox(e); return bb.height * bb.width });
-                    let bb = DataUtil.getBoundingBox(element);
-                    eSize = bb.height * bb.width;
-                }
-
-                let min = Math.min(...sizes);
-                let max = Math.max(...sizes)
-                if (min == max) {
-                    percent = 0;
-                } else {
-                    percent = (eSize - min) / (max - min);
-                }
-
-            }
+            let percent = getChannelPercentForElement(element, dimension, model)
             if (dimension.type == DimensionType.CONTINUOUS) {
                 if (dimension.domainRange[1] - dimension.domainRange[0] == 0) {
                     percent = 0;
@@ -264,6 +236,98 @@ export let DataUtil = function () {
                 return category ? category.name : null;
             }
         }
+    }
+
+    // takes a value and returns either a set of elements or an angle, size, or position
+    function unmapValue(model, dimensionId, value) {
+        let dimension = model.getDimension(dimensionId);
+
+        if (channelIsDiscrete(dimension.channel)) {
+            // the dimension must also be discrete. 
+            let category = dimension.categories.find(category => category.name == value);
+            if (category) {
+                return category.elementIds.filter(eId => {
+                    let element = model.getElement(eId);
+                    return element && DataUtil.getLevelForElement(eId, model) == dimension.level;
+                });
+            } else return null;
+        } else {
+            if (dimension.type == DimensionType.CONTINUOUS) {
+                if (typeof value == 'string') value = parseFloat(value);
+                if (isNaN(value)) { console.error('invalid value for dimension'); return null; }
+
+                let domainPercent = DataUtil.limit((value - dimension.domain[0]) / (dimension.domain[1] - dimension.domain[0]), 0, 1);
+                let channelPercent = (dimension.domainRange[1] - dimension.domainRange[0]) * domainPercent + dimension.domainRange[0];
+
+                if (dimension.channel == ChannelType.POSITION) {
+                    return channelPercent;
+                } else if (dimension.channel == ChannelType.ANGLE) {
+                    return 2 * Math.PI * channelPercent - Math.PI;
+                } else if (dimension.channel == ChannelType.SIZE) {
+                    let elements = model.getElements().filter(e => DataUtil.getLevelForElement(e.id, model) == dimension.level && !dimension.unmappedIds.includes(e.id));
+                    let sizes;
+                    if (dimension.sizeType == SizeType.LENGTH) {
+                        sizes = elements.map(e => PathUtil.getPathLength(e.spine));
+                    } else {
+                        sizes = elements.map(e => { let bb = DataUtil.getBoundingBox(e); return bb.height * bb.width });
+                    }
+                    let min = Math.min(...sizes);
+                    let max = Math.max(...sizes)
+
+                    return (max - min) * channelPercent + min;
+                }
+            } else {
+                let categoryIndex = dimension.categories.findIndex(category => category.name == value);
+                if (categoryIndex != null) {
+                    let elements = model.getElements().filter(e =>
+                        DataUtil.getLevelForElement(e.id, model) == dimension.level &&
+                        !dimension.unmappedIds.includes(e.id));
+                    let rangePercentMin = categoryIndex == 0 ? 0 : dimension.ranges[categoryIndex - 1];
+                    let rangePercentMax = dimension.ranges[categoryIndex];
+                    elements.filter(element => {
+                        let percent = getChannelPercentForElement(element, dimension, model)
+                        if (percent >= rangePercentMin && percent < rangePercentMax) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    });
+                    return elements.map(e => e.id);
+                } else return null;
+            }
+        }
+    }
+
+    function getChannelPercentForElement(element, dimension, model) {
+        let percent;
+        if (dimension.channel == ChannelType.POSITION) {
+            let parent = model.getElement(element.parentId)
+            if (!parent) { console.error("Inavlid position element", element); return null }
+            percent = PathUtil.getClosestPointOnPath(element.root, parent.spine).percent;
+        } else if (dimension.channel == ChannelType.ANGLE) {
+            let parent = dimension.angleType == AngleType.RELATIVE ? model.getElement(element.parentId) : null;
+            percent = DataUtil.angleToPercent(DataUtil.getRelativeAngle(element, parent));
+        } else if (dimension.channel == ChannelType.SIZE) {
+            let elements = model.getElements().filter(e => DataUtil.getLevelForElement(e.id, model) == dimension.level && !dimension.unmappedIds.includes(e.id));
+            let sizes, eSize;
+            if (dimension.sizeType == SizeType.LENGTH) {
+                sizes = elements.map(e => PathUtil.getPathLength(e.spine));
+                eSize = PathUtil.getPathLength(element.spine);
+            } else {
+                sizes = elements.map(e => { let bb = DataUtil.getBoundingBox(e); return bb.height * bb.width });
+                let bb = DataUtil.getBoundingBox(element);
+                eSize = bb.height * bb.width;
+            }
+
+            let min = Math.min(...sizes);
+            let max = Math.max(...sizes)
+            if (min == max) {
+                percent = 0;
+            } else {
+                percent = (eSize - min) / (max - min);
+            }
+        }
+        return percent;
     }
 
     function getCategoryForPercent(dimension, percent) {
@@ -523,6 +587,8 @@ export let DataUtil = function () {
         isDefaultLabel,
         getDefaultLabelIndex,
         getMappedValue,
+        unmapValue,
+        getChannelPercentForElement,
         getPaddedPoints,
         domainIsValid,
         isNumeric,

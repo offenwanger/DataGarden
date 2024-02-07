@@ -1,6 +1,7 @@
 import { Data } from "../data_structs.js";
 import { DataModel } from "../data_model.js";
 import { IdUtil } from "../utils/id_util.js";
+import { ModelUtil } from "../utils/model_util.js";
 
 export function TableViewController(mColorMap) {
     const TABLE_ID = "data-table-"
@@ -26,7 +27,6 @@ export function TableViewController(mColorMap) {
         .attr('id', 'generate-button')
         .html(GENERATE_MODEL_LABEL)
         .on('click', modelGenerationMode)
-        .style("display", "none");
     let mTablesContainer = mViewContainer.append('div').attr('id', 'tables-container');
 
     let mJTables = [];
@@ -73,7 +73,7 @@ export function TableViewController(mColorMap) {
                 mJTables[index].setWidth(i, DEFAULT_COL_WIDTH)
             }
             for (let i = newColCount; i < colCount; i++) {
-                mJTables[index].removeColumn();
+                mJTables[index].deleteColumn();
             }
 
             mJTables[index].setData(modelTable.getDataArray().map(r => r.map(c => c.value)));
@@ -174,11 +174,8 @@ export function TableViewController(mColorMap) {
     }
 
     function parseTables() {
-        let model = new DataModel();
-        mJTables.forEach(table => {
-            let data = mJTables.getData();
-        })
-
+        let tables = mJTables.map(t => t.getData());
+        let model = ModelUtil.modelFromTables(mOriginalModel, tables);
         mModelGeneratedCallback(model);
     }
 
