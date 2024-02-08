@@ -52,12 +52,12 @@ export function DataModel() {
         return getElements().filter(e => e.parentId == elementId);
     }
 
-    // returns an array with the element and all it's decendants
+    // returns an array with the element's decendants
     function getElementDecendants(elementId) {
         if (!IdUtil.isType(elementId, Data.Element)) { console.error("Not an element id! " + elementId); return null; };
         let elements = [];
-        let elementQueue = [getElement(elementId)];
         let allElements = getElements();
+        let elementQueue = [...allElements.filter(e => e.parentId == elementId)];
         while (elementQueue.length > 0) {
             let elem = elementQueue.shift();
             elements.push(elem);

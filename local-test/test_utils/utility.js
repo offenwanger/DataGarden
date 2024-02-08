@@ -233,6 +233,11 @@ export async function uploadJSON(filename) {
     await uploadButton.select('rect').getCallbacks()['pointerup']({ stopPropagation: () => { } });
 }
 
+export function updateTable(id, x, y, value) {
+    let data = d3.select(id).spreadsheet.getData()[x][y] = value;
+    d3.select(id).spreadsheet.getCallbacks().onchange()
+}
+
 export function timePass() {
     Date.time += 501;
     for (let i = 0; i < 3; i++) { d3.tick() }

@@ -3,6 +3,8 @@ function mockSpreadSheet(element, config) {
     let columns = config.columns;
     let meta = config.meta;
 
+    element.spreadsheet = this;
+
     function getData() {
         return data;
     }
@@ -35,6 +37,10 @@ function mockSpreadSheet(element, config) {
         columns[i].title = title;
     }
 
+    function getCallbacks() {
+        return config;
+    }
+
     this.getData = getData;
     this.setData = setData;
     this.getMeta = getMeta;
@@ -43,6 +49,7 @@ function mockSpreadSheet(element, config) {
     this.deleteColumn = deleteColumn;
     this.setWidth = setWidth;
     this.setHeader = setHeader;
+    this.getCallbacks = getCallbacks;
     this.setStyle = () => { };
 }
 

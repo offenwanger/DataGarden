@@ -72,11 +72,11 @@ describe('Test Data Model', function () {
     })
 
     describe("get children tests", function () {
-        it('should get all decdendants and the item', function () {
+        it('should get all decdendants of the item', function () {
             let dataModel = utility.makeModel();
             assert.equal(dataModel.getElements().length, 11)
             expect(dataModel.getElements().map(e => dataModel.getElementDecendants(e.id)).map(arr => arr.length).sort())
-                .to.eql([1, 1, 1, 1, 1, 1, 1, 1, 1, 10, 4]);
+                .to.eql([0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 3]);
         });
     })
 

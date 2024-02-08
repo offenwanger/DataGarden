@@ -1,4 +1,4 @@
-import { ChannelType, DimensionType, NO_CATEGORY_ID } from "../constants.js";
+import { AngleType, ChannelType, DimensionType, NO_CATEGORY_ID, SizeType } from "../constants.js";
 import { DataModel } from "../data_model.js";
 import { Data } from "../data_structs.js";
 import { DataUtil } from "./data_util.js";
@@ -203,8 +203,10 @@ export let ModelUtil = function () {
                 elements = DataUtil.unique(elements);
                 elements.forEach((element, row) => {
                     if (level > 0) element.parentId = newElements[level - 1][row].id;
-                    newModel.getElements().push(element);
-                    newUnmappedDimensions.filter(d => d.level == level).forEach(d => d.unmappedIds.push(element.id));
+                    if (!newModel.getElement(element.id)) newModel.getElements().push(element);
+                    newUnmappedDimensions.filter(d => d.level == level).forEach(d => {
+                        if (!d.unmappedIds.includes(element.id)) d.unmappedIds.push(element.id)
+                    });
                 });
             })
 
@@ -218,127 +220,21 @@ export let ModelUtil = function () {
                 deriveColor(template, newModel, levelDimensions, newDataArray, newElements[level], originalLevelElements[level]);
             })
 
-            return newModel;
+            newElements.forEach((_, level) => {
+                let levelDimensions = columns.filter(c => c.level == level).map(c => template.getDimension(c.id));
+                console.log("Need to shuffle children here")
+                deriveSize(template, newModel, levelDimensions, newDataArray, newElements[level], originalLevelElements[level]);
+            })
 
-            for (const row of table) {
-                let parentId = null;
-                let levelElementIds = DataUtil.unique(originalDataArray.map(row => row[columns.findIndex(c => c.level == level)].id));
-                // show we make a new element or find an existing one?
-                let element = null; // TODO: find an existing element
-                if (!element) {
-                    element = new Data.Element();
-                    element.parentId = parentId;
+            newElements.forEach((_, level) => {
+                let levelDimensions = columns.filter(c => c.level == level).map(c => template.getDimension(c.id));
+                derivePosition(template, newModel, levelDimensions, newDataArray, newElements[level], originalLevelElements[level]);
+            })
 
-                    let dimensions = columns.map(c => template.getDimension(c.id)).filter(d => d.level == level);
-                    let shapeDimens = dimensions.filter(d => d.channel == ChannelType.SHAPE);
-
-
-
-                    let sizeDimens = dimensions.filter(d => d.channel == ChannelType.SIZE);
-                    if (sizeDimens.length > 0) {
-                        if (sizeDimens > 1) {
-                            console.log("Need to validate double size");
-                        }
-                        let sizeDimen = sizeDimens[0];
-                        let sizeValue = row[columns.findIndex(c => c.id == sizeDimen.id)];
-                        if (sizeDimen.type == DimensionType.DISCRETE) {
-                            // find the category this size falls into
-                            // same as above
-                        } else if (sizeDimen.type == DimensionType.CONTINUOUS) {
-                            sizeValue = parseFloat(sizeValue);
-                            // calculate the channel value
-                            // get the currnelt channel value
-                            // scale the element
-                            console.log("Finish me!");
-                        }
-                    }
-
-                    let positionDimens = dimensions.filter(d => d.channel == ChannelType.POSITION);
-                    if (positionDimens.length > 0) {
-                        if (positionDimens > 1) {
-                            console.log("Need to validate double position");
-                        }
-                        let positionDimen = positionDimens[0];
-                        let positionValue = row[columns.findIndex(c => c.id == positionDimen.id)];
-                        let position = 0;
-                        if (positionDimen.type == DimensionType.DISCRETE) {
-                            let elementIds = DataUtil.unmapValue(template, positionDimen.id, positionValue)
-                            let positions = elementIds.map(eId => DataUtil.getChannelPercentForElement(template.getElement(eId), positionDimen, template));
-                            console.log("actually sample???")
-                            position = positions[0];
-                        } else if (positionDimen.type == DimensionType.CONTINUOUS) {
-                            positionValue = parseFloat(positionValue);
-                            if (isNaN(positionValue)) { console.error('invalid position value'); } else {
-                                position = DataUtil.unmapValue(template, positionDimen.id, positionValue)
-                            }
-                        }
-                        let sampledParent = template.getElement(sampledShapeElement.parentId);
-                        let sampledParentPosition = PathUtil.getClosestPointOnPath(sampledShapeElement.root, sampledParent.spine);
-                        let offset = VectorUtil.subtract(sampledShapeElement.root, sampledParentPosition);
-                        let parent = newModel.getElement(element.parentId);
-                        let parentPosition = PathUtil.getPositionForPercent(parent.spine, position);
-                        element.root = VectorUtil.add(offset, parentPosition);
-                    } else {
-                        if (level == 0) {
-                            // absolute positioning
-                            let positions = levelElementIds.map(id => template.getElement(id).root);
-                            if (positions.length == 1) {
-                                element.root = positions[0];
-                            } else {
-                                let xDist = Math.max(...positions.map(p => p.x)) - Math.min(...positions.map(p => p.x));
-                                let yDist = Math.max(...positions.map(p => p.y)) - Math.min(...positions.map(p => p.y));
-                                if (xDist > yDist) {
-                                    let avgY = positions.map(p => p.y).reduce((sum, curY) => sum + curY, 0) / positions.length
-                                    let xs = positions.map(p => p.x).sort();
-                                    let avgXDist = xs.reduce((sum, curX, index) => sum + (index == 0 ? 0 : curX - xs[index - 1]), 0) / positions.length;
-                                    element.root = { x: Math.max(...positions.map(p => p.x)) + avgXDist, y: avgY };
-                                } else {
-                                    let avgX = positions.map(p => p.x).reduce((sum, curX) => sum + curX, 0) / positions.length
-                                    let ys = positions.map(p => p.y).sort();
-                                    let avgYDist = ys.reduce((sum, curY, index) => sum + (index == 0 ? 0 : curY - ys[index - 1]), 0) / positions.length;
-                                    element.root = { y: Math.max(...positions.map(p => p.y)) + avgYDist, x: avgX };
-                                }
-                            }
-                        } else {
-                            let sampledParent = template.getElement(sampledShapeElement.parentId);
-                            let sampledParentPosition = PathUtil.getClosestPointOnPath(sampledShapeElement.root, sampledParent.spine);
-                            let offset = VectorUtil.subtract(sampledShapeElement.root, sampledParentPosition);
-                            let parent = newModel.getElement(element.parentId);
-                            let parentPosition = PathUtil.getPositionForPercent(parent.spine, sampledParentPosition.percent);
-                            element.root = VectorUtil.add(offset, parentPosition);
-                        }
-                    }
-                    let positionTranslation = VectorUtil.subtract(element.root, sampledShapeElement.root);
-                    element.strokes.forEach(stroke => stroke.path = PathUtil.translate(stroke.path, positionTranslation));
-                    element.spine = PathUtil.translate(element.spine, positionTranslation)
-
-                    element.angle = sampledShapeElement.angle;
-                    let angleDimens = dimensions.filter(d => d.channel == ChannelType.ANGLE);
-                    if (angleDimens.length > 0) {
-                        // if angle is mapped do something else keep what we had from above
-                        if (angleDimens > 1) {
-                            console.log("Need to validate double angle");
-                        }
-                        let angleDimen = angleDimens[0];
-                        let angleValue = row[columns.findIndex(c => c.id == angleDimen.id)];
-                        if (angleDimen.type == DimensionType.DISCRETE) {
-                            // find the category this angle falls into
-                            // same as above
-                            console.log("Finish me!");
-                        } else if (angleDimen.type == DimensionType.CONTINUOUS) {
-                            angleValue = parseFloat(angleValue);
-                            // calculate the channel value
-                            // get the currnelt channel value
-                            // scale the element
-                            console.log("Finish me!");
-                        }
-                    }
-                }
-                newModel.getElements().push(element);
-
-                parentId = element.id;
-            }
-
+            newElements.forEach((_, level) => {
+                let levelDimensions = columns.filter(c => c.level == level).map(c => template.getDimension(c.id));
+                deriveAngle(template, newModel, levelDimensions, newDataArray, newElements[level], originalLevelElements[level]);
+            })
         })
         return newModel;
     }
@@ -367,6 +263,9 @@ export let ModelUtil = function () {
                 samples = samples.slice(0, valueElements.length);
                 sampleElements.push(...samples)
                 elements.push(...valueElements)
+
+                model.getDimensions().find(d => d.id == shapeDimen.id).categories
+                    .find(c => c.name == value).elementIds.push(...valueElements.map(e => e.id))
             })
         }
 
@@ -379,28 +278,20 @@ export let ModelUtil = function () {
             if (element.parentId) {
                 let sampleParent = template.getElement(sampleElement.parentId);
                 let elementParent = model.getElement(element.parentId);
-                if (PathUtil.isLineLike(sampleParent.spine)) {
-                    let sampleParentPosition = PathUtil.getClosestPointOnPath(sampleElement.root, sampleParent.spine);
-                    let sampleNormal = PathUtil.getNormalForPercent(sampleParent.spine, sampleParentPosition.percent);
-                    let sampleOffset = VectorUtil.subtract(sampleElement.root, sampleParentPosition);
-                    let dist = VectorUtil.dist(sampleElement.root, sampleParentPosition) * (VectorUtil.dot(sampleNormal, sampleOffset) > 0 ? 1 : -1);
-                    let elementParentPosition = PathUtil.getPositionForPercent(elementParent.spine, sampleParentPosition.percent);
-                    let elementNormal = PathUtil.getNormalForPercent(elementParent.spine, sampleParentPosition.percent);
-                    element.root = VectorUtil.add(VectorUtil.scale(elementNormal, dist), elementParentPosition);
-                    let translationOffset = VectorUtil.subtract(element.root, sampleElement.root);
-                    let angleOffset = VectorUtil.rotation(sampleNormal, elementNormal);
-                    element.angle = VectorUtil.rotate(element.angle, angleOffset);
-                    element.strokes.forEach(stroke => stroke.path = PathUtil.translate(stroke.path, translationOffset));
-                    element.strokes.forEach(stroke => stroke.path = stroke.path.map(p => VectorUtil.rotateAroundPoint(p, element.root, angleOffset)));
-                } else {
-                    let angleOffset = VectorUtil.rotation(sampleParent.angle, elementParent.angle);
-                    let sampleOffset = VectorUtil.subtract(sampleElement.root, sampleParent.root);
-                    let elementOffset = VectorUtil.rotate(sampleOffset, angleOffset);
-                    element.root = VectorUtil.add(elementOffset, elementParent.root);
-                    element.angle = VectorUtil.rotate(element.angle, angleOffset);
-                    element.strokes.forEach(stroke => stroke.path = PathUtil.translate(stroke.path, translationOffset));
-                    element.strokes.forEach(stroke => stroke.path = stroke.path.map(p => VectorUtil.rotateAroundPoint(p, element.root, angleOffset)));
-                }
+                let sampleParentPosition = PathUtil.getClosestPointOnPath(sampleElement.root, sampleParent.spine);
+                let sampleNormal = PathUtil.getNormalForPercent(sampleParent.spine, sampleParentPosition.percent);
+                let sampleOffset = VectorUtil.subtract(sampleElement.root, sampleParentPosition);
+                let dist = VectorUtil.dist(sampleElement.root, sampleParentPosition) * (VectorUtil.dot(sampleNormal, sampleOffset) > 0 ? 1 : -1);
+                let elementParentPosition = PathUtil.getPositionForPercent(elementParent.spine, sampleParentPosition.percent);
+                let elementNormal = PathUtil.getNormalForPercent(elementParent.spine, sampleParentPosition.percent);
+                element.root = VectorUtil.add(VectorUtil.scale(elementNormal, dist), elementParentPosition);
+                let translationOffset = VectorUtil.subtract(element.root, sampleElement.root);
+                let angleOffset = VectorUtil.rotation(sampleNormal, elementNormal);
+                element.angle = VectorUtil.rotate(element.angle, angleOffset);
+                element.strokes.forEach(stroke => stroke.path = PathUtil.translate(stroke.path, translationOffset));
+                element.strokes.forEach(stroke => stroke.path = stroke.path.map(p => VectorUtil.rotateAroundPoint(p, element.root, angleOffset)));
+                element.spine = PathUtil.translate(element.spine, translationOffset)
+                element.spine = element.spine.map(p => VectorUtil.rotateAroundPoint(p, element.root, angleOffset));
             }
         })
     }
@@ -431,32 +322,218 @@ export let ModelUtil = function () {
 
             model.getDimensions().find(d => d.id == colorDimen.id).categories
                 .find(c => c.name == value).elementIds.push(...valueElements.map(e => e.id))
-        })
+        });
+    }
 
-        return;
-        if (colorDimens.length > 0) {
-            if (colorDimens > 1) {
-                console.log("Need to validate double color");
+    function deriveSize(template, model, levelDimensions, newDataArray, newElements, templateElementIds) {
+        let sizeDimens = levelDimensions.filter(d => d.channel == ChannelType.SIZE);
+        if (sizeDimens.length > 0) {
+            let sizeDimen = sizeDimens[0];
+            let sizeValues = newDataArray.flat().filter(v => v.dimensionId == sizeDimen.id).map(v => v.value);
+            if (sizeDimen.type == DimensionType.DISCRETE) {
+                sizeValues = DataUtil.unique(sizeValues);
+                sizeValues.forEach(value => {
+                    let mappedElementIds = DataUtil.unmapValue(template, sizeDimen.id, value);
+                    let sizes = mappedElementIds.map(eId => DataUtil.getSize(template.getElement(eId), sizeDimen.sizeType));
+                    let valueElements = DataUtil.unique(newDataArray.flat().filter(v => v.dimensionId == sizeDimen.id && v.value == value).map(v => newElements[v.row]));
+                    for (let i = sizes.length; i < valueElements.length; i++) sizes.push(sizes[i - sizes.length]);
+                    valueElements.forEach((element, index) => {
+                        let currentSize = DataUtil.getSize(element, sizeDimen.sizeType);
+                        let scale = sizes[index] / currentSize;
+                        if (sizeDimen.sizeType == SizeType.AREA) scale = Math.sqrt(scale);
+                        element.strokes.forEach(stroke => stroke.path = stroke.path.map(p => {
+                            return VectorUtil.add(VectorUtil.scale(VectorUtil.subtract(p, element.root), scale), element.root);
+                        }))
+                        element.spine = element.spine.map(p => {
+                            return VectorUtil.add(VectorUtil.scale(VectorUtil.subtract(p, element.root), scale), element.root);
+                        });
+                    })
+                });
+            } else if (sizeDimen.type == DimensionType.CONTINUOUS) {
+                newElements.forEach((element, row) => {
+                    let sizeValue = newDataArray[row].find(v => v.dimensionId == sizeDimen.id).value;
+                    sizeValue = parseFloat(sizeValue);
+                    let size = DataUtil.unmapValue(template, sizeDimen.id, sizeValue)
+                    let scale = size / DataUtil.getSize(element, sizeDimen.sizeType);
+                    element.strokes.forEach(stroke => stroke.path = stroke.path.map(p => {
+                        return VectorUtil.add(VectorUtil.scale(VectorUtil.subtract(p, element.root), scale), element.root);
+                    }))
+                    element.spine = element.spine.map(p => {
+                        return VectorUtil.add(VectorUtil.scale(VectorUtil.subtract(p, element.root), scale), element.root);
+                    })
+                });
             }
-            let colorDimen = colorDimens[0];
-            newElements.forEach((element, row) => {
-                let rowData = newDataArray[row];
-                let colorValue = row[columns.findIndex(c => c.id == colorDimen.id)];
-                let category = colorDimen.categories.find(c => c.name == colorValue);
-                let sampleColorElementsIds = category.elementIds;
-                let sampleColorElements = sampleColorElementsIds.map(id => template.getElement(id));
-                let currentColors = DataUtil.unique(element.strokes.map(s => s.color)).sort();
-                let sampledColors = DataUtil.unique(sampleColorElement.strokes.map(s => s.color)).sort();
-                for (let i = sampledColors.length; i < currentColors.length; i++) {
-                    sampledColors[i] = sampledColors[i - 1];
-                }
-                element.strokes.forEach(stroke => {
-                    let colorIndex = currentColors.findIndex(c => c == stroke.color)
-                    stroke.color = sampledColors[colorIndex];
-                })
-
-            })
         }
+    }
+
+    function derivePosition(template, model, levelDimensions, newDataArray, newElements, templateElementIds) {
+        let positionDimens = levelDimensions.filter(d => d.channel == ChannelType.POSITION);
+        if (positionDimens.length > 0) {
+            let positionDimen = positionDimens[0];
+            let positionValues = newDataArray.flat().filter(v => v.dimensionId == positionDimen.id).map(v => v.value);
+            if (positionDimen.type == DimensionType.DISCRETE) {
+                positionValues = DataUtil.unique(positionValues);
+                positionValues.forEach(value => {
+                    let mappedElementIds = DataUtil.unmapValue(template, positionDimen.id, value);
+                    let mappedElements = mappedElementIds.map(eId => template.getElement(eId));
+                    let mappedParents = mappedElements.map(e => template.getElement(e.parentId));
+                    let mappedPercents = mappedElements.map((e, i) => PathUtil.getClosestPointOnPath(e.root, mappedParents[i].spine)).map(p => p.percent).sort();
+                    if (mappedPercents.length == 1) {
+                        let catIndex = positionDimen.categories.findIndex(c => c.name == value);
+                        let topOfRange = catIndex == 0 ? 0 : positionDimen.ranges[catIndex - 1];
+                        let bottomOfRange = catIndex == positionDimen.range.length ? 1 : positionDimen.ranges[catIndex];
+                        mappedPercents.push(bottomOfRange, topOfRange).sort();
+                    }
+                    let startPercent = Math.min(...mappedPercents.map(p => p.percent));
+                    let endPercent = Math.max(...mappedPercents.map(p => p.percent))
+                    let percentIntervals = mappedPositions.map((p, i) => i == 0 ? 0 : p.percent - mappedPositions[i - 1].percent);
+
+                    let valueElements = DataUtil.unique(newDataArray.flat().filter(v => v.dimensionId == positionDimen.id && v.value == value).map(v => newElements[v.row]));
+                    for (let i = percentIntervals.length; i < valueElements.length; i++) {
+                        percentIntervals.push(percentIntervals[i + 1 - percentIntervals.length]);
+                    }
+                    percentIntervals = percentIntervals.slice(0, valueElements.length)
+                    let totalLength = percentIntervals.reduce((sum, c) => sum + c, 0);
+                    let scale = (startPercent - endPercent) / totalLength
+                    percentIntervals = percentIntervals.map(v => v * scale);
+                    valueElements.forEach((element, index) => {
+                        let elementParent = model.getElement(element.parentId);
+                        let oldPosition = PathUtil.getClosestPointOnPath(element.root, elementParent.spine);
+                        let oldNormal = PathUtil.getNormalForPercent(oldPosition.percent, elementParent.spine);
+                        let offset = Math.subtract(element.root, oldPosition);
+                        let dist = Math.dist(oldPosition, element.root) * (VectorUtil.dot(offset, oldNormal) > 0 ? 1 : -1);
+
+                        let newPercent = percentIntervals.slice(0, index).reduce((sum, c) => sum + c, 0) + startPercent;
+                        let newParentPos = PathUtil.getPositionForPercent(elementParent.spine, newPercent);
+                        let newNormal = PathUtil.getNormalForPercent(elementParent.spine, newPercent);
+                        let newRoot = VectorUtil.add(VectorUtil.scale(newNormal, dist), newParentPos);
+
+                        let translation = VectorUtil.subtract(newRoot, element.root);
+                        let rotation = VectorUtil.rotation(oldNormal, newNormal);
+                        translateTreeBranch(model, element.id, translation, rotation);
+                    })
+                });
+            } else if (positionDimen.type == DimensionType.CONTINUOUS) {
+                newElements.forEach((element, row) => {
+                    let elementParent = model.getElement(element.parentId);
+                    let oldPosition = PathUtil.getClosestPointOnPath(element.root, elementParent.spine);
+                    let oldNormal = PathUtil.getNormalForPercent(elementParent.spine, oldPosition.percent);
+                    let offset = VectorUtil.subtract(element.root, oldPosition);
+                    let dist = VectorUtil.dist(oldPosition, element.root) * (VectorUtil.dot(offset, oldNormal) > 0 ? 1 : -1);
+
+                    let positionValue = newDataArray[row].find(v => v.dimensionId == positionDimen.id).value;
+                    positionValue = parseFloat(positionValue);
+                    let newPercent = DataUtil.unmapValue(template, positionDimen.id, positionValue)
+                    let newParentPos = PathUtil.getPositionForPercent(elementParent.spine, newPercent);
+                    let newNormal = PathUtil.getNormalForPercent(elementParent.spine, newPercent);
+                    let newRoot = VectorUtil.add(VectorUtil.scale(newNormal, dist), newParentPos);
+
+                    let translation = VectorUtil.subtract(newRoot, element.root);
+                    let rotation = VectorUtil.rotation(oldNormal, newNormal);
+                    translateTreeBranch(model, element.id, translation, rotation);
+                });
+            }
+        } else {
+            if (DataUtil.getLevelForElement(newElements[0].id, model) == 0) {
+                let positions = DataUtil.unique(templateElementIds).map(id => template.getElement(id).root);
+                if (positions.length == 1) {
+                    let bb = DataUtil.getBoundingBox(template.getElements());
+                    positions.push({ x: positions[0].x + bb.width, y: bb.y + bb.height });
+                } else {
+                    let xDist = Math.max(...positions.map(p => p.x)) - Math.min(...positions.map(p => p.x));
+                    let yDist = Math.max(...positions.map(p => p.y)) - Math.min(...positions.map(p => p.y));
+                    if (xDist > yDist) {
+                        positions.sort(({ x1, y1 }, { x2, y2 }) => x1 - x2);
+                    } else {
+                        positions.sort(({ x1, y1 }, { x2, y2 }) => y1 - y2);
+                    }
+                }
+
+                let elements = DataUtil.unique(newElements);
+                let offsets = positions.map((p, i) => VectorUtil.subtract(p, i == 0 ? { x: 0, y: 0 } : positions[i - 1]));
+                for (let i = offsets.length; i < elements.length; i++) {
+                    offsets.push(offsets[i + 1 - offsets.length]);
+                }
+                elements.forEach((element, i) => {
+                    let newRoot = offsets.slice(0, i + 1).reduce((sum, o) => VectorUtil.add(sum, o), { x: 0, y: 0 });
+                    let translation = VectorUtil.subtract(newRoot, element.root)
+                    translateTreeBranch(model, element.id, translation, 0);
+                })
+            }
+        }
+    }
+
+    function deriveAngle(template, model, levelDimensions, newDataArray, newElements, templateElementIds) {
+        let angleDimens = levelDimensions.filter(d => d.channel == ChannelType.ANGLE);
+        if (angleDimens.length > 0) {
+            let angleDimen = angleDimens[0];
+            let angleValues = newDataArray.flat().filter(v => v.dimensionId == angleDimen.id).map(v => v.value);
+            if (angleDimen.type == DimensionType.DISCRETE) {
+                angleValues = DataUtil.unique(angleValues);
+                angleValues.forEach(value => {
+                    let valueElements = DataUtil.unique(newDataArray.flat().filter(v => v.dimensionId == angleDimen.id && v.value == value).map(v => newElements[v.row]));
+                    let mappedElementIds = DataUtil.unmapValue(template, angleDimen.id, value);
+                    let mappedElements = mappedElementIds.map(eId => template.getElement(eId));
+                    let mappedAngles;
+                    if (angleDimen.angleType == AngleType.ABSOLUTE) {
+                        mappedAngles = mappedElements.map(e => e.angle);
+                    } else {
+                        let mappedParents = mappedElements.map(e => template.getElement(e.parentId));
+                        mappedAngles = mappedElements.map((e, i) => DataUtil.getRelativeAngle(e, mappedParents[i]))
+                    }
+                    for (let i = mappedAngles.length; i < valueElements.length; i++) mappedAngles.push(mappedAngles[i - mappedAngles.length]);
+
+                    valueElements.forEach((element, index) => {
+                        let newAngle = mappedAngles[index];
+                        let currentAngle;
+                        if (angleDimen.angleType == AngleType.ABSOLUTE) {
+                            currentAngle = element.angle;
+                        } else {
+                            let elementParent = model.getElement(element.parentId);
+                            currentAngle = DataUtil.getRelativeAngle(element, elementParent);
+                        }
+
+                        let rotation = newAngle - currentAngle;
+                        translateTreeBranch(model, element.id, { x: 0, y: 0 }, rotation);
+                    })
+                });
+            } else if (angleDimen.type == DimensionType.CONTINUOUS) {
+                newElements.forEach((element, row) => {
+                    let angleValue = newDataArray[row].find(v => v.dimensionId == angleDimen.id).value;
+                    angleValue = parseFloat(angleValue);
+                    let newAngle = DataUtil.unmapValue(template, angleDimen.id, angleValue);
+                    let currentAngle;
+                    if (angleDimen.angleType == AngleType.ABSOLUTE) {
+                        currentAngle = element.angle;
+                    } else {
+                        let elementParent = model.getElement(element.parentId);
+                        currentAngle = DataUtil.getRelativeAngle(element, elementParent);
+                    }
+
+                    let rotation = newAngle - currentAngle;
+                    translateTreeBranch(model, element.id, { x: 0, y: 0 }, rotation);
+                });
+            }
+        }
+    }
+
+    function translateTreeBranch(model, elementId, translate, rotate) {
+        let element = model.getElement(elementId);
+        model.getElementDecendants(elementId).forEach(decendant => {
+            decendant.root = VectorUtil.rotateAroundPoint(decendant.root, element.root, rotate)
+            decendant.angle = VectorUtil.rotate(element.angle, rotate);
+            decendant.strokes.forEach(stroke => stroke.path = stroke.path.map(p => VectorUtil.rotateAroundPoint(p, element.root, rotate)));
+            decendant.spine = decendant.spine.map(p => VectorUtil.rotateAroundPoint(p, element.root, rotate));
+            decendant.root = VectorUtil.add(decendant.root, translate);
+            decendant.strokes.forEach(stroke => stroke.path = PathUtil.translate(stroke.path, translate));
+            decendant.spine = PathUtil.translate(decendant.spine, translate)
+        })
+        element.angle = VectorUtil.rotate(element.angle, rotate);
+        element.strokes.forEach(stroke => stroke.path = stroke.path.map(p => VectorUtil.rotateAroundPoint(p, element.root, rotate)));
+        element.spine = element.spine.map(p => VectorUtil.rotateAroundPoint(p, element.root, rotate));
+        element.strokes.forEach(stroke => stroke.path = PathUtil.translate(stroke.path, translate));
+        element.root = VectorUtil.add(element.root, translate);
+        element.spine = PathUtil.translate(element.spine, translate)
     }
 
     return {

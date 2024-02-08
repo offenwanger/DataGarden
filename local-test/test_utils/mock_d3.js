@@ -34,15 +34,6 @@ function MockElement(type) {
         }
         return { node: () => null, remove: () => null };
     }
-    // this is only ever used to remove the tables
-    this.selectAll = function (selector) {
-        return {
-            remove: () => {
-                mChildren.forEach(c => mJspreadsheet.removeTable(c));
-                mChildren = [];
-            }
-        }
-    }
     this.attr = function (att, val = null) {
         if (!att) {
             return mAttrs;

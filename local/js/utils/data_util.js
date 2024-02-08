@@ -328,16 +328,8 @@ export let DataUtil = function () {
             percent = DataUtil.angleToPercent(DataUtil.getRelativeAngle(element, parent));
         } else if (dimension.channel == ChannelType.SIZE) {
             let elements = model.getElements().filter(e => DataUtil.getLevelForElement(e.id, model) == dimension.level && !dimension.unmappedIds.includes(e.id));
-            let sizes, eSize;
-            if (dimension.sizeType == SizeType.LENGTH) {
-                sizes = elements.map(e => PathUtil.getPathLength(e.spine));
-                eSize = PathUtil.getPathLength(element.spine);
-            } else {
-                sizes = elements.map(e => { let bb = DataUtil.getBoundingBox(e); return bb.height * bb.width });
-                let bb = DataUtil.getBoundingBox(element);
-                eSize = bb.height * bb.width;
-            }
-
+            let sizes = elements.map(e => getSize(e, dimension.sizeType));
+            let eSize = getSize(element, dimension.sizeType)
             let min = Math.min(...sizes);
             let max = Math.max(...sizes)
             if (min == max) {
@@ -587,6 +579,15 @@ export let DataUtil = function () {
         }
     }
 
+    function getSize(element, type) {
+        if (type == SizeType.LENGTH) {
+            return PathUtil.getPathLength(element.spine);
+        } else {
+            let bb = DataUtil.getBoundingBox(element);
+            return bb.height * bb.width;
+        }
+    }
+
     return {
         numToColor,
         rgbToHex,
@@ -631,5 +632,6 @@ export let DataUtil = function () {
         median,
         limit,
         compareDimensions,
+        getSize,
     }
 }();

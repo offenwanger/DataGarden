@@ -78,7 +78,7 @@ export let VectorUtil = function () {
     function rotation(from, to) {
         from = normalize(from);
         to = normalize(to);
-        return Math.atan2(det(from, to), dot(from, to))
+        return Math.atan2(det(to, from), dot(to, from))
     }
 
     function rotateLeft(vector) {

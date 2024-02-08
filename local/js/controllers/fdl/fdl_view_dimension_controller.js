@@ -172,12 +172,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
             mNodes.forEach(n => {
                 if (mDimension.unmappedIds.includes(n.id)) return;
                 let element = mModel.getElement(n.id);
-                if (mDimension.sizeType == SizeType.LENGTH) {
-                    n.size = PathUtil.getPathLength(element.spine);
-                } else {
-                    let bb = DataUtil.getBoundingBox(element);
-                    n.size = bb.height * bb.width;
-                }
+                n.size = DataUtil.getSize(element, mDimension.sizeType);
             });
 
             minSize = Math.min(Infinity, ...mNodes.filter(n => n.size).map(n => n.size));
