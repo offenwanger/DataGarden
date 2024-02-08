@@ -7,6 +7,7 @@ export function MenuController() {
     let mColorPickerContainer;
 
     let mColorPickerInternalOpen = true;
+    let mLastColor = null;
 
     let mColorChangeCallback = () => { };
     let mColorPickedCallback = () => { };
@@ -98,6 +99,7 @@ export function MenuController() {
 
     mColorPicker.onChange = function (color) {
         mColorChangeCallback(color.hex, mColorPickerInternalOpen);
+        mLastColor = color.hex;
         if (mColorPickerInternalOpen) {
             d3.select("#color-selector-color").style("fill", color.hex)
         }
@@ -156,6 +158,8 @@ export function MenuController() {
     }
 
     function hideColorPicker() {
+        if (mLastColor) mColorPickedCallback(mLastColor, mColorPickerInternalOpen);
+        mLastColor = null;
         mColorPickerContainer.style('display', 'none');
     }
 
