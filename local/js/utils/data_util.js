@@ -34,6 +34,25 @@ export let DataUtil = function () {
 
         return { r, g, b, a };
     }
+
+    function closestColor(color, colorList) {
+        let closestDist = colorDist(color, colorList[0]);
+        let closestColor = colorList[0];
+        for (const c of colorList) {
+            let dist = colorDist(c, color);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closestColor = c;
+            }
+        }
+
+        return color;
+    }
+
+    function colorDist(c1, c2) {
+        return VectorUtil.dist(Object.values(DataUtil.hexToRGBA(c1)), Object.values(DataUtil.hexToRGBA(c2)));
+    }
+
     function imageDataToHex(imgData) {
         return "#" +
             imgData.data[0].toString(16).padStart(2, "0") +
@@ -425,8 +444,8 @@ export let DataUtil = function () {
     }
 
     function getStraightenedStrokes(element) {
-        let rotation = VectorUtil.toRotation(element.angle);
-        let straight = VectorUtil.toRotation({ x: 0, y: -1 });
+        let rotation = VectorUtil.toRadiens(element.angle);
+        let straight = VectorUtil.toRadiens({ x: 0, y: -1 });
         return element.strokes.map(s => {
             s = s.clone();
             s.path = s.path.map(p => VectorUtil.rotateAroundPoint(p, element.root, rotation - straight));
@@ -573,6 +592,8 @@ export let DataUtil = function () {
         rgbToHex,
         rgbaToHex,
         hexToRGBA,
+        closestColor,
+        colorDist,
         imageDataToHex,
         getBoundingBox,
         overlap,

@@ -61,6 +61,7 @@ export function TableViewController(mColorMap) {
         }
         if (mTableDivs.length > tables.length) {
             mTableDivs.splice(tables.length, mTableDivs.length - tables.length).forEach(div => div.remove());
+            mJTables.splice(tables.length, mJTables.length - tables.length);
         }
 
         mDataTables = [];
@@ -175,7 +176,7 @@ export function TableViewController(mColorMap) {
 
     function parseTables() {
         let tables = mJTables.map(t => t.getData());
-        let model = ModelUtil.modelFromTables(mOriginalModel, tables);
+        let model = ModelUtil.modelFromTables(mOriginalModel.clone(), tables);
         mModelGeneratedCallback(model);
     }
 

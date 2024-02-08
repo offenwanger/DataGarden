@@ -39,12 +39,20 @@ export let VectorUtil = function () {
     }
 
     function dist(v1, v2) {
-        return length(subtract(v1, v2));
+        if (Array.isArray(v1) && Array.isArray(v2)) {
+            return Math.hypot(...v1.map((v, i) => v - v2[i]));
+        } else {
+            return length(subtract(v1, v2));
+        }
     }
 
-    // function angle(v1, v2) {
-    //     return Math.atan2(v2.y - v1.y, v2.x - v1.x);
-    // }
+    function dot(v1, v2) {
+        return v1.x * v2.x + v1.y * v2.y;
+    }
+
+    function det(v1, v2) {
+        return v1.x * v2.y - v1.y * v2.x
+    }
 
     function normalize(v) {
         if (v.x == 0 && v.y == 0) return { x: 0, y: 0 };
@@ -62,9 +70,15 @@ export let VectorUtil = function () {
         return a.x == b.x && a.y == b.y;
     }
 
-    function toRotation(vector) {
+    function toRadiens(vector) {
         vector = VectorUtil.normalize(vector);
         return Math.atan2(vector.y, vector.x);
+    }
+
+    function rotation(from, to) {
+        from = normalize(from);
+        to = normalize(to);
+        return Math.atan2(det(from, to), dot(from, to))
     }
 
     function rotateLeft(vector) {
@@ -114,9 +128,11 @@ export let VectorUtil = function () {
         average,
         length,
         dist,
+        dot,
         normalize,
         equal,
-        toRotation,
+        toRadiens,
+        rotation,
         rotateLeft,
         rotateRight,
         rotate,

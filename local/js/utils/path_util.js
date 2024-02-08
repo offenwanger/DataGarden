@@ -234,7 +234,7 @@ export let PathUtil = function () {
 
     function isLineLike(points) {
         let metaPoints = getMetaPoints(points);
-        let normalAngles = metaPoints.map(p => VectorUtil.toRotation(p.normal) + Math.PI);
+        let normalAngles = metaPoints.map(p => VectorUtil.toRadiens(p.normal) + Math.PI);
         let normalAnglesRotated = normalAngles.map(a => (a + Math.PI) % (2 * Math.PI));
 
         // if there are so few meta points, it's too short to be read as a line. 

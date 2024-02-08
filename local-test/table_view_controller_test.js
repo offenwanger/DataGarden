@@ -19,6 +19,17 @@ describe('Struct View Controller Test', function () {
     });
 
     describe('generation tests', function () {
+        it('should flip back and forth without error', async function () {
+            await utility.uploadJSON('test.json');
+            assert.equal(model().getDimensions().length, 6);
+            utility.clickTab(Tab.TABLE);
+
+            d3.select('#generate-button').getCallbacks()['click']()
+            d3.select('#generate-button').getCallbacks()['click']()
+            d3.select('#generate-button').getCallbacks()['click']()
+            d3.select('#generate-button').getCallbacks()['click']()
+        });
+
         it('should generate a model for which the tables are the same', async function () {
             await utility.uploadJSON('test.json');
             assert.equal(model().getDimensions().length, 6);
