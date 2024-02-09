@@ -76,7 +76,7 @@ describe('Test Data Model', function () {
             let dataModel = utility.makeModel();
             assert.equal(dataModel.getElements().length, 11)
             expect(dataModel.getElements().map(e => dataModel.getElementDecendants(e.id)).map(arr => arr.length).sort())
-                .to.eql([0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 3]);
+                .to.eql([0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 9]);
         });
     })
 

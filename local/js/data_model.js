@@ -1,6 +1,7 @@
-import { DimensionType } from "./constants.js";
+import { ChannelType, DimensionType, SUPPLIMENTAL_ID } from "./constants.js";
 import { Data } from "./data_structs.js";
 import { DataUtil } from "./utils/data_util.js";
+import { GenerationUtil } from "./utils/generation_utils.js";
 import { IdUtil } from "./utils/id_util.js";
 
 export function DataModel() {
@@ -70,7 +71,7 @@ export function DataModel() {
         let level = DataUtil.getLevelForElement(elementId, this)
         let result = [];
         getDimensions().filter(d => d.level == level && DataUtil.dimensionValid(d)).forEach(dimension => {
-            let value = DataUtil.getMappedValue(this, dimension.id, elementId);
+            let value = GenerationUtil.getMappedValue(this, dimension.id, elementId);
             if (typeof value == "number") { value = Math.round(value * 100) / 100 }
             if (value || value === 0) {
                 result.push({ dimensionId: dimension.id, dimensionName: dimension.name, value: value });
@@ -129,11 +130,34 @@ export function DataModel() {
             .filter(d => d.type == DimensionType.DISCRETE || DataUtil.domainIsValid(d.domain));
         if (dimensions.length == 0) return [];
 
+        // leaves are just the elements, they can be at many levels.
+        let leafs = GenerationUtil.getLeaves(this);
+
+        let maxLevel = GenerationUtil.getLowestMappedLevel(this);
+        let suplimentalLabelDimensions = []
+        for (let i = 0; i < maxLevel; i++) {
+            if (GenerationUtil.needsLabel(this, i)) {
+                suplimentalLabelDimensions[i] = new Data.Dimension();
+                suplimentalLabelDimensions[i].id = IdUtil.getUniqueId(SUPPLIMENTAL_ID);
+                suplimentalLabelDimensions[i].type = DimensionType.DISCRETE;
+                suplimentalLabelDimensions[i].channel = ChannelType.LABEL;
+                suplimentalLabelDimensions[i].name = "L" + i;
+                let levelRowElements = DataUtil.unique(leafs.map(e => GenerationUtil.getAncestorAtLevel(e, i, this))
+                    .filter(e => e && !GenerationUtil.getLabelForElement(e.id, this)));
+                suplimentalLabelDimensions[i].categories = levelRowElements.map((e, index) => {
+                    let category = new Data.Category();
+                    category.name = "E" + index;
+                    category.elementIds = [e.id];
+                    return category;
+                })
+            }
+        }
+
         let tableCells = []
         mElements.forEach(element => {
             let level = DataUtil.getLevelForElement(element.id, this)
             dimensions.filter(d => d.level == level).forEach(dimension => {
-                let value = DataUtil.getMappedValue(this, dimension.id, element.id);
+                let value = GenerationUtil.getMappedValue(this, dimension.id, element.id);
                 if (typeof value == "number") { value = Math.round(value * 100) / 100 }
                 if (value || value === 0) {
                     tableCells.push({
@@ -144,20 +168,18 @@ export function DataModel() {
                     });
                 }
             })
+            if (suplimentalLabelDimensions[level]) {
+                let category = suplimentalLabelDimensions[level].categories.find(c => c.elementIds.includes(element.id))
+                if (category) {
+                    tableCells.push({
+                        elementId: element.id,
+                        dimensionId: suplimentalLabelDimensions[level].id,
+                        value: category.name,
+                        level: level,
+                    });
+                }
+            }
         });
-
-        let tableElementIds = [];
-        let maxLevel = Math.max(0, ...tableCells.map(t => t.level))
-        for (let i = maxLevel; i >= 0; i--) {
-            let dataIds = tableCells.filter(t => t.level == i).map(c => c.elementId);
-            let parentIds = mElements.filter(e => dataIds.includes(e.id)).map(e => e.parentId).filter(pId => pId);
-            tableElementIds.push(...dataIds, ...parentIds);
-        }
-        tableElementIds = DataUtil.unique(tableElementIds);
-        let tableElements = tableElementIds.map(eId => mElements.find(e => e.id == eId));
-
-        let parentIds = tableElements.filter(p => tableElements.filter(e => e.parentId == p.id).length > 0).map(p => p.id);
-        let leafs = tableElements.filter(e => !parentIds.includes(e.id));
 
         let rows = []
         leafs.forEach(leaf => {
@@ -179,8 +201,13 @@ export function DataModel() {
             if (!tables[key]) {
                 tables[key] = new DataTable();
                 rowData.map(c => c.dimensionId).forEach(id => {
-                    let dimension = dimensions.find(d => d.id == id);
-                    tables[key].addColumn(id, dimension.name, dimension.level);
+                    let dimension;
+                    if (IdUtil.isType(id, SUPPLIMENTAL_ID)) {
+                        dimension = suplimentalLabelDimensions.find(d => d.id == id);
+                    } else {
+                        dimension = dimensions.find(d => d.id == id);
+                    }
+                    tables[key].addColumn(dimension.clone());
                 })
             }
         })
@@ -189,7 +216,7 @@ export function DataModel() {
         Object.keys(tables).forEach(tableKey => {
             rows.filter(r => r.key == tableKey).forEach(({ key, rowData }, index) => {
                 rowData.forEach(tableCell => {
-                    tables[key].addCell(tableCell.dimensionId, index, tableCell.elementId, tableCell.value)
+                    tables[key].setCell(tableCell.dimensionId, index, tableCell.value, tableCell.elementId)
                 })
             });
         })
@@ -247,28 +274,39 @@ DataModel.fromObject = function (obj) {
 }
 
 export function DataTable() {
-    let mColumns = []
+    let mDimensions = []
     let mRows = []
 
-    function addColumn(colId, name, level) {
-        if (mColumns.find(c => c.id == colId)) return;
-        mColumns.push({ id: colId, name, level });
-        mColumns.sort(DataUtil.compareDimensions)
+    function addColumn(dimension) {
+        if (mDimensions.find(c => c.id == dimension.id)) return;
+        mDimensions.push(dimension);
+        mDimensions.sort(DataUtil.compareDimensions);
     }
 
-    function addCell(colId, rowIndex, id, value) {
-        let colIndex = mColumns.findIndex(c => c.id == colId)
+    function setCell(colId, rowIndex, value, id = null) {
+        let colIndex = mDimensions.findIndex(c => c.id == colId)
         if (colIndex == -1) { console.error("Invalid column id, cell not added", colId); return; }
         if (!mRows[rowIndex]) mRows[rowIndex] = [];
-        mRows[rowIndex].push({ id, value, colId });
+
+        let cell = mRows[rowIndex].find(c => c.colId == colId);
+        if (!cell) {
+            cell = { colId };
+            mRows[rowIndex].push(cell);
+        }
+        cell.value = value;
+        if (id) cell.id = id;
+    }
+
+    function clearCells() {
+        mRows = [];
     }
 
     function getColumns() {
-        return [...mColumns]
+        return [...mDimensions]
     }
 
     function getDataArray() {
-        return mRows.map(row => mColumns.map(col => {
+        return mRows.map(row => mDimensions.map(col => {
             let cell = row.find(cell => cell.colId == col.id)
             return {
                 id: cell.id,
@@ -277,8 +315,14 @@ export function DataTable() {
         }));
     }
 
+    function getColumnData(columnId) {
+        return mRows.map(row => row.find(c => c.colId == columnId));
+    }
+
     this.getColumns = getColumns;
     this.addColumn = addColumn;
-    this.addCell = addCell;
+    this.setCell = setCell;
+    this.clearCells = clearCells;
     this.getDataArray = getDataArray;
+    this.getColumnData = getColumnData;
 }

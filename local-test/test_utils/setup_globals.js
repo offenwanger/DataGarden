@@ -45,7 +45,7 @@ global.window = {
     innerWidth: 1000,
     innerHeight: 800,
     files: [],
-    showOpenFilePicker: function () { return [{ getFile: () => { return { text: () => fs.readFileSync(__dirname + '/' + this.files[0], 'utf8') } } }] }
+    showOpenFilePicker: function () { return [{ getFile: () => { return { text: () => fs.readFileSync(__dirname + '/' + this.files[this.files.length - 1], 'utf8') } } }] }
 }
 
 // Trap error and trigger a failure. 

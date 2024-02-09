@@ -1,4 +1,5 @@
 export const NO_CATEGORY_ID = "no_category";
+export const SUPPLIMENTAL_ID = { name: "aSupplimental" };
 export const MAP_ELEMENTS = "apply_mapping";
 export const DIMENSION_RANGE_V1 = 'range_top';
 export const DIMENSION_RANGE_V2 = 'range_bottom';

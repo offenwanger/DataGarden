@@ -1,7 +1,8 @@
 import { Data } from "../data_structs.js";
-import { DataModel } from "../data_model.js";
+import { DataModel, DataTable } from "../data_model.js";
 import { IdUtil } from "../utils/id_util.js";
 import { ModelUtil } from "../utils/model_util.js";
+import { GenerationUtil } from "../utils/generation_utils.js";
 
 export function TableViewController(mColorMap) {
     const TABLE_ID = "data-table-"
@@ -35,34 +36,14 @@ export function TableViewController(mColorMap) {
 
     let mSelection = []
     let mHighlight = [];
+    let mInvalidCells = {};
 
 
     function onModelUpdate(model) {
         mModel = model;
         let tables = model.getTables();
-        for (let index in tables) {
-            if (!mTableDivs[index]) {
-                // if (index > 0) mTableDivs[index].append("br");
-                mTableDivs[index] = mTablesContainer.append("div")
-                    .attr('id', TABLE_ID + index)
-                    .attr('tableIndex', index)
-                mJTables[index] = jspreadsheet(mTableDivs[index].node(), {
-                    data: [['']],
-                    columns: [{ width: DEFAULT_COL_WIDTH }],
-                    meta: {},
-                    contextMenu: () => { },
-                    onselection,
-                    onbeforechange,
-                    onchange,
-                    onbeforepaste,
-                    onpaste,
-                });
-            }
-        }
-        if (mTableDivs.length > tables.length) {
-            mTableDivs.splice(tables.length, mTableDivs.length - tables.length).forEach(div => div.remove());
-            mJTables.splice(tables.length, mJTables.length - tables.length);
-        }
+        for (let index in tables) if (!mTableDivs[index]) createTable(index);
+        trimTables(tables.length)
 
         mDataTables = [];
         tables.forEach((modelTable, index) => {
@@ -91,13 +72,36 @@ export function TableViewController(mColorMap) {
         restyle();
     }
 
+    function createTable(index) {
+        mTableDivs[index] = mTablesContainer.append("div")
+            .attr('id', TABLE_ID + index)
+            .attr('tableIndex', index)
+        mJTables[index] = jspreadsheet(mTableDivs[index].node(), {
+            data: [['']],
+            columns: [{ width: DEFAULT_COL_WIDTH }],
+            meta: {},
+            contextMenu: () => { },
+            onselection,
+            onbeforechange,
+            onchange,
+            onbeforepaste,
+            onpaste,
+        });
+    }
+
+    function trimTables(length) {
+        mTableDivs.splice(length, mTableDivs.length - length).forEach(div => div.remove());
+        mJTables.splice(length, mJTables.length - length);
+    }
+
     function onselection(tableDiv, colStart, rowStart, colEnd, rowEnd) {
         mSelection = [];
         for (let col = colStart; col <= colEnd; col++) {
             for (let row = rowStart; row <= rowEnd; row++) {
                 let index = d3.select(tableDiv).attr("tableIndex");
                 let cellIndex = jspreadsheet.helpers.getColumnNameFromCoords(col, row);
-                mSelection.push(mJTables[index].getMeta(cellIndex).id)
+                let meta = mJTables[index].getMeta(cellIndex);
+                if (meta) mSelection.push(meta.id)
             }
         }
         mSelectionCallback(mSelection);
@@ -153,6 +157,9 @@ export function TableViewController(mColorMap) {
                 } else {
                     style += 'background-color:white; ';
                 }
+                if (mInvalidCells[cellIndex]) {
+                    style += "borderColor: red; ";
+                }
                 styles[cellIndex] = style;
             })
             mJTables[index].setStyle(styles)
@@ -169,14 +176,36 @@ export function TableViewController(mColorMap) {
 
     function clearModelMode() {
         mEditingMode = false;
+        mInvalidCells = {};
         mGenerateButton.html(GENERATE_MODEL_LABEL);
         mGenerateButton.on('click', modelGenerationMode);
         mClearGeneratedModelCallback(mOriginalModel);
     }
 
     function parseTables() {
-        let tables = mJTables.map(t => t.getData());
-        let model = ModelUtil.modelFromTables(mOriginalModel.clone(), tables);
+        let valueArrays = mJTables.map(t => t.getData());
+        let originalTables = mOriginalModel.getTables();
+        let tables = valueArrays.map((valueArray, tableIndex) => {
+            let table = originalTables[tableIndex];
+            table.getColumns().forEach(dimen => {
+                dimen.categories.forEach(c => c.elementIds = []);
+                dimen.unmappedIds = [];
+            })
+            table.clearCells();
+            let cols = table.getColumns();
+            valueArray.forEach((row, rowIndex) => {
+                row.forEach((value, colIndex) => {
+                    let colId = cols[colIndex].id;
+                    table.setCell(colId, rowIndex, value);
+                });
+            })
+            return table;
+        })
+
+        mInvalidCells = GenerationUtil.validateTables(mOriginalModel.clone(), tables)
+        if (Object.keys(mInvalidCells).length > 0) { restyle(); return; }
+
+        let model = GenerationUtil.modelFromTables(mOriginalModel.clone(), tables);
         mModelGeneratedCallback(model);
     }
 
