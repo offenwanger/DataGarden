@@ -139,10 +139,10 @@ export function TableViewController(mColorMap) {
 
 
     function restyle() {
-        mDataTables.forEach((dataTable, index) => {
+        getCurrentJTables().forEach((jTable, index) => {
             let cellIndexes = []
-            for (let col = 0; col < dataTable.getColumns().length; col++) {
-                for (let row = 0; row < dataTable.getDataArray().length; row++) {
+            for (let row = 0; row < jTable.length; row++) {
+                for (let col = 0; col < jTable[0].length; col++) {
                     cellIndexes.push(jspreadsheet.helpers.getColumnNameFromCoords(col, row))
                 }
             }
@@ -152,7 +152,7 @@ export function TableViewController(mColorMap) {
                 let meta = mJTables[index].getMeta(cellIndex);
                 let style = '';
                 style += 'color: black; ';
-                if (mSelection.includes(meta.id)) {
+                if (meta && mSelection.includes(meta.id)) {
                     style += 'background-color: ' + mColorMap(meta.id) + '; ';
                 } else {
                     style += 'background-color:white; ';
@@ -183,9 +183,9 @@ export function TableViewController(mColorMap) {
     }
 
     function parseTables() {
-        let valueArrays = mJTables.map(t => t.getData());
+        let jTables = getCurrentJTables();
         let originalTables = mOriginalModel.getTables();
-        let tables = valueArrays.map((valueArray, tableIndex) => {
+        let tables = jTables.map((jTable, tableIndex) => {
             let table = originalTables[tableIndex];
             table.getColumns().forEach(dimen => {
                 dimen.categories.forEach(c => c.elementIds = []);
@@ -193,7 +193,7 @@ export function TableViewController(mColorMap) {
             })
             table.clearCells();
             let cols = table.getColumns();
-            valueArray.forEach((row, rowIndex) => {
+            jTable.forEach((row, rowIndex) => {
                 row.forEach((value, colIndex) => {
                     let colId = cols[colIndex].id;
                     table.setCell(colId, rowIndex, value);
@@ -234,6 +234,10 @@ export function TableViewController(mColorMap) {
             }
         });
         restyle();
+    }
+
+    function getCurrentJTables() {
+        return mJTables.map(t => t.getData());
     }
 
     function onHighlight() {
