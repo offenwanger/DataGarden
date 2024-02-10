@@ -1,4 +1,4 @@
-import { AngleType, ChannelLabels, ChannelType, DimensionType, SUPPLIMENTAL_ID, SizeType } from "../constants.js";
+import { AngleType, ChannelLabels, ChannelType, DimensionType, SizeType } from "../constants.js";
 import { DataModel } from "../data_model.js";
 import { Data } from "../data_structs.js";
 import { DataUtil } from "./data_util.js";
@@ -78,7 +78,7 @@ export let GenerationUtil = function () {
             // set the unmappedIds 
             let columns = table.getColumns();
             let tableDimensionIds = columns.map(c => c.id);
-            newModel.getDimensions().filter(d => !tableDimensionIds.includes(d.id)).forEach(d => {
+            newModel.getDimensions().filter(d => !tableDimensionIds.includes(d.id) && d.level < elementReference.length).forEach(d => {
                 d.unmappedIds = DataUtil.unique(d.unmappedIds.concat(elementReference[d.level].map(e => e.id)));
             })
 
@@ -130,7 +130,7 @@ export let GenerationUtil = function () {
         }
 
         modelElements.forEach((element, index) => {
-            let templateElement = templateElements[index].clone();
+            let templateElement = templateElements[index].copy();
             element.strokes = templateElement.strokes;
             element.spine = templateElement.spine;
             element.root = templateElement.root;
@@ -550,11 +550,10 @@ export let GenerationUtil = function () {
         let level = DataUtil.getLevelForElement(element.id, template);
         return template.getDimensions().some(d => {
             if (d.level != level) return false;
+            if (d.unmappedIds.includes(element.id)) return false;
             if (DataUtil.channelIsDiscrete(d.channel)) {
-                return d.categories.some(c => c.elementIds.includes(element.id));
-            } else {
-                return !d.unmappedIds.includes(element.id);
-            }
+                return d.categories.map(c => c.elementIds).flat().includes(element.id);
+            } else { console.error("Invalid state!"); return false; }
         });
     }
 
@@ -653,7 +652,7 @@ export let GenerationUtil = function () {
     }
 
     function getTableIds(model, table) {
-        let maxLevelDimen = table.getColumns().reduce((max, cur) => cur.level > max.level ? cur : max, { level: 0 });
+        let maxLevelDimen = table.getColumns().reduce((max, cur) => cur.level >= max.level ? cur : max, { level: 0 });
         let leafIds = table.getColumnData(maxLevelDimen.id).map(l => l.id);
         let allIds = leafIds.map(id => getAncestorIds(model, id).concat([id])).flat();
         return DataUtil.unique(allIds);
@@ -722,6 +721,7 @@ export let GenerationUtil = function () {
         needsLabel,
         getAncestorAtLevel,
         getLabelForElement,
-        validateTables
+        validateTables,
+        hasMappedValue
     }
 }();

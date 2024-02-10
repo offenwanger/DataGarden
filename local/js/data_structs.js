@@ -16,6 +16,12 @@ export let Data = function () {
             return clone;
         };
 
+        this.copy = function () {
+            let stroke = this.clone();
+            stroke.id = IdUtil.getUniqueId(Stroke);
+            return stroke;
+        }
+
         this.update = function (stroke) {
             this.id = stroke.id;
             this.creationTime = stroke.creationTime;
@@ -54,6 +60,12 @@ export let Data = function () {
             clone.root = this.root ? { x: this.root.x, y: this.root.y } : { x: 0, y: 0 };
             return clone;
         };
+
+        this.copy = function () {
+            let element = this.clone();
+            element.id = IdUtil.getUniqueId(Element);
+            return element;
+        }
 
         this.update = function (element) {
             this.id = element.id;
@@ -114,6 +126,12 @@ export let Data = function () {
             return clone;
         };
 
+        this.copy = function () {
+            let dimension = this.clone();
+            dimension.id = IdUtil.getUniqueId(Dimension);
+            return dimension;
+        }
+
         this.update = function (dimension) {
             this.id = dimension.id;
             this.creationTime = dimension.creationTime;
@@ -163,6 +181,12 @@ export let Data = function () {
             clone.elementIds = [...this.elementIds];
             return clone;
         };
+
+        this.copy = function () {
+            let category = this.clone();
+            category.id = IdUtil.getUniqueId(Category);
+            return category;
+        }
 
         this.update = function (category) {
             this.id = category.id;

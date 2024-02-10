@@ -96,6 +96,18 @@ describe('Table View Controller Test', function () {
             expect(model().getTables()[0].getDataArray()[1][2].value).to.eql("In Person");
         });
 
+        it('should generate a model for table with decorative elements', async function () {
+            await utility.uploadJSON('template_thankyous_shape_only.json');
+            assert.equal(model().getDimensions().length, 3);
+            utility.clickTab(Tab.TABLE);
+
+            let tablesBefore = model().getTables().map(t => t.getDataArray().map(r => r.map(c => c.value)));
+
+            d3.select('#generate-button').getCallbacks()['click']()
+
+            expect(model().getTables().map(t => t.getDataArray().map(r => r.map(c => c.value)))).to.eql(tablesBefore);
+        });
+
         it('should not crash for an invalid shape', async function () {
             await utility.uploadJSON('template_roses_shape.json');
             assert.equal(model().getDimensions().length, 2);

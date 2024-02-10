@@ -142,8 +142,9 @@ export function DataModel() {
                 suplimentalLabelDimensions[i].type = DimensionType.DISCRETE;
                 suplimentalLabelDimensions[i].channel = ChannelType.LABEL;
                 suplimentalLabelDimensions[i].name = "L" + i;
+                suplimentalLabelDimensions[i].level = i;
                 let levelRowElements = DataUtil.unique(leafs.map(e => GenerationUtil.getAncestorAtLevel(e, i, this))
-                    .filter(e => e && !GenerationUtil.getLabelForElement(e.id, this)));
+                    .filter(e => e && !GenerationUtil.getLabelForElement(e.id, this) && GenerationUtil.hasMappedValue(e, this)));
                 suplimentalLabelDimensions[i].categories = levelRowElements.map((e, index) => {
                     let category = new Data.Category();
                     category.name = "E" + index;
@@ -203,7 +204,7 @@ export function DataModel() {
                 rowData.map(c => c.dimensionId).forEach(id => {
                     let dimension;
                     if (IdUtil.isType(id, SUPPLIMENTAL_ID)) {
-                        dimension = suplimentalLabelDimensions.find(d => d.id == id);
+                        dimension = suplimentalLabelDimensions.find(d => d ? d.id == id : false);
                     } else {
                         dimension = dimensions.find(d => d.id == id);
                     }
