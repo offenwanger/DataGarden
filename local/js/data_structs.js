@@ -64,7 +64,7 @@ export let Data = function () {
         this.copy = function () {
             let element = this.clone();
             element.id = IdUtil.getUniqueId(Element);
-            element.storkes = element.storkes.map(s => s.copy());
+            element.strokes = element.strokes.map(s => s.copy());
             return element;
         }
 
