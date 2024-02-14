@@ -64,6 +64,7 @@ export let Data = function () {
         this.copy = function () {
             let element = this.clone();
             element.id = IdUtil.getUniqueId(Element);
+            element.storkes = element.storkes.map(s => s.copy());
             return element;
         }
 
@@ -129,6 +130,7 @@ export let Data = function () {
         this.copy = function () {
             let dimension = this.clone();
             dimension.id = IdUtil.getUniqueId(Dimension);
+            dimension.categories = dimension.categories.map(c => c.copy());
             return dimension;
         }
 
