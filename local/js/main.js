@@ -562,4 +562,10 @@ document.addEventListener('DOMContentLoaded', function (e) {
             console.error(e);
         }
     })
+
+    mDashboardController.setModelGeneratedCallback((model) => {
+        mModelController.setModel(model);
+        mVersionController.stack(mModelController.getModel().toObject());
+        mDashboardController.modelUpdate(mModelController.getModel());
+    })
 });

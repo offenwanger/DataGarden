@@ -3,12 +3,13 @@ import { DataModel, DataTable } from "../data_model.js";
 import { IdUtil } from "../utils/id_util.js";
 import { ModelUtil } from "../utils/model_util.js";
 import { GenerationUtil } from "../utils/generation_utils.js";
+import { ToolTip } from "../menu/tooltip.js";
 
 export function TableViewController(mColorMap) {
     const TABLE_ID = "data-table-"
 
-    const GENERATE_MODEL_LABEL = 'Generator Mode';
-    const CLEAR_MODEL_LABEL = 'Clear Generated Model';
+    const GENERATE_MODEL_LABEL = 'Enable Table Editing (Unstable, save your work!)';
+    const CLEAR_MODEL_LABEL = 'Disable Table Editing';
 
     const DEFAULT_COL_WIDTH = 100;
 
@@ -21,7 +22,6 @@ export function TableViewController(mColorMap) {
     let mPasting = false;
 
     let mModel = new DataModel();
-    let mOriginalModel = new DataModel();
 
     let mViewContainer = d3.select("#table-view-container")
     let mGenerateButton = mViewContainer.append('button')
@@ -29,6 +29,8 @@ export function TableViewController(mColorMap) {
         .html(GENERATE_MODEL_LABEL)
         .on('click', modelGenerationMode)
     let mTablesContainer = mViewContainer.append('div').attr('id', 'tables-container');
+
+    let mErrorTooltip = new ToolTip(d3.select('#interface-svg'));
 
     let mJTables = [];
     let mTableDivs = [];
@@ -101,7 +103,12 @@ export function TableViewController(mColorMap) {
                 let index = d3.select(tableDiv).attr("tableIndex");
                 let cellIndex = jspreadsheet.helpers.getColumnNameFromCoords(col, row);
                 let meta = mJTables[index].getMeta(cellIndex);
-                if (meta) mSelection.push(meta.id)
+                if (meta && IdUtil.isType(meta.id, Data.Element)) mSelection.push(meta.id)
+                if (mInvalidCells[index] && mInvalidCells[index][cellIndex]) {
+                    let cell = mJTables[index].getCell(cellIndex);
+                    let bBox = cell.getBoundingClientRect();
+                    mErrorTooltip.show(bBox.x + bBox.width, bBox.y + bBox.height, mInvalidCells[index][cellIndex])
+                }
             }
         }
         mSelectionCallback(mSelection);
@@ -157,7 +164,7 @@ export function TableViewController(mColorMap) {
                 } else {
                     style += 'background-color:white; ';
                 }
-                if (mInvalidCells[cellIndex]) {
+                if (mInvalidCells[index] && mInvalidCells[index][cellIndex]) {
                     style += "borderColor: red; ";
                 }
                 styles[cellIndex] = style;
@@ -168,7 +175,6 @@ export function TableViewController(mColorMap) {
 
     function modelGenerationMode() {
         mEditingMode = true;
-        mOriginalModel = mModel;
         mGenerateButton.html(CLEAR_MODEL_LABEL);
         mGenerateButton.on('click', clearModelMode);
         parseTables();
@@ -179,12 +185,13 @@ export function TableViewController(mColorMap) {
         mInvalidCells = {};
         mGenerateButton.html(GENERATE_MODEL_LABEL);
         mGenerateButton.on('click', modelGenerationMode);
-        mClearGeneratedModelCallback(mOriginalModel);
     }
 
     function parseTables() {
         let jTables = getCurrentJTables();
-        let originalTables = mOriginalModel.getTables();
+        if (jTables.length == 0) return mModel;
+
+        let originalTables = mModel.getTables();
         let tables = jTables.map((jTable, tableIndex) => {
             let table = originalTables[tableIndex];
             table.getColumns().forEach(dimen => {
@@ -202,10 +209,10 @@ export function TableViewController(mColorMap) {
             return table;
         })
 
-        mInvalidCells = GenerationUtil.validateTables(mOriginalModel.clone(), tables)
-        if (Object.keys(mInvalidCells).length > 0) { restyle(); return; }
+        mInvalidCells = GenerationUtil.validateTables(mModel.clone(), tables)
+        if (Object.values(mInvalidCells).map(o => Object.keys(o)).flat().length > 0) { restyle(); return; }
 
-        let model = GenerationUtil.modelFromTables(mOriginalModel.clone(), tables);
+        let model = GenerationUtil.modelFromTables(mModel.clone(), tables);
         mModelGeneratedCallback(model);
     }
 

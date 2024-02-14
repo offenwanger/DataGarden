@@ -111,6 +111,18 @@ export function DashboardController() {
         }
     }
 
+    function onDblClick(screenCoords) {
+        if (screenCoords.x < mWidth * mCanvasPercent) {
+            mCanvasController.onDblClick(screenCoords, mSystemState);
+        } else if (screenCoords.y < TAB_HEIGHT) {
+            // no tab double clicking
+        } else if (mActiveTab == mFdlViewController) {
+            mFdlViewController.onDblClick(screenCoords, mSystemState)
+        } else {
+            // The table is active and will handle it's own mouse events. I hope.
+        }
+    }
+
     function onPointerMove(screenCoords) {
         mCanvasController.onPointerMove(screenCoords, mSystemState);
         mTabController.onPointerMove(screenCoords, mSystemState);
@@ -134,10 +146,6 @@ export function DashboardController() {
         } else {
             // table will handle it's own wheeling, let the event propogate
         }
-    }
-
-    function onDblClick(screenCoords) {
-
     }
 
     function onLongPress(screenCoords) {
@@ -390,11 +398,6 @@ export function DashboardController() {
         mDeleteCallback([dimenId]);
     });
 
-    mTableViewController.setModelGeneratedCallback((model) => {
-        console.log("Need to shut off the editing controls");
-        modelUpdate(model);
-    });
-
     mTableViewController.setClearGeneratedModelCallback((model) => {
         modelUpdate(model);
     });
@@ -507,5 +510,6 @@ export function DashboardController() {
         setUpdateSizeTypeCallback: (func) => mUpdateSizeTypeCallback = func,
         setUpdateColorCallback: (func) => mUpdateColorCallback = func,
         setLoadModelCallback: (func) => mLoadModelCallback = func,
+        setModelGeneratedCallback: (func) => mTableViewController.setModelGeneratedCallback(func),
     }
 }

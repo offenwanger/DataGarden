@@ -686,7 +686,8 @@ export let GenerationUtil = function () {
 
     function validateTables(template, tables) {
         let invalidCells = {};
-        tables.forEach(table => {
+        tables.forEach((table, tableIndex) => {
+            invalidCells[tableIndex] = {};
             let invalidColumns = {};
             let hasColumn = [];
             table.getColumns().forEach(dimen => {
@@ -704,22 +705,22 @@ export let GenerationUtil = function () {
                     let dimension = table.getColumns()[colIndex];
                     if (IdUtil.isType(dimension.id, Data.Dimension)) dimension = template.getDimension(dimension.id)
                     if (invalidColumns[dimension.id]) {
-                        invalidCells[cellIndex] = invalidColumns[dimension.id];
+                        invalidCells[tableIndex][cellIndex] = invalidColumns[dimension.id];
                         return;
                     }
                     if (dimension.type == DimensionType.DISCRETE && dimension.channel != ChannelType.LABEL) {
                         let category = dimension.categories.find(c => c.name == cell.value);
                         if (!category) {
-                            invalidCells[cellIndex] = "Invalid category";
+                            invalidCells[tableIndex][cellIndex] = "Invalid category";
                             return;
                         } else if (category.elementIds.length == 0) {
-                            invalidCells[cellIndex] = "Category has no examples";
+                            invalidCells[tableIndex][cellIndex] = "Category has no examples";
                             return;
                         }
                     }
                     if (dimension.type == DimensionType.CONTINUOUS) {
                         if (isNaN(parseFloat(cell.value))) {
-                            invalidCells[cellIndex] = "Numbers only, sorry";
+                            invalidCells[tableIndex][cellIndex] = "Numbers only, sorry";
                         }
                     }
                 })

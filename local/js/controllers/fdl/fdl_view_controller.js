@@ -281,7 +281,15 @@ export function FdlViewController(mColorMap) {
     }
 
     function onDblClick(screenCoords, systemState) {
-
+        if (ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) {
+            console.error("Bad event state", screenCoords, systemState.getToolState()); return;
+        };
+        let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
+        if (target && IdUtil.isType(target.id, Data.Element)) {
+            let decendants = mModel.getElementDecendants();
+            mSelectionIds = [target.id].concat(decendants.map(d => d.id));
+            mSelectionCallback(mSelectionIds);
+        }
     }
 
     function onPointerMove(screenCoords, systemState) {

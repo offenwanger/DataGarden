@@ -13,7 +13,6 @@ export function EventManager(dashboard) {
 
 
     let mLastClick = { x: -10, y: -10, time: Date.now() };
-    let mCurrentToolState = Buttons.SELECTION_BUTTON;
 
     let mCurrentMousePosistion;
     let mLongPressTimeout;
@@ -67,15 +66,15 @@ export function EventManager(dashboard) {
         mLongPressTimeout = setTimeout(() => {
             let motion = VectorUtil.dist(mStartPos, mCurrentMousePosistion);
             if (motion < 5) {
-                mDashboard.onLongPress(screenCoords, mCurrentToolState);
+                mDashboard.onLongPress(screenCoords);
             }
         }, 800);
 
         if (Date.now() - mLastClick.time < DBL_CLICK_SPEED &&
             VectorUtil.dist(screenCoords, mLastClick) < DBL_CLICK_DIST) {
-            mDashboard.onDblClick(screenCoords, mCurrentToolState);
+            mDashboard.onDblClick(screenCoords);
         } else {
-            mDashboard.onPointerDown(screenCoords, mCurrentToolState);
+            mDashboard.onPointerDown(screenCoords);
         }
         mLastClick = { x: screenCoords.x, y: screenCoords.y, time: Date.now() };
     });
@@ -83,12 +82,12 @@ export function EventManager(dashboard) {
     d3.select(document).on('pointermove', (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY };
         mCurrentMousePosistion = screenCoords;
-        mDashboard.onPointerMove(screenCoords, mCurrentToolState);
+        mDashboard.onPointerMove(screenCoords);
     });
 
     d3.select(document).on('pointerup', (e) => {
         let screenCoords = { x: e.clientX, y: e.clientY };
-        mDashboard.onPointerUp(screenCoords, mCurrentToolState)
+        mDashboard.onPointerUp(screenCoords)
         clearTimeout(mLongPressTimeout);
     });
 

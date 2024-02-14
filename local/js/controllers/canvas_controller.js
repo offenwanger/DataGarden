@@ -223,6 +223,18 @@ export function CanvasController(mColorMap) {
         draw();
     }
 
+    function onDblClick(screenCoords, systemState) {
+        if (ValUtil.outOfBounds(screenCoords, mInteractionCanvas.node().getBoundingClientRect())) return;
+        let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
+        if (target && IdUtil.isType(target.id, Data.Stroke)) {
+            let element = mModel.getElementForStroke(target.id);
+            if (!element) { console.error("invalid stroke!"); return; }
+            let decendants = mModel.getElementDecendants(element.id);
+            mSelectionIds = [element.id].concat(decendants.map(d => d.id));
+            mSelectionCallback(mSelectionIds);
+        }
+    }
+
     function onPointerMove(screenCoords, systemState) {
         if (mInteraction && mInteraction.type == PANNING) {
             let mouseDist = VectorUtil.subtract(screenCoords, mInteraction.start);
@@ -521,6 +533,7 @@ export function CanvasController(mColorMap) {
     return {
         onModelUpdate,
         onPointerDown,
+        onDblClick,
         onPointerMove,
         onPointerUp,
         onWheel,
