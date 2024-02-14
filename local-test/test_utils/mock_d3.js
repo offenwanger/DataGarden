@@ -308,6 +308,7 @@ export function mockD3(jspreadsheet) {
     rootNode.append('div').attr("id", "table-view-container");
     rootNode.append('div').attr("id", "input-box");
     rootNode.append('div').attr("id", "dropdown-container");
+    rootNode.append('div').attr("id", "tooltips");
 
     let documentCallbacks = {};
 

@@ -28,7 +28,7 @@ export function CanvasController(mColorMap) {
     let mInteractionCanvas = d3.select("#canvas-view-container").select('.canvas-container').append('canvas')
         .style("opacity", 0)
         .classed('interaction-canvas', true);
-    let mDataTooltip = new ToolTip(d3.select('#interface-svg'));
+    let mDataTooltip = new ToolTip();
 
     let mDrawingUtil = new DrawingUtil(
         mCanvas.node().getContext("2d"),

@@ -30,7 +30,7 @@ export function TableViewController(mColorMap) {
         .on('click', modelGenerationMode)
     let mTablesContainer = mViewContainer.append('div').attr('id', 'tables-container');
 
-    let mErrorTooltip = new ToolTip(d3.select('#interface-svg'));
+    let mErrorTooltip = new ToolTip();
 
     let mJTables = [];
     let mTableDivs = [];
@@ -98,6 +98,7 @@ export function TableViewController(mColorMap) {
 
     function onselection(tableDiv, colStart, rowStart, colEnd, rowEnd) {
         mSelection = [];
+        let showError = null;
         for (let col = colStart; col <= colEnd; col++) {
             for (let row = rowStart; row <= rowEnd; row++) {
                 let index = d3.select(tableDiv).attr("tableIndex");
@@ -107,11 +108,12 @@ export function TableViewController(mColorMap) {
                 if (mInvalidCells[index] && mInvalidCells[index][cellIndex]) {
                     let cell = mJTables[index].getCell(cellIndex);
                     let bBox = cell.getBoundingClientRect();
-                    mErrorTooltip.show(bBox.x + bBox.width, bBox.y + bBox.height, mInvalidCells[index][cellIndex])
+                    showError = [bBox.x + bBox.width, bBox.y + bBox.height, mInvalidCells[index][cellIndex]];
                 }
             }
         }
         mSelectionCallback(mSelection);
+        if (showError) mErrorTooltip.show(...showError);
     }
 
     function onbeforechange(instance, cell, x, y, value) {
@@ -240,6 +242,7 @@ export function TableViewController(mColorMap) {
                 console.error("invalid stroke id", strokeId);
             }
         });
+        if (mSelection == []) mErrorTooltip.hide();
         restyle();
     }
 

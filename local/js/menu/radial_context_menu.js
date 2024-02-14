@@ -13,7 +13,7 @@ export function RadialContextMenu(svg, id, items, buttonSize) {
         .attr("id", id);
     let mClickCallback = () => { };
 
-    let mTooltip = new ToolTip(svg);
+    let mTooltip = new ToolTip();
 
     let radius = buttonSize + BUTTON_PADDING * 2;
     let buttonCenterDist = buttonSize / 2 + BUTTON_PADDING;
@@ -73,10 +73,8 @@ export function RadialContextMenu(svg, id, items, buttonSize) {
         let tile = mMenuContainer.append("g")
             .attr("id", items[i].id)
             .on('pointerover', function (e) {
-                d3.select(this)
-                    .raise()
-                    .attr("filter", FiltersUtil.DROP_SHADOW);
-                mTooltip.show(mX + p1.x, mY + p1.y, items[i].tooltip);
+                d3.select(this).raise().attr("filter", FiltersUtil.DROP_SHADOW);
+                mTooltip.show(e.clientX + 10, e.clientY + 10, items[i].tooltip);
             }).on('pointerleave', function () {
                 d3.select(this).attr("filter", "");
                 mTooltip.hide();
