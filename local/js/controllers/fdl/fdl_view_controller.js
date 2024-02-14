@@ -286,7 +286,7 @@ export function FdlViewController(mColorMap) {
         };
         let target = mCodeUtil.getTarget(screenCoords, mInteractionCanvas);
         if (target && IdUtil.isType(target.id, Data.Element)) {
-            let decendants = mModel.getElementDecendants();
+            let decendants = mModel.getElementDecendants(target.id);
             mSelectionIds = [target.id].concat(decendants.map(d => d.id));
             mSelectionCallback(mSelectionIds);
         }
