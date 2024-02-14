@@ -9,7 +9,7 @@ import * as suite from "./test_utils/suite_enviroment.js"
 import * as utility from "./test_utils/utility.js"
 import { VectorUtil } from '../local/js/utils/vector_util.js';
 
-describe('Test Main - Integration Test', function () {
+describe('Test Data Util', function () {
     let integrationEnv;
     beforeEach(function () {
         integrationEnv = suite.getIntegrationEnviroment();

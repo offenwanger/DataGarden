@@ -45,12 +45,21 @@ export let DataUtil = function () {
                 closestColor = c;
             }
         }
-
-        return color;
+        return closestColor;
     }
 
     function colorDist(c1, c2) {
-        return VectorUtil.dist(Object.values(DataUtil.hexToRGBA(c1)), Object.values(DataUtil.hexToRGBA(c2)));
+        let rgba1 = DataUtil.hexToRGBA(c1);
+        let rgba2 = DataUtil.hexToRGBA(c2);
+        if (rgba1.a == 0 && rgba2.a == 0) return 0;
+        // if only one is 0 and the other isn't, then they are the worst match. 
+        if (rgba1.a == 0 || rgba2.a == 0) return Infinity;
+        let rDiff = rgba1.r - rgba2.r;
+        let gDiff = rgba1.g - rgba2.g;
+        let bDiff = rgba1.b - rgba2.b;
+
+        let vector = [Math.pow(rDiff, 4), Math.pow(gDiff, 4), Math.pow(bDiff, 4)]
+        return Math.pow(vector.reduce((s, v) => s + v, 0), 1 / 4);
     }
 
     function imageDataToHex(imgData) {

@@ -164,19 +164,24 @@ export let GenerationUtil = function () {
                 if (mappedSets.templateIdSets[index].length == 0) { console.error('invalid color value!', mappedSets.values[index]); continue; }
                 let sampleColorSets = mappedSets.templateIdSets[index].map(eId => template.getElement(eId).strokes.map(s => s.color)).sort();
                 let modelElements = mappedSets.modelIdSets[index].map(id => model.getElement(id));
-                modelElements.forEach(element => {
+                for (let element of modelElements) {
                     let elementColors = element.strokes.map(s => s.color).sort();
-                    let setDists = sampleColorSets.map(set => elementColors.reduce((sum, c) => sum + Math.min(...set.map(setC => DataUtil.colorDist(setC, c))), 0))
+                    let setDists = sampleColorSets.map(set => {
+                        // we don't need to divide because it's going to be the same number of colors every time.
+                        return elementColors.reduce((sum, c) => {
+                            return sum + Math.min(...set.map(setC => DataUtil.colorDist(setC, c)))
+                        }, 0)
+                    })
                     let minDist = Math.min(...setDists);
                     if (minDist == 0) {
                         // colors all good
-                        return;
+                        continue;
                     }
                     let closestSet = sampleColorSets[setDists.indexOf(minDist)];
                     element.strokes.forEach(stroke => {
                         stroke.color = DataUtil.closestColor(stroke.color, closestSet);
                     })
-                })
+                }
 
                 let dimension = model.getDimensions().find(d => d.id == mappedSets.dimensionId);
                 let category = dimension.categories.find(c => c.name == mappedSets.values[index]);
@@ -186,6 +191,7 @@ export let GenerationUtil = function () {
     }
 
     function deriveSize(template, originalTable, model, table, level) {
+        return false;
         let sizeDimens = table.getColumns().filter(d => d.level == level).filter(d => d.channel == ChannelType.SIZE);
         if (sizeDimens.length > 1) { console.error("Not supported! Impliment me!") }
         if (sizeDimens.length > 0) {
@@ -316,6 +322,7 @@ export let GenerationUtil = function () {
     }
 
     function deriveAngle(template, originalTable, model, table, level) {
+        return;
         let angleDimens = table.getColumns().filter(d => d.level == level).filter(d => d.channel == ChannelType.ANGLE);
         if (angleDimens.length > 1) { console.error("Not supported! Impliment me!") }
         if (angleDimens.length > 0) {
@@ -551,6 +558,7 @@ export let GenerationUtil = function () {
         return template.getDimensions().some(d => {
             if (d.level != level) return false;
             if (d.unmappedIds.includes(element.id)) return false;
+            if (d.type == DimensionType.CONTINUOUS) return true;
             if (DataUtil.channelIsDiscrete(d.channel)) {
                 return d.categories.map(c => c.elementIds).flat().includes(element.id);
             } else { console.error("Invalid state!"); return false; }
@@ -636,10 +644,18 @@ export let GenerationUtil = function () {
             result.templateIdSets.push(cells.map(c => unmapValue(template, dimen.id, c.value)));
         } else {
             let originalCells = DataUtil.unique(originalTable.getColumnData(dimen.id));
+            let allOriginalCells = DataUtil.unique(template.getTables().map(t => t.getColumnData(dimen.id).filter(c => c)).flat())
             result.values = [];
             cells.forEach(cell => {
                 if (!result.values.includes(cell.value)) {
                     let originalValueCells = originalCells.filter(c => c.value == cell.value);
+                    if (originalValueCells.length == 0) {
+                        originalValueCells = allOriginalCells.filter(c => c.value == cell.value);
+                        if (originalValueCells.length == 0) {
+                            console.error('Invalid value!', value)
+                            originalValueCells = getLevelElements(template, level);
+                        }
+                    }
                     result.templateIdSets.push(originalValueCells.map(c => c.id));
                     result.modelIdSets.push([]);
                     result.values.push(cell.value);

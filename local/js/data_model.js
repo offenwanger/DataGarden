@@ -137,20 +137,21 @@ export function DataModel() {
         let suplimentalLabelDimensions = []
         for (let i = 0; i < maxLevel; i++) {
             if (GenerationUtil.needsLabel(this, i)) {
-                suplimentalLabelDimensions[i] = new Data.Dimension();
-                suplimentalLabelDimensions[i].id = IdUtil.getUniqueId(SUPPLIMENTAL_ID);
-                suplimentalLabelDimensions[i].type = DimensionType.DISCRETE;
-                suplimentalLabelDimensions[i].channel = ChannelType.LABEL;
-                suplimentalLabelDimensions[i].name = "L" + i;
-                suplimentalLabelDimensions[i].level = i;
+                let labelDimen = new Data.Dimension();
+                labelDimen.id = IdUtil.getUniqueId(SUPPLIMENTAL_ID);
+                labelDimen.type = DimensionType.DISCRETE;
+                labelDimen.channel = ChannelType.LABEL;
+                labelDimen.name = "\t";
+                labelDimen.level = i;
                 let levelRowElements = DataUtil.unique(leafs.map(e => GenerationUtil.getAncestorAtLevel(e, i, this))
-                    .filter(e => e && !GenerationUtil.getLabelForElement(e.id, this) && GenerationUtil.hasMappedValue(e, this)));
-                suplimentalLabelDimensions[i].categories = levelRowElements.map((e, index) => {
+                    .filter(e => e && !GenerationUtil.getLabelForElement(e.id, this)));
+                labelDimen.categories = levelRowElements.map((e, index) => {
                     let category = new Data.Category();
-                    category.name = "E" + index;
+                    category.name = "" + index;
                     category.elementIds = [e.id];
                     return category;
                 })
+                suplimentalLabelDimensions.push(labelDimen);
             }
         }
 
