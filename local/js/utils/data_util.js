@@ -283,6 +283,10 @@ export let DataUtil = function () {
         return (angle + Math.PI) / (Math.PI * 2);
     }
 
+    function percentToAngle(percent) {
+        return (percent * (Math.PI * 2)) - Math.PI;
+    }
+
     function getRelativeAngle(element, parent) {
         let tangent;
         if (parent) {
@@ -480,6 +484,7 @@ export let DataUtil = function () {
         isDomainNumeric,
         isDateLike,
         angleToPercent,
+        percentToAngle,
         getRelativeAngle,
         getStraightenedStrokes,
         getStupidSpine,

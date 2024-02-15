@@ -256,39 +256,13 @@ export let GenerationUtil = function () {
                     transformElement(element, translation, rotation, element.root);
                 }
             } else {
-                for (let index in mappedSets.values) {
-                    let templateElements = mappedSets.templateIdSets[index].map(id => template.getElement(id));
-                    let templateParents = templateElements.map(e => template.getElement(e.parentId));
-                    let templatePercents = templateElements.map((e, i) => PathUtil.getClosestPointOnPath(e.root, templateParents[i].spine)).map(p => p.percent).sort();
-                    let startPercent = Math.min(...templatePercents.map(p => p.percent));
-                    let endPercent = Math.max(...templatePercents.map(p => p.percent))
-                    let percentIntervals = templatePositions.map((p, i) => i == 0 ? 0 : p.percent - templatePositions[i - 1].percent);
-
-                    let valueElements = getValueElements(model, table, positionDimen.id, value);
-                    for (let i = percentIntervals.length; i < valueElements.length; i++) {
-                        percentIntervals.push(percentIntervals[i + 1 - percentIntervals.length]);
-                    }
-                    percentIntervals = percentIntervals.slice(0, valueElements.length)
-                    let totalLength = percentIntervals.reduce((sum, c) => sum + c, 0);
-                    if (totalLength == 0) totalLength = 1;
-                    let scale = (startPercent - endPercent) / totalLength
-                    percentIntervals = percentIntervals.map(v => v * scale);
-                    valueElements.forEach((element, index) => {
-                        let elementParent = model.getElement(element.parentId);
-                        let oldPosition = PathUtil.getClosestPointOnPath(element.root, elementParent.spine);
-                        let oldNormal = PathUtil.getNormalForPercent(oldPosition.percent, elementParent.spine);
-                        let offset = Math.subtract(element.root, oldPosition);
-                        let dist = Math.dist(oldPosition, element.root) * (VectorUtil.dot(offset, oldNormal) > 0 ? 1 : -1);
-
-                        let newPercent = percentIntervals.slice(0, index).reduce((sum, c) => sum + c, 0) + startPercent;
-                        let newParentPos = PathUtil.getPositionForPercent(elementParent.spine, newPercent);
-                        let newNormal = PathUtil.getNormalForPercent(elementParent.spine, newPercent);
-                        let newRoot = VectorUtil.add(VectorUtil.scale(newNormal, dist), newParentPos);
-
-                        let translation = VectorUtil.subtract(newRoot, element.root);
-                        let rotation = VectorUtil.rotation(oldNormal, newNormal);
-                        transformElement(element, translation, rotation, element.root);
-                    })
+                for (let setIndex in mappedSets.values) {
+                    let templateElementIds = mappedSets.templateIdSets[setIndex];
+                    let dimension = model.getDimension(mappedSets.dimensionId);
+                    let startPercent = setIndex == 0 ? 0 : dimension.ranges[setIndex - 1];
+                    let endPercent = setIndex == dimension.ranges.length ? 1 : dimension.ranges[setIndex];
+                    let elementIds = mappedSets.modelIdSets[setIndex];
+                    redistributedElements(model, elementIds, template, templateElementIds, startPercent, endPercent);
                 }
             }
         } else {
@@ -317,62 +291,121 @@ export let GenerationUtil = function () {
                     let translation = VectorUtil.subtract(newRoot, element.root)
                     transformElement(element, translation, 0, element.root);
                 })
+            } else {
+                let templateElementIds = mappedSets.templateIdSets[0];
+                let elementIds = mappedSets.modelIdSets[0];
+                let startPercent = 0;
+                let endPercent = 1;
+                redistributedElements(model, elementIds, template, templateElementIds, startPercent, endPercent);
             }
         }
     }
 
+    function redistributedElements(model, elementIds, template, templateElementIds, startPercent, endPercent,) {
+        let templateElements = templateElementIds.map(id => template.getElement(id));
+        let templateParents = templateElements.map(e => template.getElement(e.parentId));
+        let templatePositions = templateElements.map((e, i) => PathUtil.getClosestPointOnPath(e.root, templateParents[i].spine));
+        let percents = templatePositions.map(p => p.percent);
+
+        let percentSets = {}
+        percents.forEach((percent, index) => {
+            if (!percentSets[templateParents[index].id]) percentSets[templateParents[index].id] = []
+            percentSets[templateParents[index].id].push(percent);
+        })
+        percentSets = Object.values(percentSets);
+
+        percentSets.forEach(percents => percents.sort());
+        let patternSets = percentSets.map(percents =>
+            percents.map((p, i) => p - (i == 0 ? startPercent : percents[i - 1])));
+
+        let allElements = elementIds.map(eId => model.getElement(eId));
+        let elementSets = {};
+        allElements.forEach(e => {
+            if (!elementSets[e.parentId]) elementSets[e.parentId] = [];
+            elementSets[e.parentId].push(e);
+        })
+        elementSets = Object.values(elementSets);
+
+        elementSets.forEach(elements => {
+            let patternDists = patternSets.map(p => Math.abs(p.length - elements.length));
+            let minDist = Math.min(...patternDists);
+            let index = patternDists.findIndex(pd => pd == minDist);
+            let pattern = patternSets[index];
+
+            let lastPercent = startPercent;
+            let newPercents = []
+            for (let i = 0; i <= elements.length; i++) {
+                newPercents.push(lastPercent + pattern[i % pattern.length]);
+                lastPercent = newPercents[newPercents.length - 1];
+            }
+
+
+            if (lastPercent > endPercent) {
+                let scale = (endPercent - startPercent) / (lastPercent - startPercent);
+                newPercents = newPercents.map(p => (p - startPercent) * scale + startPercent);
+            }
+
+            for (let elementIndex in elements) {
+                let element = elements[elementIndex];
+                let elementParent = model.getElement(element.parentId);
+
+                let oldPosition = PathUtil.getClosestPointOnPath(element.root, elementParent.spine);
+                let oldNormal = PathUtil.getNormalForPercent(elementParent.spine, oldPosition.percent);
+                let offset = VectorUtil.subtract(element.root, oldPosition);
+                let dist = VectorUtil.dist(oldPosition, element.root) * (VectorUtil.dot(offset, oldNormal) > 0 ? 1 : -1);
+
+                let newPercent = newPercents[elementIndex];
+                let newParentPos = PathUtil.getPositionForPercent(elementParent.spine, newPercent);
+                let newNormal = PathUtil.getNormalForPercent(elementParent.spine, newPercent);
+                let newRoot = VectorUtil.add(VectorUtil.scale(newNormal, dist), newParentPos);
+
+                let translation = VectorUtil.subtract(newRoot, element.root);
+                let rotation = VectorUtil.rotation(oldNormal, newNormal);
+                transformElement(element, translation, rotation, element.root);
+            }
+        })
+    }
+
     function deriveAngle(template, originalTable, model, table, level) {
-        return;
-        let angleDimens = table.getColumns().filter(d => d.level == level).filter(d => d.channel == ChannelType.ANGLE);
-        if (angleDimens.length > 1) { console.error("Not supported! Impliment me!") }
-        if (angleDimens.length > 0) {
-            let angleDimen = angleDimens[0];
-            let angleValues = newDataArray.flat().filter(v => v.dimensionId == angleDimen.id).map(v => v.value);
-            if (angleDimen.type == DimensionType.DISCRETE) {
-                angleValues = DataUtil.unique(angleValues);
-                angleValues.forEach(value => {
-                    let valueElements = getValueElements(model, table, angleDimen.id, value);
-                    let mappedElementIds = unmapValue(template, angleDimen.id, value);
-                    let mappedElements = mappedElementIds.map(eId => template.getElement(eId));
-                    let mappedAngles;
-                    if (angleDimen.angleType == AngleType.ABSOLUTE) {
-                        mappedAngles = mappedElements.map(e => e.angle);
-                    } else {
-                        let mappedParents = mappedElements.map(e => template.getElement(e.parentId));
-                        mappedAngles = mappedElements.map((e, i) => DataUtil.getRelativeAngle(e, mappedParents[i]))
-                    }
-                    for (let i = mappedAngles.length; i < valueElements.length; i++) mappedAngles.push(mappedAngles[i - mappedAngles.length]);
+        let mappedSets = getMappedSets(template, originalTable, model, table, level, ChannelType.ANGLE);
+        if (mappedSets.dimensionId) {
+            let dimension = model.getDimension(mappedSets.dimensionId);
+            if (mappedSets.values == DimensionType.CONTINUOUS) {
+                for (let index in mappedSets.modelIdSets[0]) {
+                    let element = model.getElement(mappedSets.modelIdSets[0][index])
+                    let elementParent = dimension.angleType == AngleType.RELATIVE ? model.getElement(element.parentId) : null;
+                    let oldAngle = DataUtil.getRelativeAngle(element, elementParent);
+                    let newAngle = mappedSets.templateIdSets[0][index];
+                    let rotation = newAngle - oldAngle;
+                    transformElement(element, { x: 0, y: 0 }, rotation, element.root);
+                }
+            } else {
+                for (let setIndex in mappedSets.values) {
+                    let templateElementIds = mappedSets.templateIdSets[setIndex];
+                    let templateElements = templateElementIds.map(eId => template.getElement(eId));
+                    let templateParents = templateElements.map(e => dimension.angleType == AngleType.RELATIVE ? template.getElement(e.parentId) : null)
+                    let templateAngles = templateElements.map((e, i) => DataUtil.getRelativeAngle(e, templateParents[i]));
 
-                    valueElements.forEach((element, index) => {
-                        let newAngle = mappedAngles[index];
-                        let currentAngle;
-                        if (angleDimen.angleType == AngleType.ABSOLUTE) {
-                            currentAngle = element.angle;
-                        } else {
-                            let elementParent = model.getElement(element.parentId);
-                            currentAngle = DataUtil.getRelativeAngle(element, elementParent);
+                    let minPercent = setIndex == 0 ? 0 : dimension.ranges[setIndex - 1];
+                    let minAngle = DataUtil.percentToAngle(minPercent);
+                    let maxPercent = setIndex == dimension.ranges.length ? 1 : dimension.ranges[setIndex];
+                    let maxAngle = DataUtil.percentToAngle(maxPercent);
+
+                    templateAngles.push(minAngle, maxAngle);
+                    let averageAngle = templateAngles.reduce((a, b) => a + b, 0) / templateAngles.length;
+
+                    let elementIds = mappedSets.modelIdSets[setIndex];
+                    elementIds.forEach(elementId => {
+                        let currentValue = getMappedValue(model, dimension.id, elementId)
+                        if (currentValue != mappedSets.values[setIndex]) {
+                            let element = model.getElement(elementId);
+                            let elementParent = dimension.angleType == AngleType.RELATIVE ? model.getElement(element.parentId) : null;
+                            let oldAngle = DataUtil.getRelativeAngle(element, elementParent);
+                            let rotation = averageAngle - oldAngle;
+                            transformElement(element, { x: 0, y: 0 }, rotation, element.root);
                         }
-
-                        let rotation = newAngle - currentAngle;
-                        translateTreeBranch(model, element.id, { x: 0, y: 0 }, rotation);
                     })
-                });
-            } else if (angleDimen.type == DimensionType.CONTINUOUS) {
-                newElements.forEach((element, row) => {
-                    let angleValue = newDataArray[row].find(v => v.dimensionId == angleDimen.id).value;
-                    angleValue = parseFloat(angleValue);
-                    let newAngle = unmapValue(template, angleDimen.id, angleValue);
-                    let currentAngle;
-                    if (angleDimen.angleType == AngleType.ABSOLUTE) {
-                        currentAngle = element.angle;
-                    } else {
-                        let elementParent = model.getElement(element.parentId);
-                        currentAngle = DataUtil.getRelativeAngle(element, elementParent);
-                    }
-
-                    let rotation = newAngle - currentAngle;
-                    translateTreeBranch(model, element.id, { x: 0, y: 0 }, rotation);
-                });
+                }
             }
         }
     }
@@ -394,19 +427,6 @@ export let GenerationUtil = function () {
         element.root = VectorUtil.add(element.root, translation);
         element.strokes.forEach(stroke => stroke.path = PathUtil.translate(stroke.path, translation));
         element.spine = PathUtil.translate(element.spine, translation)
-    }
-
-    function getCategoryElements(template, level, categoryId = null) {
-        let levelElements = template.getElements().filter(e => DataUtil.getLevelForElement(e.id, template) == level);
-        if (categoryId) {
-            let dimension = template.getDimensionForCategory(categoryId);
-            let category = template.getCategory(categoryId);
-            if (DataUtil.channelIsContinuous(dimension.channel)) {
-                return levelElements.filter(e => DataUtil.getMappedValue(template, dimension.id, e.id) == category.name);
-            } else {
-                return levelElements.filter(e => category.elementIds.includes(e.id));
-            }
-        }
     }
 
     function getMappedValue(model, dimensionId, elementId) {
@@ -454,7 +474,6 @@ export let GenerationUtil = function () {
 
                 let domainPercent = DataUtil.limit((value - dimension.domain[0]) / (dimension.domain[1] - dimension.domain[0]), 0, 1);
                 let channelPercent = (dimension.domainRange[1] - dimension.domainRange[0]) * domainPercent + dimension.domainRange[0];
-
                 if (dimension.channel == ChannelType.POSITION) {
                     return channelPercent;
                 } else if (dimension.channel == ChannelType.ANGLE) {
@@ -558,10 +577,12 @@ export let GenerationUtil = function () {
         return template.getDimensions().some(d => {
             if (d.level != level) return false;
             if (d.unmappedIds.includes(element.id)) return false;
-            if (d.type == DimensionType.CONTINUOUS) return true;
+            if (DataUtil.channelIsContinuous(d.channel)) return true;
             if (DataUtil.channelIsDiscrete(d.channel)) {
                 return d.categories.map(c => c.elementIds).flat().includes(element.id);
-            } else { console.error("Invalid state!"); return false; }
+            }
+            console.error("Invalid state!");
+            return false;
         });
     }
 
@@ -713,7 +734,7 @@ export let GenerationUtil = function () {
                         if (!category) {
                             invalidCells[tableIndex][cellIndex] = "Invalid category";
                             return;
-                        } else if (category.elementIds.length == 0) {
+                        } else if (DataUtil.channelIsDiscrete(dimension.channel) && category.elementIds.length == 0) {
                             invalidCells[tableIndex][cellIndex] = "Category has no examples";
                             return;
                         }

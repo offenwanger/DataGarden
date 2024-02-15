@@ -106,11 +106,9 @@ export let VectorUtil = function () {
     }
 
     function rotateAroundPoint(v, p, angle) {
-        let cos = Math.cos(angle);
-        let sin = Math.sin(angle);
-        let x = (cos * (v.x - p.x)) + (sin * (v.y - p.y)) + p.x;
-        let y = (cos * (v.y - p.y)) - (sin * (v.x - p.x)) + p.y;
-        return { x, y };
+        let offset = subtract(v, p);
+        let rotated = rotate(offset, angle);
+        return add(rotated, p);
     }
 
     function projectToLine(p, p1, p2) {

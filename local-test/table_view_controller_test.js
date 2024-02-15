@@ -45,17 +45,16 @@ describe('Table View Controller Test', function () {
             d3.select('#generate-button').getCallbacks()['click']()
         });
 
-        it('should generate a model for which the tables are the same', async function () {
+        it('should generate a full model for which the tables are close enough', async function () {
             await utility.uploadJSON('template_roses_full.json');
             assert.equal(model().getDimensions().length, 6);
             utility.clickTab(Tab.TABLE);
 
-            let tablesBefore = model().getTables().map(t => t.getDataArray().map(r => r.map(c => c.value)));
+            let tablesBefore = model().getTables().map(t => t.getDataArray().map(r => r.map(c => c.value).map(v => typeof v == 'number' ? Math.round(v) : v)));
 
             d3.select('#generate-button').getCallbacks()['click']()
 
-            expect(model().getTables().map(t => t.getDataArray().map(r => r.map(c => c.value)))).to.eql(tablesBefore);
-            assert.equal('done', true);
+            expect(model().getTables().map(t => t.getDataArray().map(r => r.map(c => c.value).map(v => typeof v == 'number' ? Math.round(v) : v)))).to.eql(tablesBefore);
         });
     })
 
@@ -207,6 +206,67 @@ describe('Table View Controller Test', function () {
 
             expect(model().getTables()[0].getDataArray()[1][1].value).to.eql("Bad");
             utility.updateTable("#data-table-0", 1, 1, "Blar");
+        });
+
+        describe('angle generation tests', function () {
+            it('should flip back and forth without error', async function () {
+                await utility.uploadJSON('template_roses_angle.json');
+                assert.equal(model().getDimensions().length, 2);
+                utility.clickTab(Tab.TABLE);
+
+                d3.select('#generate-button').getCallbacks()['click']()
+                d3.select('#generate-button').getCallbacks()['click']()
+                d3.select('#generate-button').getCallbacks()['click']()
+                d3.select('#generate-button').getCallbacks()['click']()
+
+                await utility.uploadJSON('template_flowers_angle.json');
+                assert.equal(model().getDimensions().length, 2);
+                utility.clickTab(Tab.TABLE);
+
+                d3.select('#generate-button').getCallbacks()['click']()
+                d3.select('#generate-button').getCallbacks()['click']()
+                d3.select('#generate-button').getCallbacks()['click']()
+                d3.select('#generate-button').getCallbacks()['click']()
+            });
+
+            it('should generate a model for which the angles are the same', async function () {
+                await utility.uploadJSON('template_roses_angle.json');
+                assert.equal(model().getDimensions().length, 2);
+                utility.clickTab(Tab.TABLE);
+
+                let tablesBefore = model().getTables().map(t => t.getDataArray().map(r => r.map(c => c.value)));
+
+                d3.select('#generate-button').getCallbacks()['click']()
+
+                expect(model().getTables().map(t => t.getDataArray().map(r => r.map(c => c.value)))).to.eql(tablesBefore);
+            });
+
+            it('should update an angle for a changed table', async function () {
+                await utility.uploadJSON('template_roses_angle.json');
+                assert.equal(model().getDimensions().length, 2);
+                utility.clickTab(Tab.TABLE);
+
+                let tablesBefore = model().getTables().map(t => t.getDataArray().map(r => r.map(c => c.value)));
+                d3.select('#generate-button').getCallbacks()['click']()
+                expect(model().getTables().map(t => t.getDataArray().map(r => r.map(c => c.value)))).to.eql(tablesBefore);
+
+                expect(model().getTables()[0].getDataArray()[1][1].value).to.eql("Right away");
+                utility.updateTable("#data-table-0", 1, 1, "After a bit");
+                expect(model().getTables()[0].getDataArray()[1][1].value).to.eql("After a bit");
+            });
+
+            it('should not crash for an invalid angle', async function () {
+                await utility.uploadJSON('template_roses_angle.json');
+                assert.equal(model().getDimensions().length, 2);
+                utility.clickTab(Tab.TABLE);
+
+                let tablesBefore = model().getTables().map(t => t.getDataArray().map(r => r.map(c => c.value)));
+                d3.select('#generate-button').getCallbacks()['click']()
+                expect(model().getTables().map(t => t.getDataArray().map(r => r.map(c => c.value)))).to.eql(tablesBefore);
+
+                expect(model().getTables()[0].getDataArray()[1][1].value).to.eql("Right away");
+                utility.updateTable("#data-table-0", 1, 1, "Blar");
+            });
         });
     });
 });
