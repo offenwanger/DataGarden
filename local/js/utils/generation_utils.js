@@ -137,22 +137,18 @@ export let GenerationUtil = function () {
             element.angle = templateElement.angle;
             if (element.parentId) {
                 let templateParent = template.getElement(templateElement.parentId);
-                let elementParent = model.getElement(element.parentId);
+                let templatePosition = PathUtil.getClosestPointOnPath(templateElement.root, templateParent.spine);
+                let templateNormal = PathUtil.getNormalForPercent(templateParent.spine, templatePosition.percent);
 
-                let templateParentPosition = PathUtil.getClosestPointOnPath(templateElement.root, templateParent.spine);
-                let templateNormal = PathUtil.getNormalForPercent(templateParent.spine, templateParentPosition.percent);
-                let templateOffset = VectorUtil.subtract(templateElement.root, templateParentPosition);
-                let dist = VectorUtil.dist(templateElement.root, templateParentPosition) * (VectorUtil.dot(templateNormal, templateOffset) > 0 ? 1 : -1);
-                let elementParentPosition = PathUtil.getPositionForPercent(elementParent.spine, templateParentPosition.percent);
-                let elementNormal = PathUtil.getNormalForPercent(elementParent.spine, templateParentPosition.percent);
-                element.root = VectorUtil.add(VectorUtil.scale(elementNormal, dist), elementParentPosition);
-                let translationOffset = VectorUtil.subtract(element.root, templateElement.root);
-                let angleOffset = VectorUtil.rotation(templateNormal, elementNormal);
-                element.angle = VectorUtil.rotate(element.angle, angleOffset);
-                element.strokes.forEach(stroke => stroke.path = PathUtil.translate(stroke.path, translationOffset));
-                element.strokes.forEach(stroke => stroke.path = stroke.path.map(p => VectorUtil.rotateAroundPoint(p, element.root, angleOffset)));
-                element.spine = PathUtil.translate(element.spine, translationOffset)
-                element.spine = element.spine.map(p => VectorUtil.rotateAroundPoint(p, element.root, angleOffset));
+                let elementParent = model.getElement(element.parentId);
+                let elementPosition = PathUtil.getPositionForPercent(elementParent.spine, templatePosition.percent);
+                let elementNormal = PathUtil.getNormalForPercent(elementParent.spine, templatePosition.percent);
+
+                let translation = VectorUtil.subtract(elementPosition, templatePosition);
+                let rotation = VectorUtil.rotation(elementNormal, templateNormal);
+
+                transformElement(element, translation, 0, { x: 0, y: 0 })
+                transformElement(element, { x: 0, y: 0 }, rotation, elementPosition)
             }
         })
     }
@@ -360,7 +356,7 @@ export let GenerationUtil = function () {
                 let newRoot = VectorUtil.add(VectorUtil.scale(newNormal, dist), newParentPos);
 
                 let translation = VectorUtil.subtract(newRoot, element.root);
-                let rotation = VectorUtil.rotation(oldNormal, newNormal);
+                let rotation = VectorUtil.rotation(newNormal, oldNormal);
                 transformElement(element, translation, rotation, element.root);
             }
         })
@@ -408,14 +404,6 @@ export let GenerationUtil = function () {
                 }
             }
         }
-    }
-
-    function translateTreeBranch(model, elementId, translation, rotation) {
-        let element = model.getElement(elementId);
-        model.getElementDecendants(elementId).forEach(decendant => {
-            transformElement(decendant, translation, rotation, element.root);
-        })
-        transformElement(element, translation, rotation, element.root);
     }
 
     function transformElement(element, translation, rotation, transformationRoot) {
