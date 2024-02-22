@@ -241,6 +241,12 @@ export let DataUtil = function () {
         return parseInt(labelName.split(dimentionName)[1]);
     }
 
+    function getNextDefaultName(nameRoot, names) {
+        return nameRoot + (Math.max(0, ...names
+            .map(name => DataUtil.isDefaultLabel(nameRoot, name) ? DataUtil.getDefaultLabelIndex(nameRoot, name) : 0)
+            .filter(n => !isNaN(n))) + 1)
+    }
+
     function getPaddedPoints(nodes, padding) {
         let pointArr = [];
         nodes.forEach(d => {
@@ -478,6 +484,7 @@ export let DataUtil = function () {
         channelIsContinuous,
         isDefaultLabel,
         getDefaultLabelIndex,
+        getNextDefaultName,
         getPaddedPoints,
         domainIsValid,
         isNumeric,

@@ -168,9 +168,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
         let newCategory = new Data.Category();
         let defaultName = dimension.channel == ChannelType.LABEL ? dimension.name : DEFAULT_CATEGORY_NAME;
-        newCategory.name = defaultName + (Math.max(0, ...dimension.categories
-            .map(c => DataUtil.isDefaultLabel(defaultName, c.name) ? DataUtil.getDefaultLabelIndex(defaultName, c.name) : 0)
-            .filter(n => !isNaN(n))) + 1);
+        newCategory.name = DataUtil.getNextDefaultName(defaultName, dimension.categories.map(c => c.name));
         dimension.categories.push(newCategory);
         ModelUtil.syncRanges(dimension);
 
@@ -190,19 +188,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
             if (!category) { console.error("Invalid category id"); return; }
         }
 
-        if (dimension.channel != ChannelType.LABEL) {
-            dimension.categories.forEach(category => {
-                category.elementIds = category.elementIds.filter(e => !elementIds.includes(e));
-            })
-            dimension.unmappedIds = dimension.unmappedIds.filter(e => !elementIds.includes(e));
-        }
-
         // Only add valid elements
         elementIds = elementIds.map(eId => {
             let e = model.getElement(eId);
             if (!e) { console.error("Invalid element id!", eId); return null; };
             return e;
         }).filter(e => e).map(e => e.id);
+
 
         if (dimension.channel == ChannelType.LABEL) {
             if (categoryId == NO_CATEGORY_ID) {
@@ -214,28 +206,34 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 })
                 dimension.unmappedIds.push(...elementIds);
             } else {
-                let firstElement = elementIds[0];
-                dimension.unmappedIds = dimension.unmappedIds.filter(e => e != firstElement);
+                let firstElementId = elementIds[0];
 
-                let firstElementCategory = dimension.categories.find(c => c.elementIds.includes(firstElement));
-                if (firstElementCategory && DataUtil.isDefaultLabel(dimension.name, firstElementCategory.name) && firstElementCategory != category) {
-                    dimension.categories = dimension.categories.filter(category => category != firstElementCategory);
-                } else if (firstElementCategory) {
-                    firstElementCategory.elementIds = firstElementCategory.elementIds.filter(e => e != firstElement)
-                }
+                let newCategoryElementId = category.elementIds.pop();
+                let firstElementCategory = dimension.categories.find(c => c.elementIds.includes(firstElementId));
 
-                if (category) {
-                    dimension.unmappedIds.push(...category.elementIds)
-                    category.elementIds = [firstElement];
+                if (firstElementCategory) {
+                    firstElementCategory.elementIds = firstElementCategory.elementIds.filter(eId => eId != firstElementId)
+                    if (newCategoryElementId) firstElementCategory.elementIds.push(newCategoryElementId);
+                    if (firstElementCategory.elementIds.length == 0 &&
+                        DataUtil.isDefaultLabel(dimension.name, firstElementCategory.name)) {
+                        dimension.categories = dimension.categories.filter(category => category != firstElementCategory);
+                    }
                 } else {
-                    dimension.unmappedIds.push(firstElement);
+                    dimension.unmappedIds = dimension.unmappedIds.filter(eId => eId != firstElementId);
+                    if (newCategoryElementId) dimension.unmappedIds.push(newCategoryElementId)
                 }
+                category.elementIds.push(firstElementId);
             }
         } else {
+            dimension.categories.forEach(category => {
+                category.elementIds = category.elementIds.filter(e => !elementIds.includes(e));
+            })
+            dimension.unmappedIds = dimension.unmappedIds.filter(e => !elementIds.includes(e));
+
             if (categoryId == NO_CATEGORY_ID) {
                 dimension.unmappedIds.push(...elementIds);
             } else if (category) {
-                category.elementIds = DataUtil.unique(category.elementIds.concat(elementIds));
+                category.elementIds = category.elementIds.concat(elementIds);
             }
         }
 
@@ -517,13 +515,17 @@ document.addEventListener('DOMContentLoaded', function (e) {
             model = mModelController.getModel();
             let oldElements = oldStrokeElementIds.map(eId => model.getElement(eId)).filter(e => e && e.parentId && e.parentId != element.id);
             if (oldElements.length > 0) {
-                let parentId = Object.entries(oldElements.reduce((counts, e) => {
-                    counts[e.parentId] ? counts[e.parentId]++ : counts[e.parentId] = 1;
+                let oldElementParentCounts = oldElements.reduce((counts, e) => {
+                    if (e.parentId) counts[e.parentId] ? counts[e.parentId]++ : counts[e.parentId] = 1;
                     return counts;
-                }, {})).reduce((max, [parentId, count]) => {
-                    count > max.count ? { parentId, count } : max;
+                }, {});
+                oldElementParentCounts = Object.entries(oldElementParentCounts)
+
+                let parentId = oldElementParentCounts.reduce((max, [parentId, count]) => {
+                    return count > max.count ? { count, parentId } : max;
                 }, { count: 0, parentId: null }).parentId;
                 let parent = parentId ? model.getElement(parentId) : null;
+
                 if (parent) {
                     element.parentId = parentId;
                     ModelUtil.orientElementByParent(element, parent.spine)
@@ -531,6 +533,8 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 } else if (parentId) { console.error("Invalid parent id", parentId); }
             }
         }
+
+        ModelUtil.autoClusterLevelDimensions(DataUtil.getLevelForElement(element.id, mModelController.getModel()), mModelController);
 
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());

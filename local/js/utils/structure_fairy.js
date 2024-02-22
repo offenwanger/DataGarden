@@ -86,28 +86,55 @@ export let StructureFairy = function () {
             } else {
                 clusters = ClassifierUtil.clusterElementShapes(elements, categories);
             }
-            let clusterCount = Math.max(...clusters) + 1;
 
-            for (let i = 0; i < clusterCount; i++) {
-                let category = categories[i];
-                if (!category) {
-                    if (i == 0 || dimension.channel == ChannelType.COLOR || dimension.channel == ChannelType.SHAPE) {
-                        category = new Data.Category();
-                        category.name = DEFAULT_CATEGORY_NAME + (i + 1);
-                        categories.push(category)
-                    } else {
-                        // don't make new categories unless we are using a discrete channel.
-                        category = categories[0];
-                    }
-                }
-                let clusterElementIds = clusters
-                    .map((cluster, elementIndex) => cluster == i ? elementIndex : -1)
+            if (dimension.channel == ChannelType.LABEL) {
+                let noMappingIndex = categories.findIndex(c => c.id == NO_CATEGORY_ID);
+                if (noMappingIndex != -1) categories[noMappingIndex].elementIds = DataUtil.unique(clusters
+                    .map((cluster, elementIndex) => cluster == noMappingIndex ? elementIndex : -1)
                     .filter(i => i != -1)
-                    .map(i => elements[i].id);
-                category.elementIds = DataUtil.unique(category.elementIds.concat(clusterElementIds));
-            }
-            for (let i = clusterCount; i < categories.length; i++) {
-                categories[i].elementIds = [];
+                    .map(i => elements[i].id));
+
+                let mappedIds = DataUtil.unique(clusters
+                    .map((cluster, elementIndex) => cluster != noMappingIndex ? elementIndex : -1)
+                    .filter(i => i != -1)
+                    .map(i => elements[i].id));
+
+                let elementIds = elements.map(e => e.id);
+                let emptyCategories = categories.filter(c => !c.elementIds.some(eId => elementIds.includes(eId)) && c.id != NO_CATEGORY_ID);
+                let unlabledElements = mappedIds.filter(id => !categories.find(c => c.elementIds.includes(id)));
+
+                unlabledElements.forEach((id, i) => {
+                    let emptyCat = emptyCategories[i];
+                    if (!emptyCat) {
+                        emptyCat = new Data.Category();
+                        emptyCat.name = DataUtil.getNextDefaultName(dimension.name, dimension.categories.map(c => c.name));
+                        categories.push(emptyCat)
+                    }
+                    emptyCat.elementIds = [id];
+                })
+            } else {
+                let clusterCount = Math.max(...clusters) + 1;
+                for (let i = 0; i < clusterCount; i++) {
+                    let category = categories[i];
+                    if (!category) {
+                        if (i == 0 || DataUtil.channelIsDiscrete(dimension.channel)) {
+                            category = new Data.Category();
+                            category.name = DEFAULT_CATEGORY_NAME + (i + 1);
+                            categories.push(category)
+                        } else {
+                            // don't make new categories unless we are using a discrete channel.
+                            category = categories[0];
+                        }
+                    }
+                    let clusterElementIds = clusters
+                        .map((cluster, elementIndex) => cluster == i ? elementIndex : -1)
+                        .filter(i => i != -1)
+                        .map(i => elements[i].id);
+                    category.elementIds = DataUtil.unique(category.elementIds.concat(clusterElementIds));
+                }
+                for (let i = clusterCount; i < categories.length; i++) {
+                    categories[i].elementIds = [];
+                }
             }
 
             if (dimension.unmappedIds.length == 0) {
