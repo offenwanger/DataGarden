@@ -464,6 +464,18 @@ export let DataUtil = function () {
         }
     }
 
+    function resizeElement(element, size, sizeType) {
+        let currentSize = getSize(element, sizeType);
+        let scale = size / currentSize;
+        if (sizeType == SizeType.AREA) { scale = Math.sqrt(scale); }
+        element.strokes.forEach(s => s.path = s.path.map(p => {
+            return VectorUtil.add(VectorUtil.scale(VectorUtil.subtract(p, element.root), scale), element.root);
+        }))
+        element.spine = element.spine.map(p => {
+            return VectorUtil.add(VectorUtil.scale(VectorUtil.subtract(p, element.root), scale), element.root);
+        })
+    }
+
     return {
         numToColor,
         rgbToHex,
@@ -508,5 +520,6 @@ export let DataUtil = function () {
         limit,
         compareDimensions,
         getSize,
+        resizeElement,
     }
 }();

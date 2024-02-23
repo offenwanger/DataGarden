@@ -187,45 +187,30 @@ export let GenerationUtil = function () {
     }
 
     function deriveSize(template, originalTable, model, table, level) {
-        return false;
-        let sizeDimens = table.getColumns().filter(d => d.level == level).filter(d => d.channel == ChannelType.SIZE);
-        if (sizeDimens.length > 1) { console.error("Not supported! Impliment me!") }
-        if (sizeDimens.length > 0) {
-            let sizeDimen = sizeDimens[0];
-            let sizeCells = table.getColumnData(sizeDimen.id)
-            let sizeValues = sizeCells.map(c => c.value);
-            if (sizeDimen.type == DimensionType.DISCRETE) {
-                sizeValues = DataUtil.unique(sizeValues);
-                sizeValues.forEach(value => {
-                    let mappedElementIds = unmapValue(template, sizeDimen.id, value);
-                    let sizes = mappedElementIds.map(eId => DataUtil.getSize(template.getElement(eId), sizeDimen.sizeType));
-                    let valueElements = getValueElements(model, table, sizeDimen.id, value);
-                    for (let i = sizes.length; i < valueElements.length; i++) sizes.push(sizes[i - sizes.length]);
-                    valueElements.forEach((element, index) => {
-                        let currentSize = DataUtil.getSize(element, sizeDimen.sizeType);
-                        let scale = sizes[index] / currentSize;
-                        if (sizeDimen.sizeType == SizeType.AREA) scale = Math.sqrt(scale);
-                        element.strokes.forEach(stroke => stroke.path = stroke.path.map(p => {
-                            return VectorUtil.add(VectorUtil.scale(VectorUtil.subtract(p, element.root), scale), element.root);
-                        }))
-                        element.spine = element.spine.map(p => {
-                            return VectorUtil.add(VectorUtil.scale(VectorUtil.subtract(p, element.root), scale), element.root);
-                        });
+        let mappedSets = getMappedSets(template, originalTable, model, table, level, ChannelType.SIZE);
+        if (mappedSets.dimensionId) {
+            let dimension = model.getDimension(mappedSets.dimensionId);
+            if (mappedSets.values == DimensionType.CONTINUOUS) {
+                for (let index in mappedSets.modelIdSets[0]) {
+                    let element = model.getElement(mappedSets.modelIdSets[0][index])
+                    let newSize = mappedSets.templateIdSets[0][index];
+                    DataUtil.resizeElement(element, newSize, dimension.sizeType);
+                }
+            } else {
+                for (let setIndex in mappedSets.values) {
+                    let templateElementIds = mappedSets.templateIdSets[setIndex];
+                    let templateElements = templateElementIds.map(eId => template.getElement(eId));
+                    let templateSizes = templateElements.map((e, i) => DataUtil.getSize(e, dimension.sizeType));
+                    if (templateSizes.length == 0) { console.error('Invalid size range! No examples!'); continue; }
+
+                    let averageSize = templateSizes.reduce((a, b) => a + b, 0) / templateSizes.length;
+
+                    let elementIds = mappedSets.modelIdSets[setIndex];
+                    elementIds.forEach(elementId => {
+                        let element = model.getElement(elementId);
+                        DataUtil.resizeElement(element, averageSize, dimension.sizeType);
                     })
-                });
-            } else if (sizeDimen.type == DimensionType.CONTINUOUS) {
-                newElements.forEach((element, row) => {
-                    let sizeValue = newDataArray[row].find(v => v.dimensionId == sizeDimen.id).value;
-                    sizeValue = parseFloat(sizeValue);
-                    let size = unmapValue(template, sizeDimen.id, sizeValue)
-                    let scale = size / DataUtil.getSize(element, sizeDimen.sizeType);
-                    element.strokes.forEach(stroke => stroke.path = stroke.path.map(p => {
-                        return VectorUtil.add(VectorUtil.scale(VectorUtil.subtract(p, element.root), scale), element.root);
-                    }))
-                    element.spine = element.spine.map(p => {
-                        return VectorUtil.add(VectorUtil.scale(VectorUtil.subtract(p, element.root), scale), element.root);
-                    })
-                });
+                }
             }
         }
     }
