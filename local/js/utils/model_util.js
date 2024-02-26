@@ -98,7 +98,7 @@ export let ModelUtil = function () {
 
     function updateCategories(dimension, model) {
         if (dimension.channel == ChannelType.LABEL) {
-            let elements = model.getElements().filter(e => DataUtil.getLevelForElement(e.id, model) == dimension.level);
+            let elements = model.getElements().filter(e => model.getElementLevel(e.id) == dimension.level);
             elements.forEach(e => {
                 if (dimension.unmappedIds.includes(e.id)) return;
                 let category = dimension.categories.find(c => c.elementIds.includes(e.id));

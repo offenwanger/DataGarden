@@ -136,24 +136,6 @@ export let DataUtil = function () {
         return distMetric;
     }
 
-    function getLevelForElement(elementId, model) {
-        let element = model.getElement(elementId);
-        if (!element) { console.error("invalid element id", elementId); return -1; }
-
-        let level = 0;
-        let touched = [elementId];
-        let curr = element;
-        while (curr.parentId) {
-            let parent = model.getElement(curr.parentId)
-            if (!parent) { console.error("Invalid state, parent not found", curr.parentId); return -1; };
-            level++;
-            curr = parent;
-            if (touched.includes(curr.id)) { console.error("Invalid State, loop", touched); return -1; }
-            touched.push(curr.id);
-        }
-        return level;
-    }
-
     function isDecendant(acestorId, decendantId, model) {
         let parentId = decendantId;
         while (parentId) {
@@ -487,7 +469,6 @@ export let DataUtil = function () {
         getBoundingBox,
         overlap,
         getDifferenceMetric,
-        getLevelForElement,
         isDecendant,
         unique,
         findEmptyPlace,

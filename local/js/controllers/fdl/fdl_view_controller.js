@@ -80,7 +80,7 @@ export function FdlViewController(mColorMap) {
                 id: element.id,
                 parent: element.parentId,
                 radius: Size.ELEMENT_NODE_SIZE,
-                level: DataUtil.getLevelForElement(element.id, mModel),
+                level: mModel.getElementLevel(element.id),
                 parentProjection: parent ? PathUtil.getClosestPointOnPath(element.root, parent.spine) : null,
             }
             let oldNodeData = oldSimulationData.find(item => item.id == element.id);

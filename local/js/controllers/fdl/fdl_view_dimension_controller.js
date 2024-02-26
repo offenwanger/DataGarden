@@ -121,7 +121,7 @@ export function FdlDimensionViewController(mDrawingUtil, mOverlayUtil, mCodeUtil
         mDimension = mModel.getDimension(mDimensionId);
         if (!mDimension) { console.error("Invalid dimension id", mDimensionId); mDimensionId = null; mDimension = null; draw(); return; }
 
-        mNodes = data.filter(node => IdUtil.isType(node.id, Data.Element) && DataUtil.getLevelForElement(node.id, mModel) == mDimension.level);
+        mNodes = data.filter(node => IdUtil.isType(node.id, Data.Element) && mModel.getElementLevel(node.id) == mDimension.level);
         mCategories = data.filter(node => node.dimension == mDimension.id);
         mControls = makeControlNodes(mDimension);
 

@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             }
 
             model = mModelController.getModel();
-            let level = DataUtil.getLevelForElement(element.id, model);
+            let level = model.getElementLevel(element.id);
             ModelUtil.autoClusterLevelDimensions(level, mModelController);
         }
 
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             if (!element) { console.error("Invalid element id", elementId); return; }
             mModelController.updateElement(element);
 
-            levels.push(DataUtil.getLevelForElement(element.id, model));
+            levels.push(model.getElementLevel(element.id));
         });
 
         DataUtil.unique(levels).forEach(level => {
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         let maxNum = Math.max(0, ...model.getDimensions()
             .map(d => d.name.startsWith("Dimension") ? parseInt(d.name.slice(9)) : 0)
             .filter(n => !isNaN(n)))
-        let maxLevel = Math.max(0, ...model.getElements().map(e => DataUtil.getLevelForElement(e.id, model)));
+        let maxLevel = Math.max(0, ...model.getElements().map(e => model.getElementLevel(e.id)));
         let newDimension = new Data.Dimension();
         newDimension.name = "Dimension" + (maxNum + 1);
         newDimension.type = DimensionType.DISCRETE;
@@ -427,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             dimen.categories.forEach(l => l.elementIds = l.elementIds.filter(eId => !elementIds.includes(eId)));
             mModelController.updateDimension(dimen);
         })
-        DataUtil.unique(elementIds.map(eId => DataUtil.getLevelForElement(eId, model))).forEach(level => {
+        DataUtil.unique(elementIds.map(eId => model.getElementLevel(eId))).forEach(level => {
             ModelUtil.autoClusterLevelDimensions(level, mModelController);
         });
 
@@ -534,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             }
         }
 
-        ModelUtil.autoClusterLevelDimensions(DataUtil.getLevelForElement(element.id, mModelController.getModel()), mModelController);
+        ModelUtil.autoClusterLevelDimensions(mModelController.getModel().getElementLevel(element.id), mModelController);
 
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());

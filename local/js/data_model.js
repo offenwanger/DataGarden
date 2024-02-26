@@ -45,6 +45,12 @@ export function DataModel() {
         return mElements;
     }
 
+    function getLevelElements(level) {
+        return getElements().filter(e => {
+            return getElementLevel(e.id) == level;
+        });
+    }
+
     function setElements(elements) {
         mElements = elements;
     }
@@ -68,7 +74,7 @@ export function DataModel() {
     }
 
     function getElementMappedValues(elementId) {
-        let level = DataUtil.getLevelForElement(elementId, this)
+        let level = getElementLevel(elementId)
         let result = [];
         getDimensions().filter(d => d.level == level && DataUtil.dimensionValid(d)).forEach(dimension => {
             let value = GenerationUtil.getMappedValue(this, dimension.id, elementId);
@@ -78,6 +84,24 @@ export function DataModel() {
             }
         })
         return result;
+    }
+
+    function getElementLevel(elementId) {
+        let element = getElement(elementId);
+        if (!element) { console.error("invalid element id", elementId); return -1; }
+
+        let level = 0;
+        let touched = [elementId];
+        let curr = element;
+        while (curr.parentId) {
+            let parent = getElement(curr.parentId)
+            if (!parent) { console.error("Invalid state, parent not found", curr.parentId); return -1; };
+            level++;
+            curr = parent;
+            if (touched.includes(curr.id)) { console.error("Invalid State, loop", touched); return -1; }
+            touched.push(curr.id);
+        }
+        return level;
     }
 
     function getDimension(dimensionId) {
@@ -151,13 +175,13 @@ export function DataModel() {
                     category.elementIds = [e.id];
                     return category;
                 })
-                suplimentalLabelDimensions.push(labelDimen);
+                suplimentalLabelDimensions[i] = labelDimen;
             }
         }
 
         let tableCells = []
         mElements.forEach(element => {
-            let level = DataUtil.getLevelForElement(element.id, this)
+            let level = getElementLevel(element.id);
             dimensions.filter(d => d.level == level).forEach(dimension => {
                 let value = GenerationUtil.getMappedValue(this, dimension.id, element.id);
                 if (typeof value == "number") { value = Math.round(value * 100) / 100 }
@@ -247,10 +271,12 @@ export function DataModel() {
         getElement,
         getElementForStroke,
         getElements,
+        getLevelElements,
         setElements,
         getElementDecendants,
         getElementMappedValues,
         getElementChildren,
+        getElementLevel,
         getDimension,
         getDimensions,
         getDimenstionForCategory,

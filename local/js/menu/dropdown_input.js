@@ -44,7 +44,7 @@ export function DropdownInput() {
     }
 
     function onModelUpdate(model) {
-        let maxLevel = model.getElements().reduce((max, element) => Math.max(max, DataUtil.getLevelForElement(element.id, model)), 0);
+        let maxLevel = model.getElements().reduce((max, element) => Math.max(max, model.getElementLevel(element.id)), 0);
         mLevelSelect.html("");
         for (let i = 0; i <= maxLevel; i++) {
             mLevelSelect.append("option").attr("value", i).html("Level " + i).style("background", DataUtil.getLevelColor(i));
