@@ -109,10 +109,20 @@ describe('Table View Controller Test', function () {
             expect(model().getTables()[0].getDataArray()[0][0].value).to.eql("Label0 3");
             expect(model().getLevelElements(0).map(e => e.root)).to.eql([
                 { "x": 158, "y": 266 },
-                { "x": 158, "y": 266 },
-                { "x": 423, "y": 72 }
+                { "x": 423, "y": 72 },
+                { "x": 688, "y": -122 }
             ]);
-            assert.equal('done', true)
+        });
+
+        it('should create accurate positions for multi table multi level viz', async function () {
+            await utility.uploadJSON('template_two_table_multi_level.json');
+
+            utility.clickTab(Tab.TABLE);
+
+            let tablesBefore = model().getTables().map(t => t.getDataArray().map(r => r.map(c => c.value)));
+            d3.select('#generate-button').getCallbacks()['click']()
+            let tablesAfter = model().getTables().map(t => t.getDataArray().map(r => r.map(c => c.value)));
+            expect(tablesBefore).to.eql(tablesAfter);
         });
 
     })

@@ -1,5 +1,5 @@
 import { AngleType, ChannelLabels, ChannelType, DimensionType, SizeType } from "../constants.js";
-import { DataModel } from "../data_model.js";
+import { DataModel, DataTable } from "../data_model.js";
 import { Data } from "../data_structs.js";
 import { DataUtil } from "./data_util.js";
 import { IdUtil } from "./id_util.js";
@@ -8,9 +8,9 @@ import { VectorUtil } from "./vector_util.js";
 
 export let GenerationUtil = function () {
     function modelFromTables(template, dataTables) {
-        let newModel = new DataModel();
-        newModel.setDimensions(template.getDimensions().map(dimen => dimen.clone()));
-        newModel.getDimensions().forEach(dimen => {
+        let model = new DataModel();
+        model.setDimensions(template.getDimensions().map(dimen => dimen.clone()));
+        model.getDimensions().forEach(dimen => {
             dimen.categories.forEach(category => {
                 category.elementIds = [];
             });
@@ -19,8 +19,8 @@ export let GenerationUtil = function () {
 
         let originalTables = template.getTables();
 
-        let labelMap = {};
-        dataTables.forEach((table, tableIndex) => {
+        let elementMap = {};
+        dataTables.forEach(table => {
             let dataArray = table.getDataArray();
             if (dataArray.length == 0) { return; }
 
@@ -31,53 +31,46 @@ export let GenerationUtil = function () {
                 let labelDimenIndex = table.getColumns().findIndex(d => d.level == level && d.channel == ChannelType.LABEL);
                 if (labelDimenIndex > -1) {
                     let column = table.getColumns().find(d => d.level == level && d.channel == ChannelType.LABEL);
-                    if (!labelMap[column.id]) { labelMap[column.id] = []; }
 
                     let levelLabels = dataArray.map(r => r[labelDimenIndex].value);
                     // make sure the elements are created
                     DataUtil.unique(levelLabels).forEach(label => {
-                        if (!labelMap[column.id][label]) {
-                            labelMap[column.id][label] = makeNewElement(newModel);
+                        if (!elementMap[column.id + label]) {
+                            elementMap[column.id + label] = makeNewElement(model);
                             if (IdUtil.isType(column.id, Data.Dimension)) {
                                 // set up the dimension
-                                let dimension = newModel.getDimension(column.id);
+                                let dimension = model.getDimension(column.id);
                                 let category = dimension.categories.find(c => c.name == label);
                                 if (!category) {
                                     category = new Data.Category();
                                     category.name = label;
                                     dimension.categories.push(category);
                                 }
-                                category.elementIds = [labelMap[column.id][label].id];
+                                category.elementIds = [elementMap[column.id + label].id];
                             }
                         }
                     })
                     levelLabels.forEach((label, rowIndex) => {
-                        elementReference[level][rowIndex] = labelMap[column.id][label];
+                        elementReference[level][rowIndex] = elementMap[column.id + label];
                     })
                 } else {
                     // no label, we're either in the one element per parent or one element per row cases
                     if (oneElementPerParent(template, level)) {
                         if (level == 0) {
-                            let element = makeNewElement(newModel);
-                            elementReference[level] = elementReference[level].map(() => element);
+                            if (!elementMap['Level0Element']) elementMap['Level0Element'] = makeNewElement(model);
+                            elementReference[level] = elementReference[level].map(() => elementMap['Level0Element']);
                         } else {
-                            let parentElements = DataUtil.unique(elementReference[level - 1].map(e => e.id));
-                            let elements = parentElements.map(() => makeNewElement(newModel));
                             elementReference[level] = elementReference[level].map((_, i) => {
-                                let referenceIndex = parentElements.findIndex(id => id == elementReference[level - 1][i].id)
-                                return elements[referenceIndex];
+                                let parentId = elementReference[level - 1][i].id;
+                                if (!elementMap["Parent" + parentId]) elementMap["Parent" + parentId] = makeNewElement(model);
+                                return elementMap["Parent" + parentId];
                             });
                         }
-
                     } else if (oneElementPerRow(template, level)) {
-                        elementReference[level] = elementReference[level].map(() => makeNewElement(newModel));
+                        elementReference[level] = elementReference[level].map(() => makeNewElement(model));
                     } else {
                         console.error("Cannot determine element mapping scheme");
-                        elementReference[level] = elementReference[level].map(() => makeNewElement(newModel));
-                    }
-                    let parentId = false;
-                    if (template.getLevelElements(level).length == 1) {
-
+                        elementReference[level] = elementReference[level].map(() => makeNewElement(model));
                     }
                 }
             }
@@ -92,7 +85,7 @@ export let GenerationUtil = function () {
             // set the unmappedIds 
             let columns = table.getColumns();
             let tableDimensionIds = columns.map(c => c.id);
-            newModel.getDimensions().filter(d => !tableDimensionIds.includes(d.id) && d.level < elementReference.length).forEach(d => {
+            model.getDimensions().filter(d => !tableDimensionIds.includes(d.id) && d.level < elementReference.length).forEach(d => {
                 d.unmappedIds = DataUtil.unique(d.unmappedIds.concat(elementReference[d.level].map(e => e.id)));
             })
 
@@ -103,17 +96,82 @@ export let GenerationUtil = function () {
                     table.setCell(columns[colIndex].id, rowIndex, cell.value, elementId);
                 }))
             })
-
-            for (let level = 0; level <= maxTableLevel; level++) {
-                deriveShape(template, originalTables[tableIndex], newModel, table, level);
-                deriveColor(template, originalTables[tableIndex], newModel, table, level);
-                deriveSize(template, originalTables[tableIndex], newModel, table, level);
-                derivePosition(template, originalTables[tableIndex], newModel, table, level);
-                deriveAngle(template, originalTables[tableIndex], newModel, table, level);
-            }
         })
 
-        return newModel;
+        let maxLevel = Math.max(...model.getDimensions().map(d => d.level))
+        for (let level = 0; level < maxLevel + 1; level++) {
+            // now go through and create new data tables for each level
+            // these tabels join all the tables to make sure all the element data is in one table
+            let modelDataTables = {};
+            let templateTableElements = {};
+            dataTables.forEach((table, tableIndex) => {
+                let maxLevel = Math.max(...table.getColumns().map(c => c.level))
+                if (maxLevel < level) return;
+
+                let columns = table.getColumns().filter(d => d.level == level)
+                if (columns.length == 0) {
+                    // we are in a one or many case, either way, stick to this tables elements
+                    let key = "NoColumns_" + tableIndex + "_" + level
+
+                    let leafColumn = table.getColumns().find(c => c.level == maxLevel);
+
+                    modelDataTables[key] = {
+                        level, elementIds: DataUtil.unique(table.getColumnData(leafColumn.id)
+                            .map(data => getAncestorAtLevel(model.getElement(data.id), level, model))
+                            .map(e => e.id))
+                    };
+
+                    let originalTable = originalTables[tableIndex];
+                    templateTableElements[key] = DataUtil.unique(originalTable.getColumnData(leafColumn.id)
+                        .map(data => getAncestorAtLevel(template.getElement(data.id), level, template))
+                        .map(e => e.id));
+                } else {
+                    let key = columns.sort(DataUtil.compareDimensions)
+                        .map(c => c.id).join(",");
+                    if (!modelDataTables[key]) {
+                        modelDataTables[key] = new DataTable();
+                        for (const dimen of columns) {
+                            modelDataTables[key].addColumn(dimen.clone());
+                        }
+                        templateTableElements[key] = [];
+                    }
+
+                    let lastModelIndex = modelDataTables[key].getDataArray().length;
+                    columns.forEach(col => {
+                        table.getColumnData(col.id).forEach((item, index) => {
+                            modelDataTables[key].setCell(col.id, lastModelIndex + index, item.value, item.id);
+                        });
+                    })
+
+                    let originalTable = originalTables[tableIndex];
+                    let levelColumn = originalTable.getColumns().find(c => c.level == level)
+                    originalTable.getColumnData(levelColumn.id).map(item => item.id).forEach(id => templateTableElements[key].push(id))
+                    templateTableElements[key] = DataUtil.unique(templateTableElements[key]);
+                }
+            })
+
+            let keys = Object.keys(modelDataTables);
+            for (let level = 0; level < maxLevel + 1; level++) {
+                let levelKeys = keys.filter(key => {
+                    if (modelDataTables[key].level) {
+                        return modelDataTables[key].level == level;
+                    } else {
+                        return modelDataTables[key].getColumns()[0].level == level
+                    }
+                });
+                levelKeys.forEach(key => {
+                    let table = modelDataTables[key];
+                    if (table.level) table = table.elementIds;
+                    let templateElementIds = templateTableElements[key];
+                    deriveShape(template, templateElementIds, model, table, level);
+                    deriveColor(template, templateElementIds, model, table, level);
+                    deriveSize(template, templateElementIds, model, table, level);
+                    derivePosition(template, templateElementIds, model, table, level);
+                    deriveAngle(template, templateElementIds, model, table, level);
+                })
+            }
+        }
+        return model;
     }
 
     function makeNewElement(model) {
@@ -122,8 +180,8 @@ export let GenerationUtil = function () {
         return element;
     }
 
-    function deriveShape(template, originalTable, model, table, level) {
-        let mappedSets = getMappedSets(template, originalTable, model, table, level, ChannelType.SHAPE);
+    function deriveShape(template, templateTableIds, model, table, level) {
+        let mappedSets = getMappedSets(template, templateTableIds, model, table, level, ChannelType.SHAPE);
         let modelElements = [];
         let templateElements = [];
         for (let i = 0; i < mappedSets.modelIdSets.length; i++) {
@@ -167,8 +225,8 @@ export let GenerationUtil = function () {
         })
     }
 
-    function deriveColor(template, originalTable, model, table, level) {
-        let mappedSets = getMappedSets(template, originalTable, model, table, level, ChannelType.COLOR);
+    function deriveColor(template, templateTableIds, model, table, level) {
+        let mappedSets = getMappedSets(template, templateTableIds, model, table, level, ChannelType.COLOR);
         if (mappedSets.dimensionId) {
             for (let index in mappedSets.values) {
                 if (mappedSets.templateIdSets[index].length == 0) { console.error('invalid color value!', mappedSets.values[index]); continue; }
@@ -200,8 +258,8 @@ export let GenerationUtil = function () {
         }
     }
 
-    function deriveSize(template, originalTable, model, table, level) {
-        let mappedSets = getMappedSets(template, originalTable, model, table, level, ChannelType.SIZE);
+    function deriveSize(template, templateTableIds, model, table, level) {
+        let mappedSets = getMappedSets(template, templateTableIds, model, table, level, ChannelType.SIZE);
         if (mappedSets.dimensionId) {
             let dimension = model.getDimension(mappedSets.dimensionId);
             if (mappedSets.values == DimensionType.CONTINUOUS) {
@@ -229,8 +287,8 @@ export let GenerationUtil = function () {
         }
     }
 
-    function derivePosition(template, originalTable, model, table, level) {
-        let mappedSets = getMappedSets(template, originalTable, model, table, level, ChannelType.POSITION);
+    function derivePosition(template, templateTableIds, model, table, level) {
+        let mappedSets = getMappedSets(template, templateTableIds, model, table, level, ChannelType.POSITION);
         if (mappedSets.dimensionId) {
             if (mappedSets.values == DimensionType.CONTINUOUS) {
                 for (let index in mappedSets.modelIdSets[0]) {
@@ -361,8 +419,8 @@ export let GenerationUtil = function () {
         })
     }
 
-    function deriveAngle(template, originalTable, model, table, level) {
-        let mappedSets = getMappedSets(template, originalTable, model, table, level, ChannelType.ANGLE);
+    function deriveAngle(template, templateTableIds, model, table, level) {
+        let mappedSets = getMappedSets(template, templateTableIds, model, table, level, ChannelType.ANGLE);
         if (mappedSets.dimensionId) {
             let dimension = model.getDimension(mappedSets.dimensionId);
             if (mappedSets.values == DimensionType.CONTINUOUS) {
@@ -629,22 +687,21 @@ export let GenerationUtil = function () {
         return String(hours).padStart(2, '0') + ":" + String(minutes).padStart(2, '0');
     }
 
-    function getValueElements(model, table, dimensionId, value) {
-        let cells = table.getColumnData(dimensionId);
-        let valueCells = cells.filter(c => c.value == value);
-        let elementsIds = DataUtil.unique(cells.map(c => c.id));
-        return elementsIds.map(id => model.getElement(id));
-    }
-
     // returns a modelIds -> templateIds mapping for deriving values
-    function getMappedSets(template, originalTable, model, table, level, channel) {
-        let templateTableIds = getTableIds(template, originalTable)
+    function getMappedSets(template, templateTableIds, model, table, level, channel) {
+        let result = { modelIdSets: [], templateIdSets: [] };
+        if (!(table instanceof DataTable)) {
+            if (!Array.isArray(table)) { console.error("Invalid table", table) }
+            result.templateIdSets.push(templateTableIds);
+            result.modelIdSets.push(table);
+            return result;
+        }
+
         let tableIds = getTableIds(model, table)
 
         let dimens = table.getColumns().filter(d => d.level == level).filter(d => d.channel == channel);
-        let result = { modelIdSets: [], templateIdSets: [] };
         if (dimens.length == 0) {
-            result.templateIdSets.push(template.getLevelElements(level).map(e => e.id).filter(eId => templateTableIds.includes(eId)));
+            result.templateIdSets.push(templateTableIds);
             result.modelIdSets.push(model.getLevelElements(level).map(e => e.id).filter(eId => tableIds.includes(eId)));
             return result;
         }
@@ -658,20 +715,16 @@ export let GenerationUtil = function () {
             result.modelIdSets.push(cells.map(c => c.id));
             result.templateIdSets.push(cells.map(c => unmapValue(template, dimen.id, c.value)));
         } else {
-            let originalCells = DataUtil.unique(originalTable.getColumnData(dimen.id));
-            let allOriginalCells = DataUtil.unique(template.getTables().map(t => t.getColumnData(dimen.id).filter(c => c)).flat())
+            let originalValues = templateTableIds.map(eId => { return { id: eId, value: getMappedValue(template, dimen.id, eId) } })
             result.values = [];
             cells.forEach(cell => {
                 if (!result.values.includes(cell.value)) {
-                    let originalValueCells = originalCells.filter(c => c.value == cell.value);
-                    if (originalValueCells.length == 0) {
-                        originalValueCells = allOriginalCells.filter(c => c.value == cell.value);
-                        if (originalValueCells.length == 0) {
-                            console.error('Invalid value!', value)
-                            originalValueCells = template.getLevelElements(level);
-                        }
+                    let originalMatchingValues = originalValues.filter(c => c.value == cell.value);
+                    if (originalMatchingValues.length == 0) {
+                        console.error("No examples for value!", value)
+                        originalMatchingValues = originalValues;
                     }
-                    result.templateIdSets.push(originalValueCells.map(c => c.id));
+                    result.templateIdSets.push(originalMatchingValues.map(c => c.id));
                     result.modelIdSets.push([]);
                     result.values.push(cell.value);
                 }
