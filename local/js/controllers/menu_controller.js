@@ -29,6 +29,7 @@ export function MenuController() {
         Buttons.PANNING_BUTTON,
         Buttons.ZOOM_BUTTON,
         Buttons.DOWNLOAD,
+        Buttons.DOWNLOAD_IMAGE,
         Buttons.UPLOAD,
     ]
     const BUTTON_PARENTS = [
@@ -48,6 +49,7 @@ export function MenuController() {
     BUTTON_IMAGES[Buttons.SPINE_BRUSH_BUTTON] = "img/spine_brush_button.svg";
     BUTTON_IMAGES[Buttons.ANGLE_BRUSH_BUTTON] = "img/angle_brush_button.svg";
     BUTTON_IMAGES[Buttons.DOWNLOAD] = "img/download.svg";
+    BUTTON_IMAGES[Buttons.DOWNLOAD_IMAGE] = "img/download_image.svg";
     BUTTON_IMAGES[Buttons.UPLOAD] = "img/upload.svg";
     const BUTTON_HOTKEYS = {}
     BUTTON_HOTKEYS[Buttons.BRUSH_BUTTON] = "d";

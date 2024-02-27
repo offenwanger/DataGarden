@@ -9,6 +9,7 @@ import { FloatingButton } from "../menu/floating_button.js";
 import { TextInput } from "../menu/text_input.js";
 import { ClassifierUtil } from "../utils/classifier_util.js";
 import { DataUtil } from "../utils/data_util.js";
+import { DrawingUtil } from "../utils/drawing_util.js";
 import { IdUtil } from "../utils/id_util.js";
 import { CanvasController } from "./canvas_controller.js";
 import { FdlViewController } from "./fdl/fdl_view_controller.js";
@@ -441,6 +442,25 @@ export function DashboardController() {
             }
         } else if (button == Buttons.DOWNLOAD) {
             FileHandler.downloadJSON(mModel.toObject());
+        } else if (button == Buttons.DOWNLOAD_IMAGE) {
+            let boundingbox = DataUtil.getBoundingBox(mModel.getElements());
+            let canvas = document.createElement("canvas");
+            canvas.width = boundingbox.width + 50;
+            canvas.height = boundingbox.height + 50;
+
+            let dummy = { reset: () => { }, translate: () => { }, scale: () => { } };
+            let drawingUtil = new DrawingUtil(canvas.getContext('2d'), dummy, dummy)
+            drawingUtil.reset({ x: -boundingbox.x, y: -boundingbox.y, k: 1 });
+            mModel.getElements().forEach(elem => {
+                elem.strokes.forEach(stroke => {
+                    drawingUtil.drawStroke({
+                        path: stroke.path,
+                        color: stroke.color,
+                        width: stroke.size
+                    })
+                })
+            })
+            FileHandler.downloadPNG(canvas);
         } else if (button == Buttons.UPLOAD) {
             await mLoadModelCallback();
         }

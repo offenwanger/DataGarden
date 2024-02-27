@@ -19,6 +19,7 @@ export const Buttons = {
     VIEW_BUTTON: "View",
     COLOR_BUTTON: "Color",
     DOWNLOAD: "Download",
+    DOWNLOAD_IMAGE: "DownloadImage",
     UPLOAD: "Upload",
     SPINE_BRUSH_BUTTON: "Spine",
     ANGLE_BRUSH_BUTTON: "Angle",
