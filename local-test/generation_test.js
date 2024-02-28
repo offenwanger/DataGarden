@@ -114,6 +114,22 @@ describe('Table View Controller Test', function () {
             ]);
         });
 
+        it('should handle a template with an unmapped root branch', async function () {
+            await utility.uploadJSON('template_blog-of-tree_3_dimens.json');
+            assert.equal(model().getDimensions().length, 3);
+            assert.equal(model().getElements().length, 21);
+            assert.equal(model().getTables().length, 2);
+            assert.equal(model().getTables()[0].getColumns().length, 2);
+            assert.equal(model().getTables()[1].getColumns().length, 3);
+            utility.clickTab(Tab.TABLE);
+            d3.select('#generate-button').getCallbacks()['click']()
+            assert.equal(model().getDimensions().length, 3);
+            assert.equal(model().getElements().length, 21);
+            assert.equal(model().getTables().length, 2);
+            assert.equal(model().getTables()[0].getColumns().length, 2);
+            assert.equal(model().getTables()[1].getColumns().length, 3);
+        });
+
         it('should create accurate positions for multi table multi level viz', async function () {
             await utility.uploadJSON('template_two_table_multi_level.json');
 

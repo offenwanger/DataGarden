@@ -153,7 +153,7 @@ export let GenerationUtil = function () {
             let keys = Object.keys(modelDataTables);
             for (let level = 0; level < maxLevel + 1; level++) {
                 let levelKeys = keys.filter(key => {
-                    if (modelDataTables[key].level) {
+                    if ('level' in modelDataTables[key]) {
                         return modelDataTables[key].level == level;
                     } else {
                         return modelDataTables[key].getColumns()[0].level == level
@@ -161,7 +161,7 @@ export let GenerationUtil = function () {
                 });
                 levelKeys.forEach(key => {
                     let table = modelDataTables[key];
-                    if (table.level) table = table.elementIds;
+                    if ('level' in table) table = table.elementIds;
                     let templateElementIds = templateTableElements[key];
                     deriveShape(template, templateElementIds, model, table, level);
                     deriveColor(template, templateElementIds, model, table, level);
