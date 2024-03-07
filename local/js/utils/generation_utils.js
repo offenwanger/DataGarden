@@ -305,7 +305,7 @@ export let GenerationUtil = function () {
                     let newRoot = VectorUtil.add(VectorUtil.scale(newNormal, dist), newParentPos);
 
                     let translation = VectorUtil.subtract(newRoot, element.root);
-                    let rotation = VectorUtil.rotation(oldNormal, newNormal);
+                    let rotation = VectorUtil.rotation(newNormal, oldNormal);
                     transformElement(element, translation, rotation, element.root);
                 }
             } else {
@@ -414,6 +414,7 @@ export let GenerationUtil = function () {
 
                 let translation = VectorUtil.subtract(newRoot, element.root);
                 let rotation = VectorUtil.rotation(newNormal, oldNormal);
+
                 transformElement(element, translation, rotation, element.root);
             }
         })
