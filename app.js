@@ -21,7 +21,7 @@ utility.log("************* Starting the server *************")
 const port = 3333;
 
 app.get('/', function (req, res) {
-    res.sendFile(__dirname + '/local/app.html');
+    res.sendFile(__dirname + '/local/index.html');
 });
 
 // Everything in the local folder can be accessed via /filename

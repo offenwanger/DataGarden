@@ -572,4 +572,30 @@ document.addEventListener('DOMContentLoaded', function (e) {
         mVersionController.stack(mModelController.getModel().toObject());
         mDashboardController.modelUpdate(mModelController.getModel());
     })
+
+    if (new URLSearchParams(window.location.search).has('viz')) {
+        let loadViz = new URLSearchParams(window.location.search).get('viz');
+        let url = "assets/json/" + loadViz + ".json";
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.responseType = 'json';
+        xhr.onload = function () {
+            var status = xhr.status;
+            if (status === 200) {
+                try {
+                    let model = xhr.response;
+                    if (model) {
+                        mModelController.setModel(DataModel.fromObject(model));
+                        mVersionController.stack(mModelController.getModel().toObject());
+                        mDashboardController.modelUpdate(mModelController.getModel());
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            } else {
+                console.error("Failed to get model", xhr.response);
+            }
+        };
+        xhr.send();
+    }
 });
