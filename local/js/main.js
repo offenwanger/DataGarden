@@ -575,7 +575,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     if (new URLSearchParams(window.location.search).has('viz')) {
         let loadViz = new URLSearchParams(window.location.search).get('viz');
-        let url = "assets/json/" + loadViz + ".json";
+        let url = "/" + loadViz + ".json";
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url, true);
         xhr.responseType = 'json';
